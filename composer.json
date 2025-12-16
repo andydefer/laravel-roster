@@ -1,0 +1,19 @@
+{
+    "authors": [
+        {
+            "email": "andykanidimbu@gmail.com",
+            "name": "Andy Kani"
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+            "Roster\\": "src/"
+        }
+    },
+    "description": "Clean and flexible scheduling for Laravel applications.",
+    "license": "MIT",
+    "minimum-stability": "dev",
+    "name": "andydefer/roster",
+    "require": {},
+    "type": "library"
+}
