@@ -48,9 +48,9 @@ test:  # Exécute les tests PHPUnit
 	@vendor/bin/phpunit
 
 # Concatène tout le code PHP de src dans all.php
-concat-src:  # Parcourt src/ et écrit tout le contenu PHP dans all.php
-	@echo "🔹 Concaténation de tous les fichiers PHP de src/ dans all.php..."
-	@find src -type f -name "*.php" -exec sh -c 'echo "\n\n// ==== {} ====\n\n"; cat {}' \; > all.php
+concat-all:  # Parcourt src/, tests/ et database/ et écrit tout le contenu PHP dans all.php
+	@echo "🔹 Concaténation de tous les fichiers PHP de src/, tests/ et database/ dans all.php..."
+	@find src tests database -type f -name "*.php" -exec sh -c 'echo "\n\n// ==== {} ====\n\n"; cat {}' \; > all.php
 	@echo "✅ Fichier all.php généré avec succès."
 
 # Affiche l'aide et les descriptions
