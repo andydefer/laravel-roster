@@ -1,18 +1,77 @@
 <?php
+// ==== config/roster.php ====
 
 return [
     /*
     |--------------------------------------------------------------------------
-    | Roster Configuration
+    | Pas de modèle Schedulable par défaut
     |--------------------------------------------------------------------------
     |
-    | Configuration du système de roster/effectifs
+    | Le package est conçu pour être utilisé avec n'importe quel modèle
+    | qui utilise le trait Roster\Traits\HasRoster.
+    | Nous ne spécifions pas de modèle par défaut.
     |
     */
 
-    'default_timezone' => 'UTC',
+    /*
+    |--------------------------------------------------------------------------
+    | Durée par défaut des créneaux
+    |--------------------------------------------------------------------------
+    */
+    'default_slot_duration' => 60,
 
-    'pagination' => [
-        'per_page' => 15,
+    /*
+    |--------------------------------------------------------------------------
+    | Intervalle par défaut
+    |--------------------------------------------------------------------------
+    */
+    'default_slot_interval' => 30,
+
+    /*
+    |--------------------------------------------------------------------------
+    | Fuseau horaire
+    |--------------------------------------------------------------------------
+    */
+    'timezone' => 'UTC',
+
+    /*
+    |--------------------------------------------------------------------------
+    | Jours de la semaine
+    |--------------------------------------------------------------------------
+    */
+    'days_of_week' => [
+        'monday',
+        'tuesday',
+        'wednesday',
+        'thursday',
+        'friday',
+        'saturday',
+        'sunday',
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Types d'activités disponibles
+    |--------------------------------------------------------------------------
+    */
+    'activity_types' => [
+        'consultation',
+        'training',
+        'meeting',
+        'coaching',
+        'appointment',
+        'other',
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Statuts de schedule
+    |--------------------------------------------------------------------------
+    */
+    'schedule_statuses' => [
+        'available',
+        'booked',
+        'cancelled',
+        'blocked',
     ],
 ];

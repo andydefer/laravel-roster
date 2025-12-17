@@ -11,7 +11,7 @@ use Illuminate\Database\Eloquent\Model;
 class User extends Model
 {
     // Utiliser le trait pour gérer les disponibilités
-    use \Roster\Traits\Schedulable;
+    use \Roster\Traits\HasRoster;
 }
 ```
 
