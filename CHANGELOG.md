@@ -4,6 +4,124 @@ Toutes les modifications notables de ce projet seront documentées dans ce fichi
 Le format est basé sur [Keep a Changelog](https://keepachangelog.com/fr/1.0.0/),
 et ce projet suit les principes de [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.0.8] - 2025-12-17
+
+### 🛡️ Prévention des Chevauchements d'Impediments
+
+#### 🔒 Validation des Chevauchements
+- **Nouvelle méthode `hasOverlappingImpediment()`** dans `ImpedimentService`
+- **Prévention à la création** : Empêche les impediments qui se chevauchent
+- **Validation à la mise à jour** : Vérifie les chevauchements lors des modifications
+- **Exclusion intelligente** : Permet d'exclure l'impediment en cours de modification
+
+#### 🏗️ Contraintes de Base de Données
+- **Contrainte d'unicité** : `impediments_unique_time_slot` sur `(availability_id, start_datetime, end_datetime)`
+- **Index de performance** : Optimisation des requêtes de chevauchement
+- **Validation temporelle** : Vérification que `end_datetime > start_datetime` (selon le SGBD)
+
+#### 🎯 Nouvelles Fonctionnalités
+- **Méthode `getAvailableTimeSlots()`** : Retourne les créneaux disponibles entre les impediments
+- **Amélioration de `isTimeSlotBlocked()`** : Vérification précise des blocages
+- **Méthode `delete()` complète** : Suppression avec validation du schedulable
+
+#### 🧪 Tests Complets
+- **15 tests unitaires** couvrant tous les scénarios de chevauchement
+- **Tests de validation** : Dates invalides, chevauchements, créneaux disponibles
+- **Tests d'intégration** : Interaction entre impediments et schedules
+
+### 🐛 Corrections
+- **Correction du test `test_create_impediment_deletes_overlapping_schedules`** : Maintenant crée un impediment qui ne chevauche pas le schedule
+- **Ajout de la méthode manquante `delete()`** dans `ImpedimentService`
+
+### 📈 Améliorations
+- **Performance** : Index optimisés pour les requêtes de chevauchement
+- **Sécurité** : Double validation (logique applicative + contraintes base)
+- **Expérience développeur** : Messages d'erreur clairs pour les conflits
+
+### 🚀 Impact sur l'API
+```php
+// CRÉATION - Échoue si chevauchement
+try {
+    $impediment = Impediment::for($user)->create([
+        'reason' => 'Réunion',
+        'start_datetime' => '2024-06-03 12:00:00',
+        'end_datetime' => '2024-06-03 13:00:00',
+    ]);
+} catch (InvalidArgumentException $e) {
+    // "This time slot overlaps with an existing impediment"
+}
+
+// MISE À JOUR - Échoue si chevauchement avec d'autres impediments
+$updated = Impediment::for($user)->update($id, [
+    'start_datetime' => '2024-06-03 12:30:00',
+    'end_datetime' => '2024-06-03 13:30:00',
+]);
+
+// CRÉNEAUX DISPONIBLES - Nouvelle méthode
+$availableSlots = Impediment::for($user)
+    ->getAvailableTimeSlots($start, $end, 'consultation');
+// Retourne: [
+//   ['start' => '2024-06-03 09:00:00', 'end' => '2024-06-03 10:00:00'],
+//   ['start' => '2024-06-03 12:00:00', 'end' => '2024-06-03 14:00:00'],
+// ]
+```
+
+### 🔧 Migration Requise
+```bash
+# 1. Exécuter la migration des contraintes
+php artisan migrate
+
+# 2. Vérifier l'intégrité des données existantes
+# Les impediments qui se chevauchent déjà causeront une erreur
+# Il faudra les corriger manuellement avant la migration
+```
+
+### 📊 Schéma de Base de Données Mis à Jour
+```sql
+impediments {
+  id
+  availability_id (FK → availabilities.id)
+  reason
+  start_datetime
+  end_datetime
+  metadata (JSON)
+  created_at
+  updated_at
+
+  -- NOUVELLES CONTRAINTES
+  UNIQUE(availability_id, start_datetime, end_datetime) AS impediments_unique_time_slot
+  INDEX(availability_id, start_datetime) -- pour chevauchements
+  INDEX(availability_id, end_datetime)   -- pour chevauchements
+
+  -- Si PostgreSQL
+  EXCLUDE USING gist (
+    availability_id WITH =,
+    tsrange(start_datetime, end_datetime) WITH &&
+  ) AS impediments_no_overlap
+}
+```
+
+### 🎯 Points Clés
+1. **🛡️ Intégrité garantie** : Aucun chevauchement d'impediments possible
+2. **⚡ Performance** : Index optimisés pour les vérifications rapides
+3. **🧩 Compatible** : Ne brise pas l'API existante, ajoute seulement de la validation
+4. **🔍 Transparent** : Messages d'erreur clairs pour les développeurs
+5. **🧪 Testé** : Couverture complète des cas de chevauchement
+
+---
+
+### Comparaison avec Version 0.0.7
+
+| Fonctionnalité | 0.0.7 | 0.0.8 |
+|----------------|-------|-------|
+| Prévention chevauchements impediments | ❌ Non | ✅ Oui |
+| Contraintes base de données | ❌ Non | ✅ Oui |
+| Messages d'erreur clairs | ❌ Non | ✅ Oui |
+| Méthode getAvailableTimeSlots() | ❌ Non | ✅ Oui |
+| Tests de chevauchement | ❌ Partiel | ✅ Complet |
+
+**Statut** : 🟢 **Rétrocompatible** - Ajoute seulement de la validation, ne brise pas l'API existante.
+
 ## [0.0.7] - 2025-12-17
 
 ### 🚀 Nouveautés

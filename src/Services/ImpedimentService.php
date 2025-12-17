@@ -26,15 +26,7 @@ class ImpedimentService
     }
 
     /**
-     * Récupérer le modèle schedulable courant
-     */
-    public function getSchedulable(): ?Model
-    {
-        return $this->schedulable;
-    }
-
-    /**
-     * Créer un nouvel impediment
+     * Créer un nouvel impediment avec vérification des chevauchements
      */
     public function create(array $data): Impediment
     {
@@ -50,6 +42,11 @@ class ImpedimentService
             throw new InvalidArgumentException('No matching availability found for this impediment');
         }
 
+        // Vérifier les chevauchements
+        if ($this->hasOverlappingImpediment($availability->id, $data)) {
+            throw new InvalidArgumentException('This time slot overlaps with an existing impediment');
+        }
+
         // Créer l'impediment
         $impediment = Impediment::create(array_merge($data, [
             'availability_id' => $availability->id,
@@ -59,7 +56,7 @@ class ImpedimentService
     }
 
     /**
-     * Mettre à jour un impediment existant
+     * Mettre à jour un impediment existant avec vérification des chevauchements
      */
     public function update(int $id, array $data): bool
     {
@@ -73,6 +70,8 @@ class ImpedimentService
 
         if ($data) {
             // Si les dates changent, vérifier la nouvelle Availability
+            $availabilityId = $impediment->availability_id;
+
             if (isset($data['start_datetime'])) {
                 $newAvailability = $this->findMatchingAvailability($data);
 
@@ -80,8 +79,25 @@ class ImpedimentService
                     throw new InvalidArgumentException('No matching availability found for new impediment time');
                 }
 
+                $availabilityId = $newAvailability->id;
+
+                // Vérifier les chevauchements avec d'autres impediments (sauf celui en cours de modification)
+                if ($this->hasOverlappingImpediment($availabilityId, $data, $id)) {
+                    throw new InvalidArgumentException('This time slot overlaps with another impediment');
+                }
+
                 if ($newAvailability->id !== $impediment->availability_id) {
                     $data['availability_id'] = $newAvailability->id;
+                }
+            } else {
+                // Même availability, vérifier les chevauchements
+                $updateData = array_merge([
+                    'start_datetime' => $impediment->start_datetime,
+                    'end_datetime' => $impediment->end_datetime,
+                ], $data);
+
+                if ($this->hasOverlappingImpediment($availabilityId, $updateData, $id)) {
+                    throw new InvalidArgumentException('This time slot overlaps with another impediment');
                 }
             }
         }
@@ -103,6 +119,35 @@ class ImpedimentService
         }
 
         return $impediment->delete();
+    }
+
+    /**
+     * Vérifier si un créneau horaire chevauche un impediment existant
+     */
+    protected function hasOverlappingImpediment(int $availabilityId, array $data, ?int $excludeId = null): bool
+    {
+        $start = Carbon::parse($data['start_datetime']);
+        $end = Carbon::parse($data['end_datetime']);
+
+        $query = Impediment::where('availability_id', $availabilityId)
+            ->where(function ($q) use ($start, $end) {
+                // Chevauchement : un impediment existe qui commence avant la fin du nouveau
+                // et se termine après le début du nouveau
+                $q->where(function ($inner) use ($start, $end) {
+                    $inner->where('start_datetime', '<', $end)
+                        ->where('end_datetime', '>', $start);
+                });
+                // Ou : un impediment qui commence ou se termine exactement à la même heure
+                // ->orWhere('start_datetime', '=', $start)
+                // ->orWhere('end_datetime', '=', $end);
+            });
+
+        // Exclure l'impediment en cours de modification si nécessaire
+        if ($excludeId) {
+            $query->where('id', '!=', $excludeId);
+        }
+
+        return $query->exists();
     }
 
     /**
@@ -195,9 +240,71 @@ class ImpedimentService
 
         // Vérifier les chevauchements avec des impediments
         return $availability->impediments()
-            ->where('start_datetime', '<', $end)
-            ->where('end_datetime', '>', $start)
+            ->where(function ($q) use ($start, $end) {
+                $q->where('start_datetime', '<', $end)
+                    ->where('end_datetime', '>', $start);
+            })
             ->exists();
+    }
+
+    /**
+     * Obtenir les créneaux disponibles dans une période
+     */
+    public function getAvailableTimeSlots(Carbon $start, Carbon $end, ?string $type = null): Collection
+    {
+        $this->validateSchedulable();
+
+        // Trouver l'Availability correspondante
+        $availability = $this->findAvailabilityForTimeSlot($start, $end, $type);
+
+        if (!$availability) {
+            return collect();
+        }
+
+        // Récupérer tous les impediments pour cette availability
+        $impediments = $availability->impediments()
+            ->where('start_datetime', '>=', $start->copy()->startOfDay())
+            ->where('end_datetime', '<=', $end->copy()->endOfDay())
+            ->orderBy('start_datetime')
+            ->get();
+
+        // Si pas d'impediments, tout le créneau est disponible
+        if ($impediments->isEmpty()) {
+            return collect([[
+                'start' => $start,
+                'end' => $end,
+            ]]);
+        }
+
+        // Calculer les créneaux disponibles entre les impediments
+        $availableSlots = collect();
+        $currentTime = $start->copy();
+
+        foreach ($impediments as $impediment) {
+            $impedimentStart = Carbon::parse($impediment->start_datetime);
+            $impedimentEnd = Carbon::parse($impediment->end_datetime);
+
+            // Si l'impediment commence après le temps courant, il y a un créneau disponible
+            if ($impedimentStart > $currentTime) {
+                $availableSlots->push([
+                    'start' => $currentTime->copy(),
+                    'end' => $impedimentStart->copy(),
+                ]);
+            }
+
+            // Mettre à jour le temps courant à la fin de l'impediment
+            $currentTime = max($currentTime, $impedimentEnd);
+        }
+
+        // Vérifier s'il reste du temps après le dernier impediment
+        if ($currentTime < $end) {
+            $availableSlots->push([
+                'start' => $currentTime->copy(),
+                'end' => $end->copy(),
+            ]);
+        }
+
+        return $availableSlots;
     }
 
     /**
@@ -223,6 +330,12 @@ class ImpedimentService
 
         if ($end->lte($start)) {
             throw new InvalidArgumentException('End datetime must be after start datetime');
+        }
+
+        // Optionnel : vérifier une durée minimale
+        $minDuration = 5; // minutes
+        if ($start->diffInMinutes($end) < $minDuration) {
+            throw new InvalidArgumentException("Impediment must be at least {$minDuration} minutes long");
         }
     }
 

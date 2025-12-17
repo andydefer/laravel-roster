@@ -11,17 +11,6 @@ use Roster\Services\AvailabilityService;
 use Roster\Services\AvailabilityValidator;
 use Roster\Tests\TestCase;
 
-// Création d'un modèle factice pour les tests
-class TestSchedulable extends Model
-{
-    protected $table = 'test_schedulables';
-
-    protected $fillable = ['name'];
-
-    // Utiliser le trait Schedulable si nécessaire
-    use \Roster\Traits\HasRoster;
-}
-
 class AvailabilityServiceTest extends TestCase
 {
     use RefreshDatabase;
