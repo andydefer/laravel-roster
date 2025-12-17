@@ -3,6 +3,7 @@
 namespace Roster\Tests\Unit\Services;
 
 use Roster\Services\AvailabilityService;
+use Roster\Services\AvailabilityValidator;
 use Roster\Models\Availability;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -36,7 +37,8 @@ class AvailabilityServiceTest extends TestCase
             $table->timestamps();
         });
 
-        $this->service = app(AvailabilityService::class);
+        $validator = new AvailabilityValidator();
+        $this->service = new AvailabilityService($validator);
         $this->schedulable = TestSchedulable::create(['name' => 'Test Schedulable']);
     }
 
@@ -367,150 +369,431 @@ class AvailabilityServiceTest extends TestCase
         $this->assertEquals('2024-06-12 09:00:00', $nextSlot->format('Y-m-d H:i:s')); // Mercredi suivant
     }
 
-    public function test_get_available_slots_with_default_interval()
+    public function test_create_availability_with_overlap_throws_exception()
     {
-        $availability = Availability::create([
-            'schedulable_id' => $this->schedulable->id,
-            'schedulable_type' => TestSchedulable::class,
+        // Créer une première disponibilité
+        $this->service->for($this->schedulable)->create([
             'type' => 'consultation',
             'start_time' => '09:00',
             'end_time' => '12:00',
-            'days' => ['monday', 'wednesday'],
+            'days' => ['monday'],
         ]);
 
-        $startDate = Carbon::create(2024, 6, 10, 0, 0, 0); // Lundi
-        $endDate = Carbon::create(2024, 6, 19, 23, 59, 59); // Mercredi semaine suivante
+        // Tentative de création d'une disponibilité qui chevauche
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('This availability overlaps with an existing one.');
 
-        // Avec intervalle de 30 minutes par défaut, on aura plusieurs créneaux par jour
-        // De 9h à 12h avec durée de 60 min = 3 créneaux possibles (9h-10h, 9h30-10h30, 10h-11h, 10h30-11h30, 11h-12h)
-        // En réalité avec l'algorithme actuel : 9h-10h, 9h30-10h30, 10h-11h, 10h30-11h30, 11h-12h = 5 créneaux
-        // Sur 2 jours = 10 créneaux, sur 4 jours = 20 créneaux
-        $slots = $this->service->for($this->schedulable)->availableSlots($startDate, $endDate, 60); // intervalle par défaut 30 min
-
-        $this->assertIsArray($slots);
-
-        // Avec intervalle de 30 min et durée de 60 min, de 9h à 12h :
-        // Créneaux possibles : 9h-10h, 9h30-10h30, 10h-11h, 10h30-11h30, 11h-12h = 5 créneaux par jour
-        // Sur 4 jours (2 lundis + 2 mercredis) = 20 créneaux
-        $this->assertCount(20, $slots);
-
-        // Vérifier le premier créneau
-        $slot = $slots[0];
-        $this->assertArrayHasKey('start', $slot);
-        $this->assertArrayHasKey('end', $slot);
-        $this->assertArrayHasKey('type', $slot);
-        $this->assertArrayHasKey('availability_id', $slot);
-        $this->assertInstanceOf(Carbon::class, $slot['start']);
-        $this->assertInstanceOf(Carbon::class, $slot['end']);
-        $this->assertEquals('09:00', $slot['start']->format('H:i'));
-        $this->assertEquals('10:00', $slot['end']->format('H:i'));
+        $this->service->for($this->schedulable)->create([
+            'type' => 'consultation',
+            'start_time' => '10:00',
+            'end_time' => '13:00',
+            'days' => ['monday'],
+        ]);
     }
 
-    public function test_get_available_slots_with_custom_interval()
+    public function test_create_availability_without_overlap_succeeds()
     {
-        $availability = Availability::create([
-            'schedulable_id' => $this->schedulable->id,
-            'schedulable_type' => TestSchedulable::class,
+        // Créer une première disponibilité
+        $this->service->for($this->schedulable)->create([
             'type' => 'consultation',
             'start_time' => '09:00',
             'end_time' => '12:00',
-            'days' => ['monday', 'wednesday'],
+            'days' => ['monday'],
         ]);
 
-        $startDate = Carbon::create(2024, 6, 10, 0, 0, 0); // Lundi
-        $endDate = Carbon::create(2024, 6, 19, 23, 59, 59); // Mercredi semaine suivante
+        // Créer une deuxième disponibilité qui ne chevauche pas
+        $availability = $this->service->for($this->schedulable)->create([
+            'type' => 'consultation',
+            'start_time' => '14:00',
+            'end_time' => '17:00',
+            'days' => ['monday'],
+        ]);
 
-        // Avec intervalle de 120 min et durée de 60 min
-        // De 9:00 à 12:00 = 3 heures
-        // Créneaux : 9:00-10:00, 11:00-12:00 = 2 créneaux par jour
-        // Sur 4 jours = 8 créneaux
-        $slots = $this->service->for($this->schedulable)->availableSlots($startDate, $endDate, 60, 120);
-
-        $this->assertIsArray($slots);
-
-        // Correction : 4 jours × 2 créneaux = 8 créneaux
-        $this->assertCount(8, $slots);
-
-        // Vérifier les heures des créneaux
-        $expectedTimes = ['09:00', '11:00']; // Heures de début attendues
-
-        foreach ($slots as $index => $slot) {
-            $this->assertArrayHasKey('start', $slot);
-            $this->assertArrayHasKey('end', $slot);
-
-            $hourStart = $slot['start']->format('H:i');
-            $hourEnd = $slot['end']->format('H:i');
-
-            // Vérifier que l'heure de début est soit 9:00 soit 11:00
-            $this->assertContains($hourStart, $expectedTimes);
-
-            // Vérifier la durée
-            $expectedEnd = Carbon::parse($hourStart)->addMinutes(60)->format('H:i');
-            $this->assertEquals($expectedEnd, $hourEnd);
-        }
+        $this->assertInstanceOf(Availability::class, $availability);
+        $this->assertEquals('14:00', $availability->start_time->format('H:i'));
+        $this->assertEquals('17:00', $availability->end_time->format('H:i'));
     }
 
-    public function test_get_available_slots_for_date_range()
+    public function test_create_availability_with_overlap_on_different_days_succeeds()
     {
-        $availability = Availability::create([
-            'schedulable_id' => $this->schedulable->id,
-            'schedulable_type' => TestSchedulable::class,
+        // Créer une disponibilité le lundi
+        $this->service->for($this->schedulable)->create([
             'type' => 'consultation',
             'start_time' => '09:00',
             'end_time' => '12:00',
-            'days' => ['monday', 'wednesday'],
+            'days' => ['monday'],
         ]);
 
-        $startDate = Carbon::create(2024, 6, 10, 0, 0, 0); // Lundi
-        $endDate = Carbon::create(2024, 6, 19, 23, 59, 59); // Mercredi semaine suivante
+        // Créer une disponibilité avec mêmes horaires mais le mardi (pas de chevauchement)
+        $availability = $this->service->for($this->schedulable)->create([
+            'type' => 'consultation',
+            'start_time' => '09:00',
+            'end_time' => '12:00',
+            'days' => ['tuesday'],
+        ]);
 
-        // Intervalle égal à la durée (60 min)
-        // De 9:00 à 12:00 = 3 heures
-        // Créneaux : 9:00-10:00, 10:00-11:00, 11:00-12:00 = 3 créneaux par jour
-        // Sur 4 jours = 12 créneaux
-        $slots = $this->service->for($this->schedulable)->availableSlots($startDate, $endDate, 60, 60);
+        $this->assertInstanceOf(Availability::class, $availability);
+        $this->assertEquals(['tuesday'], $availability->days);
+    }
 
-        $this->assertIsArray($slots);
+    public function test_update_availability_with_overlap_throws_exception()
+    {
+        // Créer deux disponibilités
+        $availability1 = $this->service->for($this->schedulable)->create([
+            'type' => 'consultation',
+            'start_time' => '09:00',
+            'end_time' => '11:00',
+            'days' => ['monday'],
+        ]);
 
-        // Correction : 4 jours × 3 créneaux = 12 créneaux
-        $this->assertCount(12, $slots);
+        $availability2 = $this->service->for($this->schedulable)->create([
+            'type' => 'consultation',
+            'start_time' => '14:00',
+            'end_time' => '16:00',
+            'days' => ['monday'],
+        ]);
 
-        // Vérifier le format et les heures
-        $expectedTimes = ['09:00', '10:00', '11:00']; // Heures de début attendues
+        // Tentative de mise à jour pour chevaucher la première
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('This availability overlaps with an existing one.');
 
-        foreach ($slots as $slot) {
-            $this->assertArrayHasKey('start', $slot);
-            $this->assertArrayHasKey('end', $slot);
-            $this->assertArrayHasKey('type', $slot);
-            $this->assertArrayHasKey('availability_id', $slot);
-            $this->assertInstanceOf(Carbon::class, $slot['start']);
-            $this->assertInstanceOf(Carbon::class, $slot['end']);
-            $this->assertEquals('consultation', $slot['type']);
-            $this->assertEquals($availability->id, $slot['availability_id']);
+        $this->service->for($this->schedulable)->update($availability2->id, [
+            'start_time' => '10:00',
+            'end_time' => '12:00',
+            'days' => ['monday'], // Ajouter les jours pour la vérification
+        ]);
+    }
 
-            // Vérifier que l'heure de début est l'une des heures attendues
-            $hourStart = $slot['start']->format('H:i');
-            $this->assertContains($hourStart, $expectedTimes);
+    public function test_update_availability_without_overlap_succeeds()
+    {
+        // Créer deux disponibilités
+        $availability1 = $this->service->for($this->schedulable)->create([
+            'type' => 'consultation',
+            'start_time' => '09:00',
+            'end_time' => '11:00',
+            'days' => ['monday'],
+        ]);
 
-            // Vérifier la durée
-            $expectedEnd = Carbon::parse($hourStart)->addMinutes(60)->format('H:i');
-            $this->assertEquals($expectedEnd, $slot['end']->format('H:i'));
-        }
+        $availability2 = $this->service->for($this->schedulable)->create([
+            'type' => 'consultation',
+            'start_time' => '14:00',
+            'end_time' => '16:00',
+            'days' => ['monday'],
+        ]);
 
-        // Compter les créneaux par jour
-        $slotsByDay = [];
-        foreach ($slots as $slot) {
-            $date = $slot['start']->format('Y-m-d');
-            if (!isset($slotsByDay[$date])) {
-                $slotsByDay[$date] = 0;
-            }
-            $slotsByDay[$date]++;
-        }
+        // Mise à jour qui ne chevauche pas
+        $result = $this->service->for($this->schedulable)->update($availability2->id, [
+            'start_time' => '16:00',
+            'end_time' => '18:00',
+            'days' => ['monday'], // Ajouter les jours pour la vérification
+        ]);
 
-        // Vérifier qu'on a 3 créneaux par jour
-        foreach ($slotsByDay as $date => $count) {
-            $this->assertEquals(3, $count, "Date {$date} devrait avoir 3 créneaux, a {$count}");
-        }
+        $this->assertTrue($result);
+
+        $availability2->refresh();
+        $this->assertEquals('16:00', $availability2->start_time->format('H:i'));
+        $this->assertEquals('18:00', $availability2->end_time->format('H:i'));
+    }
+    public function test_has_overlapping_method_returns_true_when_overlap_exists()
+    {
+        // Créer une disponibilité
+        $this->service->for($this->schedulable)->create([
+            'type' => 'consultation',
+            'start_time' => '09:00',
+            'end_time' => '12:00',
+            'days' => ['monday'],
+        ]);
+
+        // Vérifier le chevauchement
+        $hasOverlap = $this->service->for($this->schedulable)->hasOverlapping([
+            'type' => 'consultation',
+            'start_time' => '10:00',
+            'end_time' => '13:00',
+            'days' => ['monday'],
+        ]);
+
+        $this->assertTrue($hasOverlap);
+    }
+
+    public function test_has_overlapping_method_returns_false_when_no_overlap()
+    {
+        // Créer une disponibilité
+        $this->service->for($this->schedulable)->create([
+            'type' => 'consultation',
+            'start_time' => '09:00',
+            'end_time' => '12:00',
+            'days' => ['monday'],
+        ]);
+
+        // Vérifier l'absence de chevauchement
+        $hasOverlap = $this->service->for($this->schedulable)->hasOverlapping([
+            'type' => 'consultation',
+            'start_time' => '14:00',
+            'end_time' => '16:00',
+            'days' => ['monday'],
+        ]);
+
+        $this->assertFalse($hasOverlap);
+    }
+
+    public function test_find_overlapping_returns_collection_of_overlapping_availabilities()
+    {
+        // Créer plusieurs disponibilités
+        $availability1 = $this->service->for($this->schedulable)->create([
+            'type' => 'consultation',
+            'start_time' => '09:00',
+            'end_time' => '11:00',
+            'days' => ['monday'],
+        ]);
+
+        $availability2 = $this->service->for($this->schedulable)->create([
+            'type' => 'consultation',
+            'start_time' => '14:00',
+            'end_time' => '16:00',
+            'days' => ['monday'],
+        ]);
+
+        // availability3 va fusionner avec availability2 car elles sont adjacentes
+        $availability3 = $this->service->for($this->schedulable)->create([
+            'type' => 'consultation',
+            'start_time' => '16:00',
+            'end_time' => '18:00',
+            'days' => ['monday'],
+        ]);
+
+        // availability2 a été fusionnée et supprimée
+        // Nous avons maintenant availability1 (09:00-11:00) et availability3 (14:00-18:00)
+
+        // Trouver les chevauchements avec une nouvelle disponibilité
+        $overlapping = $this->service->for($this->schedulable)->findOverlapping([
+            'type' => 'consultation',
+            'start_time' => '15:00',
+            'end_time' => '17:00',
+            'days' => ['monday'],
+        ]);
+
+        // Doit trouver availability3 (14:00-18:00) seulement
+        $this->assertCount(1, $overlapping);
+        $this->assertTrue($overlapping->contains($availability3));
+    }
+
+    public function test_date_range_overlap_validation()
+    {
+        // Disponibilité avec dates spécifiques
+        $this->service->for($this->schedulable)->create([
+            'type' => 'consultation',
+            'start_time' => '09:00',
+            'end_time' => '12:00',
+            'days' => ['monday'],
+            'start_date' => '2024-01-01',
+            'end_date' => '2024-06-30',
+        ]);
+
+        // Tentative de création avec dates qui chevauchent
+        $this->expectException(\InvalidArgumentException::class);
+
+        $this->service->for($this->schedulable)->create([
+            'type' => 'consultation',
+            'start_time' => '10:00',
+            'end_time' => '13:00',
+            'days' => ['monday'],
+            'start_date' => '2024-04-01',
+            'end_date' => '2024-08-31',
+        ]);
+    }
+
+    public function test_no_date_range_overlap_when_dates_dont_intersect()
+    {
+        // Disponibilité avec dates spécifiques
+        $this->service->for($this->schedulable)->create([
+            'type' => 'consultation',
+            'start_time' => '09:00',
+            'end_time' => '12:00',
+            'days' => ['monday'],
+            'start_date' => '2024-01-01',
+            'end_date' => '2024-03-31',
+        ]);
+
+        // Création avec dates qui ne chevauchent pas
+        $availability = $this->service->for($this->schedulable)->create([
+            'type' => 'consultation',
+            'start_time' => '09:00',
+            'end_time' => '12:00',
+            'days' => ['monday'],
+            'start_date' => '2024-07-01',
+            'end_date' => '2024-12-31',
+        ]);
+
+        $this->assertInstanceOf(Availability::class, $availability);
+        $this->assertEquals('2024-07-01', $availability->start_date->format('Y-m-d'));
+    }
+
+    public function test_auto_merge_adjacent_availabilities()
+    {
+        // Créer une première disponibilité
+        $availability1 = $this->service->for($this->schedulable)->create([
+            'type' => 'consultation',
+            'start_time' => '09:00',
+            'end_time' => '12:00',
+            'days' => ['monday'],
+        ]);
+
+        // Créer une deuxième disponibilité adjacente
+        // Elle devrait fusionner avec la première
+        $availability2 = $this->service->for($this->schedulable)->create([
+            'type' => 'consultation',
+            'start_time' => '12:00', // Adjacent à la fin de la première
+            'end_time' => '15:00',
+            'days' => ['monday'],
+        ]);
+
+        // La première disponibilité devrait avoir été fusionnée et supprimée
+        $this->assertDatabaseMissing('availabilities', ['id' => $availability1->id]);
+
+        // La deuxième devrait avoir les horaires étendus
+        $availability2->refresh();
+        $this->assertEquals('09:00', $availability2->start_time->format('H:i'));
+        $this->assertEquals('15:00', $availability2->end_time->format('H:i'));
+    }
+
+    public function test_find_adjacent_availabilities()
+    {
+        // Créer plusieurs disponibilités
+        $availability1 = $this->service->for($this->schedulable)->create([
+            'type' => 'consultation',
+            'start_time' => '09:00',
+            'end_time' => '12:00',
+            'days' => ['monday'],
+        ]);
+
+        $availability2 = $this->service->for($this->schedulable)->create([
+            'type' => 'consultation',
+            'start_time' => '14:00',
+            'end_time' => '16:00',
+            'days' => ['monday'],
+        ]);
+
+        // availability2 existe maintenant de 14:00 à 16:00
+        // availability3 va fusionner avec availability2
+        $availability3 = $this->service->for($this->schedulable)->create([
+            'type' => 'consultation',
+            'start_time' => '16:00', // Adjacent à la fin de availability2
+            'end_time' => '18:00',
+            'days' => ['monday'],
+        ]);
+
+        // availability2 a été fusionnée et supprimée
+        // Nous avons maintenant availability1 (09:00-12:00) et availability3 (14:00-18:00)
+
+        // Trouver les adjacentes à une nouvelle disponibilité de 12:00 à 14:00
+        $adjacent = $this->service->for($this->schedulable)->findAdjacentAvailabilities([
+            'type' => 'consultation',
+            'start_time' => '12:00',
+            'end_time' => '14:00',
+            'days' => ['monday'],
+        ]);
+
+        // Doit trouver availability1 (09:00-12:00) et availability3 (14:00-18:00)
+        $this->assertCount(2, $adjacent);
+        $this->assertTrue($adjacent->contains($availability1));
+        // availability2 n'existe plus, vérifions availability3
+        $this->assertTrue($adjacent->contains($availability3));
+    }
+
+    public function test_different_types_dont_overlap()
+    {
+        // Créer une disponibilité de type 'consultation'
+        $this->service->for($this->schedulable)->create([
+            'type' => 'consultation',
+            'start_time' => '09:00',
+            'end_time' => '12:00',
+            'days' => ['monday'],
+        ]);
+
+        // Tentative de création d'une disponibilité de type 'meeting' aux mêmes horaires
+        // (devrait échouer car les chevauchements sont interdits quel que soit le type)
+        $this->expectException(\InvalidArgumentException::class);
+
+        $this->service->for($this->schedulable)->create([
+            'type' => 'meeting',
+            'start_time' => '09:00',
+            'end_time' => '12:00',
+            'days' => ['monday'],
+        ]);
+    }
+
+    public function test_adjacent_availabilities_with_different_types_not_merged()
+    {
+        // Créer une disponibilité de type 'consultation'
+        $availability1 = $this->service->for($this->schedulable)->create([
+            'type' => 'consultation',
+            'start_time' => '09:00',
+            'end_time' => '12:00',
+            'days' => ['monday'],
+        ]);
+
+        // Créer une disponibilité adjacente de type différent
+        $availability2 = $this->service->for($this->schedulable)->create([
+            'type' => 'meeting', // Type différent
+            'start_time' => '12:00',
+            'end_time' => '15:00',
+            'days' => ['monday'],
+        ]);
+
+        // Les deux devraient exister séparément (pas de fusion car types différents)
+        $this->assertDatabaseHas('availabilities', ['id' => $availability1->id]);
+        $this->assertDatabaseHas('availabilities', ['id' => $availability2->id]);
+
+        // Vérifier qu'elles n'ont pas été fusionnées
+        $availability2->refresh();
+        $this->assertEquals('12:00', $availability2->start_time->format('H:i'));
+        $this->assertEquals('15:00', $availability2->end_time->format('H:i'));
+    }
+
+    public function test_adjacent_availabilities_with_different_days_not_merged()
+    {
+        // Créer une disponibilité le lundi
+        $availability1 = $this->service->for($this->schedulable)->create([
+            'type' => 'consultation',
+            'start_time' => '09:00',
+            'end_time' => '12:00',
+            'days' => ['monday'],
+        ]);
+
+        // Créer une disponibilité adjacente le mardi
+        $availability2 = $this->service->for($this->schedulable)->create([
+            'type' => 'consultation',
+            'start_time' => '12:00',
+            'end_time' => '15:00',
+            'days' => ['tuesday'], // Jour différent
+        ]);
+
+        // Les deux devraient exister séparément
+        $this->assertDatabaseHas('availabilities', ['id' => $availability1->id]);
+        $this->assertDatabaseHas('availabilities', ['id' => $availability2->id]);
+    }
+
+    public function test_overlap_with_unlimited_date_range()
+    {
+        // Créer une disponibilité sans dates limites
+        $this->service->for($this->schedulable)->create([
+            'type' => 'consultation',
+            'start_time' => '09:00',
+            'end_time' => '12:00',
+            'days' => ['monday'],
+        ]);
+
+        // Tentative de création avec dates spécifiques (devrait chevaucher car la première est illimitée)
+        $this->expectException(\InvalidArgumentException::class);
+
+        $this->service->for($this->schedulable)->create([
+            'type' => 'consultation',
+            'start_time' => '10:00',
+            'end_time' => '13:00',
+            'days' => ['monday'],
+            'start_date' => '2024-01-01',
+            'end_date' => '2024-12-31',
+        ]);
     }
 
     public function test_throws_exception_when_no_schedulable_specified()

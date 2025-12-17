@@ -7,11 +7,18 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Carbon;
 use InvalidArgumentException;
+use RuntimeException;
 
 class AvailabilityService
 {
     protected ?Model $schedulable = null;
     protected array $filters = [];
+    protected AvailabilityValidator $validator;
+
+    public function __construct(?AvailabilityValidator $validator = null)
+    {
+        $this->validator = $validator ?? new AvailabilityValidator();
+    }
 
     /**
      * Spécifier le modèle pour lequel gérer les disponibilités
@@ -31,12 +38,22 @@ class AvailabilityService
     }
 
     /**
-     * Créer une nouvelle disponibilité
+     * Créer une nouvelle disponibilité avec validation des chevauchements
      */
     public function create(array $data): Availability
     {
         $this->validateSchedulable();
-        $this->validateAvailabilityData($data);
+
+        // Valider les données de base
+        $this->validator->validateBasicData($data);
+
+        // Vérifier les chevauchements (toujours interdit)
+        if ($this->validator->hasOverlapping($this->schedulable, $data)) {
+            throw new InvalidArgumentException('This availability overlaps with an existing one.');
+        }
+
+        // Fusion automatique des disponibilités adjacentes (toujours activée)
+        $data = $this->mergeWithAdjacentAvailabilities($data);
 
         return Availability::create(array_merge($data, [
             'schedulable_id' => $this->schedulable->id,
@@ -51,14 +68,37 @@ class AvailabilityService
     {
         $this->validateSchedulable();
 
-        if ($data) {
-            $this->validateAvailabilityData($data, $id);
-        }
-
         $availability = $this->find($id);
 
         if (!$availability) {
             return false;
+        }
+
+        if ($data) {
+            // Valider les données de base
+            $this->validator->validateBasicData($data);
+
+            // Préparer les données pour la vérification des chevauchements
+            // En cas de mise à jour partielle, utiliser les valeurs existantes pour les champs non fournis
+            $checkData = array_merge([
+                'type' => $availability->type,
+                'days' => $availability->days,
+                'start_date' => $availability->start_date?->format('Y-m-d'),
+                'end_date' => $availability->end_date?->format('Y-m-d'),
+            ], $data);
+
+            // Assurer que les champs de temps sont présents
+            if (!isset($checkData['start_time']) && $availability->start_time) {
+                $checkData['start_time'] = $availability->start_time->format('H:i:s');
+            }
+            if (!isset($checkData['end_time']) && $availability->end_time) {
+                $checkData['end_time'] = $availability->end_time->format('H:i:s');
+            }
+
+            // Vérifier les chevauchements avec les autres disponibilités (toujours interdit)
+            if ($this->validator->hasOverlapping($this->schedulable, $checkData, $id)) {
+                throw new InvalidArgumentException('This availability overlaps with an existing one.');
+            }
         }
 
         return $availability->update($data);
@@ -93,7 +133,152 @@ class AvailabilityService
     }
 
     /**
+     * Vérifier s'il y a des chevauchements
+     */
+    public function hasOverlapping(array $data, ?int $exceptId = null): bool
+    {
+        $this->validateSchedulable();
+
+        return $this->validator->hasOverlapping($this->schedulable, $data, $exceptId);
+    }
+
+    /**
+     * Trouver toutes les disponibilités qui chevauchent
+     *
+     * @return Collection<int, Availability>
+     */
+    public function findOverlapping(array $data, ?int $exceptId = null): Collection
+    {
+        $this->validateSchedulable();
+
+        $startTime = Carbon::parse($data['start_time']);
+        $endTime = Carbon::parse($data['end_time']);
+        $days = $data['days'] ?? [];
+        $startDate = isset($data['start_date']) ? Carbon::parse($data['start_date']) : null;
+        $endDate = isset($data['end_date']) ? Carbon::parse($data['end_date']) : null;
+
+        $query = Availability::where('schedulable_id', $this->schedulable->id)
+            ->where('schedulable_type', get_class($this->schedulable));
+
+        // Exclure l'enregistrement courant lors d'une mise à jour
+        if ($exceptId !== null) {
+            $query->where('id', '!=', $exceptId);
+        }
+
+        /** @var Collection<int, Availability> $allAvailabilities */
+        $allAvailabilities = $query->get();
+
+        // Filtrer manuellement pour vérifier l'intersection des jours et le chevauchement
+        return $allAvailabilities->filter(function (Availability $availability) use ($startTime, $endTime, $startDate, $endDate, $days) {
+            // Vérifier si les jours se chevauchent
+            if (!empty($days)) {
+                $commonDays = array_intersect($availability->days, $days);
+                if (empty($commonDays)) {
+                    return false;
+                }
+            }
+
+            return $this->validator->overlaps($availability, $startTime, $endTime, $startDate, $endDate);
+        });
+    }
+
+    /**
+     * Fusionner avec les disponibilités adjacentes
+     */
+    protected function mergeWithAdjacentAvailabilities(array $data): array
+    {
+        $this->validateSchedulable();
+
+        // Trouver les disponibilités adjacentes
+        $adjacentAvailabilities = $this->findAdjacentAvailabilities($data);
+
+        if ($adjacentAvailabilities->isEmpty()) {
+            return $data;
+        }
+
+        // Fusionner toutes les disponibilités adjacentes
+        $mergedData = $data;
+        $idsToDelete = [];
+
+        /** @var Availability $adjacent */
+        foreach ($adjacentAvailabilities as $adjacent) {
+            try {
+                // Créer un objet temporaire avec les données fusionnées
+                $tempAvailability = $this->createAvailabilityFromData($mergedData);
+
+                // Vérifier si elles sont vraiment adjacentes
+                if ($this->validator->areAdjacent($tempAvailability, $adjacent)) {
+                    $mergedData = $this->validator->mergeAdjacent($tempAvailability, $adjacent);
+                    $idsToDelete[] = $adjacent->id;
+                }
+            } catch (InvalidArgumentException $e) {
+                // Si la fusion échoue, continuer avec la suivante
+                continue;
+            }
+        }
+
+        // Supprimer toutes les disponibilités fusionnées
+        if (!empty($idsToDelete)) {
+            Availability::whereIn('id', $idsToDelete)->delete();
+        }
+
+        return $mergedData;
+    }
+
+    /**
+     * Trouver les disponibilités adjacentes
+     *
+     * @return Collection<int, Availability>
+     */
+    public function findAdjacentAvailabilities(array $data): Collection
+    {
+        $this->validateSchedulable();
+
+        $type = $data['type'] ?? null;
+
+        $query = Availability::where('schedulable_id', $this->schedulable->id)
+            ->where('schedulable_type', get_class($this->schedulable));
+
+        if ($type !== null) {
+            $query->where('type', $type);
+        }
+
+        /** @var Collection<int, Availability> $availabilities */
+        $availabilities = $query->get();
+
+        // Créer un objet temporaire pour la comparaison
+        $tempAvailability = $this->createAvailabilityFromData($data);
+
+        return $availabilities->filter(function (Availability $availability) use ($tempAvailability) {
+            return $this->validator->areAdjacent($tempAvailability, $availability);
+        });
+    }
+
+    /**
+     * Créer un objet Availability temporaire à partir de données
+     */
+    protected function createAvailabilityFromData(array $data): Availability
+    {
+        $availability = new Availability();
+
+        // Ajouter les attributs du schedulable
+        $availability->schedulable_id = $this->schedulable->id;
+        $availability->schedulable_type = get_class($this->schedulable);
+
+        $availability->start_time = Carbon::parse($data['start_time']);
+        $availability->end_time = Carbon::parse($data['end_time']);
+        $availability->days = $data['days'] ?? [];
+        $availability->type = $data['type'] ?? null;
+        $availability->start_date = isset($data['start_date']) ? Carbon::parse($data['start_date']) : null;
+        $availability->end_date = isset($data['end_date']) ? Carbon::parse($data['end_date']) : null;
+
+        return $availability;
+    }
+
+    /**
      * Récupérer toutes les disponibilités
+     *
+     * @return Collection<int, Availability>
      */
     public function all(): Collection
     {
@@ -104,6 +289,8 @@ class AvailabilityService
 
     /**
      * Récupérer les disponibilités avec les filtres appliqués
+     *
+     * @return Collection<int, Availability>
      */
     public function get(): Collection
     {
@@ -171,6 +358,7 @@ class AvailabilityService
         for ($i = 0; $i < $maxDaysToCheck; $i++) {
             $dayOfWeek = strtolower($currentDate->englishDayOfWeek);
 
+            /** @var Collection<int, Availability> $availabilities */
             $availabilities = Availability::where('schedulable_id', $this->schedulable->id)
                 ->where('schedulable_type', get_class($this->schedulable))
                 ->whereJsonContains('days', $dayOfWeek)
@@ -185,6 +373,7 @@ class AvailabilityService
                 ->orderBy('start_time')
                 ->get();
 
+            /** @var Availability $availability */
             foreach ($availabilities as $availability) {
                 $slotStart = $currentDate->copy()->setTimeFrom($availability->start_time);
                 $slotEnd = $currentDate->copy()->setTimeFrom($availability->end_time);
@@ -210,6 +399,13 @@ class AvailabilityService
 
     /**
      * Récupérer tous les créneaux disponibles dans une période
+     *
+     * @return array<array{
+     *     start: Carbon,
+     *     end: Carbon,
+     *     type: string,
+     *     availability_id: int
+     * }>
      */
     public function availableSlots(Carbon $startDate, Carbon $endDate, int $durationMinutes = 60, int $intervalMinutes = 30): array
     {
@@ -221,6 +417,7 @@ class AvailabilityService
         while ($currentDate->lte($endDate)) {
             $dayOfWeek = strtolower($currentDate->englishDayOfWeek);
 
+            /** @var Collection<int, Availability> $availabilities */
             $availabilities = Availability::where('schedulable_id', $this->schedulable->id)
                 ->where('schedulable_type', get_class($this->schedulable))
                 ->whereJsonContains('days', $dayOfWeek)
@@ -235,6 +432,7 @@ class AvailabilityService
                 ->orderBy('start_time')
                 ->get();
 
+            /** @var Availability $availability */
             foreach ($availabilities as $availability) {
                 $slotStart = $currentDate->copy()->setTimeFrom($availability->start_time);
                 $slotEnd = $currentDate->copy()->setTimeFrom($availability->end_time);
@@ -269,48 +467,19 @@ class AvailabilityService
     }
 
     /**
-     * Valider les données de disponibilité
-     */
-    protected function validateAvailabilityData(array $data, ?int $exceptId = null): void
-    {
-        // Vérifier les jours
-        if (isset($data['days']) && empty($data['days'])) {
-            throw new InvalidArgumentException('At least one day must be specified');
-        }
-
-        // Vérifier les horaires
-        if (isset($data['start_time']) && isset($data['end_time'])) {
-            $startTime = Carbon::parse($data['start_time']);
-            $endTime = Carbon::parse($data['end_time']);
-
-            if ($endTime->lte($startTime)) {
-                throw new InvalidArgumentException('End time must be after start time');
-            }
-        }
-
-        // Vérifier les dates de période
-        if (isset($data['start_date']) && isset($data['end_date'])) {
-            $startDate = Carbon::parse($data['start_date']);
-            $endDate = Carbon::parse($data['end_date']);
-
-            if ($endDate->lt($startDate)) {
-                throw new InvalidArgumentException('End date must be after or equal to start date');
-            }
-        }
-    }
-
-    /**
      * Valider que le schedulable est défini
      */
     protected function validateSchedulable(): void
     {
         if (!$this->schedulable) {
-            throw new \RuntimeException('No schedulable specified. Use for() method first.');
+            throw new RuntimeException('No schedulable specified. Use for() method first.');
         }
     }
 
     /**
      * Appliquer les filtres à la requête
+     *
+     * @return \Illuminate\Database\Eloquent\Builder
      */
     protected function applyFilters()
     {
