@@ -5,10 +5,10 @@ namespace Roster\Traits;
 use Roster\Models\Availability;
 use Roster\Models\Schedule;
 
-trait Schedulable
+trait HasRoster
 {
     /**
-     * Un modèle peut avoir plusieurs créneaux (schedules)
+     * Le modèle possède des schedules (planifications concrètes)
      */
     public function schedules()
     {
@@ -16,7 +16,7 @@ trait Schedulable
     }
 
     /**
-     * Un modèle peut avoir plusieurs disponibilités (availabilities)
+     * Le modèle possède des availabilities (règles de disponibilité)
      */
     public function availabilities()
     {

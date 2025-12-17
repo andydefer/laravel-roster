@@ -10,7 +10,7 @@ return new class extends Migration {
         Schema::create('availabilities', function (Blueprint $table) {
             $table->id();
             $table->morphs('schedulable'); // schedulable_type + schedulable_id
-            $table->string('type'); // ex: consultation, eglise
+            $table->string('type'); // ex: consultation, culte
             $table->time('start_time');
             $table->time('end_time');
             $table->json('days'); // ["monday","tuesday"]
