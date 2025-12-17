@@ -2,5 +2,4 @@
 
 namespace Roster\Services;
 
-
 class ScheduleService {}

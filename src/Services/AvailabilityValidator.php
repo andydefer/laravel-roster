@@ -2,10 +2,10 @@
 
 namespace Roster\Services;
 
-use Roster\Models\Availability;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Carbon;
 use InvalidArgumentException;
+use Roster\Models\Availability;
 
 class AvailabilityValidator
 {
@@ -92,7 +92,7 @@ class AvailabilityValidator
         ?Carbon $newEndDate
     ): bool {
         // Vérifier le chevauchement horaire
-        if (!$this->timeOverlaps($existing->start_time, $existing->end_time, $newStartTime, $newEndTime)) {
+        if (! $this->timeOverlaps($existing->start_time, $existing->end_time, $newStartTime, $newEndTime)) {
             return false;
         }
 
@@ -179,7 +179,7 @@ class AvailabilityValidator
         }
 
         // Périodes de dates compatibles (doivent se chevaucher)
-        if (!$this->dateRangesOverlap(
+        if (! $this->dateRangesOverlap(
             $first->start_date,
             $first->end_date,
             $second->start_date,
@@ -209,7 +209,7 @@ class AvailabilityValidator
         Availability $first,
         Availability $second
     ): array {
-        if (!$this->areAdjacent($first, $second)) {
+        if (! $this->areAdjacent($first, $second)) {
             throw new InvalidArgumentException('Cannot merge non-adjacent availabilities');
         }
 

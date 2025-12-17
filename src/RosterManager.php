@@ -2,12 +2,13 @@
 
 namespace Roster;
 
-use Roster\Services\ScheduleService;
 use Roster\Services\AvailabilityService;
+use Roster\Services\ScheduleService;
 
 class RosterManager
 {
     protected ScheduleService $scheduleService;
+
     protected AvailabilityService $availabilityService;
 
     public function __construct(ScheduleService $scheduleService, AvailabilityService $availabilityService)

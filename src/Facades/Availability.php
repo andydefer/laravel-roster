@@ -3,8 +3,6 @@
 namespace Roster\Facades;
 
 use Illuminate\Support\Facades\Facade;
-use Roster\Services\AvailabilityService;
-use Illuminate\Database\Eloquent\Model;
 
 class Availability extends Facade
 {

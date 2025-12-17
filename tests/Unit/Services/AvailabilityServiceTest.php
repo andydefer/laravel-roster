@@ -2,13 +2,13 @@
 
 namespace Roster\Tests\Unit\Services;
 
-use Roster\Services\AvailabilityService;
-use Roster\Services\AvailabilityValidator;
-use Roster\Models\Availability;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Schema;
+use Roster\Models\Availability;
+use Roster\Services\AvailabilityService;
+use Roster\Services\AvailabilityValidator;
 use Roster\Tests\TestCase;
 
 // Création d'un modèle factice pour les tests
@@ -24,6 +24,7 @@ class AvailabilityServiceTest extends TestCase
     use RefreshDatabase;
 
     protected AvailabilityService $service;
+
     protected TestSchedulable $schedulable;
 
     protected function setUp(): void
@@ -37,7 +38,7 @@ class AvailabilityServiceTest extends TestCase
             $table->timestamps();
         });
 
-        $validator = new AvailabilityValidator();
+        $validator = new AvailabilityValidator;
         $this->service = new AvailabilityService($validator);
         $this->schedulable = TestSchedulable::create(['name' => 'Test Schedulable']);
     }
@@ -494,6 +495,7 @@ class AvailabilityServiceTest extends TestCase
         $this->assertEquals('16:00', $availability2->start_time->format('H:i'));
         $this->assertEquals('18:00', $availability2->end_time->format('H:i'));
     }
+
     public function test_has_overlapping_method_returns_true_when_overlap_exists()
     {
         // Créer une disponibilité
@@ -785,8 +787,6 @@ class AvailabilityServiceTest extends TestCase
             'days' => ['monday'],
         ]);
     }
-
-
 
     public function test_overlap_with_unlimited_date_range()
     {

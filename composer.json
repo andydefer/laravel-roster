@@ -56,7 +56,11 @@
     "require-dev": {
         "orchestra/testbench": "^10.8",
         "phpunit/phpunit": "^12.5",
-        "symfony/var-dumper": "^7.0"
+        "symfony/var-dumper": "^7.0",
+        "barryvdh/laravel-ide-helper": "^3.6",
+        "phpstan/phpstan": "^2.1",
+        "rector/rector": "^2.2",
+        "laravel/pint": "^1.26"
     },
     "scripts": {
         "test": "vendor/bin/phpunit",

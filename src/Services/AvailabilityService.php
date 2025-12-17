@@ -2,22 +2,24 @@
 
 namespace Roster\Services;
 
-use Roster\Models\Availability;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Collection;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Collection;
 use InvalidArgumentException;
+use Roster\Models\Availability;
 use RuntimeException;
 
 class AvailabilityService
 {
     protected ?Model $schedulable = null;
+
     protected array $filters = [];
+
     protected AvailabilityValidator $validator;
 
     public function __construct(?AvailabilityValidator $validator = null)
     {
-        $this->validator = $validator ?? new AvailabilityValidator();
+        $this->validator = $validator ?? new AvailabilityValidator;
     }
 
     /**
@@ -26,6 +28,7 @@ class AvailabilityService
     public function for(Model $schedulable): self
     {
         $this->schedulable = $schedulable;
+
         return $this;
     }
 
@@ -70,7 +73,7 @@ class AvailabilityService
 
         $availability = $this->find($id);
 
-        if (!$availability) {
+        if (! $availability) {
             return false;
         }
 
@@ -88,10 +91,10 @@ class AvailabilityService
             ], $data);
 
             // Assurer que les champs de temps sont présents
-            if (!isset($checkData['start_time']) && $availability->start_time) {
+            if (! isset($checkData['start_time']) && $availability->start_time) {
                 $checkData['start_time'] = $availability->start_time->format('H:i:s');
             }
-            if (!isset($checkData['end_time']) && $availability->end_time) {
+            if (! isset($checkData['end_time']) && $availability->end_time) {
                 $checkData['end_time'] = $availability->end_time->format('H:i:s');
             }
 
@@ -113,7 +116,7 @@ class AvailabilityService
 
         $availability = $this->find($id);
 
-        if (!$availability) {
+        if (! $availability) {
             return false;
         }
 
@@ -171,7 +174,7 @@ class AvailabilityService
         // Filtrer manuellement pour vérifier l'intersection des jours et le chevauchement
         return $allAvailabilities->filter(function (Availability $availability) use ($startTime, $endTime, $startDate, $endDate, $days) {
             // Vérifier si les jours se chevauchent
-            if (!empty($days)) {
+            if (! empty($days)) {
                 $commonDays = array_intersect($availability->days, $days);
                 if (empty($commonDays)) {
                     return false;
@@ -218,7 +221,7 @@ class AvailabilityService
         }
 
         // Supprimer toutes les disponibilités fusionnées
-        if (!empty($idsToDelete)) {
+        if (! empty($idsToDelete)) {
             Availability::whereIn('id', $idsToDelete)->delete();
         }
 
@@ -254,7 +257,6 @@ class AvailabilityService
         });
     }
 
-
     /**
      * Créer un objet Availability temporaire à partir de données
      *
@@ -263,7 +265,7 @@ class AvailabilityService
     protected function createAvailabilityFromData(array $data): Availability
     {
         // Vérifier que les champs essentiels existent
-        if (!isset($data['start_time'], $data['end_time'])) {
+        if (! isset($data['start_time'], $data['end_time'])) {
             throw new \InvalidArgumentException('Both start_time and end_time must be provided.');
         }
 
@@ -275,7 +277,7 @@ class AvailabilityService
             throw new \InvalidArgumentException('End time must be after start time.');
         }
 
-        $availability = new Availability();
+        $availability = new Availability;
 
         // Ajouter les attributs du schedulable
         $availability->schedulable_id = $this->schedulable->id;
@@ -289,7 +291,6 @@ class AvailabilityService
 
         return $availability;
     }
-
 
     /**
      * Récupérer toutes les disponibilités
@@ -321,6 +322,7 @@ class AvailabilityService
     public function whereType(string $type): self
     {
         $this->filters['type'] = $type;
+
         return $this;
     }
 
@@ -330,6 +332,7 @@ class AvailabilityService
     public function whereDay(string $day): self
     {
         $this->filters['day'] = strtolower($day);
+
         return $this;
     }
 
@@ -479,6 +482,7 @@ class AvailabilityService
     public function resetFilters(): self
     {
         $this->filters = [];
+
         return $this;
     }
 
@@ -487,7 +491,7 @@ class AvailabilityService
      */
     protected function validateSchedulable(): void
     {
-        if (!$this->schedulable) {
+        if (! $this->schedulable) {
             throw new RuntimeException('No schedulable specified. Use for() method first.');
         }
     }

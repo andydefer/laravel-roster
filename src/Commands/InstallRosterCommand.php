@@ -17,13 +17,13 @@ class InstallRosterCommand extends Command
         // Publier la configuration
         $this->call('vendor:publish', [
             '--provider' => 'Vendor\Roster\RosterServiceProvider',
-            '--tag' => 'roster-config'
+            '--tag' => 'roster-config',
         ]);
 
         // Publier les migrations
         $this->call('vendor:publish', [
             '--provider' => 'Vendor\Roster\RosterServiceProvider',
-            '--tag' => 'roster-migrations'
+            '--tag' => 'roster-migrations',
         ]);
 
         // Exécuter les migrations
