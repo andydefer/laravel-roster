@@ -254,19 +254,34 @@ class AvailabilityService
         });
     }
 
+
     /**
      * Créer un objet Availability temporaire à partir de données
+     *
+     * @throws \InvalidArgumentException si end_time est avant start_time ou si les clés sont manquantes
      */
     protected function createAvailabilityFromData(array $data): Availability
     {
+        // Vérifier que les champs essentiels existent
+        if (!isset($data['start_time'], $data['end_time'])) {
+            throw new \InvalidArgumentException('Both start_time and end_time must be provided.');
+        }
+
+        $startTime = Carbon::parse($data['start_time']);
+        $endTime = Carbon::parse($data['end_time']);
+
+        // Vérification que end_time est après start_time
+        if ($endTime->lessThanOrEqualTo($startTime)) {
+            throw new \InvalidArgumentException('End time must be after start time.');
+        }
+
         $availability = new Availability();
 
         // Ajouter les attributs du schedulable
         $availability->schedulable_id = $this->schedulable->id;
         $availability->schedulable_type = get_class($this->schedulable);
-
-        $availability->start_time = Carbon::parse($data['start_time']);
-        $availability->end_time = Carbon::parse($data['end_time']);
+        $availability->start_time = $startTime;
+        $availability->end_time = $endTime;
         $availability->days = $data['days'] ?? [];
         $availability->type = $data['type'] ?? null;
         $availability->start_date = isset($data['start_date']) ? Carbon::parse($data['start_date']) : null;
@@ -274,6 +289,7 @@ class AvailabilityService
 
         return $availability;
     }
+
 
     /**
      * Récupérer toutes les disponibilités

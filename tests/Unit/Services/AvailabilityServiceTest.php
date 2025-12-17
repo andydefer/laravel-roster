@@ -773,6 +773,21 @@ class AvailabilityServiceTest extends TestCase
         $this->assertDatabaseHas('availabilities', ['id' => $availability2->id]);
     }
 
+    public function test_create_availability_throws_exception_when_end_time_before_start_time()
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('End time must be after start time');
+
+        $this->service->for($this->schedulable)->create([
+            'type' => 'consultation',
+            'start_time' => '20:00',
+            'end_time' => '19:00',
+            'days' => ['monday'],
+        ]);
+    }
+
+
+
     public function test_overlap_with_unlimited_date_range()
     {
         // Créer une disponibilité sans dates limites
