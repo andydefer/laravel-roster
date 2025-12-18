@@ -6,31 +6,52 @@ namespace Roster\Commands;
 
 use Illuminate\Console\Command;
 
+/**
+ * Command to install the Roster package.
+ *
+ * Publishes configuration and migration files, then runs database migrations
+ * to set up the package in a Laravel application.
+ */
 class InstallRosterCommand extends Command
 {
+    /**
+     * The name and signature of the console command.
+     *
+     * @var string
+     */
     protected $signature = 'roster:install';
 
-    protected $description = 'Installer le package Roster';
+    /**
+     * The console command description.
+     *
+     * @var string
+     */
+    protected $description = 'Install the Roster package';
 
+    /**
+     * Execute the console command.
+     *
+     * @return void
+     */
     public function handle(): void
     {
-        $this->info('Installation du package Roster...');
+        $this->info('Installing the Roster package...');
 
-        // Publier la configuration
+        // Publish configuration
         $this->call('vendor:publish', [
             '--provider' => 'Vendor\Roster\RosterServiceProvider',
             '--tag' => 'roster-config',
         ]);
 
-        // Publier les migrations
+        // Publish migrations
         $this->call('vendor:publish', [
             '--provider' => 'Vendor\Roster\RosterServiceProvider',
             '--tag' => 'roster-migrations',
         ]);
 
-        // Exécuter les migrations
+        // Run migrations
         $this->call('migrate');
 
-        $this->info('Package Roster installé avec succès!');
+        $this->info('Roster package installed successfully!');
     }
 }

@@ -2,14 +2,14 @@
 
 declare(strict_types=1);
 
-// ==== src/Models/Availability.php ====
-
 namespace Roster\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Support\Carbon;
+use Roster\Exceptions\AvailabilityViolationException;
+use Roster\Exceptions\ExceptionType;
 
 class Availability extends Model
 {
@@ -35,7 +35,7 @@ class Availability extends Model
     ];
 
     /**
-     * Relation polymorphique vers le propriétaire
+     * Polymorphic relationship to the owner.
      */
     public function schedulable(): MorphTo
     {
@@ -43,7 +43,7 @@ class Availability extends Model
     }
 
     /**
-     * Relation vers les Schedules
+     * Relationship to Schedules.
      */
     public function schedules(): HasMany
     {
@@ -51,7 +51,7 @@ class Availability extends Model
     }
 
     /**
-     * Relation vers les Impediments
+     * Relationship to Impediments.
      */
     public function impediments(): HasMany
     {
@@ -59,17 +59,17 @@ class Availability extends Model
     }
 
     /**
-     * Vérifier si une période donnée est disponible pour un Schedule
+     * Check if a given time period is available for a Schedule.
      */
     public function isAvailableForSchedule(Carbon $start, Carbon $end): bool
     {
-        // Vérifier le jour
+        // Check day
         $dayOfWeek = strtolower($start->englishDayOfWeek);
-        if (! in_array($dayOfWeek, $this->days)) {
+        if (!in_array($dayOfWeek, $this->days)) {
             return false;
         }
 
-        // Vérifier l'horaire
+        // Check time
         $startTime = $start->format('H:i:s');
         $endTime = $end->format('H:i:s');
 
@@ -80,11 +80,11 @@ class Availability extends Model
             return false;
         }
 
-        // Vérifier les dates de période
+        // Check period dates
         if ($this->start_date && $start->lt($this->start_date)) {
             return false;
         }
 
-        return ! ($this->end_date && $end->gt($this->end_date));
+        return !($this->end_date && $end->gt($this->end_date));
     }
 }

@@ -7,10 +7,18 @@ namespace Roster\Exceptions;
 use LogicException;
 
 /**
- * Thrown when a schedulable service is used without a parent model.
+ * Exception thrown when a schedulable service is used without a parent model.
+ *
+ * This exception is thrown when trying to execute operations on a schedulable service
+ * before specifying which schedulable entity to scope the operations to.
  */
 final class MissingSchedulableException extends LogicException
 {
+    /**
+     * Create a new MissingSchedulableException instance.
+     *
+     * @return self
+     */
     public static function create(): self
     {
         return new self(
