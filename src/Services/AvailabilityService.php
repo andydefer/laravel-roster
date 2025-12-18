@@ -8,18 +8,31 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
-use Roster\Exceptions\TimeRangeValidationException;
 use Roster\Exceptions\ValidationException;
 use Roster\Exceptions\ValidationType;
 use Roster\Models\Availability;
+use Roster\Repositories\AvailabilityRepository;
+use Roster\Services\Core\ValidationService;
+use Roster\Traits\FilterableTrait;
 
 class AvailabilityService extends AbstractSchedulableService
 {
+    use FilterableTrait;
+
     protected AvailabilityValidator $validator;
 
-    public function __construct(?AvailabilityValidator $availabilityValidator = null)
-    {
+    protected ValidationService $validationService;
+
+    protected AvailabilityRepository $availabilityRepository;
+
+    public function __construct(
+        AvailabilityValidator $availabilityValidator,
+        ValidationService $validationService,
+        AvailabilityRepository $availabilityRepository
+    ) {
         $this->validator = $availabilityValidator ?? new AvailabilityValidator;
+        $this->validationService = $validationService;
+        $this->availabilityRepository = $availabilityRepository;
     }
 
     /**
@@ -41,9 +54,7 @@ class AvailabilityService extends AbstractSchedulableService
 
         // Validate basic data including time range
         $this->validator->validateBasicData($data);
-
-        // Validate time range
-        $this->validateTimeRange($data);
+        $this->validationService->parseAndValidateTimeRange($data);
 
         // Check for overlaps (always forbidden)
         if ($this->validator->hasOverlapping($this->schedulable, $data)) {
@@ -87,11 +98,10 @@ class AvailabilityService extends AbstractSchedulableService
                     ],
                     $data
                 );
-                $this->validateTimeRange($validationData);
+                $this->validationService->parseAndValidateTimeRange($validationData);
             }
 
             // Prepare data for overlap check
-            // In case of partial update, use existing values for non-provided fields
             $checkData = array_merge([
                 'type' => $availability->type,
                 'days' => $availability->days,
@@ -109,7 +119,7 @@ class AvailabilityService extends AbstractSchedulableService
             }
 
             // Validate time range for check data
-            $this->validateTimeRange($checkData);
+            $this->validationService->parseAndValidateTimeRange($checkData);
 
             // Check for overlaps with other availabilities (always forbidden)
             if ($this->validator->hasOverlapping($this->schedulable, $checkData, $id)) {
@@ -156,9 +166,7 @@ class AvailabilityService extends AbstractSchedulableService
     public function hasOverlapping(array $data, ?int $exceptId = null): bool
     {
         $this->validateSchedulable();
-
-        // Validate time range for input data
-        $this->validateTimeRange($data);
+        $this->validationService->parseAndValidateTimeRange($data);
 
         return $this->validator->hasOverlapping($this->schedulable, $data, $exceptId);
     }
@@ -172,65 +180,9 @@ class AvailabilityService extends AbstractSchedulableService
     public function findOverlapping(array $data, ?int $exceptId = null): Collection
     {
         $this->validateSchedulable();
+        $this->validationService->parseAndValidateTimeRange($data);
 
-        // Validate time range for input data
-        $this->validateTimeRange($data);
-
-        $startTime = Carbon::parse($data['start_time']);
-        $endTime = Carbon::parse($data['end_time']);
-        $days = $data['days'] ?? [];
-        $startDate = isset($data['start_date']) ? Carbon::parse($data['start_date']) : null;
-        $endDate = isset($data['end_date']) ? Carbon::parse($data['end_date']) : null;
-
-        $query = Availability::where('schedulable_id', $this->schedulable->id)
-            ->where('schedulable_type', get_class($this->schedulable));
-
-        // Exclude current record during update
-        if ($exceptId !== null) {
-            $query->where('id', '!=', $exceptId);
-        }
-
-        /** @var Collection<int, Availability> $allAvailabilities */
-        $allAvailabilities = $query->get();
-
-        // Filter manually to check day intersection and overlap
-        return $allAvailabilities->filter(function (Availability $availability) use ($startTime, $endTime, $startDate, $endDate, $days): bool {
-            // Check if days overlap
-            if (!empty($days)) {
-                $commonDays = array_intersect($availability->days, $days);
-                if ($commonDays === []) {
-                    return false;
-                }
-            }
-
-            return $this->validator->overlaps($availability, $startTime, $endTime, $startDate, $endDate);
-        });
-    }
-
-    /**
-     * Validate that start time is before end time.
-     *
-     * @param array<string, mixed> $data
-     */
-    protected function validateTimeRange(array $data): void
-    {
-        if (!isset($data['start_time']) || !isset($data['end_time'])) {
-            throw new ValidationException(
-                ValidationType::INVALID_TIME_RANGE
-            );
-        }
-
-        $startTime = Carbon::parse($data['start_time']);
-        $endTime = Carbon::parse($data['end_time']);
-
-        if ($endTime->lte($startTime)) {
-            throw new TimeRangeValidationException(
-                [
-                    'start_time' => $startTime->format('H:i:s'),
-                    'end_time' => $endTime->format('H:i:s'),
-                ]
-            );
-        }
+        return $this->availabilityRepository->findOverlapping($this->schedulable, $data, $exceptId);
     }
 
     /**
@@ -315,29 +267,10 @@ class AvailabilityService extends AbstractSchedulableService
      */
     protected function createAvailabilityFromData(array $data): Availability
     {
-        // Check that essential fields exist
-        if (!isset($data['start_time'], $data['end_time'])) {
-            throw new ValidationException(
-                ValidationType::INVALID_TIME_RANGE
-            );
-        }
-
-        $startTime = Carbon::parse($data['start_time']);
-        $endTime = Carbon::parse($data['end_time']);
-
-        // Validate that end_time is after start_time
-        if ($endTime->lessThanOrEqualTo($startTime)) {
-            throw new TimeRangeValidationException(
-                [
-                    'start_time' => $startTime->format('H:i:s'),
-                    'end_time' => $endTime->format('H:i:s'),
-                ]
-            );
-        }
+        ['start' => $startTime, 'end' => $endTime] = $this->validationService
+            ->parseAndValidateTimeRange($data);
 
         $availability = new Availability;
-
-        // Add schedulable attributes
         $availability->schedulable_id = $this->schedulable->id;
         $availability->schedulable_type = get_class($this->schedulable);
         $availability->start_time = $startTime;
@@ -356,7 +289,6 @@ class AvailabilityService extends AbstractSchedulableService
     public function whereDay(string $day): self
     {
         $this->filters['day'] = strtolower($day);
-
         return $this;
     }
 
@@ -366,26 +298,7 @@ class AvailabilityService extends AbstractSchedulableService
     public function isAvailableAt(Carbon $datetime): bool
     {
         $this->validateSchedulable();
-
-        $dayOfWeek = strtolower($datetime->englishDayOfWeek);
-        $time = $datetime->format('H:i:s');
-
-        $query = Availability::where('schedulable_id', $this->schedulable->id)
-            ->where('schedulable_type', get_class($this->schedulable))
-            ->whereJsonContains('days', $dayOfWeek)
-            ->where('start_time', '<=', $time)
-            ->where('end_time', '>=', $time);
-
-        // Check validity dates if present
-        $query->where(function ($q) use ($datetime): void {
-            $q->whereNull('start_date')
-                ->orWhere('start_date', '<=', $datetime->toDateString());
-        })->where(function ($q) use ($datetime): void {
-            $q->whereNull('end_date')
-                ->orWhere('end_date', '>=', $datetime->toDateString());
-        });
-
-        return $query->exists();
+        return $this->availabilityRepository->isAvailableAt($this->schedulable, $datetime);
     }
 
     /**
@@ -404,25 +317,13 @@ class AvailabilityService extends AbstractSchedulableService
         }
 
         $currentDate = $fromDate->copy();
-        $maxDaysToCheck = 365; // Limit to avoid infinite loops
+        $maxDaysToCheck = 365;
 
         for ($i = 0; $i < $maxDaysToCheck; ++$i) {
             $dayOfWeek = strtolower($currentDate->englishDayOfWeek);
 
             /** @var Collection<int, Availability> $availabilities */
-            $availabilities = Availability::where('schedulable_id', $this->schedulable->id)
-                ->where('schedulable_type', get_class($this->schedulable))
-                ->whereJsonContains('days', $dayOfWeek)
-                ->where(function ($q) use ($currentDate): void {
-                    $q->whereNull('start_date')
-                        ->orWhere('start_date', '<=', $currentDate->toDateString());
-                })
-                ->where(function ($q) use ($currentDate): void {
-                    $q->whereNull('end_date')
-                        ->orWhere('end_date', '>=', $currentDate->toDateString());
-                })
-                ->orderBy('start_time')
-                ->get();
+            $availabilities = $this->availabilityRepository->getForDate($this->schedulable, $currentDate);
 
             /** @var Availability $availability */
             foreach ($availabilities as $availability) {
@@ -458,32 +359,20 @@ class AvailabilityService extends AbstractSchedulableService
      *     availability_id: int
      * }>
      */
-    public function availableSlots(Carbon $startDate, Carbon $endDate, int $durationMinutes = 60, int $intervalMinutes = 30): array
-    {
+    public function availableSlots(
+        Carbon $startDate,
+        Carbon $endDate,
+        int $durationMinutes = 60,
+        int $intervalMinutes = 30
+    ): array {
         $this->validateSchedulable();
-
-        // Validate time range for input parameters
-        if ($endDate->lte($startDate)) {
-            throw new TimeRangeValidationException(
-                [
-                    'start_date' => $startDate->format('Y-m-d H:i:s'),
-                    'end_date' => $endDate->format('Y-m-d H:i:s'),
-                ]
-            );
-        }
+        $this->validationService->validateTimeRange($startDate, $endDate, 'date');
 
         // Validate durations are positive
-        if ($durationMinutes <= 0) {
+        if ($durationMinutes <= 0 || $intervalMinutes <= 0) {
             throw new ValidationException(
                 ValidationType::MINIMUM_DURATION_NOT_MET,
-                ['minimum_minutes' => 1, 'provided_minutes' => $durationMinutes]
-            );
-        }
-
-        if ($intervalMinutes <= 0) {
-            throw new ValidationException(
-                ValidationType::MINIMUM_DURATION_NOT_MET,
-                ['minimum_minutes' => 1, 'provided_minutes' => $intervalMinutes]
+                ['minimum_minutes' => 1, 'provided_minutes' => min($durationMinutes, $intervalMinutes)]
             );
         }
 
@@ -491,22 +380,7 @@ class AvailabilityService extends AbstractSchedulableService
         $currentDate = $startDate->copy();
 
         while ($currentDate->lte($endDate)) {
-            $dayOfWeek = strtolower($currentDate->englishDayOfWeek);
-
-            /** @var Collection<int, Availability> $availabilities */
-            $availabilities = Availability::where('schedulable_id', $this->schedulable->id)
-                ->where('schedulable_type', get_class($this->schedulable))
-                ->whereJsonContains('days', $dayOfWeek)
-                ->where(function ($q) use ($currentDate): void {
-                    $q->whereNull('start_date')
-                        ->orWhere('start_date', '<=', $currentDate->toDateString());
-                })
-                ->where(function ($q) use ($currentDate): void {
-                    $q->whereNull('end_date')
-                        ->orWhere('end_date', '>=', $currentDate->toDateString());
-                })
-                ->orderBy('start_time')
-                ->get();
+            $availabilities = $this->availabilityRepository->getForDate($this->schedulable, $currentDate);
 
             /** @var Availability $availability */
             foreach ($availabilities as $availability) {
@@ -515,14 +389,12 @@ class AvailabilityService extends AbstractSchedulableService
 
                 // Generate slots inside this availability
                 while ($slotStart->copy()->addMinutes($durationMinutes)->lte($slotEnd)) {
-                    $slot = [
+                    $slots[] = [
                         'start' => $slotStart->copy(),
                         'end' => $slotStart->copy()->addMinutes($durationMinutes),
                         'type' => $availability->type,
                         'availability_id' => $availability->id,
                     ];
-
-                    $slots[] = $slot;
                     $slotStart->addMinutes($intervalMinutes);
                 }
             }
@@ -543,13 +415,8 @@ class AvailabilityService extends AbstractSchedulableService
         $query = Availability::where('schedulable_id', $this->schedulable->id)
             ->where('schedulable_type', get_class($this->schedulable));
 
-        if (isset($this->filters['type'])) {
-            $query->where('type', $this->filters['type']);
-        }
-
-        if (isset($this->filters['day'])) {
-            $query->whereJsonContains('days', $this->filters['day']);
-        }
+        $this->applyTypeFilter($query, '');
+        $this->applyDayFilter($query);
 
         return $query;
     }

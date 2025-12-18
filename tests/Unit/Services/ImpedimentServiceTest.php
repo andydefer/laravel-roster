@@ -2,8 +2,6 @@
 
 declare(strict_types=1);
 
-// ==== tests/Unit/Services/ImpedimentServiceTest.php ====
-
 namespace Roster\Tests\Unit\Services;
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -14,6 +12,8 @@ use Roster\Exceptions\MissingSchedulableException;
 use Roster\Models\Availability;
 use Roster\Models\Impediment;
 use Roster\Models\Schedule;
+use Roster\Repositories\AvailabilityRepository;
+use Roster\Services\Core\ValidationService;
 use Roster\Services\ImpedimentService;
 use Roster\Tests\TestCase;
 
@@ -40,12 +40,21 @@ final class ImpedimentServiceTest extends TestCase
             $table->timestamps();
         });
 
-        $this->impedimentService = new ImpedimentService;
+        // Créer les dépendances nécessaires
+        $validationService = new ValidationService();
+        $availabilityRepository = new AvailabilityRepository($validationService);
+
+        // Instancier le service avec ses dépendances
+        $this->impedimentService = new ImpedimentService(
+            $validationService,
+            $availabilityRepository
+        );
+
         $this->testSchedulable = TestSchedulable::create(['name' => 'Test Schedulable']);
 
         // Dates fixes de juin 2027
         $this->mondayJune7 = Carbon::create(2027, 6, 7); // Lundi
-        Carbon::create(2027, 6, 8); // Mardi
+        Carbon::create(2027, 6, 8); // Mardi (pour référence)
     }
 
     public function test_create_impediment_with_valid_data(): void
