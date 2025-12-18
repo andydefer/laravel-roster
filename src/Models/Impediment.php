@@ -17,6 +17,8 @@ class Impediment extends Model
 
     protected $fillable = [
         'availability_id',
+        'schedulable_id',
+        'schedulable_type',
         'reason',
         'start_datetime',
         'end_datetime',
@@ -52,13 +54,9 @@ class Impediment extends Model
         return $this->belongsTo(Availability::class);
     }
 
-    /**
-     * Relation vers le Schedulable (via Availability)
-     * Cette relation est dynamique grâce au polymorphisme
-     */
     public function schedulable()
     {
-        return $this->availability ? $this->availability->schedulable() : null;
+        return $this->morphTo();
     }
 
     /**

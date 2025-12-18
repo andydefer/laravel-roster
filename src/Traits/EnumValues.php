@@ -2,9 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Roster\Enums;
-
-use Stringable;
+namespace Roster\Traits;
 
 /**
  * Trait to provide helper methods for Enums.

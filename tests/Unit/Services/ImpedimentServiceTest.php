@@ -278,6 +278,8 @@ final class ImpedimentServiceTest extends TestCase
 
         Impediment::create([
             'availability_id' => $availability->id,
+            'schedulable_type' =>  TestSchedulable::class,
+            'schedulable_id' =>  $this->testSchedulable->id,
             'reason' => 'Pause',
             'start_datetime' => $this->mondayJune7->copy()->setTime(12, 0),
             'end_datetime' => $this->mondayJune7->copy()->setTime(13, 0),
@@ -330,6 +332,8 @@ final class ImpedimentServiceTest extends TestCase
         // Créer un impediment de 10h à 12h
         Impediment::create([
             'availability_id' => $availability->id,
+            'schedulable_type' =>  TestSchedulable::class,
+            'schedulable_id' =>  $this->testSchedulable->id,
             'reason' => 'Réunion',
             'start_datetime' => $this->mondayJune7->copy()->setTime(10, 0),
             'end_datetime' => $this->mondayJune7->copy()->setTime(12, 0),
@@ -338,6 +342,8 @@ final class ImpedimentServiceTest extends TestCase
         // Créer un impediment de 14h à 15h
         Impediment::create([
             'availability_id' => $availability->id,
+            'schedulable_type' =>  TestSchedulable::class,
+            'schedulable_id' =>  $this->testSchedulable->id,
             'reason' => 'Pause',
             'start_datetime' => $this->mondayJune7->copy()->setTime(14, 0),
             'end_datetime' => $this->mondayJune7->copy()->setTime(15, 0),
@@ -381,6 +387,8 @@ final class ImpedimentServiceTest extends TestCase
 
         Impediment::create([
             'availability_id' => $availability->id,
+            'schedulable_type' =>  TestSchedulable::class,
+            'schedulable_id' =>  $this->testSchedulable->id,
             'reason' => 'Impediment 1',
             'start_datetime' => $this->mondayJune7->copy()->setTime(9, 0),
             'end_datetime' => $this->mondayJune7->copy()->setTime(10, 0),
@@ -388,6 +396,8 @@ final class ImpedimentServiceTest extends TestCase
 
         Impediment::create([
             'availability_id' => $availability->id,
+            'schedulable_type' =>  TestSchedulable::class,
+            'schedulable_id' =>  $this->testSchedulable->id,
             'reason' => 'Impediment 2',
             'start_datetime' => $nextMondayJune14->copy()->setTime(9, 0),
             'end_datetime' => $nextMondayJune14->copy()->setTime(10, 0),
@@ -429,6 +439,8 @@ final class ImpedimentServiceTest extends TestCase
 
         Impediment::create([
             'availability_id' => $availability1->id,
+            'schedulable_type' =>  TestSchedulable::class,
+            'schedulable_id' =>  $this->testSchedulable->id,
             'reason' => 'Maladie consultation',
             'start_datetime' => $this->mondayJune7->copy()->setTime(9, 0),
             'end_datetime' => $this->mondayJune7->copy()->setTime(12, 0),
@@ -436,6 +448,8 @@ final class ImpedimentServiceTest extends TestCase
 
         Impediment::create([
             'availability_id' => $availability2->id,
+            'schedulable_type' =>  TestSchedulable::class,
+            'schedulable_id' =>  $this->testSchedulable->id,
             'reason' => 'Blessure training',
             'start_datetime' => $this->mondayJune7->copy()->setTime(18, 0),
             'end_datetime' => $this->mondayJune7->copy()->setTime(20, 0),

@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Roster\Enums;
 
+use Roster\Traits\EnumValues;
+
 enum DaysOfWeek: string
 {
     use EnumValues;

@@ -6,6 +6,7 @@ declare(strict_types=1);
 
 namespace Roster\Services;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
@@ -13,46 +14,64 @@ use InvalidArgumentException;
 use Roster\Models\Availability;
 use Roster\Models\Impediment;
 
+/**
+ * Service class to manage Impediments for a schedulable model.
+ *
+ * Handles creation, update, deletion, and retrieval of impediments
+ * while ensuring they respect the corresponding Availability rules.
+ */
 class ImpedimentService extends AbstractSchedulableService
 {
+    /**
+     * @var Model|null The current schedulable instance
+     */
     protected ?Model $schedulable = null;
 
+    /**
+     * @var array<string, mixed> Active filters for queries
+     */
     protected array $filters = [];
 
     /**
-     * Créer un nouvel impediment avec vérification des chevauchements
+     * Create a new impediment with overlap validation.
+     *
+     * @param array<string, mixed> $data
+     *
+     * @throws InvalidArgumentException
      */
     public function create(array $data): Impediment
     {
         $this->validateSchedulable();
 
-        // Valider les données de base
+        // Validate basic impediment data
         $this->validateImpedimentData($data);
 
-        // Trouver l'Availability correspondante
+        // Find matching availability
         $availability = $this->findMatchingAvailability($data);
 
         if (! $availability instanceof Availability) {
             throw new InvalidArgumentException('No matching availability found for this impediment');
         }
 
-        // Vérifier les chevauchements
+        // Check for overlapping impediments
         if ($this->hasOverlappingImpediment($availability->id, $data)) {
             throw new InvalidArgumentException('This time slot overlaps with an existing impediment');
         }
 
-        // Créer l'impediment
-        $impediment = Impediment::create(array_merge($data, [
-            'availability_id' => $availability->id,
+        // Create the impediment
+        return Impediment::create(array_merge($data, [
+            'schedulable_id' => $this->schedulable->id,
+            'schedulable_type' => get_class($this->schedulable),
+            'availability_id' => $availability->id, // mandatory
         ]));
-
-        return $impediment;
     }
 
     /**
-     * Mettre à jour un impediment existant avec vérification des chevauchements
+     * Update an existing impediment with overlap validation.
      *
-     * @param  array<string, mixed>  $data
+     * @param array<string, mixed> $data
+     *
+     * @throws InvalidArgumentException
      */
     public function update(int $id, array $data): bool
     {
@@ -65,9 +84,9 @@ class ImpedimentService extends AbstractSchedulableService
         }
 
         if ($data !== []) {
-            // Si les dates changent, vérifier la nouvelle Availability
             $availabilityId = $impediment->availability_id;
 
+            // If the start date changes, validate new availability
             if (isset($data['start_datetime'])) {
                 $newAvailability = $this->findMatchingAvailability($data);
 
@@ -77,7 +96,6 @@ class ImpedimentService extends AbstractSchedulableService
 
                 $availabilityId = $newAvailability->id;
 
-                // Vérifier les chevauchements avec d'autres impediments (sauf celui en cours de modification)
                 if ($this->hasOverlappingImpediment($availabilityId, $data, $id)) {
                     throw new InvalidArgumentException('This time slot overlaps with another impediment');
                 }
@@ -86,7 +104,7 @@ class ImpedimentService extends AbstractSchedulableService
                     $data['availability_id'] = $newAvailability->id;
                 }
             } else {
-                // Même availability, vérifier les chevauchements
+                // Validate overlap with existing availability
                 $updateData = array_merge([
                     'start_datetime' => $impediment->start_datetime,
                     'end_datetime' => $impediment->end_datetime,
@@ -102,7 +120,7 @@ class ImpedimentService extends AbstractSchedulableService
     }
 
     /**
-     * Supprimer un impediment
+     * Delete an impediment.
      */
     public function delete(int $id): bool
     {
@@ -118,9 +136,9 @@ class ImpedimentService extends AbstractSchedulableService
     }
 
     /**
-     * Vérifier si un créneau horaire chevauche un impediment existant
+     * Check if a time slot overlaps with an existing impediment.
      *
-     * @param  array<string, mixed>  $data
+     * @param array<string, mixed> $data
      */
     protected function hasOverlappingImpediment(int $availabilityId, array $data, ?int $excludeId = null): bool
     {
@@ -129,18 +147,10 @@ class ImpedimentService extends AbstractSchedulableService
 
         $query = Impediment::where('availability_id', $availabilityId)
             ->where(function ($q) use ($start, $end): void {
-                // Chevauchement : un impediment existe qui commence avant la fin du nouveau
-                // et se termine après le début du nouveau
-                $q->where(function ($inner) use ($start, $end): void {
-                    $inner->where('start_datetime', '<', $end)
-                        ->where('end_datetime', '>', $start);
-                });
-                // Ou : un impediment qui commence ou se termine exactement à la même heure
-                // ->orWhere('start_datetime', '=', $start)
-                // ->orWhere('end_datetime', '=', $end);
+                $q->where('start_datetime', '<', $end)
+                    ->where('end_datetime', '>', $start);
             });
 
-        // Exclure l'impediment en cours de modification si nécessaire
         if ($excludeId) {
             $query->where('id', '!=', $excludeId);
         }
@@ -149,21 +159,19 @@ class ImpedimentService extends AbstractSchedulableService
     }
 
     /**
-     * Trouver un impediment par son ID
+     * Find an impediment by its ID.
      */
     public function find(int $id): ?Impediment
     {
         $this->validateSchedulable();
 
-        return Impediment::whereHas('availability', function ($query): void {
-            $query->where('schedulable_id', $this->schedulable->id)
-                ->where('schedulable_type', get_class($this->schedulable));
-        })->find($id);
+        return Impediment::where('schedulable_id', $this->schedulable->id)
+            ->where('schedulable_type', get_class($this->schedulable))
+            ->find($id);
     }
 
-
     /**
-     * Filtrer par date de début
+     * Filter by start date.
      */
     public function whereStartDate(Carbon $date): self
     {
@@ -173,7 +181,7 @@ class ImpedimentService extends AbstractSchedulableService
     }
 
     /**
-     * Filtrer par date de fin
+     * Filter by end date.
      */
     public function whereEndDate(Carbon $date): self
     {
@@ -183,7 +191,9 @@ class ImpedimentService extends AbstractSchedulableService
     }
 
     /**
-     * Récupérer les impediments pour une période donnée
+     * Get impediments between two dates.
+     *
+     * @return Collection<int, Impediment>
      */
     public function between(Carbon $start, Carbon $end): Collection
     {
@@ -197,50 +207,45 @@ class ImpedimentService extends AbstractSchedulableService
     }
 
     /**
-     * Vérifier si une période est bloquée par un impediment
+     * Check if a time slot is blocked by an impediment.
      */
     public function isTimeSlotBlocked(Carbon $start, Carbon $end, ?string $type = null): bool
     {
         $this->validateSchedulable();
 
-        // Trouver une Availability correspondante
         $availability = $this->findAvailabilityForTimeSlot($start, $end, $type);
 
         if (! $availability instanceof Availability) {
             return false;
         }
 
-        // Vérifier les chevauchements avec des impediments
         return $availability->impediments()
-            ->where(function ($q) use ($start, $end): void {
-                $q->where('start_datetime', '<', $end)
-                    ->where('end_datetime', '>', $start);
-            })
+            ->where('start_datetime', '<', $end)
+            ->where('end_datetime', '>', $start)
             ->exists();
     }
 
     /**
-     * Obtenir les créneaux disponibles dans une période
+     * Get available time slots for a period.
+     *
+     * @return Collection<int, array{start: Carbon, end: Carbon}>
      */
     public function getAvailableTimeSlots(Carbon $start, Carbon $end, ?string $type = null): Collection
     {
         $this->validateSchedulable();
 
-        // Trouver l'Availability correspondante
         $availability = $this->findAvailabilityForTimeSlot($start, $end, $type);
 
         if (! $availability instanceof Availability) {
             return collect();
         }
 
-        // Récupérer tous les impediments pour cette availability
         $impediments = $availability->impediments()
             ->where('start_datetime', '>=', $start->copy()->startOfDay())
             ->where('end_datetime', '<=', $end->copy()->endOfDay())
             ->orderBy('start_datetime')
             ->get();
 
-        // Si pas d'impediments, tout le créneau est disponible
         if ($impediments->isEmpty()) {
             return collect([[
                 'start' => $start,
@@ -248,27 +253,23 @@ class ImpedimentService extends AbstractSchedulableService
             ]]);
         }
 
-        // Calculer les créneaux disponibles entre les impediments
         $availableSlots = collect();
         $currentTime = $start->copy();
 
         foreach ($impediments as $impediment) {
-            $impedimentStart = Carbon::parse($impediment->start_datetime);
-            $impedimentEnd = Carbon::parse($impediment->end_datetime);
+            $impStart = Carbon::parse($impediment->start_datetime);
+            $impEnd = Carbon::parse($impediment->end_datetime);
 
-            // Si l'impediment commence après le temps courant, il y a un créneau disponible
-            if ($impedimentStart > $currentTime) {
+            if ($impStart > $currentTime) {
                 $availableSlots->push([
                     'start' => $currentTime->copy(),
-                    'end' => $impedimentStart->copy(),
+                    'end' => $impStart->copy(),
                 ]);
             }
 
-            // Mettre à jour le temps courant à la fin de l'impediment
-            $currentTime = max($currentTime, $impedimentEnd);
+            $currentTime = max($currentTime, $impEnd);
         }
 
-        // Vérifier s'il reste du temps après le dernier impediment
         if ($currentTime < $end) {
             $availableSlots->push([
                 'start' => $currentTime->copy(),
@@ -280,13 +281,15 @@ class ImpedimentService extends AbstractSchedulableService
     }
 
     /**
-     * Valider les données de l'impediment
+     * Validate impediment data.
      *
-     * @param  array<string, mixed>  $data
+     * @param array<string, mixed> $data
+     *
+     * @throws InvalidArgumentException
      */
     protected function validateImpedimentData(array $data): void
     {
-        if (! isset($data['start_datetime']) || ! isset($data['end_datetime'])) {
+        if (! isset($data['start_datetime'], $data['end_datetime'])) {
             throw new InvalidArgumentException('Start and end datetime are required');
         }
 
@@ -297,17 +300,16 @@ class ImpedimentService extends AbstractSchedulableService
             throw new InvalidArgumentException('End datetime must be after start datetime');
         }
 
-        // Optionnel : vérifier une durée minimale
-        $minDuration = 5; // minutes
+        $minDuration = 5;
         if ($start->diffInMinutes($end) < $minDuration) {
             throw new InvalidArgumentException(sprintf('Impediment must be at least %d minutes long', $minDuration));
         }
     }
 
     /**
-     * Trouver l'Availability correspondante pour un impediment
+     * Find matching availability for given impediment data.
      *
-     * @param  array<string, mixed>  $data
+     * @param array<string, mixed> $data
      */
     protected function findMatchingAvailability(array $data): ?Availability
     {
@@ -318,7 +320,7 @@ class ImpedimentService extends AbstractSchedulableService
     }
 
     /**
-     * Trouver une Availability pour un créneau donné
+     * Find an availability for a given time slot.
      */
     protected function findAvailabilityForTimeSlot(Carbon $start, Carbon $end, ?string $type = null): ?Availability
     {
@@ -332,7 +334,6 @@ class ImpedimentService extends AbstractSchedulableService
             $query->where('type', $type);
         }
 
-        // Vérifier les dates de période
         $query->where(function ($q) use ($start): void {
             $q->whereNull('start_date')
                 ->orWhere('start_date', '<=', $start->toDateString());
@@ -344,22 +345,15 @@ class ImpedimentService extends AbstractSchedulableService
         return $query->first();
     }
 
-
     /**
-     * Appliquer les filtres à la requête
+     * Apply filters to the query.
+     *
+     * @return Builder
      */
     protected function applyFilters()
     {
-        $query = Impediment::whereHas('availability', function ($query): void {
-            $query->where('schedulable_id', $this->schedulable->id)
-                ->where('schedulable_type', get_class($this->schedulable));
-        });
-
-        if (isset($this->filters['type'])) {
-            $query->whereHas('availability', function ($q): void {
-                $q->where('type', $this->filters['type']);
-            });
-        }
+        $query = Impediment::where('schedulable_id', $this->schedulable->id)
+            ->where('schedulable_type', get_class($this->schedulable));
 
         if (isset($this->filters['start_date'])) {
             $query->where('start_datetime', '>=', $this->filters['start_date']);
@@ -367,6 +361,13 @@ class ImpedimentService extends AbstractSchedulableService
 
         if (isset($this->filters['end_date'])) {
             $query->where('end_datetime', '<=', $this->filters['end_date']);
+        }
+
+        // AJOUTEZ CE BLOC :
+        if (isset($this->filters['type'])) {
+            $query->whereHas('availability', function ($q) {
+                $q->where('type', $this->filters['type']);
+            });
         }
 
         return $query;

@@ -30,6 +30,8 @@ return new class extends Migration
                 ->constrained('availabilities')
                 ->onDelete('cascade');
 
+            $table->morphs('schedulable');
+
             $table->string('reason')->nullable()->comment('Optional explanation for the impediment');
             $table->dateTime('start_datetime')->comment('Start of the blocked period');
             $table->dateTime('end_datetime')->comment('End of the blocked period');

@@ -4,9 +4,12 @@ declare(strict_types=1);
 
 namespace Roster\Enums;
 
+use Roster\Traits\EnumValues;
+
 enum ActivityType: string
 {
     use EnumValues;
+
     case CONSULTATION       = 'consultation';
     case TRAINING           = 'training';
     case MEETING            = 'meeting';
@@ -18,7 +21,7 @@ enum ActivityType: string
     case EXAMINATION        = 'examination';
     case THERAPY            = 'therapy';
     case TUTORING           = 'tutoring';
-    case COURSE             = 'course'; // safe
+    case COURSE             = 'course';
     case LECTURE            = 'lecture';
     case REHEARSAL          = 'rehearsal';
     case COMPETITION        = 'competition';
