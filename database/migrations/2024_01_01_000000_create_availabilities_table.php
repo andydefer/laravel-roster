@@ -1,27 +1,50 @@
 <?php
 
+declare(strict_types=1);
+
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
+/**
+ * Migration to create the `availabilities` table.
+ *
+ * This table stores recurring availability rules for any schedulable entity
+ * (e.g., doctor, room, team, or equipment). It defines the theoretical
+ * periods when a schedulable can be booked, including recurring days and
+ * optional date ranges.
+ *
+ * Conceptually, this represents "ideal working hours" or "default availability"
+ * that can later be constrained by schedules or impediments.
+ */
 return new class extends Migration
 {
-    public function up()
+    /**
+     * Run the migrations.
+     */
+    public function up(): void
     {
-        Schema::create('availabilities', function (Blueprint $table) {
+        Schema::create('availabilities', function (Blueprint $table): void {
             $table->id();
-            $table->morphs('schedulable'); // schedulable_type + schedulable_id
-            $table->string('type'); // ex: consultation, culte
+
+            $table->morphs('schedulable');
+            $table->string('type')->comment('Type of availability (e.g., consultation, service)');
             $table->time('start_time');
             $table->time('end_time');
-            $table->json('days'); // ["monday","tuesday"]
-            $table->date('start_date')->nullable(); // période de début
-            $table->date('end_date')->nullable();   // période de fin
+            $table->json('days')->comment('Recurring days of the week (e.g., ["monday","wednesday"])');
+
+            // Optional date range for validity
+            $table->date('start_date')->nullable()->comment('Start date of the availability period');
+            $table->date('end_date')->nullable()->comment('End date of the availability period');
+
             $table->timestamps();
         });
     }
 
-    public function down()
+    /**
+     * Reverse the migrations.
+     */
+    public function down(): void
     {
         Schema::dropIfExists('availabilities');
     }

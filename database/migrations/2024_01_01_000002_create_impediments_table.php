@@ -1,40 +1,51 @@
 <?php
 
-// ==== database/migrations/2024_01_01_000002_create_impediments_table.php ====
+declare(strict_types=1);
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
+/**
+ * Migration to create the `impediments` table.
+ *
+ * This table stores temporary exceptions that block availability, even if a schedulable
+ * entity would normally be available. Examples: illness, training, holidays.
+ *
+ * Each impediment is linked to an availability rule and defines a time range that
+ * should not be booked.
+ */
 return new class extends Migration
 {
+    /**
+     * Run the migrations.
+     */
     public function up(): void
     {
-        Schema::create('impediments', function (Blueprint $table) {
+        Schema::create('impediments', function (Blueprint $table): void {
             $table->id();
+
             $table->foreignId('availability_id')
                 ->constrained('availabilities')
                 ->onDelete('cascade');
-            $table->string('reason')->nullable();
-            $table->datetime('start_datetime');
-            $table->datetime('end_datetime');
-            $table->json('metadata')->nullable();
+
+            $table->string('reason')->nullable()->comment('Optional explanation for the impediment');
+            $table->dateTime('start_datetime')->comment('Start of the blocked period');
+            $table->dateTime('end_datetime')->comment('End of the blocked period');
+            $table->json('metadata')->nullable()->comment('Optional additional data');
             $table->timestamps();
 
-            // Contrainte unique pour empêcher les impediments identiques exactement au même moment
+            // Prevent duplicate impediments for the exact same period
             $table->unique(
                 ['availability_id', 'start_datetime', 'end_datetime'],
                 'impediments_unique_time_slot'
             );
 
-            // Index pour optimiser les recherches de chevauchement
-            // (Logique d'évitement de chevauchement se fera dans le service)
             $table->index(['availability_id', 'start_datetime']);
             $table->index(['availability_id', 'end_datetime']);
             $table->index(['start_datetime', 'end_datetime']);
 
-            // Vérification que end_datetime > start_datetime
-            // (Cette contrainte dépend du SGBD)
+            // Optional: ensure end > start (MySQL only)
             if (config('database.default') === 'mysql') {
                 $table->rawIndex(
                     'CHECK(end_datetime > start_datetime)',
@@ -43,7 +54,7 @@ return new class extends Migration
             }
         });
 
-        // Pour PostgreSQL uniquement : contrainte EXCLUDE pour empêcher les chevauchements
+        // PostgreSQL: Prevent overlapping time ranges per availability
         if (config('database.default') === 'pgsql') {
             \Illuminate\Support\Facades\DB::statement('
                 ALTER TABLE impediments
@@ -56,6 +67,9 @@ return new class extends Migration
         }
     }
 
+    /**
+     * Reverse the migrations.
+     */
     public function down(): void
     {
         Schema::dropIfExists('impediments');
