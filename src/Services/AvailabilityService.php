@@ -14,7 +14,6 @@ use Roster\Exceptions\Enums\ValidationType;
 use Roster\Exceptions\ValidationException;
 use Roster\Models\Availability;
 use Roster\Repositories\AvailabilityRepository;
-use Roster\Services\Core\ValidationService;
 use Roster\Traits\FilterableTrait;
 
 class AvailabilityService extends AbstractSchedulableService
@@ -446,37 +445,40 @@ class AvailabilityService extends AbstractSchedulableService
         int $durationMinutes = 60,
         int $intervalMinutes = 30
     ): array {
-        $this->validateSchedulable();
-        $this->validationService->validateTimeRange($startDate, $endDate, 'date');
-
-        // Validate durations are positive
-        if ($durationMinutes <= 0 || $intervalMinutes <= 0) {
-            throw new ValidationException(
-                ValidationType::MINIMUM_DURATION_NOT_MET,
-                ['minimum_minutes' => 1, 'provided_minutes' => min($durationMinutes, $intervalMinutes)]
-            );
-        }
+        // Chargement unique
+        $availabilities = $this->availabilityRepository
+            ->getForDateRange($this->schedulable, $startDate, $endDate)
+            ->load(['schedules' => function ($query) use ($startDate, $endDate): void {
+                $query->whereBetween('start_datetime', [$startDate, $endDate]);
+            }, 'impediments' => function ($query) use ($startDate, $endDate): void {
+                $query->whereBetween('start_datetime', [$startDate, $endDate]);
+            }]);
 
         $slots = [];
         $currentDate = $startDate->copy();
 
         while ($currentDate->lte($endDate)) {
-            // Delegate to repository
-            $availabilities = $this->availabilityRepository->getForDate($this->schedulable, $currentDate);
+            $dailyAvailabilities = $availabilities->filter(function ($availability) use ($currentDate): bool {
+                return in_array(strtolower($currentDate->englishDayOfWeek), $availability->days);
+            });
 
-            /** @var Availability $availability */
-            foreach ($availabilities as $availability) {
-                $slotStart = $currentDate->copy()->setTimeFrom($availability->start_time);
-                $slotEnd = $currentDate->copy()->setTimeFrom($availability->end_time);
+            foreach ($dailyAvailabilities as $dailyAvailability) {
+                $slotStart = $currentDate->copy()->setTimeFrom($dailyAvailability->start_time);
+                $slotEnd = $currentDate->copy()->setTimeFrom($dailyAvailability->end_time);
 
-                // Generate slots inside this availability (business logic)
+                // Filtrage en mémoire
+                $blockedSlots = $this->getBlockedSlotsForAvailability($dailyAvailability, $currentDate);
+
                 while ($slotStart->copy()->addMinutes($durationMinutes)->lte($slotEnd)) {
-                    $slots[] = [
-                        'start' => $slotStart->copy(),
-                        'end' => $slotStart->copy()->addMinutes($durationMinutes),
-                        'type' => $availability->type,
-                        'availability_id' => $availability->id,
-                    ];
+                    if (!$this->isSlotBlocked($slotStart, $slotStart->copy()->addMinutes($durationMinutes), $blockedSlots)) {
+                        $slots[] = [
+                            'start' => $slotStart->copy(),
+                            'end' => $slotStart->copy()->addMinutes($durationMinutes),
+                            'type' => $dailyAvailability->type,
+                            'availability_id' => $dailyAvailability->id,
+                        ];
+                    }
+
                     $slotStart->addMinutes($intervalMinutes);
                 }
             }
@@ -485,6 +487,44 @@ class AvailabilityService extends AbstractSchedulableService
         }
 
         return $slots;
+    }
+
+    private function getBlockedSlotsForAvailability(Availability $availability, Carbon $date): array
+    {
+        $blocks = [];
+
+        // Utilisation des relations déjà chargées
+        foreach ($availability->schedules as $schedule) {
+            if ($schedule->start_datetime->isSameDay($date)) {
+                $blocks[] = [
+                    'start' => $schedule->start_datetime,
+                    'end' => $schedule->end_datetime
+                ];
+            }
+        }
+
+        foreach ($availability->impediments as $impediment) {
+            if ($impediment->start_datetime->isSameDay($date)) {
+                $blocks[] = [
+                    'start' => $impediment->start_datetime,
+                    'end' => $impediment->end_datetime
+                ];
+            }
+        }
+
+        return $blocks;
+    }
+
+    private function isSlotBlocked(Carbon $slotStart, Carbon $slotEnd, array $blockedSlots): bool
+    {
+        foreach ($blockedSlots as $blockedSlot) {
+            // Vérifie si le créneau chevauche un blocage
+            if ($slotStart->lt($blockedSlot['end']) && $slotEnd->gt($blockedSlot['start'])) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
 

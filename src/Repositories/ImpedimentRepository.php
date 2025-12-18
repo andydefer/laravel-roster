@@ -10,8 +10,64 @@ use Illuminate\Database\Eloquent\Builder;
 use Roster\Models\Impediment;
 use Roster\Contracts\Repository\ImpedimentRepositoryInterface;
 
-class ImpedimentRepository implements ImpedimentRepositoryInterface
+class ImpedimentRepository extends AbstractRepository implements ImpedimentRepositoryInterface
 {
+
+    /**
+     * Create a new impediment.
+     */
+    public function create(array $data): Impediment
+    {
+        return Impediment::create($data);
+    }
+
+    /**
+     * Update an existing impediment.
+     */
+    public function update(int $id, array $data): bool
+    {
+        $impediment = $this->findById($id);
+
+        if (!$impediment instanceof Impediment) {
+            return false;
+        }
+
+        return $impediment->update($data);
+    }
+
+    /**
+     * Delete an impediment.
+     */
+    public function delete(int $id): bool
+    {
+        $impediment = $this->findById($id);
+
+        if (!$impediment instanceof Impediment) {
+            return false;
+        }
+
+        return $impediment->delete();
+    }
+
+    /**
+     * Find impediment by ID.
+     */
+    public function findById(int $id): ?Impediment
+    {
+        return Impediment::find($id);
+    }
+
+    /**
+     * Get all impediments.
+     */
+    public function getAll(): Collection
+    {
+        return Impediment::query()
+            ->orderBy('start_datetime')
+            ->get();
+    }
+
+
     /**
      * Find impediments for a time slot.
      */

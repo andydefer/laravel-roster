@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Roster\Services;
 
-use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Carbon;
 use InvalidArgumentException;
@@ -60,36 +59,32 @@ class AvailabilityValidator implements AvailabilityValidatorInterface
         array $data,
         ?int $exceptId = null
     ): bool {
-        $startTime = Carbon::parse($data['start_time']);
-        $endTime = Carbon::parse($data['end_time']);
-        $days = $data['days'] ?? [];
-        $startDate = isset($data['start_date']) ? Carbon::parse($data['start_date']) : null;
-        $endDate = isset($data['end_date']) ? Carbon::parse($data['end_date']) : null;
-
+        // Utiliser une requête avec EXISTS au lieu de charger toutes les données
         $query = Availability::where('schedulable_id', $model->id)
-            ->where('schedulable_type', get_class($model));
+            ->where('schedulable_type', get_class($model))
+            ->where(function ($q) use ($data): void {
+                // Appliquer les filtres directement en SQL
+                if (!empty($data['days'])) {
+                    $q->where(function ($query) use ($data): void {
+                        foreach ($data['days'] as $day) {
+                            $query->orWhereJsonContains('days', $day);
+                        }
+                    });
+                }
+            })
+            ->where(function ($q) use ($data): void {
+                $startTime = Carbon::parse($data['start_time'])->format('H:i:s');
+                $endTime = Carbon::parse($data['end_time'])->format('H:i:s');
 
-        // Exclure l'enregistrement courant lors d'une mise à jour
+                $q->where('start_time', '<', $endTime)
+                    ->where('end_time', '>', $startTime);
+            });
+
         if ($exceptId !== null) {
             $query->where('id', '!=', $exceptId);
         }
 
-        /** @var Collection<int, Availability> $existingAvailabilities */
-        $existingAvailabilities = $query->get();
-
-        foreach ($existingAvailabilities as $existingAvailability) {
-            // Vérifier si les jours se chevauchent
-            $commonDays = array_intersect($existingAvailability->days, $days);
-            if ($commonDays === []) {
-                continue;
-            }
-
-            if ($this->overlaps($existingAvailability, $startTime, $endTime, $startDate, $endDate)) {
-                return true;
-            }
-        }
-
-        return false;
+        return $query->exists(); // Retourne booléen sans charger les modèles
     }
 
     /**

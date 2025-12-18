@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Roster\Contracts\Services;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Collection;
 use Roster\Models\Availability;
 use Roster\Exceptions\ValidationException;
 
@@ -25,11 +24,8 @@ interface AvailabilityValidatorInterface
      *
      * @param object $schedulable
      * @param array<string, mixed> $data
-     * @param int|null $exceptId
      *
-     * @return bool
      */
-
     public function hasOverlapping(
         Model $model,
         array $data,
@@ -39,18 +35,13 @@ interface AvailabilityValidatorInterface
     /**
      * Determine if two Availability instances are adjacent.
      *
-     * @param Availability $availability1
-     * @param Availability $availability2
      *
-     * @return bool
      */
     public function areAdjacent(Availability $availability1, Availability $availability2): bool;
 
     /**
      * Merge two adjacent Availability instances into a single array of data.
      *
-     * @param Availability $availability1
-     * @param Availability $availability2
      *
      * @return array<string, mixed>
      */

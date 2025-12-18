@@ -13,7 +13,7 @@ use Roster\Services\Core\ValidationService;
 use Roster\Contracts\Repository\AvailabilityRepositoryInterface;
 use Roster\Traits\DateRangeOverlapTrait;
 
-class AvailabilityRepository implements AvailabilityRepositoryInterface
+class AvailabilityRepository extends AbstractRepository implements AvailabilityRepositoryInterface
 {
     use DateRangeOverlapTrait;
 
@@ -46,6 +46,64 @@ class AvailabilityRepository implements AvailabilityRepositoryInterface
         return $availability->update($data);
     }
 
+    public function getForDateRange(
+        Model $model,
+        Carbon $start,
+        Carbon $end,
+        ?string $type = null
+    ): Collection {
+        $builder = $this->buildBaseQuery($model)
+            ->where(function ($query) use ($end): void {
+                $query->whereNull('start_date')
+                    ->orWhere('start_date', '<=', $end);
+            })
+            ->where(function ($query) use ($start): void {
+                $query->whereNull('end_date')
+                    ->orWhere('end_date', '>=', $start);
+            });
+
+        if ($type) {
+            $builder->where('type', $type);
+        }
+
+        return $builder->get();
+    }
+
+    public function findForTimeSlotWithOverlaps(
+        Model $model,
+        Carbon $start,
+        Carbon $end,
+        ?string $type = null
+    ): ?Availability {
+        $this->validationService->validateTimeRange($start, $end);
+
+        return Availability::where('schedulable_id', $model->id)
+            ->where('schedulable_type', get_class($model))
+            ->when($type, function ($query) use ($type): void {
+                $query->where('type', $type);
+            })
+            ->whereJsonContains('days', strtolower($start->englishDayOfWeek))
+            ->where('start_time', '<=', $start->format('H:i:s'))
+            ->where('end_time', '>=', $end->format('H:i:s'))
+            ->where(function ($q) use ($start): void {
+                $q->whereNull('start_date')
+                    ->orWhere('start_date', '<=', $start->toDateString());
+            })
+            ->where(function ($q) use ($end): void {
+                $q->whereNull('end_date')
+                    ->orWhere('end_date', '>=', $end->toDateString());
+            })
+            // Sous-requêtes pour les overlaps
+            ->withExists(['schedules as has_overlapping_schedules' => function ($query) use ($start, $end): void {
+                $query->where('start_datetime', '<', $end)
+                    ->where('end_datetime', '>', $start);
+            }])
+            ->withExists(['impediments as has_overlapping_impediments' => function ($query) use ($start, $end): void {
+                $query->where('start_datetime', '<', $end)
+                    ->where('end_datetime', '>', $start);
+            }])
+            ->first();
+    }
 
     /**
      * Delete an availability.
@@ -76,6 +134,8 @@ class AvailabilityRepository implements AvailabilityRepositoryInterface
     {
         return Availability::find($id);
     }
+
+
 
     /**
      * Find availability for a time slot.
@@ -128,6 +188,20 @@ class AvailabilityRepository implements AvailabilityRepositoryInterface
     }
 
     /**
+     * Get all availabilities.
+     *
+     * @return Collection<int, Availability>
+     */
+    public function getAll(): Collection
+    {
+        return Availability::query()
+            ->orderBy('start_time')
+            ->get();
+    }
+
+
+
+    /**
      * Get all availabilities for a schedulable.
      *
      * @return Collection<int, Availability>
@@ -137,7 +211,8 @@ class AvailabilityRepository implements AvailabilityRepositoryInterface
         ?string $type = null,
         ?string $day = null
     ): Collection {
-        $builder = $this->buildBaseQuery($model);
+        $builder = $this->buildBaseQuery($model)
+            ->with(['schedules', 'impediments']);; // précharge la relation principale pour éviter N+1
 
         if ($type) {
             $builder->where('type', $type);
@@ -235,11 +310,52 @@ class AvailabilityRepository implements AvailabilityRepositoryInterface
             });
         });
 
+        // OPTIMISATION: Eager loading des relations pour éviter les N+1 ultérieurs
+        $builder->with([
+            'schedules' => function ($query) use ($startDate, $endDate): void {
+                // Filtrer uniquement les schedules potentiellement pertinents
+                if ($startDate instanceof Carbon && $endDate instanceof Carbon) {
+                    $query->where(function ($q) use ($startDate, $endDate): void {
+                        $q->whereBetween('start_datetime', [$startDate, $endDate])
+                            ->orWhereBetween('end_datetime', [$startDate, $endDate])
+                            ->orWhere(function ($subQ) use ($startDate, $endDate): void {
+                                $subQ->where('start_datetime', '<', $startDate)
+                                    ->where('end_datetime', '>', $endDate);
+                            });
+                    });
+                }
+
+                $query->orderBy('start_datetime');
+            },
+            'impediments' => function ($query) use ($startDate, $endDate): void {
+                // Filtrer uniquement les impediments potentiellement pertinents
+                if ($startDate instanceof Carbon && $endDate instanceof Carbon) {
+                    $query->where(function ($q) use ($startDate, $endDate): void {
+                        $q->whereBetween('start_datetime', [$startDate, $endDate])
+                            ->orWhereBetween('end_datetime', [$startDate, $endDate])
+                            ->orWhere(function ($subQ) use ($startDate, $endDate): void {
+                                $subQ->where('start_datetime', '<', $startDate)
+                                    ->where('end_datetime', '>', $endDate);
+                            });
+                    });
+                }
+
+                $query->orderBy('start_datetime');
+            }
+        ]);
+
+        // OPTIMISATION: Ajouter des sous-requêtes pour les informations fréquemment utilisées
+        $builder->withExists([
+            'schedules as has_schedules',
+            'impediments as has_impediments'
+        ]);
+
         /** @var Collection<int, Availability> $overlappingAvailabilities */
         $overlappingAvailabilities = $builder->get();
 
         return $overlappingAvailabilities;
     }
+
 
     /**
      * Check if time ranges overlap.

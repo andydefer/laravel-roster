@@ -7,16 +7,12 @@ namespace Roster\Services\Core;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Carbon;
 use Roster\Contracts\Repository\AvailabilityRepositoryInterface;
-use Roster\Contracts\Repository\ScheduleRepositoryInterface;
-use Roster\Contracts\Repository\ImpedimentRepositoryInterface;
 use Roster\Models\Availability;
 
 class ScheduleSlotFinder
 {
     public function __construct(
-        private AvailabilityRepositoryInterface $availabilityRepository,
-        private ScheduleRepositoryInterface $scheduleRepository,
-        private ImpedimentRepositoryInterface $impedimentRepository
+        private AvailabilityRepositoryInterface $availabilityRepository
     ) {}
 
     /**
@@ -29,19 +25,31 @@ class ScheduleSlotFinder
     ): ?array {
         $now = Carbon::now();
 
-        // Search in the next 30 days
+        // Utiliser getForDateRange au lieu de boucler
+        $startDate = $now->copy()->startOfDay();
+        $endDate = $now->copy()->addDays(30)->endOfDay();
+
+        $availabilities = $this->availabilityRepository->getForDateRange(
+            $model,
+            $startDate,
+            $endDate,
+            $type
+        )->load(['schedules', 'impediments']);
+
+        // Recherche optimisée
         for ($i = 0; $i < 30; ++$i) {
             $currentDate = $now->copy()->addDays($i)->startOfDay();
-            $availabilities = $this->availabilityRepository->getForDate($model, $currentDate, $type);
 
-            /** @var Availability $availability */
-            foreach ($availabilities as $availability) {
+            $dailyAvailabilities = $availabilities->filter(function (Availability $availability) use ($currentDate): bool {
+                return $this->availabilityAppliesToDate($availability, $currentDate);
+            });
+
+            foreach ($dailyAvailabilities as $dailyAvailability) {
                 $slot = $this->findSlotInAvailability(
-                    $availability,
+                    $dailyAvailability,
                     $currentDate,
                     $durationMinutes,
-                    $i === 0,
-                    $type
+                    $i === 0
                 );
 
                 if ($slot) {
@@ -63,22 +71,30 @@ class ScheduleSlotFinder
         int $durationMinutes,
         ?string $type = null
     ): array {
+        // Chargement unique avec eager loading
+        $availabilities = $this->availabilityRepository->getForDateRange(
+            $model,
+            $startDate,
+            $endDate,
+            $type
+        )->load(['schedules', 'impediments']); // Eager loading des relations
+
         $slots = [];
         $currentDate = $startDate->copy();
 
         while ($currentDate->lte($endDate)) {
-            $availabilities = $this->availabilityRepository->getForDate($model, $currentDate, $type);
+            // Filtrage en mémoire au lieu de requêtes par jour
+            $dailyAvailabilities = $availabilities->filter(function (Availability $availability) use ($currentDate): bool {
+                return $this->availabilityAppliesToDate($availability, $currentDate);
+            });
 
-            /** @var Availability $availability */
-            foreach ($availabilities as $availability) {
+            foreach ($dailyAvailabilities as $dailyAvailability) {
                 $availabilitySlots = $this->findAllSlotsInAvailability(
-                    $availability,
+                    $dailyAvailability,
                     $currentDate,
                     $durationMinutes,
-                    $currentDate->isSameDay($startDate) ? $startDate : null,
-                    $type
+                    $currentDate->isSameDay($startDate) ? $startDate : null
                 );
-
                 $slots = array_merge($slots, $availabilitySlots);
             }
 
@@ -92,22 +108,31 @@ class ScheduleSlotFinder
      * Get the first available period of a specific duration.
      */
     public function findFirstAvailablePeriod(
-        $schedulable,
+        Model $model,
         Carbon $startDate,
         Carbon $endDate,
         int $durationMinutes,
         ?string $type = null
     ): ?array {
+        // Optimisation similaire
+        $availabilities = $this->availabilityRepository->getForDateRange(
+            $model,
+            $startDate,
+            $endDate,
+            $type
+        )->load(['schedules', 'impediments']);
+
         $currentDate = $startDate->copy();
         $interval = 15; // minutes
 
         while ($currentDate->lte($endDate)) {
-            $availabilities = $this->availabilityRepository->getForDate($schedulable, $currentDate, $type);
+            $dailyAvailabilities = $availabilities->filter(function (Availability $availability) use ($currentDate): bool {
+                return $this->availabilityAppliesToDate($availability, $currentDate);
+            });
 
-            /** @var Availability $availability */
-            foreach ($availabilities as $availability) {
-                $slotStart = $currentDate->copy()->setTimeFrom($availability->start_time);
-                $slotEnd = $currentDate->copy()->setTimeFrom($availability->end_time);
+            foreach ($dailyAvailabilities as $dailyAvailability) {
+                $slotStart = $currentDate->copy()->setTimeFrom($dailyAvailability->start_time);
+                $slotEnd = $currentDate->copy()->setTimeFrom($dailyAvailability->end_time);
 
                 // For the first day, start at the later of slot start or start date time
                 if ($currentDate->isSameDay($startDate) && $slotStart->lt($startDate)) {
@@ -122,12 +147,12 @@ class ScheduleSlotFinder
                         continue;
                     }
 
-                    if ($this->isTimeSlotAvailable($schedulable, $slotStart, $proposedEnd, $type)) {
+                    if ($this->isTimeSlotAvailableOptimized($dailyAvailability, $slotStart, $proposedEnd)) {
                         return [
                             'start' => $slotStart->copy(),
                             'end' => $proposedEnd,
-                            'availability_id' => $availability->id,
-                            'type' => $availability->type,
+                            'availability_id' => $dailyAvailability->id,
+                            'type' => $dailyAvailability->type,
                         ];
                     }
 
@@ -142,14 +167,32 @@ class ScheduleSlotFinder
     }
 
     /**
+     * Check if availability applies to specific date.
+     */
+    private function availabilityAppliesToDate(Availability $availability, Carbon $date): bool
+    {
+        // Vérifier le jour de la semaine
+        $dayOfWeek = strtolower($date->englishDayOfWeek);
+        if (!in_array($dayOfWeek, $availability->days)) {
+            return false;
+        }
+
+        // Vérifier les dates de période
+        if ($availability->start_date && $date->lt($availability->start_date)) {
+            return false;
+        }
+
+        return !($availability->end_date && $date->gt($availability->end_date));
+    }
+
+    /**
      * Find a slot in an availability.
      */
     private function findSlotInAvailability(
         Availability $availability,
         Carbon $date,
         int $durationMinutes,
-        bool $isToday = false,
-        ?string $type = null
+        bool $isToday = false
     ): ?array {
         $startTime = $availability->start_time;
         $endTime = $availability->end_time;
@@ -176,8 +219,8 @@ class ScheduleSlotFinder
                 continue;
             }
 
-            // Check availability
-            if ($this->isTimeSlotAvailable($availability->schedulable, $currentSlot, $proposedEnd, $type)) {
+            // Check availability avec méthode optimisée
+            if ($this->isTimeSlotAvailableOptimized($availability, $currentSlot, $proposedEnd)) {
                 return [
                     'start' => $currentSlot->copy(),
                     'end' => $proposedEnd,
@@ -200,8 +243,7 @@ class ScheduleSlotFinder
         Availability $availability,
         Carbon $date,
         int $durationMinutes,
-        ?Carbon $minStartTime = null,
-        ?string $type = null
+        ?Carbon $minStartTime = null
     ): array {
         $slots = [];
         $startTime = $availability->start_time;
@@ -225,7 +267,7 @@ class ScheduleSlotFinder
                 continue;
             }
 
-            if ($this->isTimeSlotAvailable($availability->schedulable, $currentSlot, $proposedEnd, $type)) {
+            if ($this->isTimeSlotAvailableOptimized($availability, $currentSlot, $proposedEnd)) {
                 $slots[] = [
                     'start' => $currentSlot->copy(),
                     'end' => $proposedEnd,
@@ -242,22 +284,22 @@ class ScheduleSlotFinder
     }
 
     /**
-     * Check if a time slot is available.
+     * Check if a time slot is available (optimized version using loaded relations).
      */
-    private function isTimeSlotAvailable(Model $model, Carbon $start, Carbon $end, ?string $type = null): bool
-    {
-        // Find a matching availability
-        $availability = $this->availabilityRepository->findForTimeSlot($model, $start, $end, $type);
+    private function isTimeSlotAvailableOptimized(
+        Availability $availability,
+        Carbon $start,
+        Carbon $end
+    ): bool {
+        // Vérifier les chevauchements avec les schedules chargés
+        $hasOverlappingSchedule = $availability->schedules->contains(function ($schedule) use ($start, $end) {
+            return $schedule->overlapsWith($start, $end);
+        });
 
-        if (!$availability instanceof Availability) {
-            return false;
-        }
-
-        // Check for overlapping schedules using repository
-        $hasOverlappingSchedule = $this->scheduleRepository->hasOverlappingSchedule($availability->id, $start, $end);
-
-        // Check for overlapping impediments using repository
-        $hasOverlappingImpediment = $this->impedimentRepository->hasOverlappingImpediment($availability->id, $start, $end);
+        // Vérifier les chevauchements avec les impediments chargés
+        $hasOverlappingImpediment = $availability->impediments->contains(function ($impediment) use ($start, $end) {
+            return $impediment->overlapsWith($start, $end);
+        });
 
         return !$hasOverlappingSchedule && !$hasOverlappingImpediment;
     }
@@ -266,12 +308,19 @@ class ScheduleSlotFinder
      * Check if a time period is completely available.
      */
     public function isPeriodAvailable(
-        $schedulable,
+        Model $model,
         Carbon $start,
         Carbon $end,
         ?string $type = null
     ): bool {
-        // Split into 30-minute intervals to check each slot
+        // Optimisation : charger toutes les availabilities en une fois
+        $availabilities = $this->availabilityRepository->getForDateRange(
+            $model,
+            $start,
+            $end,
+            $type
+        )->load(['schedules', 'impediments']);
+
         $current = $start->copy();
         $interval = 30; // minutes
 
@@ -281,7 +330,18 @@ class ScheduleSlotFinder
                 $slotEnd = $end->copy();
             }
 
-            if (!$this->isTimeSlotAvailable($schedulable, $current, $slotEnd, $type)) {
+            // Trouver l'availability correspondante
+            $availability = $availabilities->first(function ($availability) use ($current, $slotEnd, $type): bool {
+                if ($type && $availability->type !== $type) {
+                    return false;
+                }
+
+                return $this->availabilityAppliesToDate($availability, $current) &&
+                    $availability->start_time->format('H:i') <= $current->format('H:i') &&
+                    $availability->end_time->format('H:i') >= $slotEnd->format('H:i');
+            });
+
+            if (!$availability || !$this->isTimeSlotAvailableOptimized($availability, $current, $slotEnd)) {
                 return false;
             }
 

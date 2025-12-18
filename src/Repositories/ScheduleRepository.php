@@ -10,7 +10,7 @@ use Illuminate\Support\Collection;
 use Roster\Models\Schedule;
 use Roster\Contracts\Repository\ScheduleRepositoryInterface;
 
-class ScheduleRepository implements ScheduleRepositoryInterface
+class ScheduleRepository extends AbstractRepository implements ScheduleRepositoryInterface
 {
     /**
      * Create a new schedule.
@@ -53,7 +53,25 @@ class ScheduleRepository implements ScheduleRepositoryInterface
      */
     public function findById(int $id): ?Schedule
     {
-        return Schedule::find($id);
+        return Schedule::with([
+            'availability.schedules' => function ($query): void {
+                $query->where('status', '!=', 'cancelled')
+                    ->orderBy('start_datetime');
+            },
+            'availability.impediments' => function ($query): void {
+                $query->orderBy('start_datetime');
+            }
+        ])->find($id);
+    }
+
+    /**
+     * Get all schedules.
+     */
+    public function getAll(): Collection
+    {
+        return Schedule::with(['availability', 'availability.schedules', 'availability.impediments'])
+            ->orderBy('start_datetime')
+            ->get();
     }
 
     /**
@@ -123,7 +141,9 @@ class ScheduleRepository implements ScheduleRepositoryInterface
         string $schedulableType,
         array $filters = []
     ): Collection {
-        $builder = $this->buildSchedulableQuery($schedulableId, $schedulableType);
+        $builder = $this->buildSchedulableQuery($schedulableId, $schedulableType)
+            ->with(['availability', 'availability.schedules', 'availability.impediments']); // <-- Eager loading pour éviter N+1
+
         $this->applyCommonFilters($builder, $filters);
 
         return $builder->orderBy('start_datetime')->get();

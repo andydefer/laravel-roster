@@ -104,6 +104,13 @@ interface AvailabilityRepositoryInterface
         ?Carbon $newEndDate
     ): bool;
 
+    public function getForDateRange(
+        Model $model,
+        Carbon $start,
+        Carbon $end,
+        ?string $type = null
+    ): Collection;
+
     /**
      * Delete multiple availabilities by IDs.
      */
@@ -119,6 +126,13 @@ interface AvailabilityRepositoryInterface
         Model $model,
         array $data
     ): Collection;
+
+    public function findForTimeSlotWithOverlaps(
+        Model $model,
+        Carbon $start,
+        Carbon $end,
+        ?string $type = null
+    ): ?Availability;
 
     /**
      * Apply filters to query.

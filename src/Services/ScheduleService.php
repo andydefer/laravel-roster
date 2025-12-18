@@ -18,7 +18,6 @@ use Roster\Contracts\Repository\ScheduleRepositoryInterface;
 use Roster\Contracts\Services\ValidationServiceInterface;
 use Roster\Exceptions\OverlappingScheduleException;
 use Roster\Exceptions\ScheduleImpedimentOverlapException;
-use Roster\Services\Core\ValidationService;
 use Roster\Services\Core\ScheduleSlotFinder;
 use Roster\Traits\FilterableTrait;
 
@@ -212,21 +211,18 @@ class ScheduleService extends AbstractSchedulableService
         $this->validateSchedulable();
         $this->validationService->validateTimeRange($start, $end);
 
-        // Find a matching availability
-        $availability = $this->availabilityRepository->findForTimeSlot($this->schedulable, $start, $end, $type);
+        // Requête unique avec jointures
+        $availability = $this->availabilityRepository->findForTimeSlotWithOverlaps(
+            $this->schedulable,
+            $start,
+            $end,
+            $type
+        );
 
-        if (!$availability instanceof Availability) {
-            return false;
-        }
-
-        // Check for overlapping schedules using repository
-        $hasOverlappingSchedule = $this->scheduleRepository->hasOverlappingSchedule($availability->id, $start, $end);
-
-        // Check for overlapping impediments using repository
-        $hasOverlappingImpediment = $this->impedimentRepository->hasOverlappingImpediment($availability->id, $start, $end);
-
-        return !$hasOverlappingSchedule && !$hasOverlappingImpediment;
+        return $availability instanceof Availability && !$availability->has_overlapping_schedules && !$availability->has_overlapping_impediments;
     }
+
+
 
     /**
      * Check if a time period is completely available (no schedules or impediments).
