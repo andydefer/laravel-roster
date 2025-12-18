@@ -12,6 +12,8 @@ use Roster\Exceptions\AvailabilityViolationException;
 use Roster\Exceptions\AvailabilityViolationType;
 use Roster\Exceptions\MissingResourceException;
 use Roster\Exceptions\MissingResourceType;
+use Roster\Exceptions\TimeRangeValidationException;
+use Roster\Exceptions\TimeRangeValidationType;
 use Roster\Exceptions\TimeSlotOverlapException;
 use Roster\Exceptions\TimeSlotOverlapType;
 
@@ -39,6 +41,7 @@ class Schedule extends Model
     protected static function booted(): void
     {
         self::creating(function (Schedule $schedule): void {
+            $schedule->validateTimeRange();
             $schedule->validateAgainstAvailability();
             $schedule->validateNoOverlappingSchedules();
             $schedule->validateNoOverlappingImpediments();
@@ -46,6 +49,7 @@ class Schedule extends Model
 
         self::updating(function (Schedule $schedule): void {
             if ($schedule->isDirty(['start_datetime', 'end_datetime', 'availability_id'])) {
+                $schedule->validateTimeRange();
                 $schedule->validateAgainstAvailability();
                 $schedule->validateNoOverlappingSchedules($schedule->id);
                 $schedule->validateNoOverlappingImpediments($schedule->id);
@@ -83,6 +87,21 @@ class Schedule extends Model
     public function overlapsWith(Carbon $start, Carbon $end): bool
     {
         return $this->start_datetime->lt($end) && $this->end_datetime->gt($start);
+    }
+
+    /**
+     * Validate that start datetime is before end datetime.
+     */
+    protected function validateTimeRange(): void
+    {
+        if ($this->end_datetime->lte($this->start_datetime)) {
+            throw new TimeRangeValidationException(
+                [
+                    'start_datetime' => $this->start_datetime->format('Y-m-d H:i:s'),
+                    'end_datetime' => $this->end_datetime->format('Y-m-d H:i:s'),
+                ]
+            );
+        }
     }
 
     /**

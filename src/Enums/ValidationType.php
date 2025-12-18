@@ -9,6 +9,7 @@ enum ValidationType: string
     case INVALID_TIME_RANGE = 'INVALID_TIME_RANGE';
     case MINIMUM_DURATION_NOT_MET = 'MINIMUM_DURATION_NOT_MET';
     case NO_MATCHING_AVAILABILITY = 'NO_MATCHING_AVAILABILITY';
+    case CUSTOM = 'CUSTOM';
 
     public function getDefaultMessage(): string
     {
@@ -16,6 +17,7 @@ enum ValidationType: string
             self::INVALID_TIME_RANGE => 'End datetime must be after start datetime',
             self::MINIMUM_DURATION_NOT_MET => 'Duration must be at least the minimum required minutes',
             self::NO_MATCHING_AVAILABILITY => 'No matching availability found',
+            self::CUSTOM => '',
         };
     }
 }

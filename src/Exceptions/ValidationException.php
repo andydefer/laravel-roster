@@ -19,4 +19,13 @@ class ValidationException extends RosterException
         $message = $message ?: $type->getDefaultMessage();
         parent::__construct($type->value, $message, $context, $code, $previous);
     }
+
+    public static function withMessage(string $message): self
+    {
+        return new self(
+            ValidationType::CUSTOM,
+            [],
+            $message
+        );
+    }
 }

@@ -10,13 +10,12 @@ namespace Roster\Exceptions;
 class TimeRangeValidationException extends RosterException
 {
     public function __construct(
-        TimeRangeValidationType $type,
         array $context = [],
         string $message = '',
         int $code = 0,
         ?\Throwable $previous = null
     ) {
-        $message = $message ?: $type->getDefaultMessage();
-        parent::__construct($type->value, $message, $context, $code, $previous);
+        $message = $message ?: 'End datetime must be after start datetime';
+        parent::__construct(TimeRangeValidationType::END_BEFORE_START->value, $message, $context, $code, $previous);
     }
 }

@@ -11,6 +11,8 @@ use Roster\Exceptions\AvailabilityViolationException;
 use Roster\Exceptions\AvailabilityViolationType;
 use Roster\Exceptions\MissingResourceException;
 use Roster\Exceptions\MissingResourceType;
+use Roster\Exceptions\TimeRangeValidationException;
+use Roster\Exceptions\TimeRangeValidationType;
 use Roster\Exceptions\TimeSlotOverlapException;
 use Roster\Exceptions\TimeSlotOverlapType;
 
@@ -37,12 +39,14 @@ class Impediment extends Model
     protected static function booted(): void
     {
         self::creating(function (Impediment $impediment): void {
+            $impediment->validateTimeRange();
             $impediment->validateAgainstAvailability();
             $impediment->validateNotOverlappingWithSchedules();
         });
 
         self::updating(function (Impediment $impediment): void {
             if ($impediment->isDirty(['start_datetime', 'end_datetime', 'availability_id'])) {
+                $impediment->validateTimeRange();
                 $impediment->validateAgainstAvailability();
                 $impediment->validateNotOverlappingWithSchedules($impediment->id);
             }
@@ -71,6 +75,21 @@ class Impediment extends Model
     public function overlapsWith(Carbon $start, Carbon $end): bool
     {
         return $this->start_datetime->lt($end) && $this->end_datetime->gt($start);
+    }
+
+    /**
+     * Validate that start datetime is before end datetime.
+     */
+    protected function validateTimeRange(): void
+    {
+        if ($this->end_datetime->lte($this->start_datetime)) {
+            throw new TimeRangeValidationException(
+                [
+                    'start_datetime' => $this->start_datetime->format('Y-m-d H:i:s'),
+                    'end_datetime' => $this->end_datetime->format('Y-m-d H:i:s'),
+                ]
+            );
+        }
     }
 
     /**
