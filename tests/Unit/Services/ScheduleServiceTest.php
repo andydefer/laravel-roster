@@ -24,13 +24,16 @@ final class ScheduleServiceTest extends TestCase
     use RefreshDatabase;
 
     private ScheduleService $scheduleService;
+
     private TestSchedulable $testSchedulable;
 
     /**
      * Dates fixes pour juin 2027
      */
-    private Carbon $mondayJune7;    // Lundi 7 juin 2027
-    private Carbon $tuesdayJune8;   // Mardi 8 juin 2027
+    private Carbon $mondayJune7;
+        // Lundi 7 juin 2027
+    private Carbon $tuesdayJune8;
+       // Mardi 8 juin 2027
     private Carbon $nextMondayJune14; // Lundi suivant 14 juin 2027
 
     protected function setUp(): void

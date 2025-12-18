@@ -10,7 +10,7 @@ use Roster\Models\Schedule;
 trait HasRoster
 {
     /**
-     * Le modèle possède des schedules (planifications concrètes)
+     * Get all schedules (concrete planned time slots) for the model.
      */
     public function schedules()
     {
@@ -18,7 +18,7 @@ trait HasRoster
     }
 
     /**
-     * Le modèle possède des availabilities (règles de disponibilité)
+     * Get all availabilities (availability rules) for the model.
      */
     public function availabilities()
     {

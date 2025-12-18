@@ -2,7 +2,6 @@
 
 declare(strict_types=1);
 
-// ==== src/RosterManager.php ====
 
 namespace Roster;
 
@@ -29,7 +28,7 @@ class RosterManager
     }
 
     /**
-     * Accès aux fonctionnalités Schedule
+     * Access schedule-related features.
      */
     public function schedules(): ScheduleService
     {
@@ -37,7 +36,7 @@ class RosterManager
     }
 
     /**
-     * Accès aux fonctionnalités Availability
+     * Access availability-related features.
      */
     public function availabilities(): AvailabilityService
     {
@@ -45,7 +44,7 @@ class RosterManager
     }
 
     /**
-     * Accès aux fonctionnalités Impediment
+     * Access impediment-related features.
      */
     public function impediments(): ImpedimentService
     {
