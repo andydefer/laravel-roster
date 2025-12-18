@@ -162,7 +162,6 @@ final class ModelIntegrationTest extends TestCase
         $outsideDateEnd = Carbon::parse('2024-02-01 11:00:00');
         $this->assertFalse($availability->isAvailableForSchedule($outsideDateStart, $outsideDateEnd));
     }
-
     public function test_schedule_methods(): void
     {
         $schedule = new Schedule([
@@ -179,8 +178,10 @@ final class ModelIntegrationTest extends TestCase
         $nonOverlapEnd = Carbon::parse('2024-01-01 12:00:00');
         $this->assertFalse($schedule->overlapsWith($nonOverlapStart, $nonOverlapEnd));
 
-        // Test duration
-        $this->assertSame(60, $schedule->getDurationMinutesAttribute());
+        // Test duration - maintenant un float
+        $this->assertSame(60.0, $schedule->getDurationMinutesAttribute());
+        // OU
+        $this->assertEquals(60, $schedule->getDurationMinutesAttribute());
 
         // Test active/upcoming/past status
         $now = Carbon::now();
@@ -218,8 +219,10 @@ final class ModelIntegrationTest extends TestCase
         $nonOverlapEnd = Carbon::parse('2024-01-01 12:00:00');
         $this->assertFalse($impediment->overlapsWith($nonOverlapStart, $nonOverlapEnd));
 
-        // Test duration
-        $this->assertSame(60, $impediment->getDurationMinutesAttribute());
+        // Test duration - maintenant un float
+        $this->assertSame(60.0, $impediment->getDurationMinutesAttribute());
+        // OU
+        $this->assertEquals(60, $impediment->getDurationMinutesAttribute());
 
         // Test active/upcoming/past status
         $now = Carbon::now();

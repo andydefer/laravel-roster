@@ -43,7 +43,7 @@ class ValidationService
     public function validateMinimumDuration(
         Carbon $start,
         Carbon $end,
-        int $minimumMinutes = null
+        ?int $minimumMinutes = null
     ): void {
         $defaultMinutes = match (true) {
             str_contains(debug_backtrace()[1]['function'] ?? '', 'Impediment') =>

@@ -51,11 +51,12 @@ final class ScheduleServiceTest extends TestCase
 
     public function test_create_schedule_successfully(): void
     {
+        // Utiliser une date future (2038-06-07 est un lundi)
         $data = [
             'title' => 'Test Consultation',
             'description' => 'Test description',
-            'start_datetime' => '2024-01-01 10:00:00',
-            'end_datetime' => '2024-01-01 11:00:00',
+            'start_datetime' => '2038-06-07 10:00:00',
+            'end_datetime' => '2038-06-07 11:00:00',
             'status' => 'available',
             'metadata' => ['notes' => 'Test notes'],
         ];
@@ -85,8 +86,8 @@ final class ScheduleServiceTest extends TestCase
 
         $data = [
             'title' => 'Training Session',
-            'start_datetime' => '2024-01-01 14:00:00',
-            'end_datetime' => '2024-01-01 15:00:00',
+            'start_datetime' => '2038-06-07 14:00:00', // Lundi
+            'end_datetime' => '2038-06-07 15:00:00',
             'type' => 'training',
         ];
 
@@ -100,8 +101,8 @@ final class ScheduleServiceTest extends TestCase
     {
         $data = [
             'title' => 'Test Schedule',
-            'start_datetime' => '2024-01-02 10:00:00', // Tuesday, but availability is only Monday
-            'end_datetime' => '2024-01-02 11:00:00',
+            'start_datetime' => '2038-06-08 10:00:00', // Mardi (8 juin 2038), mais availability est seulement lundi
+            'end_datetime' => '2038-06-08 11:00:00',
         ];
 
         $this->expectException(ValidationException::class);
@@ -112,11 +113,12 @@ final class ScheduleServiceTest extends TestCase
 
     public function test_update_schedule_successfully(): void
     {
+        // Créer un schedule avec une date future pour l'update
         $schedule = Schedule::create([
             'availability_id' => $this->availability->id,
             'title' => 'Original Title',
-            'start_datetime' => '2024-01-01 10:00:00',
-            'end_datetime' => '2024-01-01 11:00:00',
+            'start_datetime' => '2038-06-07 10:00:00',
+            'end_datetime' => '2038-06-07 11:00:00',
             'status' => 'available',
         ]);
 
@@ -137,8 +139,8 @@ final class ScheduleServiceTest extends TestCase
         $schedule = Schedule::create([
             'availability_id' => $this->availability->id,
             'title' => 'Test Schedule',
-            'start_datetime' => '2024-01-01 10:00:00',
-            'end_datetime' => '2024-01-01 11:00:00',
+            'start_datetime' => '2038-06-07 10:00:00',
+            'end_datetime' => '2038-06-07 11:00:00',
             'status' => 'available',
         ]);
 
@@ -153,8 +155,8 @@ final class ScheduleServiceTest extends TestCase
         $schedule = Schedule::create([
             'availability_id' => $this->availability->id,
             'title' => 'Test Schedule',
-            'start_datetime' => '2024-01-01 10:00:00',
-            'end_datetime' => '2024-01-01 11:00:00',
+            'start_datetime' => '2038-06-07 10:00:00',
+            'end_datetime' => '2038-06-07 11:00:00',
             'status' => 'available',
         ]);
 
@@ -171,35 +173,43 @@ final class ScheduleServiceTest extends TestCase
         Schedule::create([
             'availability_id' => $this->availability->id,
             'title' => 'Blocked Schedule',
-            'start_datetime' => '2024-01-01 10:00:00',
-            'end_datetime' => '2024-01-01 11:00:00',
+            'start_datetime' => '2038-06-07 10:00:00',
+            'end_datetime' => '2038-06-07 11:00:00',
             'status' => 'booked',
         ]);
 
         // Test available slot (before blocked time)
-        $availableStart = Carbon::parse('2024-01-01 09:00:00');
-        $availableEnd = Carbon::parse('2024-01-01 09:30:00');
+        $availableStart = Carbon::parse('2038-06-07 09:00:00');
+        $availableEnd = Carbon::parse('2038-06-07 09:30:00');
         $this->assertTrue($this->scheduleService->isTimeSlotAvailable($availableStart, $availableEnd));
 
         // Test blocked slot
-        $blockedStart = Carbon::parse('2024-01-01 10:00:00');
-        $blockedEnd = Carbon::parse('2024-01-01 10:30:00');
+        $blockedStart = Carbon::parse('2038-06-07 10:00:00');
+        $blockedEnd = Carbon::parse('2038-06-07 10:30:00');
         $this->assertFalse($this->scheduleService->isTimeSlotAvailable($blockedStart, $blockedEnd));
 
         // Test overlapping slot
-        $overlapStart = Carbon::parse('2024-01-01 10:30:00');
-        $overlapEnd = Carbon::parse('2024-01-01 11:30:00');
+        $overlapStart = Carbon::parse('2038-06-07 10:30:00');
+        $overlapEnd = Carbon::parse('2038-06-07 11:30:00');
         $this->assertFalse($this->scheduleService->isTimeSlotAvailable($overlapStart, $overlapEnd));
     }
 
     public function test_find_next_available_slot(): void
     {
-        // Block 10:00-11:00
+        // Il y a un problème ici : la méthode findNextAvailableSlot() commence à la date actuelle
+        // Donc nous devons soit :
+        // 1. Simuler le temps actuel (mock Carbon)
+        // 2. Ou ajuster la logique pour tester avec une date fixe
+
+        // Option 1 : Simuler Carbon::now() pour retourner une date fixe
+        Carbon::setTestNow('2038-06-06 08:00:00'); // Un jour avant le lundi disponible
+
+        // Block 10:00-11:00 le lundi 7 juin
         Schedule::create([
             'availability_id' => $this->availability->id,
             'title' => 'Blocked',
-            'start_datetime' => '2024-01-01 10:00:00',
-            'end_datetime' => '2024-01-01 11:00:00',
+            'start_datetime' => '2038-06-07 10:00:00',
+            'end_datetime' => '2038-06-07 11:00:00',
             'status' => 'booked',
         ]);
 
@@ -208,8 +218,11 @@ final class ScheduleServiceTest extends TestCase
         $this->assertIsArray($nextSlot);
         $this->assertArrayHasKey('start', $nextSlot);
         $this->assertArrayHasKey('end', $nextSlot);
-        $this->assertSame('2024-01-01 09:00:00', $nextSlot['start']->format('Y-m-d H:i:s'));
-        $this->assertSame('2024-01-01 10:00:00', $nextSlot['end']->format('Y-m-d H:i:s'));
+        $this->assertSame('2038-06-07 09:00:00', $nextSlot['start']->format('Y-m-d H:i:s'));
+        $this->assertSame('2038-06-07 10:00:00', $nextSlot['end']->format('Y-m-d H:i:s'));
+
+        // Nettoyer le mock
+        Carbon::setTestNow();
     }
 
     public function test_between_method_returns_schedules_in_period(): void
@@ -217,30 +230,30 @@ final class ScheduleServiceTest extends TestCase
         Schedule::create([
             'availability_id' => $this->availability->id,
             'title' => 'Schedule 1',
-            'start_datetime' => '2024-01-01 10:00:00',
-            'end_datetime' => '2024-01-01 11:00:00',
+            'start_datetime' => '2038-06-07 10:00:00',
+            'end_datetime' => '2038-06-07 11:00:00',
             'status' => 'available',
         ]);
 
         Schedule::create([
             'availability_id' => $this->availability->id,
             'title' => 'Schedule 2',
-            'start_datetime' => '2024-01-01 14:00:00',
-            'end_datetime' => '2024-01-01 15:00:00',
+            'start_datetime' => '2038-06-07 14:00:00',
+            'end_datetime' => '2038-06-07 15:00:00',
             'status' => 'available',
         ]);
 
-        // Create schedule outside period
+        // Create schedule outside period (un autre lundi)
         Schedule::create([
             'availability_id' => $this->availability->id,
             'title' => 'Schedule 3',
-            'start_datetime' => '2024-01-02 10:00:00',
-            'end_datetime' => '2024-01-02 11:00:00',
+            'start_datetime' => '2038-06-14 10:00:00', // Lundi suivant
+            'end_datetime' => '2038-06-14 11:00:00',
             'status' => 'available',
         ]);
 
-        $start = Carbon::parse('2024-01-01 00:00:00');
-        $end = Carbon::parse('2024-01-01 23:59:59');
+        $start = Carbon::parse('2038-06-07 00:00:00');
+        $end = Carbon::parse('2038-06-07 23:59:59');
 
         $schedules = $this->scheduleService->between($start, $end);
 

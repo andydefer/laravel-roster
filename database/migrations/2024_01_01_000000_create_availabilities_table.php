@@ -12,8 +12,8 @@ use Illuminate\Support\Facades\Schema;
  * This table stores recurring availability rules for any schedulable entity
  * (e.g., doctor, room, team, or equipment). It defines the theoretical
  * periods when a schedulable can be booked, including recurring days and
- * optional date ranges.
- *
+e ranges.
+ * * optional dat
  * Conceptually, this represents "ideal working hours" or "default availability"
  * that can later be constrained by schedules or impediments.
  */

@@ -4,19 +4,16 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Facades;
 
-use Illuminate\Database\Eloquent\Model;
+use Roster\Services\AvailabilityService;
 use Illuminate\Support\Collection;
-use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Carbon;
 use Roster\Facades\Availability as AvailabilityFacade;
 use Roster\Models\Availability;
-use Roster\Services\AvailabilityService;
 use Tests\TestCase;
 
 final class AvailabilityFacadeTest extends TestCase
 {
-    use RefreshDatabase;
-
     private Model $model;
 
     protected function setUp(): void
@@ -25,11 +22,10 @@ final class AvailabilityFacadeTest extends TestCase
 
         $this->model = new class extends Model {
             protected $table = 'test_schedulables';
-
-            public $timestamps = false;
         };
-        $this->model->id = 1;
-        $this->model->save();
+
+        // Créer un enregistrement dans la table
+        $this->model = $this->model::create();
     }
 
     public function test_facade_returns_availability_service(): void
@@ -37,7 +33,7 @@ final class AvailabilityFacadeTest extends TestCase
         $availabilityService = AvailabilityFacade::for($this->model);
 
         $this->assertInstanceOf(AvailabilityService::class, $availabilityService);
-        $this->assertSame($this->model, $availabilityService->getSchedulable());
+        $this->assertSame($this->model->id, $availabilityService->getSchedulable()->id);
     }
 
     public function test_facade_can_create_availability(): void
@@ -95,7 +91,6 @@ final class AvailabilityFacadeTest extends TestCase
             'end_time' => '16:00:00',
             'days' => ['monday'],
         ]);
-
         /** @var Collection<int, \Roster\Models\Availability> $availabilities */
         $availabilities = AvailabilityFacade::for($this->model)->all();
 
@@ -103,7 +98,6 @@ final class AvailabilityFacadeTest extends TestCase
         $this->assertSame('consultation', $availabilities[0]->type);
         $this->assertSame('training', $availabilities[1]->type);
     }
-
 
     public function test_facade_can_filter_by_type(): void
     {

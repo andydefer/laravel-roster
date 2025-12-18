@@ -55,7 +55,7 @@ class Impediment extends Model
     /**
      * Get duration in minutes.
      */
-    public function getDurationMinutesAttribute(): int
+    public function getDurationMinutesAttribute(): float
     {
         return $this->start_datetime->diffInMinutes($this->end_datetime);
     }

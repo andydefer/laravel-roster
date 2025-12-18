@@ -11,9 +11,12 @@ use Illuminate\Database\Eloquent\Builder;
 use Roster\Models\Availability;
 use Roster\Services\Core\ValidationService;
 use Roster\Contracts\Repository\AvailabilityRepositoryInterface;
+use Roster\Traits\DateRangeOverlapTrait;
 
 class AvailabilityRepository implements AvailabilityRepositoryInterface
 {
+    use DateRangeOverlapTrait;
+
     protected ValidationService $validationService;
 
     public function __construct(ValidationService $validationService)
@@ -172,38 +175,6 @@ class AvailabilityRepository implements AvailabilityRepositoryInterface
         Carbon $newEnd
     ): bool {
         return $newStart->lt($existingEnd) && $newEnd->gt($existingStart);
-    }
-
-    /**
-     * Check if date ranges overlap.
-     */
-    public function dateRangesOverlap(
-        ?Carbon $existingStartDate,
-        ?Carbon $existingEndDate,
-        ?Carbon $newStartDate,
-        ?Carbon $newEndDate
-    ): bool {
-        // Si aucune date n'est spécifiée pour l'existant, c'est valable indéfiniment
-        if (!$existingStartDate && !$existingEndDate) {
-            return true;
-        }
-
-        // Si aucune date n'est spécifiée pour la nouvelle, c'est valable indéfiniment
-        if (!$newStartDate && !$newEndDate) {
-            return true;
-        }
-
-        // Calculer les bornes effectives
-        $effectiveExistingStart = $existingStartDate ?? Carbon::minValue();
-        $effectiveExistingEnd = $existingEndDate ?? Carbon::maxValue();
-        $effectiveNewStart = $newStartDate ?? Carbon::minValue();
-        $effectiveNewEnd = $newEndDate ?? Carbon::maxValue();
-
-        // Deux périodes se chevauchent si:
-        // 1. La nouvelle commence avant que l'existante ne se termine ET
-        // 2. La nouvelle se termine après que l'existante ne commence
-        return $effectiveNewStart->lte($effectiveExistingEnd) &&
-            $effectiveNewEnd->gte($effectiveExistingStart);
     }
 
     /**
