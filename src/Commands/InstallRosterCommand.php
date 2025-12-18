@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Roster\Commands;
 
 use Illuminate\Console\Command;
@@ -10,7 +12,7 @@ class InstallRosterCommand extends Command
 
     protected $description = 'Installer le package Roster';
 
-    public function handle()
+    public function handle(): void
     {
         $this->info('Installation du package Roster...');
 

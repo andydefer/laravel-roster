@@ -60,7 +60,8 @@
         "barryvdh/laravel-ide-helper": "^3.6",
         "phpstan/phpstan": "^2.1",
         "rector/rector": "^2.2",
-        "laravel/pint": "^1.26"
+        "laravel/pint": "^1.26",
+        "larastan/larastan": "^3.8"
     },
     "scripts": {
         "test": "vendor/bin/phpunit",

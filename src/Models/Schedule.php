@@ -1,13 +1,16 @@
 <?php
+
+declare(strict_types=1);
+
 // ==== src/Models/Schedule.php ====
 
 namespace Roster\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Roster\Enums\ScheduleStatus;
-use InvalidArgumentException;
 use Illuminate\Support\Carbon;
+use InvalidArgumentException;
+use Roster\Enums\ScheduleStatus;
 
 class Schedule extends Model
 {
@@ -32,13 +35,13 @@ class Schedule extends Model
 
     protected static function booted(): void
     {
-        static::creating(function (Schedule $schedule) {
+        self::creating(function (Schedule $schedule): void {
             $schedule->validateAgainstAvailability();
             $schedule->validateNoOverlappingSchedules();
             $schedule->validateNoOverlappingImpediments();
         });
 
-        static::updating(function (Schedule $schedule) {
+        self::updating(function (Schedule $schedule): void {
             if ($schedule->isDirty(['start_datetime', 'end_datetime', 'availability_id'])) {
                 $schedule->validateAgainstAvailability();
                 $schedule->validateNoOverlappingSchedules($schedule->id);
@@ -85,7 +88,7 @@ class Schedule extends Model
      */
     protected function validateAgainstAvailability(): void
     {
-        if (!$this->availability) {
+        if (! $this->availability) {
             throw new InvalidArgumentException('Schedule must belong to an Availability');
         }
 
@@ -93,9 +96,9 @@ class Schedule extends Model
 
         // Vérifier que les jours correspondent
         $dayOfWeek = strtolower($this->start_datetime->englishDayOfWeek);
-        if (!in_array($dayOfWeek, $availability->days)) {
+        if (! in_array($dayOfWeek, $availability->days)) {
             throw new InvalidArgumentException(
-                "Schedule day ({$dayOfWeek}) is not in Availability days"
+                sprintf('Schedule day (%s) is not in Availability days', $dayOfWeek)
             );
         }
 
@@ -132,7 +135,7 @@ class Schedule extends Model
     protected function validateNoOverlappingSchedules(?int $excludeId = null): void
     {
         $query = self::where('availability_id', $this->availability_id)
-            ->where(function ($q) {
+            ->where(function ($q): void {
                 $q->where('start_datetime', '<', $this->end_datetime)
                     ->where('end_datetime', '>', $this->start_datetime);
             });
@@ -152,7 +155,7 @@ class Schedule extends Model
     protected function validateNoOverlappingImpediments(?int $excludeId = null): void
     {
         $overlappingImpediment = Impediment::where('availability_id', $this->availability_id)
-            ->where(function ($q) {
+            ->where(function ($q): void {
                 $q->where('start_datetime', '<', $this->end_datetime)
                     ->where('end_datetime', '>', $this->start_datetime);
             })
@@ -177,6 +180,7 @@ class Schedule extends Model
     public function isActive(): bool
     {
         $now = Carbon::now();
+
         return $this->start_datetime->lte($now) && $this->end_datetime->gte($now);
     }
 

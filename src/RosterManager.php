@@ -1,16 +1,21 @@
 <?php
+
+declare(strict_types=1);
+
 // ==== src/RosterManager.php ====
 
 namespace Roster;
 
-use Roster\Services\ScheduleService;
 use Roster\Services\AvailabilityService;
 use Roster\Services\ImpedimentService;
+use Roster\Services\ScheduleService;
 
 class RosterManager
 {
     protected ScheduleService $scheduleService;
+
     protected AvailabilityService $availabilityService;
+
     protected ImpedimentService $impedimentService;
 
     public function __construct(

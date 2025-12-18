@@ -1,29 +1,23 @@
 <?php
+
+declare(strict_types=1);
+
 // ==== src/Services/ImpedimentService.php ====
 
 namespace Roster\Services;
 
-use Roster\Models\Impediment;
-use Roster\Models\Availability;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Collection;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Collection;
 use InvalidArgumentException;
-use RuntimeException;
+use Roster\Models\Availability;
+use Roster\Models\Impediment;
 
-class ImpedimentService
+class ImpedimentService extends AbstractSchedulableService
 {
     protected ?Model $schedulable = null;
-    protected array $filters = [];
 
-    /**
-     * Spécifier le modèle pour lequel gérer les impediments
-     */
-    public function for(Model $schedulable): self
-    {
-        $this->schedulable = $schedulable;
-        return $this;
-    }
+    protected array $filters = [];
 
     /**
      * Créer un nouvel impediment avec vérification des chevauchements
@@ -38,7 +32,7 @@ class ImpedimentService
         // Trouver l'Availability correspondante
         $availability = $this->findMatchingAvailability($data);
 
-        if (!$availability) {
+        if (! $availability instanceof Availability) {
             throw new InvalidArgumentException('No matching availability found for this impediment');
         }
 
@@ -57,6 +51,8 @@ class ImpedimentService
 
     /**
      * Mettre à jour un impediment existant avec vérification des chevauchements
+     *
+     * @param  array<string, mixed>  $data
      */
     public function update(int $id, array $data): bool
     {
@@ -64,18 +60,18 @@ class ImpedimentService
 
         $impediment = $this->find($id);
 
-        if (!$impediment) {
+        if (! $impediment instanceof Impediment) {
             return false;
         }
 
-        if ($data) {
+        if ($data !== []) {
             // Si les dates changent, vérifier la nouvelle Availability
             $availabilityId = $impediment->availability_id;
 
             if (isset($data['start_datetime'])) {
                 $newAvailability = $this->findMatchingAvailability($data);
 
-                if (!$newAvailability) {
+                if (! $newAvailability instanceof Availability) {
                     throw new InvalidArgumentException('No matching availability found for new impediment time');
                 }
 
@@ -114,7 +110,7 @@ class ImpedimentService
 
         $impediment = $this->find($id);
 
-        if (!$impediment) {
+        if (! $impediment instanceof Impediment) {
             return false;
         }
 
@@ -123,6 +119,8 @@ class ImpedimentService
 
     /**
      * Vérifier si un créneau horaire chevauche un impediment existant
+     *
+     * @param  array<string, mixed>  $data
      */
     protected function hasOverlappingImpediment(int $availabilityId, array $data, ?int $excludeId = null): bool
     {
@@ -130,10 +128,10 @@ class ImpedimentService
         $end = Carbon::parse($data['end_datetime']);
 
         $query = Impediment::where('availability_id', $availabilityId)
-            ->where(function ($q) use ($start, $end) {
+            ->where(function ($q) use ($start, $end): void {
                 // Chevauchement : un impediment existe qui commence avant la fin du nouveau
                 // et se termine après le début du nouveau
-                $q->where(function ($inner) use ($start, $end) {
+                $q->where(function ($inner) use ($start, $end): void {
                     $inner->where('start_datetime', '<', $end)
                         ->where('end_datetime', '>', $start);
                 });
@@ -157,40 +155,12 @@ class ImpedimentService
     {
         $this->validateSchedulable();
 
-        return Impediment::whereHas('availability', function ($query) {
+        return Impediment::whereHas('availability', function ($query): void {
             $query->where('schedulable_id', $this->schedulable->id)
                 ->where('schedulable_type', get_class($this->schedulable));
         })->find($id);
     }
 
-    /**
-     * Trouver tous les impediments
-     */
-    public function all(): Collection
-    {
-        $this->validateSchedulable();
-
-        return $this->applyFilters()->get();
-    }
-
-    /**
-     * Récupérer les impediments avec les filtres appliqués
-     */
-    public function get(): Collection
-    {
-        $this->validateSchedulable();
-
-        return $this->applyFilters()->get();
-    }
-
-    /**
-     * Filtrer par type d'activité
-     */
-    public function whereType(string $type): self
-    {
-        $this->filters['type'] = $type;
-        return $this;
-    }
 
     /**
      * Filtrer par date de début
@@ -198,6 +168,7 @@ class ImpedimentService
     public function whereStartDate(Carbon $date): self
     {
         $this->filters['start_date'] = $date;
+
         return $this;
     }
 
@@ -207,6 +178,7 @@ class ImpedimentService
     public function whereEndDate(Carbon $date): self
     {
         $this->filters['end_date'] = $date;
+
         return $this;
     }
 
@@ -234,13 +206,13 @@ class ImpedimentService
         // Trouver une Availability correspondante
         $availability = $this->findAvailabilityForTimeSlot($start, $end, $type);
 
-        if (!$availability) {
+        if (! $availability instanceof Availability) {
             return false;
         }
 
         // Vérifier les chevauchements avec des impediments
         return $availability->impediments()
-            ->where(function ($q) use ($start, $end) {
+            ->where(function ($q) use ($start, $end): void {
                 $q->where('start_datetime', '<', $end)
                     ->where('end_datetime', '>', $start);
             })
@@ -257,7 +229,7 @@ class ImpedimentService
         // Trouver l'Availability correspondante
         $availability = $this->findAvailabilityForTimeSlot($start, $end, $type);
 
-        if (!$availability) {
+        if (! $availability instanceof Availability) {
             return collect();
         }
 
@@ -308,20 +280,13 @@ class ImpedimentService
     }
 
     /**
-     * Réinitialiser les filtres
-     */
-    public function resetFilters(): self
-    {
-        $this->filters = [];
-        return $this;
-    }
-
-    /**
      * Valider les données de l'impediment
+     *
+     * @param  array<string, mixed>  $data
      */
     protected function validateImpedimentData(array $data): void
     {
-        if (!isset($data['start_datetime']) || !isset($data['end_datetime'])) {
+        if (! isset($data['start_datetime']) || ! isset($data['end_datetime'])) {
             throw new InvalidArgumentException('Start and end datetime are required');
         }
 
@@ -335,12 +300,14 @@ class ImpedimentService
         // Optionnel : vérifier une durée minimale
         $minDuration = 5; // minutes
         if ($start->diffInMinutes($end) < $minDuration) {
-            throw new InvalidArgumentException("Impediment must be at least {$minDuration} minutes long");
+            throw new InvalidArgumentException(sprintf('Impediment must be at least %d minutes long', $minDuration));
         }
     }
 
     /**
      * Trouver l'Availability correspondante pour un impediment
+     *
+     * @param  array<string, mixed>  $data
      */
     protected function findMatchingAvailability(array $data): ?Availability
     {
@@ -366,10 +333,10 @@ class ImpedimentService
         }
 
         // Vérifier les dates de période
-        $query->where(function ($q) use ($start) {
+        $query->where(function ($q) use ($start): void {
             $q->whereNull('start_date')
                 ->orWhere('start_date', '<=', $start->toDateString());
-        })->where(function ($q) use ($end) {
+        })->where(function ($q) use ($end): void {
             $q->whereNull('end_date')
                 ->orWhere('end_date', '>=', $end->toDateString());
         });
@@ -377,28 +344,19 @@ class ImpedimentService
         return $query->first();
     }
 
-    /**
-     * Valider que le schedulable est défini
-     */
-    protected function validateSchedulable(): void
-    {
-        if (!$this->schedulable) {
-            throw new RuntimeException('No schedulable specified. Use for() method first.');
-        }
-    }
 
     /**
      * Appliquer les filtres à la requête
      */
     protected function applyFilters()
     {
-        $query = Impediment::whereHas('availability', function ($query) {
+        $query = Impediment::whereHas('availability', function ($query): void {
             $query->where('schedulable_id', $this->schedulable->id)
                 ->where('schedulable_type', get_class($this->schedulable));
         });
 
         if (isset($this->filters['type'])) {
-            $query->whereHas('availability', function ($q) {
+            $query->whereHas('availability', function ($q): void {
                 $q->where('type', $this->filters['type']);
             });
         }

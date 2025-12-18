@@ -1,7 +1,10 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Roster\Services;
 
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Carbon;
 use InvalidArgumentException;
@@ -11,6 +14,8 @@ class AvailabilityValidator
 {
     /**
      * Valider les données de base d'une disponibilité
+     *
+     * @param  array<string, mixed>  $data
      */
     public function validateBasicData(array $data): void
     {
@@ -43,9 +48,11 @@ class AvailabilityValidator
     /**
      * Vérifier s'il y a un chevauchement avec des disponibilités existantes
      * Vérifie toujours les chevauchements, quel que soit le type
+     *
+     * @param  array<string, mixed>  $data
      */
     public function hasOverlapping(
-        Model $schedulable,
+        Model $model,
         array $data,
         ?int $exceptId = null
     ): bool {
@@ -55,25 +62,25 @@ class AvailabilityValidator
         $startDate = isset($data['start_date']) ? Carbon::parse($data['start_date']) : null;
         $endDate = isset($data['end_date']) ? Carbon::parse($data['end_date']) : null;
 
-        $query = Availability::where('schedulable_id', $schedulable->id)
-            ->where('schedulable_type', get_class($schedulable));
+        $query = Availability::where('schedulable_id', $model->id)
+            ->where('schedulable_type', get_class($model));
 
         // Exclure l'enregistrement courant lors d'une mise à jour
         if ($exceptId !== null) {
             $query->where('id', '!=', $exceptId);
         }
 
-        /** @var \Illuminate\Database\Eloquent\Collection<int, Availability> $existingAvailabilities */
+        /** @var Collection<int, Availability> $existingAvailabilities */
         $existingAvailabilities = $query->get();
 
-        foreach ($existingAvailabilities as $existing) {
+        foreach ($existingAvailabilities as $existingAvailability) {
             // Vérifier si les jours se chevauchent
-            $commonDays = array_intersect($existing->days, $days);
-            if (empty($commonDays)) {
+            $commonDays = array_intersect($existingAvailability->days, $days);
+            if ($commonDays === []) {
                 continue;
             }
 
-            if ($this->overlaps($existing, $startTime, $endTime, $startDate, $endDate)) {
+            if ($this->overlaps($existingAvailability, $startTime, $endTime, $startDate, $endDate)) {
                 return true;
             }
         }
@@ -85,21 +92,21 @@ class AvailabilityValidator
      * Vérifier si deux plages se chevauchent
      */
     public function overlaps(
-        Availability $existing,
+        Availability $availability,
         Carbon $newStartTime,
         Carbon $newEndTime,
         ?Carbon $newStartDate,
         ?Carbon $newEndDate
     ): bool {
         // Vérifier le chevauchement horaire
-        if (! $this->timeOverlaps($existing->start_time, $existing->end_time, $newStartTime, $newEndTime)) {
+        if (! $this->timeOverlaps($availability->start_time, $availability->end_time, $newStartTime, $newEndTime)) {
             return false;
         }
 
         // Vérifier le chevauchement des dates
         return $this->dateRangesOverlap(
-            $existing->start_date,
-            $existing->end_date,
+            $availability->start_date,
+            $availability->end_date,
             $newStartDate,
             $newEndDate
         );
@@ -130,12 +137,12 @@ class AvailabilityValidator
         ?Carbon $newEndDate
     ): bool {
         // Si aucune date n'est spécifiée pour l'existant, c'est valable indéfiniment
-        if ($existingStartDate === null && $existingEndDate === null) {
+        if (! $existingStartDate instanceof Carbon && ! $existingEndDate instanceof Carbon) {
             return true;
         }
 
         // Si aucune date n'est spécifiée pour la nouvelle, c'est valable indéfiniment
-        if ($newStartDate === null && $newEndDate === null) {
+        if (! $newStartDate instanceof Carbon && ! $newEndDate instanceof Carbon) {
             return true;
         }
 
@@ -169,7 +176,7 @@ class AvailabilityValidator
 
         // Mêmes jours (au moins un jour en commun)
         $commonDays = array_intersect($first->days, $second->days);
-        if (empty($commonDays)) {
+        if ($commonDays === []) {
             return false;
         }
 
@@ -189,8 +196,11 @@ class AvailabilityValidator
         }
 
         // Vérifier l'adjacence horaire (les plages se touchent exactement)
-        return $first->end_time->eq($second->start_time) ||
-            $second->end_time->eq($first->start_time);
+        if ($first->end_time->eq($second->start_time)) {
+            return true;
+        }
+
+        return (bool) $second->end_time->eq($first->start_time);
     }
 
     /**

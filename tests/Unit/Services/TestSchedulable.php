@@ -1,8 +1,11 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Roster\Tests\Unit\Services;
 
 use Illuminate\Database\Eloquent\Model;
+use Roster\Traits\HasRoster;
 
 class TestSchedulable extends Model
 {
@@ -11,5 +14,5 @@ class TestSchedulable extends Model
     protected $guarded = [];
 
     // Utiliser le trait Schedulable si nécessaire
-    use \Roster\Traits\HasRoster;
+    use HasRoster;
 }

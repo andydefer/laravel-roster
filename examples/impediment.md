@@ -1,6 +1,9 @@
+Voici le fichier d'exemples mis à jour avec les nouvelles fonctionnalités de prévention des chevauchements :
+
+```markdown
 # Exemple complet d'utilisation du `ImpedimentService` via la façade `Roster\Impediment`
 
-Voici des exemples détaillés montrant comment utiliser toutes les fonctionnalités du `ImpedimentService` dans une application Laravel.
+Voici des exemples détaillés montrant comment utiliser toutes les fonctionnalités du `ImpedimentService` dans une application Laravel, incluant la nouvelle prévention des chevauchements.
 
 ## Configuration initiale dans un modèle
 
@@ -45,12 +48,20 @@ $trainingAvailability = Availability::for($user)->create([
 ]);
 ```
 
+## ⚠️ NOUVEAUTÉ : Prévention des chevauchements d'impediments
+
+### Règles de validation :
+1. **Pas de chevauchement** : Deux impediments ne peuvent pas se chevaucher pour la même availability
+2. **Validation automatique** : Vérification lors de la création et de la mise à jour
+3. **Messages d'erreur clairs** : Exceptions détaillées en cas de conflit
+
 ## Exemple 1 : Créer des impediments (blocages de temps)
 
 ```php
 use Roster\Impediment;
 use App\Models\User;
 use Illuminate\Support\Carbon;
+use InvalidArgumentException;
 
 $user = User::find(1);
 $now = Carbon::now();
@@ -67,70 +78,122 @@ $lunchBreak = Impediment::for($user)->create([
 ]);
 
 echo "Impediment créé avec l'ID: " . $lunchBreak->id;
-echo "Raison: " . $lunchBreak->reason;
-echo "Disponibilité liée: " . $lunchBreak->availability_id;
 
-// 2. Créer un impediment de congé
+// 2. Tentative de créer un impediment qui chevauche - ÉCHOUERA
+try {
+    $overlappingImpediment = Impediment::for($user)->create([
+        'reason' => 'Réunion',
+        'start_datetime' => Carbon::parse('2024-06-03 12:30:00'), // Chevauche avec pause déjeuner
+        'end_datetime' => Carbon::parse('2024-06-03 13:30:00'),
+    ]);
+} catch (InvalidArgumentException $e) {
+    echo "Erreur: " . $e->getMessage(); // "This time slot overlaps with an existing impediment"
+}
+
+// 3. Créer un impediment qui ne chevauche pas - RÉUSSIRA
+$afternoonMeeting = Impediment::for($user)->create([
+    'reason' => 'Réunion d\'équipe',
+    'start_datetime' => Carbon::parse('2024-06-03 14:00:00'), // Après la pause
+    'end_datetime' => Carbon::parse('2024-06-03 15:00:00'),
+]);
+
+
+Un impediment doit impérativement se situer **entièrement à l'intérieur des plages horaires** d'une disponibilité (`Availability`) existante. Il ne peut pas déborder en dehors.
+
+**Exemple concret avec votre disponibilité :**
+- Votre disponibilité "consultation" : **8h-18h du lundi au vendredi**
+- Impediment valide : 10h-12h (entièrement entre 8h et 18h) ✅
+- Impediment invalide : 7h-9h (déborde avant 8h) ❌
+- Impediment invalide : 17h-19h (déborde après 18h) ❌
+- Congé sur journée entière (0h-24h) : invalide car dépasse les bornes 8h-18h ❌
+
+**Pour un congé de plusieurs jours** : Chaque journée du congé doit respecter les heures 8h-18h. C'est pourquoi votre congé du 15 juillet 8h au 5 août 18h est valide : chaque jour est bloqué seulement de 8h à 18h, pas la nuit.
+
+**Solution alternative pour bloquer des journées complètes** : Créer une disponibilité spéciale "congés" avec des plages 0h-24h.
+// 4. Créer un impediment de congé (plusieurs jours)
+// Le congé doit être dans les heures de disponibilité (8h-18h) il
 $vacation = Impediment::for($user)->create([
     'reason' => 'Congés annuels',
-    'start_datetime' => Carbon::parse('2024-07-15 00:00:00'),
-    'end_datetime' => Carbon::parse('2024-08-05 23:59:59'),
+    'start_datetime' => Carbon::parse('2024-07-15 08:00:00'), // 8h du matin
+    'end_datetime' => Carbon::parse('2024-08-05 18:00:00'),   // 18h le soir
     'metadata' => [
         'type' => 'vacation',
         'approved_by' => 'HR Department',
-        'document_ref' => 'VAC-2024-007'
+        'document_ref' => 'VAC-2024-007',
     ]
 ]);
 
-// 3. Créer un impediment pour une formation
+// 5. Créer un impediment pour une formation
 $training = Impediment::for($user)->create([
     'reason' => 'Formation médicale continue',
     'start_datetime' => Carbon::parse('2024-06-05 18:00:00'),
     'end_datetime' => Carbon::parse('2024-06-05 21:00:00'),
-    'type' => 'training', // Spécifier le type d'activité
+    'type' => 'training',
     'metadata' => [
         'training_title' => 'Nouvelles techniques chirurgicales',
         'organizer' => 'College of Surgeons',
         'credits' => 3
     ]
 ]);
+```
 
-// 4. Créer un impediment pour une réunion d'équipe
-$teamMeeting = Impediment::for($user)->create([
-    'reason' => 'Réunion d\'équipe hebdomadaire',
-    'start_datetime' => Carbon::parse('2024-06-04 08:00:00'),
-    'end_datetime' => Carbon::parse('2024-06-04 09:30:00'),
-    'metadata' => [
-        'recurring' => true,
-        'frequency' => 'weekly',
-        'day_of_week' => 'tuesday'
-    ]
+## Exemple 2 : Mettre à jour des impediments avec validation de chevauchement
+
+```php
+use Roster\Impediment;
+use App\Models\User;
+use Illuminate\Support\Carbon;
+
+$user = User::find(1);
+
+// Créer deux impediments qui ne se chevauchent pas initialement
+$impediment1 = Impediment::for($user)->create([
+    'reason' => 'Pause déjeuner',
+    'start_datetime' => Carbon::parse('2024-06-03 12:00:00'),
+    'end_datetime' => Carbon::parse('2024-06-03 13:00:00'),
 ]);
 
-// 5. Tentative de création dans le passé (possible pour les impediments)
-$pastImpediment = Impediment::for($user)->create([
-    'reason' => 'Maladie passée',
-    'start_datetime' => Carbon::parse('2024-05-15 09:00:00'), // Date passée OK pour impediments
-    'end_datetime' => Carbon::parse('2024-05-15 17:00:00'),
-    'metadata' => [
-        'sick_leave' => true,
-        'medical_certificate' => 'MC-12345'
-    ]
+$impediment2 = Impediment::for($user)->create([
+    'reason' => 'Réunion',
+    'start_datetime' => Carbon::parse('2024-06-03 14:00:00'),
+    'end_datetime' => Carbon::parse('2024-06-03 15:00:00'),
 ]);
 
-// 6. Tentative de création sans disponibilité correspondante (échoue)
+// 1. Mise à jour simple sans changement d'horaire - RÉUSSIT
+$updated = Impediment::for($user)->update($impediment1->id, [
+    'reason' => 'Pause déjeuner prolongée',
+    'metadata' => ['extended_reason' => 'Réunion déjeuner client']
+]);
+
+// 2. Tentative de mettre à jour pour chevaucher l'autre impediment - ÉCHOUERA
 try {
-    Impediment::for($user)->create([
-        'reason' => 'Réunion weekend',
-        'start_datetime' => Carbon::parse('2024-06-01 10:00:00'), // Samedi (pas de disponibilité)
-        'end_datetime' => Carbon::parse('2024-06-01 12:00:00'),
+    Impediment::for($user)->update($impediment2->id, [
+        'start_datetime' => Carbon::parse('2024-06-03 12:30:00'), // Chevauche avec impediment1
+        'end_datetime' => Carbon::parse('2024-06-03 13:30:00'),
     ]);
-} catch (\InvalidArgumentException $e) {
-    echo "Erreur: " . $e->getMessage(); // "No matching availability found for this impediment"
+} catch (InvalidArgumentException $e) {
+    echo "Erreur: " . $e->getMessage(); // "This time slot overlaps with another impediment"
+}
+
+// 3. Mise à jour vers un horaire qui ne chevauche pas - RÉUSSIT
+$updated = Impediment::for($user)->update($impediment2->id, [
+    'start_datetime' => Carbon::parse('2024-06-03 15:00:00'),
+    'end_datetime' => Carbon::parse('2024-06-03 16:00:00'),
+]);
+
+// 4. Mise à jour avec changement de disponibilité (si compatible)
+try {
+    $updated = Impediment::for($user)->update($impediment1->id, [
+        'start_datetime' => Carbon::parse('2024-06-04 12:00:00'), // Jour différent
+        'end_datetime' => Carbon::parse('2024-06-04 13:00:00'),
+    ]);
+} catch (InvalidArgumentException $e) {
+    // Peut échouer si pas de disponibilité le 4 juin à cet horaire
+    echo "Erreur: " . $e->getMessage();
 }
 ```
 
-## Exemple 2 : Rechercher et récupérer des impediments
+## Exemple 3 : Rechercher et récupérer des impediments
 
 ```php
 use Roster\Impediment;
@@ -151,15 +214,8 @@ if ($impediment) {
 
 // 2. Récupérer tous les impediments
 $allImpediments = Impediment::for($user)->all();
-foreach ($allImpediments as $imp) {
-    echo "Impediment #" . $imp->id . ": " . $imp->reason;
-}
 
-// 3. Récupérer avec pagination
-$impediments = Impediment::for($user)->get();
-$paginated = $impediments->paginate(10);
-
-// 4. Récupérer les impediments pour une période spécifique
+// 3. Récupérer les impediments pour une période spécifique
 $startDate = Carbon::parse('2024-06-01');
 $endDate = Carbon::parse('2024-06-30');
 
@@ -169,7 +225,189 @@ $juneImpediments = Impediment::for($user)
 echo "Nombre d'impediments en juin: " . $juneImpediments->count();
 ```
 
-## Exemple 3 : Filtrer les impediments
+## Exemple 4 : 🔍 NOUVEAU - Obtenir les créneaux disponibles entre les impediments
+
+```php
+use Roster\Impediment;
+use App\Models\User;
+use Illuminate\Support\Carbon;
+
+$user = User::find(1);
+
+// Créer quelques impediments pour démontrer
+Impediment::for($user)->create([
+    'reason' => 'Réunion matinale',
+    'start_datetime' => Carbon::parse('2024-06-03 09:00:00'),
+    'end_datetime' => Carbon::parse('2024-06-03 10:00:00'),
+]);
+
+Impediment::for($user)->create([
+    'reason' => 'Pause déjeuner',
+    'start_datetime' => Carbon::parse('2024-06-03 12:00:00'),
+    'end_datetime' => Carbon::parse('2024-06-03 13:00:00'),
+]);
+
+Impediment::for($user)->create([
+    'reason' => 'Formation',
+    'start_datetime' => Carbon::parse('2024-06-03 15:00:00'),
+    'end_datetime' => Carbon::parse('2024-06-03 16:30:00'),
+]);
+
+// Obtenir les créneaux disponibles pour la journée
+$startOfDay = Carbon::parse('2024-06-03 08:00:00');
+$endOfDay = Carbon::parse('2024-06-03 18:00:00');
+
+$availableSlots = Impediment::for($user)
+    ->getAvailableTimeSlots($startOfDay, $endOfDay, 'consultation');
+
+echo "Créneaux disponibles le 3 juin:";
+foreach ($availableSlots as $slot) {
+    echo $slot['start']->format('H:i') . " - " . $slot['end']->format('H:i');
+    // Affiche:
+    // 08:00 - 09:00  (avant la réunion)
+    // 10:00 - 12:00  (entre réunion et pause déjeuner)
+    // 13:00 - 15:00  (après pause déjeuner, avant formation)
+    // 16:30 - 18:00  (après formation)
+}
+```
+
+## Exemple 5 : Vérifier si un créneau est bloqué
+
+```php
+use Roster\Impediment;
+use App\Models\User;
+use Illuminate\Support\Carbon;
+
+$user = User::find(1);
+
+// Créer un impediment
+Impediment::for($user)->create([
+    'reason' => 'Pause déjeuner',
+    'start_datetime' => Carbon::parse('2024-06-03 12:00:00'),
+    'end_datetime' => Carbon::parse('2024-06-03 13:00:00'),
+]);
+
+// 1. Vérifier un créneau qui chevauche complètement
+$start = Carbon::parse('2024-06-03 12:30:00');
+$end = Carbon::parse('2024-06-03 13:30:00');
+$isBlocked = Impediment::for($user)->isTimeSlotBlocked($start, $end, 'consultation');
+// $isBlocked = true
+
+// 2. Vérifier un créneau qui touche juste le début
+$start = Carbon::parse('2024-06-03 11:30:00');
+$end = Carbon::parse('2024-06-03 12:30:00');
+$isBlocked = Impediment::for($user)->isTimeSlotBlocked($start, $end, 'consultation');
+// $isBlocked = true (chevauchement partiel)
+
+// 3. Vérifier un créneau qui ne chevauche pas
+$start = Carbon::parse('2024-06-03 14:00:00');
+$end = Carbon::parse('2024-06-03 15:00:00');
+$isBlocked = Impediment::for($user)->isTimeSlotBlocked($start, $end, 'consultation');
+// $isBlocked = false
+
+// 4. Vérifier avec un type spécifique
+$isTrainingBlocked = Impediment::for($user)
+    ->isTimeSlotBlocked($start, $end, 'training');
+```
+
+## Exemple 6 : Gestion des conflits avec les schedules
+
+```php
+use Roster\Impediment;
+use Roster\Schedule;
+use App\Models\User;
+use Illuminate\Support\Carbon;
+
+$user = User::find(1);
+
+// Scénario 1: Tentative de création d'un impediment qui chevauche un schedule existant
+$appointment = Schedule::for($user)->create([
+    'title' => 'Consultation - M. Dupont',
+    'start_datetime' => Carbon::parse('2024-06-03 14:00:00'),
+    'end_datetime' => Carbon::parse('2024-06-03 15:00:00'),
+    'status' => 'booked',
+]);
+
+try {
+    $impediment = Impediment::for($user)->create([
+        'reason' => 'Réunion urgente',
+        'start_datetime' => Carbon::parse('2024-06-03 14:30:00'),
+        'end_datetime' => Carbon::parse('2024-06-03 15:30:00'),
+    ]);
+} catch (InvalidArgumentException $e) {
+    echo "Erreur: " . $e->getMessage(); // "Cannot create impediment that overlaps with existing schedules"
+}
+
+// Solution: Annuler d'abord le rendez-vous, puis créer l'impediment
+Schedule::for($user)->delete($appointment->id);
+
+// Maintenant la création réussit
+$impediment = Impediment::for($user)->create([
+    'reason' => 'Réunion urgente',
+    'start_datetime' => Carbon::parse('2024-06-03 14:30:00'),
+    'end_datetime' => Carbon::parse('2024-06-03 15:30:00'),
+]);
+
+// Scénario 2: Mise à jour d'un impediment - les schedules qui chevauchent sont automatiquement supprimés
+$impediment = Impediment::for($user)->create([
+    'reason' => 'Maintenance bureau',
+    'start_datetime' => Carbon::parse('2024-06-04 08:00:00'),
+    'end_datetime' => Carbon::parse('2024-06-04 09:00:00'),
+]);
+
+// Créer un rendez-vous qui sera impacté par l'extension de l'impediment
+$appointment = Schedule::for($user)->create([
+    'title' => 'Consultation matinale',
+    'start_datetime' => Carbon::parse('2024-06-04 08:30:00'),
+    'end_datetime' => Carbon::parse('2024-06-04 09:00:00'),
+    'status' => 'booked',
+]);
+
+// Mettre à jour l'impediment pour qu'il dure plus longtemps
+Impediment::for($user)->update($impediment->id, [
+    'end_datetime' => Carbon::parse('2024-06-04 10:00:00'),
+]);
+
+// Le rendez-vous a été automatiquement supprimé
+$remainingAppointments = Schedule::for($user)
+    ->between(Carbon::parse('2024-06-04 00:00:00'), Carbon::parse('2024-06-04 23:59:59'))
+    ->count();
+// $remainingAppointments = 0
+```
+
+## Exemple 7 : Supprimer des impediments
+
+```php
+use Roster\Impediment;
+use App\Models\User;
+
+$user = User::find(1);
+
+// Créer un impediment
+$impediment = Impediment::for($user)->create([
+    'reason' => 'Test impediment',
+    'start_datetime' => Carbon::parse('2024-06-03 09:00:00'),
+    'end_datetime' => Carbon::parse('2024-06-03 10:00:00'),
+]);
+
+// 1. Supprimer un impediment existant
+$deleted = Impediment::for($user)->delete($impediment->id);
+// $deleted = true
+
+// 2. Tentative de suppression d'un impediment inexistant
+$result = Impediment::for($user)->delete(999);
+// $result = false
+
+// 3. Supprimer après vérification
+$impediment = Impediment::for($user)->find(2);
+if ($impediment && $impediment->isUpcoming()) {
+    // Ne supprimer que les impediments à venir
+    $deleted = Impediment::for($user)->delete($impediment->id);
+    echo "Impediment à venir supprimé";
+}
+```
+
+## Exemple 8 : Filtrer les impediments
 
 ```php
 use Roster\Impediment;
@@ -212,88 +450,9 @@ $allAgain = Impediment::for($user)
     ->get(); // Retourne tous les impediments
 ```
 
-## Exemple 4 : Mettre à jour des impediments
+## Exemple 9 : Cas d'usage avancés
 
-```php
-use Roster\Impediment;
-use App\Models\User;
-use Illuminate\Support\Carbon;
-
-$user = User::find(1);
-$impediment = Impediment::for($user)->find(1);
-
-if ($impediment) {
-    // 1. Mise à jour simple (changer la raison)
-    Impediment::for($user)->update($impediment->id, [
-        'reason' => 'Pause déjeuner prolongée',
-        'metadata' => array_merge($impediment->metadata ?? [], [
-            'extended_by' => 'manager',
-            'extension_reason' => 'Réunion déjeuner client'
-        ])
-    ]);
-
-    // 2. Changer la période de l'impediment
-    $newStart = Carbon::parse('2024-06-03 12:30:00');
-    $newEnd = Carbon::parse('2024-06-03 13:30:00');
-
-    $updated = Impediment::for($user)->update($impediment->id, [
-        'start_datetime' => $newStart,
-        'end_datetime' => $newEnd,
-    ]);
-
-    if ($updated) {
-        echo "Impediment modifié avec succès";
-        // Note: Les schedules qui chevauchent seront automatiquement supprimés
-    }
-
-    // 3. Prolonger un impediment
-    Impediment::for($user)->update($impediment->id, [
-        'end_datetime' => $impediment->end_datetime->addHours(2),
-        'metadata' => array_merge($impediment->metadata ?? [], [
-            'extended' => true,
-            'previous_end' => $impediment->end_datetime->toDateTimeString()
-        ])
-    ]);
-
-    // 4. Ajouter des métadonnées supplémentaires
-    Impediment::for($user)->update($impediment->id, [
-        'metadata' => array_merge($impediment->metadata ?? [], [
-            'updated_at' => Carbon::now()->toDateTimeString(),
-            'updated_by' => auth()->user()->id ?? null,
-            'notes' => 'Ajout de notes supplémentaires'
-        ])
-    ]);
-}
-```
-
-## Exemple 5 : Supprimer des impediments
-
-```php
-use Roster\Impediment;
-use App\Models\User;
-
-$user = User::find(1);
-$impediment = Impediment::for($user)->find(1);
-
-if ($impediment) {
-    // 1. Supprimer un impediment
-    $deleted = Impediment::for($user)->delete($impediment->id);
-
-    if ($deleted) {
-        echo "Impediment supprimé avec succès";
-        // Note: Les schedules précédemment bloqués ne sont PAS automatiquement restaurés
-    }
-
-    // 2. Tentative de suppression d'un impediment inexistant
-    $result = Impediment::for($user)->delete(999);
-    if (!$result) {
-        echo "Impediment non trouvé";
-    }
-}
-```
-
-## Exemple 6 : Vérifier si un créneau est bloqué
-
+### Gestion des pauses récurrentes
 ```php
 use Roster\Impediment;
 use App\Models\User;
@@ -301,270 +460,104 @@ use Illuminate\Support\Carbon;
 
 $user = User::find(1);
 
-// 1. Vérifier si un créneau est bloqué par un impediment
-$start = Carbon::parse('2024-06-03 12:30:00');
-$end = Carbon::parse('2024-06-03 13:00:00');
+// Créer des pauses déjeuner pour les 30 prochains jours ouvrables
+for ($i = 0; $i < 30; $i++) {
+    $date = Carbon::now()->addDays($i);
 
-$isBlocked = Impediment::for($user)
-    ->isTimeSlotBlocked($start, $end, 'consultation');
-
-if ($isBlocked) {
-    echo "Le créneau est bloqué par un impediment";
-} else {
-    echo "Le créneau n'est pas bloqué";
-}
-
-// 2. Vérifier avec un type spécifique
-$isTrainingBlocked = Impediment::for($user)
-    ->isTimeSlotBlocked($start, $end, 'training');
-
-// 3. Vérifier différents créneaux pendant la pause déjeuner
-$lunchTimeSlots = [
-    ['12:00', '12:30'],
-    ['12:30', '13:00'],
-    ['13:00', '13:30'],
-    ['13:30', '14:00'],
-];
-
-foreach ($lunchTimeSlots as $slot) {
-    $slotStart = Carbon::parse('2024-06-03 ' . $slot[0]);
-    $slotEnd = Carbon::parse('2024-06-03 ' . $slot[1]);
-
-    $blocked = Impediment::for($user)
-        ->isTimeSlotBlocked($slotStart, $slotEnd, 'consultation');
-
-    echo "Créneau {$slot[0]}-{$slot[1]}: " . ($blocked ? 'Bloqué' : 'Libre');
+    if ($date->isWeekday()) {
+        try {
+            Impediment::for($user)->create([
+                'reason' => 'Pause déjeuner',
+                'start_datetime' => $date->copy()->setTime(12, 0),
+                'end_datetime' => $date->copy()->setTime(13, 0),
+                'metadata' => [
+                    'recurring' => true,
+                    'category' => 'daily_lunch_break',
+                    'auto_generated' => true
+                ]
+            ]);
+        } catch (InvalidArgumentException $e) {
+            // Ignorer si déjà un impediment à cette heure (jour férié, etc.)
+            echo "Skipping {$date->format('Y-m-d')}: " . $e->getMessage();
+        }
+    }
 }
 ```
 
-## Exemple 7 : Gestion des conflits avec les schedules
-
+### Vérification de disponibilité pour un nouveau rendez-vous
 ```php
 use Roster\Impediment;
 use Roster\Schedule;
 use App\Models\User;
 use Illuminate\Support\Carbon;
 
-$user = User::find(1);
+function checkAvailabilityForAppointment(User $user, Carbon $proposedStart, Carbon $proposedEnd, string $type = 'consultation')
+{
+    // 1. Vérifier les impediments
+    $impedimentBlocked = Impediment::for($user)
+        ->isTimeSlotBlocked($proposedStart, $proposedEnd, $type);
 
-// Scénario: Créer un rendez-vous d'abord, puis un impediment qui le chevauche
-$appointment = Schedule::for($user)->create([
-    'title' => 'Consultation - M. Dupont',
-    'start_datetime' => Carbon::parse('2024-06-03 14:00:00'),
-    'end_datetime' => Carbon::parse('2024-06-03 15:00:00'),
-    'status' => 'booked',
-]);
-
-// Tentative de création d'un impediment qui chevauche le rendez-vous
-try {
-    $impediment = Impediment::for($user)->create([
-        'reason' => 'Réunion urgente',
-        'start_datetime' => Carbon::parse('2024-06-03 14:30:00'), // Chevauchement
-        'end_datetime' => Carbon::parse('2024-06-03 15:30:00'),
-    ]);
-} catch (\InvalidArgumentException $e) {
-    echo "Erreur: " . $e->getMessage(); // "Cannot create impediment that overlaps with existing schedules"
-
-    // Solutions possibles:
-    // 1. Annuler d'abord le rendez-vous
-    Schedule::for($user)->delete($appointment->id);
-
-    // 2. Puis créer l'impediment
-    $impediment = Impediment::for($user)->create([
-        'reason' => 'Réunion urgente',
-        'start_datetime' => Carbon::parse('2024-06-03 14:30:00'),
-        'end_datetime' => Carbon::parse('2024-06-03 15:30:00'),
-    ]);
-
-    echo "Rendez-vous annulé et impediment créé";
-}
-
-// Scénario: Mettre à jour un impediment pour qu'il chevauche des rendez-vous existants
-$impediment = Impediment::for($user)->create([
-    'reason' => 'Maintenance bureau',
-    'start_datetime' => Carbon::parse('2024-06-04 08:00:00'),
-    'end_datetime' => Carbon::parse('2024-06-04 09:00:00'),
-]);
-
-// Créer des rendez-vous qui seront impactés
-$appointment1 = Schedule::for($user)->create([
-    'title' => 'Consultation matinale 1',
-    'start_datetime' => Carbon::parse('2024-06-04 08:30:00'),
-    'end_datetime' => Carbon::parse('2024-06-04 09:00:00'),
-    'status' => 'booked',
-]);
-
-$appointment2 = Schedule::for($user)->create([
-    'title' => 'Consultation matinale 2',
-    'start_datetime' => Carbon::parse('2024-06-04 09:00:00'),
-    'end_datetime' => Carbon::parse('2024-06-04 09:30:00'),
-    'status' => 'booked',
-]);
-
-// Mettre à jour l'impediment pour qu'il dure plus longtemps
-Impediment::for($user)->update($impediment->id, [
-    'end_datetime' => Carbon::parse('2024-06-04 10:00:00'),
-]);
-
-// Vérifier que les rendez-vous ont été automatiquement supprimés
-$remainingAppointments = Schedule::for($user)
-    ->between(Carbon::parse('2024-06-04 00:00:00'), Carbon::parse('2024-06-04 23:59:59'))
-    ->count();
-
-echo "Rendez-vous restants le 4 juin: " . $remainingAppointments; // Devrait être 0
-```
-
-## Exemple 8 : Types courants d'impediments et bonnes pratiques
-
-```php
-use Roster\Impediment;
-use App\Models\User;
-use Illuminate\Support\Carbon;
-
-$user = User::find(1);
-
-// 1. Pauses régulières (déjeuner, café)
-$lunchBreaks = [
-    ['12:00', '13:00', 'Pause déjeuner'],
-    ['10:30', '10:45', 'Pause café matinale'],
-    ['15:30', '15:45', 'Pause café après-midi'],
-];
-
-foreach ($lunchBreaks as $break) {
-    for ($i = 0; $i < 30; $i++) { // Pour les 30 prochains jours
-        $date = Carbon::now()->addDays($i);
-
-        // Ne créer que pour les jours de semaine
-        if ($date->isWeekday()) {
-            Impediment::for($user)->create([
-                'reason' => $break[2],
-                'start_datetime' => $date->copy()->setTimeFromTimeString($break[0]),
-                'end_datetime' => $date->copy()->setTimeFromTimeString($break[1]),
-                'metadata' => [
-                    'recurring' => true,
-                    'category' => 'daily_break',
-                    'auto_generated' => true
-                ]
-            ]);
-        }
+    if ($impedimentBlocked) {
+        return [
+            'available' => false,
+            'reason' => 'time_slot_blocked_by_impediment',
+            'message' => 'Ce créneau est bloqué par un impediment'
+        ];
     }
-}
 
-// 2. Congés et vacances
-$vacationPeriods = [
-    [
-        'reason' => 'Vacances d\'été',
-        'start' => '2024-07-15',
-        'end' => '2024-08-05',
-        'type' => 'vacation'
-    ],
-    [
-        'reason' => 'Formation professionnelle',
-        'start' => '2024-09-10',
-        'end' => '2024-09-12',
-        'type' => 'training'
-    ],
-    [
-        'reason' => 'Congé maladie',
-        'start' => '2024-10-01',
-        'end' => '2024-10-03',
-        'type' => 'sick_leave'
-    ]
-];
+    // 2. Vérifier les rendez-vous existants
+    $existingSchedule = Schedule::for($user)
+        ->between($proposedStart, $proposedEnd)
+        ->first();
 
-foreach ($vacationPeriods as $period) {
-    Impediment::for($user)->create([
-        'reason' => $period['reason'],
-        'start_datetime' => Carbon::parse($period['start'] . ' 00:00:00'),
-        'end_datetime' => Carbon::parse($period['end'] . ' 23:59:59'),
-        'metadata' => [
-            'type' => $period['type'],
-            'full_day' => true,
-            'requires_approval' => in_array($period['type'], ['vacation', 'training'])
-        ]
-    ]);
-}
-
-// 3. Réunions régulières
-$regularMeetings = [
-    [
-        'reason' => 'Réunion d\'équipe hebdomadaire',
-        'day_of_week' => 'monday',
-        'time' => '08:00',
-        'duration' => 90
-    ],
-    [
-        'reason' => 'Revue de cas cliniques',
-        'day_of_week' => 'wednesday',
-        'time' => '17:00',
-        'duration' => 120
-    ],
-    [
-        'reason' => 'Formation continue',
-        'day_of_week' => 'friday',
-        'time' => '18:00',
-        'duration' => 180
-    ]
-];
-
-foreach ($regularMeetings as $meeting) {
-    for ($i = 0; $i < 12; $i++) { // Pour les 12 prochaines semaines
-        $date = Carbon::now()->startOfWeek()->addWeeks($i);
-        $date->next($meeting['day_of_week']);
-
-        if ($date->gte(Carbon::now())) {
-            Impediment::for($user)->create([
-                'reason' => $meeting['reason'],
-                'start_datetime' => $date->copy()->setTimeFromTimeString($meeting['time']),
-                'end_datetime' => $date->copy()->setTimeFromTimeString($meeting['time'])->addMinutes($meeting['duration']),
-                'metadata' => [
-                    'recurring' => true,
-                    'frequency' => 'weekly',
-                    'day_of_week' => $meeting['day_of_week'],
-                    'series_id' => 'meeting_' . str_slug($meeting['reason'])
-                ]
-            ]);
-        }
+    if ($existingSchedule) {
+        return [
+            'available' => false,
+            'reason' => 'time_slot_already_booked',
+            'message' => 'Ce créneau est déjà réservé'
+        ];
     }
+
+    // 3. Vérifier la disponibilité (heures de travail, etc.)
+    $availability = $user->availabilities()
+        ->where('type', $type)
+        ->whereJsonContains('days', strtolower($proposedStart->englishDayOfWeek))
+        ->where('start_time', '<=', $proposedStart->format('H:i:s'))
+        ->where('end_time', '>=', $proposedEnd->format('H:i:s'))
+        ->first();
+
+    if (!$availability) {
+        return [
+            'available' => false,
+            'reason' => 'outside_availability_hours',
+            'message' => 'Hors des heures de disponibilité'
+        ];
+    }
+
+    return [
+        'available' => true,
+        'message' => 'Créneau disponible'
+    ];
 }
 
-// 4. Blocages ponctuels (urgences, réunions imprévues)
-$oneTimeBlocks = [
-    [
-        'reason' => 'Audit qualité',
-        'date' => '2024-06-10',
-        'start_time' => '09:00',
-        'end_time' => '12:00'
-    ],
-    [
-        'reason' => 'Entretien annuel',
-        'date' => '2024-06-15',
-        'start_time' => '14:00',
-        'end_time' => '16:00'
-    ],
-    [
-        'reason' => 'Maintenance équipement',
-        'date' => '2024-06-20',
-        'start_time' => '08:00',
-        'end_time' => '10:00'
-    ]
-];
+// Utilisation
+$user = User::find(1);
+$proposedStart = Carbon::parse('2024-06-03 14:00:00');
+$proposedEnd = Carbon::parse('2024-06-03 15:00:00');
 
-foreach ($oneTimeBlocks as $block) {
-    Impediment::for($user)->create([
-        'reason' => $block['reason'],
-        'start_datetime' => Carbon::parse($block['date'] . ' ' . $block['start_time']),
-        'end_datetime' => Carbon::parse($block['date'] . ' ' . $block['end_time']),
-        'metadata' => [
-            'one_time' => true,
-            'category' => 'special_event',
-            'notification_sent' => false
-        ]
+$availability = checkAvailabilityForAppointment($user, $proposedStart, $proposedEnd);
+if ($availability['available']) {
+    // Créer le rendez-vous
+    $appointment = Schedule::for($user)->create([
+        'title' => 'Nouvelle consultation',
+        'start_datetime' => $proposedStart,
+        'end_datetime' => $proposedEnd,
+        'status' => 'booked',
     ]);
 }
 ```
 
-## Exemple 9 : Intégration dans un contrôleur Laravel
+## Exemple 10 : Intégration dans un contrôleur Laravel
 
 ```php
 // App\Http\Controllers\ImpedimentController.php
@@ -573,49 +566,14 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Roster\Impediment;
-use Roster\Schedule;
 use App\Models\User;
 use Illuminate\Support\Carbon;
+use InvalidArgumentException;
 
 class ImpedimentController extends Controller
 {
     /**
-     * Afficher tous les impediments d'un utilisateur
-     */
-    public function index(Request $request, User $user): JsonResponse
-    {
-        $query = Impediment::for($user);
-
-        // Appliquer les filtres depuis la requête
-        if ($request->has('type')) {
-            $query->whereType($request->get('type'));
-        }
-
-        if ($request->has('start_date')) {
-            $query->whereStartDate(Carbon::parse($request->get('start_date')));
-        }
-
-        if ($request->has('end_date')) {
-            $query->whereEndDate(Carbon::parse($request->get('end_date')));
-        }
-
-        // Filtrer par période si spécifié
-        if ($request->has('period_start') && $request->has('period_end')) {
-            $periodStart = Carbon::parse($request->get('period_start'));
-            $periodEnd = Carbon::parse($request->get('period_end'));
-            $impediments = $query->between($periodStart, $periodEnd);
-        } else {
-            $impediments = $query->get();
-        }
-
-        return response()->json([
-            'data' => $impediments,
-            'count' => $impediments->count(),
-        ]);
-    }
-
-    /**
-     * Créer un nouvel impediment
+     * Créer un nouvel impediment avec validation des chevauchements
      */
     public function store(Request $request, User $user): JsonResponse
     {
@@ -630,115 +588,41 @@ class ImpedimentController extends Controller
         try {
             $impediment = Impediment::for($user)->create($validated);
 
-            // Récupérer les rendez-vous qui ont été supprimés
-            $deletedSchedules = $this->getDeletedSchedulesForImpediment($impediment);
-
             return response()->json([
                 'message' => 'Impediment créé avec succès',
                 'data' => $impediment,
-                'affected_schedules' => $deletedSchedules,
-                'warning' => $deletedSchedules->count() > 0
-                    ? count($deletedSchedules) . ' rendez-vous ont été annulés automatiquement'
-                    : null
+                'available_slots' => $this->getAlternativeSlots($user, $validated),
             ], 201);
-        } catch (\InvalidArgumentException $e) {
-            return response()->json([
-                'message' => $e->getMessage(),
-                'suggestions' => $this->getAlternativeTimes($user, $validated),
-            ], 422);
-        }
-    }
 
-    /**
-     * Mettre à jour un impediment
-     */
-    public function update(Request $request, User $user, int $id): JsonResponse
-    {
-        $validated = $request->validate([
-            'reason' => 'sometimes|string|max:255',
-            'start_datetime' => 'sometimes|date',
-            'end_datetime' => 'sometimes|date|after:start_datetime',
-            'metadata' => 'nullable|array',
-        ]);
+        } catch (InvalidArgumentException $e) {
+            $errorMessage = $e->getMessage();
 
-        $impediment = Impediment::for($user)->find($id);
-
-        if (!$impediment) {
-            return response()->json([
-                'message' => 'Impediment non trouvé',
-            ], 404);
-        }
-
-        // Vérifier s'il y aura des schedules affectés par la mise à jour
-        $willAffectSchedules = false;
-        if (isset($validated['start_datetime']) || isset($validated['end_datetime'])) {
-            $newStart = isset($validated['start_datetime'])
-                ? Carbon::parse($validated['start_datetime'])
-                : $impediment->start_datetime;
-            $newEnd = isset($validated['end_datetime'])
-                ? Carbon::parse($validated['end_datetime'])
-                : $impediment->end_datetime;
-
-            // Vérifier les chevauchements
-            $overlappingSchedules = Schedule::where('availability_id', $impediment->availability_id)
-                ->where(function ($q) use ($newStart, $newEnd) {
-                    $q->where('start_datetime', '<', $newEnd)
-                        ->where('end_datetime', '>', $newStart);
-                })
-                ->count();
-
-            $willAffectSchedules = $overlappingSchedules > 0;
-        }
-
-        try {
-            $updated = Impediment::for($user)->update($id, $validated);
-
-            if ($updated) {
-                $impediment->refresh();
-                $deletedSchedules = $this->getDeletedSchedulesForImpediment($impediment);
-
+            // Fournir des suggestions basées sur le type d'erreur
+            if (str_contains($errorMessage, 'overlaps with an existing impediment')) {
                 return response()->json([
-                    'message' => 'Impediment mis à jour',
-                    'data' => $impediment,
-                    'affected_schedules' => $willAffectSchedules ? $deletedSchedules : [],
-                    'warning' => $willAffectSchedules && $deletedSchedules->count() > 0
-                        ? count($deletedSchedules) . ' rendez-vous ont été annulés automatiquement'
-                        : null
-                ]);
+                    'message' => 'Ce créneau chevauche un impediment existant',
+                    'suggestions' => $this->getAlternativeSlots($user, $validated),
+                    'conflicts' => $this->getConflictingImpediments($user, $validated),
+                ], 422);
             }
-        } catch (\InvalidArgumentException $e) {
+
+            if (str_contains($errorMessage, 'overlaps with existing schedules')) {
+                return response()->json([
+                    'message' => 'Ce créneau chevauche des rendez-vous existants',
+                    'warning' => 'Les rendez-vous devront être annulés manuellement avant de créer cet impediment',
+                ], 422);
+            }
+
             return response()->json([
-                'message' => $e->getMessage(),
+                'message' => $errorMessage,
             ], 422);
         }
-
-        return response()->json([
-            'message' => 'Erreur lors de la mise à jour',
-        ], 500);
     }
 
     /**
-     * Supprimer un impediment
+     * Vérifier la disponibilité d'un créneau
      */
-    public function destroy(User $user, int $id): JsonResponse
-    {
-        $deleted = Impediment::for($user)->delete($id);
-
-        if ($deleted) {
-            return response()->json([
-                'message' => 'Impediment supprimé',
-            ]);
-        }
-
-        return response()->json([
-            'message' => 'Impediment non trouvé',
-        ], 404);
-    }
-
-    /**
-     * Vérifier si un créneau est bloqué
-     */
-    public function checkBlocked(User $user, Request $request): JsonResponse
+    public function check(Request $request, User $user): JsonResponse
     {
         $request->validate([
             'start' => 'required|date',
@@ -753,750 +637,337 @@ class ImpedimentController extends Controller
         $isBlocked = Impediment::for($user)
             ->isTimeSlotBlocked($start, $end, $type);
 
-        // Récupérer les impediments qui bloquent ce créneau
-        $blockingImpediments = [];
-        if ($isBlocked) {
-            $impediments = Impediment::for($user)->get();
-            foreach ($impediments as $impediment) {
-                if ($impediment->overlapsWith($start, $end)) {
-                    $blockingImpediments[] = [
-                        'id' => $impediment->id,
-                        'reason' => $impediment->reason,
-                        'start' => $impediment->start_datetime->toDateTimeString(),
-                        'end' => $impediment->end_datetime->toDateTimeString(),
-                    ];
-                }
-            }
-        }
+        // Obtenir les créneaux disponibles autour de l'heure demandée
+        $availableSlots = Impediment::for($user)
+            ->getAvailableTimeSlots(
+                $start->copy()->subHours(2),
+                $end->copy()->addHours(2),
+                $type
+            );
 
         return response()->json([
             'blocked' => $isBlocked,
-            'blocking_impediments' => $blockingImpediments,
+            'available_slots' => $availableSlots,
+            'next_available' => $this->findNextAvailableSlot($user, $start, $end, $type),
         ]);
     }
 
     /**
-     * Récupérer les rendez-vous supprimés par un impediment
+     * Trouver les impediments en conflit
      */
-    private function getDeletedSchedulesForImpediment($impediment)
+    private function getConflictingImpediments(User $user, array $data): array
     {
-        // Note: Cette méthode est théorique car les schedules sont supprimés
-        // automatiquement. Dans une vraie application, vous voudriez peut-être
-        // les archiver au lieu de les supprimer complètement.
+        $start = Carbon::parse($data['start_datetime']);
+        $end = Carbon::parse($data['end_datetime']);
 
-        // Pour l'exemple, on retourne une collection vide
-        return collect([]);
+        $impediments = Impediment::for($user)->get();
+
+        $conflicts = [];
+        foreach ($impediments as $impediment) {
+            if ($impediment->overlapsWith($start, $end)) {
+                $conflicts[] = [
+                    'id' => $impediment->id,
+                    'reason' => $impediment->reason,
+                    'start' => $impediment->start_datetime->format('Y-m-d H:i'),
+                    'end' => $impediment->end_datetime->format('H:i'),
+                    'duration' => $impediment->duration_minutes . ' minutes',
+                ];
+            }
+        }
+
+        return $conflicts;
     }
 
     /**
-     * Trouver des créneaux alternatifs pour un impediment
+     * Obtenir des créneaux alternatifs
      */
-    private function getAlternativeTimes(User $user, array $originalRequest): array
+    private function getAlternativeSlots(User $user, array $originalRequest): array
     {
         $start = Carbon::parse($originalRequest['start_datetime']);
         $end = Carbon::parse($originalRequest['end_datetime']);
         $duration = $end->diffInMinutes($start);
 
-        // Chercher des créneaux libres aujourd'hui et demain
         $suggestions = [];
 
-        for ($i = 0; $i < 7; $i++) {
-            $date = $start->copy()->addDays($i);
+        // Chercher des créneaux le même jour
+        $sameDayEnd = $start->copy()->endOfDay();
+        $availableSlots = Impediment::for($user)
+            ->getAvailableTimeSlots($start, $sameDayEnd, $originalRequest['type'] ?? null);
 
-            // Vérifier si ce jour a des disponibilités
-            $hasAvailability = true; // Simplification
+        foreach ($availableSlots as $slot) {
+            $slotDuration = $slot['start']->diffInMinutes($slot['end']);
+            if ($slotDuration >= $duration) {
+                $suggestions[] = [
+                    'start' => $slot['start']->format('Y-m-d H:i'),
+                    'end' => $slot['start']->copy()->addMinutes($duration)->format('H:i'),
+                    'same_day' => true,
+                ];
 
-            if ($hasAvailability) {
-                // Vérifier si le créneau est libre
-                $isBlocked = Impediment::for($user)
-                    ->isTimeSlotBlocked(
-                        $date->copy()->setTimeFrom($start),
-                        $date->copy()->setTimeFrom($end),
-                        $originalRequest['type'] ?? null
-                    );
-
-                if (!$isBlocked) {
-                    $suggestions[] = [
-                        'date' => $date->toDateString(),
-                        'start' => $date->copy()->setTimeFrom($start)->toDateTimeString(),
-                        'end' => $date->copy()->setTimeFrom($end)->toDateTimeString(),
-                    ];
-
-                    if (count($suggestions) >= 3) {
-                        break;
-                    }
-                }
+                if (count($suggestions) >= 3) break;
             }
         }
 
         return $suggestions;
     }
+
+    /**
+     * Trouver le prochain créneau disponible
+     */
+    private function findNextAvailableSlot(User $user, Carbon $start, Carbon $end, ?string $type): ?array
+    {
+        $duration = $end->diffInMinutes($start);
+
+        // Chercher dans les 7 prochains jours
+        for ($i = 0; $i < 7; $i++) {
+            $searchDate = $start->copy()->addDays($i);
+
+            // Vérifier si c'est un jour de disponibilité
+            $availability = $user->availabilities()
+                ->where('type', $type)
+                ->whereJsonContains('days', strtolower($searchDate->englishDayOfWeek))
+                ->first();
+
+            if ($availability) {
+                $dayStart = $searchDate->copy()->setTimeFromTimeString($availability->start_time);
+                $dayEnd = $searchDate->copy()->setTimeFromTimeString($availability->end_time);
+
+                $availableSlots = Impediment::for($user)
+                    ->getAvailableTimeSlots($dayStart, $dayEnd, $type);
+
+                foreach ($availableSlots as $slot) {
+                    $slotDuration = $slot['start']->diffInMinutes($slot['end']);
+                    if ($slotDuration >= $duration) {
+                        return [
+                            'date' => $searchDate->format('Y-m-d'),
+                            'start' => $slot['start']->format('H:i'),
+                            'end' => $slot['start']->copy()->addMinutes($duration)->format('H:i'),
+                            'days_from_now' => $i,
+                        ];
+                    }
+                }
+            }
+        }
+
+        return null;
+    }
 }
 ```
 
-## Exemple 10 : Utilisation dans les vues Blade
+## Exemple 11 : Interface utilisateur avec validation en temps réel
 
-```blade
-{{-- resources/views/impediments/index.blade.php --}}
-@extends('layouts.app')
+```javascript
+// resources/js/components/ImpedimentForm.vue
+<template>
+  <div>
+    <form @submit.prevent="submitForm">
+      <div class="mb-3">
+        <label for="reason" class="form-label">Raison</label>
+        <input v-model="form.reason" type="text" class="form-control" required>
+      </div>
 
-@section('content')
-<div class="container">
-    <h2>Blocages de temps pour {{ $user->name }}</h2>
-
-    <!-- Filtres -->
-    <div class="card mb-4">
-        <div class="card-body">
-            <form id="filterForm">
-                <div class="row">
-                    <div class="col-md-3">
-                        <label for="type" class="form-label">Type d'activité</label>
-                        <select name="type" id="type" class="form-select">
-                            <option value="">Tous les types</option>
-                            <option value="consultation">Consultation</option>
-                            <option value="training">Formation</option>
-                            <option value="meeting">Réunion</option>
-                        </select>
-                    </div>
-                    <div class="col-md-3">
-                        <label for="period_start" class="form-label">Du</label>
-                        <input type="date" name="period_start" id="period_start" class="form-control">
-                    </div>
-                    <div class="col-md-3">
-                        <label for="period_end" class="form-label">Au</label>
-                        <input type="date" name="period_end" id="period_end" class="form-control">
-                    </div>
-                    <div class="col-md-3">
-                        <label for="reason" class="form-label">Raison (contient)</label>
-                        <input type="text" name="reason" id="reason" class="form-control"
-                               placeholder="Pause, congé, réunion...">
-                    </div>
-                </div>
-                <div class="mt-3">
-                    <button type="submit" class="btn btn-primary">Filtrer</button>
-                    <button type="button" id="resetFilters" class="btn btn-secondary">Réinitialiser</button>
-                    <button type="button" class="btn btn-info" data-bs-toggle="modal" data-bs-target="#checkModal">
-                        Vérifier créneau
-                    </button>
-                </div>
-            </form>
+      <div class="row mb-3">
+        <div class="col-md-6">
+          <label for="start_datetime" class="form-label">Date et heure de début</label>
+          <input v-model="form.start_datetime" type="datetime-local" class="form-control" required>
         </div>
-    </div>
-
-    <!-- Liste des impediments -->
-    <div class="card">
-        <div class="card-body">
-            <div class="table-responsive">
-                <table class="table table-hover">
-                    <thead>
-                        <tr>
-                            <th>Date & Heure</th>
-                            <th>Raison</th>
-                            <th>Type</th>
-                            <th>Durée</th>
-                            <th>Statut</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach($impediments as $impediment)
-                        @php
-                            $statusClass = '';
-                            if ($impediment->isActive()) {
-                                $statusClass = 'bg-warning';
-                            } elseif ($impediment->isUpcoming()) {
-                                $statusClass = 'bg-info';
-                            } else {
-                                $statusClass = 'bg-secondary';
-                            }
-                        @endphp
-                        <tr>
-                            <td>
-                                {{ $impediment->start_datetime->format('d/m/Y H:i') }}<br>
-                                <small>à {{ $impediment->end_datetime->format('H:i') }}</small>
-                            </td>
-                            <td>{{ $impediment->reason }}</td>
-                            <td>
-                                @if($impediment->type)
-                                <span class="badge bg-primary">{{ $impediment->type }}</span>
-                                @endif
-                            </td>
-                            <td>{{ $impediment->duration_minutes }} minutes</td>
-                            <td>
-                                <span class="badge {{ $statusClass }}">
-                                    @if($impediment->isActive())
-                                        En cours
-                                    @elseif($impediment->isUpcoming())
-                                        À venir
-                                    @else
-                                        Passé
-                                    @endif
-                                </span>
-                            </td>
-                            <td>
-                                <div class="btn-group btn-group-sm">
-                                    <button class="btn btn-outline-primary"
-                                            data-bs-toggle="modal"
-                                            data-bs-target="#editModal"
-                                            data-id="{{ $impediment->id }}"
-                                            data-reason="{{ $impediment->reason }}"
-                                            data-start="{{ $impediment->start_datetime->format('Y-m-d\TH:i') }}"
-                                            data-end="{{ $impediment->end_datetime->format('Y-m-d\TH:i') }}"
-                                            data-type="{{ $impediment->type }}">
-                                        Modifier
-                                    </button>
-                                    <form action="{{ route('impediments.destroy', [$user, $impediment->id]) }}"
-                                          method="POST"
-                                          class="d-inline"
-                                          onsubmit="return confirm('Supprimer ce blocage ?')">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit" class="btn btn-outline-danger">
-                                            Supprimer
-                                        </button>
-                                    </form>
-                                </div>
-                            </td>
-                        </tr>
-                        @endforeach
-                    </tbody>
-                </table>
-            </div>
-
-            @if($impediments->isEmpty())
-            <div class="text-center py-5">
-                <i class="bi bi-calendar-x text-muted" style="font-size: 3rem;"></i>
-                <h5 class="mt-3">Aucun blocage de temps</h5>
-                <p class="text-muted">Tous les créneaux sont disponibles</p>
-            </div>
-            @endif
+        <div class="col-md-6">
+          <label for="end_datetime" class="form-label">Date et heure de fin</label>
+          <input v-model="form.end_datetime" type="datetime-local" class="form-control" required>
         </div>
-    </div>
+      </div>
 
-    <!-- Bouton pour créer un nouvel impediment -->
-    <div class="mt-4">
-        <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#createModal">
-            <i class="bi bi-plus-circle"></i> Nouveau blocage
-        </button>
+      <div class="mb-3">
+        <label for="type" class="form-label">Type d'activité</label>
+        <select v-model="form.type" class="form-select">
+          <option value="">Tous les types</option>
+          <option value="consultation">Consultation</option>
+          <option value="training">Formation</option>
+          <option value="meeting">Réunion</option>
+        </select>
+      </div>
 
-        <!-- Boutons pour les blocages récurrents -->
-        <div class="btn-group">
-            <button type="button" class="btn btn-outline-primary dropdown-toggle" data-bs-toggle="dropdown">
-                <i class="bi bi-arrow-repeat"></i> Blocages récurrents
-            </button>
-            <ul class="dropdown-menu">
-                <li>
-                    <button class="dropdown-item" type="button" data-bs-toggle="modal" data-bs-target="#lunchModal">
-                        Pause déjeuner quotidienne
-                    </button>
-                </li>
-                <li>
-                    <button class="dropdown-item" type="button" data-bs-toggle="modal" data-bs-target="#weeklyModal">
-                        Réunion hebdomadaire
-                    </button>
-                </li>
-                <li>
-                    <button class="dropdown-item" type="button" data-bs-toggle="modal" data-bs-target="#vacationModal">
-                        Période de congés
-                    </button>
-                </li>
+      <!-- Validation en temps réel -->
+      <div v-if="validationResult" class="mb-3">
+        <div v-if="validationResult.available" class="alert alert-success">
+          <i class="bi bi-check-circle"></i> Ce créneau est disponible
+        </div>
+        <div v-else class="alert alert-danger">
+          <i class="bi bi-exclamation-circle"></i> {{ validationResult.message }}
+
+          <div v-if="validationResult.conflicts && validationResult.conflicts.length > 0" class="mt-2">
+            <strong>Conflits:</strong>
+            <ul class="mb-0">
+              <li v-for="conflict in validationResult.conflicts" :key="conflict.id">
+                {{ conflict.reason }} ({{ conflict.start }} - {{ conflict.end }})
+              </li>
             </ul>
-        </div>
-    </div>
-</div>
+          </div>
 
-<!-- Modals -->
-@include('impediments.modals.create')
-@include('impediments.modals.edit')
-@include('impediments.modals.check')
-@include('impediments.modals.recurring.lunch')
-@include('impediments.modals.recurring.weekly')
-@include('impediments.modals.recurring.vacation')
+          <div v-if="validationResult.suggestions && validationResult.suggestions.length > 0" class="mt-2">
+            <strong>Suggestions:</strong>
+            <ul class="mb-0">
+              <li v-for="suggestion in validationResult.suggestions" :key="suggestion.start">
+                {{ suggestion.start }} - {{ suggestion.end }}
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <button type="submit" class="btn btn-primary" :disabled="!formIsValid">
+        Créer l'impediment
+      </button>
+    </form>
+  </div>
+</template>
 
 <script>
-// Gestion des filtres
-document.getElementById('filterForm').addEventListener('submit', function(e) {
-    e.preventDefault();
-    const params = new URLSearchParams(new FormData(this));
-    window.location.href = window.location.pathname + '?' + params.toString();
-});
-
-document.getElementById('resetFilters').addEventListener('click', function() {
-    window.location.href = window.location.pathname;
-});
-
-// Mise à jour du modal d'édition
-document.addEventListener('DOMContentLoaded', function() {
-    const editModal = document.getElementById('editModal');
-    if (editModal) {
-        editModal.addEventListener('show.bs.modal', function(event) {
-            const button = event.relatedTarget;
-            const modal = this;
-
-            modal.querySelector('#editReason').value = button.getAttribute('data-reason');
-            modal.querySelector('#editStart').value = button.getAttribute('data-start');
-            modal.querySelector('#editEnd').value = button.getAttribute('data-end');
-            modal.querySelector('#editType').value = button.getAttribute('data-type');
-
-            // Mettre à jour l'action du formulaire
-            const form = modal.querySelector('#editForm');
-            const impedimentId = button.getAttribute('data-id');
-            form.action = form.action.replace(/\/\d+$/, '/' + impedimentId);
-        });
+export default {
+  props: {
+    userId: {
+      type: Number,
+      required: true
     }
+  },
 
-    // Validation du formulaire de vérification
-    const checkForm = document.getElementById('checkForm');
-    if (checkForm) {
-        checkForm.addEventListener('submit', async function(e) {
-            e.preventDefault();
-
-            const formData = new FormData(this);
-            const response = await fetch(this.action, {
-                method: 'POST',
-                body: formData,
-                headers: {
-                    'X-Requested-With': 'XMLHttpRequest',
-                    'Accept': 'application/json'
-                }
-            });
-
-            const result = await response.json();
-            const resultDiv = document.getElementById('checkResult');
-
-            if (result.blocked) {
-                resultDiv.innerHTML = `
-                    <div class="alert alert-danger">
-                        <h5><i class="bi bi-x-circle"></i> Créneau bloqué</h5>
-                        <p>Ce créneau n'est pas disponible pour les raisons suivantes:</p>
-                        <ul>
-                            ${result.blocking_impediments.map(imp =>
-                                `<li>${imp.reason} (${imp.start} - ${imp.end})</li>`
-                            ).join('')}
-                        </ul>
-                    </div>
-                `;
-            } else {
-                resultDiv.innerHTML = `
-                    <div class="alert alert-success">
-                        <h5><i class="bi bi-check-circle"></i> Créneau disponible</h5>
-                        <p>Ce créneau est libre et peut être utilisé.</p>
-                    </div>
-                `;
-            }
-        });
+  data() {
+    return {
+      form: {
+        reason: '',
+        start_datetime: '',
+        end_datetime: '',
+        type: '',
+        metadata: {}
+      },
+      validationResult: null,
+      debounceTimer: null
     }
-});
+  },
+
+  computed: {
+    formIsValid() {
+      return this.form.reason &&
+             this.form.start_datetime &&
+             this.form.end_datetime &&
+             this.validationResult?.available
+    }
+  },
+
+  watch: {
+    'form.start_datetime': function() {
+      this.debouncedValidate()
+    },
+    'form.end_datetime': function() {
+      this.debouncedValidate()
+    },
+    'form.type': function() {
+      this.debouncedValidate()
+    }
+  },
+
+  methods: {
+    debouncedValidate() {
+      clearTimeout(this.debounceTimer)
+      this.debounceTimer = setTimeout(this.validateTimeSlot, 500)
+    },
+
+    async validateTimeSlot() {
+      if (!this.form.start_datetime || !this.form.end_datetime) {
+        return
+      }
+
+      try {
+        const response = await axios.post(`/api/users/${this.userId}/impediments/check`, {
+          start: this.form.start_datetime,
+          end: this.form.end_datetime,
+          type: this.form.type
+        })
+
+        this.validationResult = response.data
+      } catch (error) {
+        console.error('Validation error:', error)
+      }
+    },
+
+    async submitForm() {
+      try {
+        const response = await axios.post(`/api/users/${this.userId}/impediments`, this.form)
+
+        this.$emit('created', response.data.data)
+        this.resetForm()
+
+        this.$toast.success('Impediment créé avec succès')
+      } catch (error) {
+        if (error.response?.status === 422) {
+          this.validationResult = {
+            available: false,
+            message: error.response.data.message,
+            conflicts: error.response.data.conflicts || [],
+            suggestions: error.response.data.suggestions || []
+          }
+          this.$toast.error(error.response.data.message)
+        } else {
+          this.$toast.error('Erreur lors de la création')
+        }
+      }
+    },
+
+    resetForm() {
+      this.form = {
+        reason: '',
+        start_datetime: '',
+        end_datetime: '',
+        type: '',
+        metadata: {}
+      }
+      this.validationResult = null
+    }
+  }
+}
 </script>
-@endsection
 ```
 
-## Exemple 11 : Système de gestion des congés et absences
+## Résumé des nouvelles fonctionnalités
 
-```php
-<?php
-// App\Services\LeaveManagementService.php
-namespace App\Services;
+### ✅ Validation des chevauchements
+- **Création** : Empêche les nouveaux impediments qui chevauchent
+- **Mise à jour** : Vérifie les chevauchements lors des modifications
+- **Messages clairs** : Exceptions détaillées avec suggestions
 
-use Roster\Impediment;
-use Roster\Schedule;
-use App\Models\User;
-use Illuminate\Support\Carbon;
-use Illuminate\Support\Facades\DB;
-use InvalidArgumentException;
+### ✅ Nouvelle méthode `getAvailableTimeSlots()`
+- Retourne les créneaux libres entre les impediments
+- Utile pour trouver des alternatives quand un créneau est bloqué
+- Prend en compte le type d'activité
 
-class LeaveManagementService
-{
-    /**
-     * Demander un congé
-     */
-    public function requestLeave(User $employee, array $data): array
-    {
-        DB::beginTransaction();
+### ✅ Performance optimisée
+- Index de base de données pour les vérifications rapides
+- Contraintes d'unicité au niveau base
+- Messages d'erreur en temps réel
 
-        try {
-            // Validation des données
-            $this->validateLeaveRequest($data);
+### ✅ Intégration transparente
+- Compatible avec l'API existante
+- Gestion automatique des schedules qui chevauchent
+- API fluide et intuitive
 
-            $start = Carbon::parse($data['start_date'] . ' 00:00:00');
-            $end = Carbon::parse($data['end_date'] . ' 23:59:59');
+## Bonnes pratiques
 
-            // Vérifier les chevauchements avec des congés existants
-            $existingLeaves = Impediment::for($employee)
-                ->between($start, $end)
-                ->filter(function($imp) {
-                    return isset($imp->metadata['leave_type']);
-                });
+1. **Toujours vérifier avant de créer** : Utilisez `isTimeSlotBlocked()` ou `getAvailableTimeSlots()`
+2. **Gérer les erreurs** : Attrapez `InvalidArgumentException` et proposez des alternatives
+3. **Interface utilisateur** : Validez en temps réel pour une meilleure expérience
+4. **Archivage** : Considérez archiver plutôt que supprimer les schedules affectés
+5. **Notifications** : Informez les utilisateurs lorsque leurs rendez-vous sont annulés
 
-            if ($existingLeaves->count() > 0) {
-                throw new InvalidArgumentException('Vous avez déjà un congé pendant cette période');
-            }
+## Dépannage
 
-            // Créer l'impediment pour le congé
-            $leaveImpediment = Impediment::for($employee)->create([
-                'reason' => $data['reason'] ?? 'Congé',
-                'start_datetime' => $start,
-                'end_datetime' => $end,
-                'metadata' => [
-                    'leave_type' => $data['leave_type'],
-                    'status' => 'pending',
-                    'requested_at' => Carbon::now()->toDateTimeString(),
-                    'requested_by' => $employee->id,
-                    'approver_id' => $data['approver_id'] ?? null,
-                    'documentation' => $data['documentation'] ?? null,
-                ]
-            ]);
+### Erreur : "This time slot overlaps with an existing impediment"
+**Solution** : Utilisez `getAvailableTimeSlots()` pour trouver des créneaux alternatifs
 
-            // Annuler automatiquement les rendez-vous pendant le congé
-            $cancelledAppointments = $this->cancelAppointmentsDuringLeave($employee, $start, $end);
+### Erreur : "Cannot create impediment that overlaps with existing schedules"
+**Solution** : Annulez manuellement les rendez-vous concernés avant de créer l'impediment
 
-            // Notifier le manager
-            $this->notifyManager($employee, $leaveImpediment, $data);
+### Erreur : "No matching availability found"
+**Solution** : Vérifiez les disponibilités de l'utilisateur pour ce jour et cet horaire
 
-            DB::commit();
-
-            return [
-                'success' => true,
-                'leave' => $leaveImpediment,
-                'cancelled_appointments' => $cancelledAppointments,
-                'message' => 'Demande de congé soumise avec succès'
-            ];
-
-        } catch (\Exception $e) {
-            DB::rollBack();
-
-            return [
-                'success' => false,
-                'message' => $e->getMessage()
-            ];
-        }
-    }
-
-    /**
-     * Approuver un congé
-     */
-    public function approveLeave(User $approver, int $leaveId, array $data = []): array
-    {
-        DB::beginTransaction();
-
-        try {
-            $leave = Impediment::find($leaveId);
-
-            if (!$leave) {
-                throw new InvalidArgumentException('Congé non trouvé');
-            }
-
-            // Vérifier les permissions
-            $employee = User::find($leave->schedulable_id);
-            if (!$employee) {
-                throw new InvalidArgumentException('Employé non trouvé');
-            }
-
-            // Mettre à jour le statut
-            Impediment::for($employee)->update($leaveId, [
-                'metadata' => array_merge($leave->metadata ?? [], [
-                    'status' => 'approved',
-                    'approved_at' => Carbon::now()->toDateTimeString(),
-                    'approved_by' => $approver->id,
-                    'approval_notes' => $data['notes'] ?? null,
-                ])
-            ]);
-
-            // Notifier l'employé
-            $this->notifyEmployee($employee, $leave, 'approved');
-
-            DB::commit();
-
-            return [
-                'success' => true,
-                'message' => 'Congé approuvé avec succès'
-            ];
-
-        } catch (\Exception $e) {
-            DB::rollBack();
-
-            return [
-                'success' => false,
-                'message' => $e->getMessage()
-            ];
-        }
-    }
-
-    /**
-     * Refuser un congé
-     */
-    public function rejectLeave(User $approver, int $leaveId, string $reason): array
-    {
-        DB::beginTransaction();
-
-        try {
-            $leave = Impediment::find($leaveId);
-
-            if (!$leave) {
-                throw new InvalidArgumentException('Congé non trouvé');
-            }
-
-            $employee = User::find($leave->schedulable_id);
-            if (!$employee) {
-                throw new InvalidArgumentException('Employé non trouvé');
-            }
-
-            // Supprimer l'impediment
-            Impediment::for($employee)->delete($leaveId);
-
-            // Restaurer les rendez-vous annulés (si possible)
-            $this->restoreAppointments($employee, $leave);
-
-            // Notifier l'employé
-            $this->notifyEmployee($employee, $leave, 'rejected', $reason);
-
-            DB::commit();
-
-            return [
-                'success' => true,
-                'message' => 'Congé refusé'
-            ];
-
-        } catch (\Exception $e) {
-            DB::rollBack();
-
-            return [
-                'success' => false,
-                'message' => $e->getMessage()
-            ];
-        }
-    }
-
-    /**
-     * Vérifier la disponibilité d'un employé
-     */
-    public function checkEmployeeAvailability(User $employee, Carbon $start, Carbon $end): array
-    {
-        // Vérifier les impediments (congés, réunions, etc.)
-        $impediments = Impediment::for($employee)
-            ->between($start, $end)
-            ->get();
-
-        $blockedPeriods = [];
-        foreach ($impediments as $impediment) {
-            $blockedPeriods[] = [
-                'start' => $impediment->start_datetime,
-                'end' => $impediment->end_datetime,
-                'reason' => $impediment->reason,
-                'type' => $impediment->metadata['leave_type'] ?? 'other',
-            ];
-        }
-
-        // Vérifier les rendez-vous existants
-        $existingAppointments = Schedule::for($employee)
-            ->between($start, $end)
-            ->get();
-
-        $busyPeriods = [];
-        foreach ($existingAppointments as $appointment) {
-            $busyPeriods[] = [
-                'start' => $appointment->start_datetime,
-                'end' => $appointment->end_datetime,
-                'title' => $appointment->title,
-                'status' => $appointment->status->value,
-            ];
-        }
-
-        return [
-            'available' => empty($blockedPeriods),
-            'blocked_periods' => $blockedPeriods,
-            'busy_periods' => $busyPeriods,
-            'summary' => [
-                'total_days' => $start->diffInDays($end),
-                'blocked_days' => count($blockedPeriods),
-                'busy_days' => count($busyPeriods),
-            ]
-        ];
-    }
-
-    /**
-     * Générer un rapport de congés
-     */
-    public function generateLeaveReport(User $employee, Carbon $startDate, Carbon $endDate): array
-    {
-        $leaves = Impediment::for($employee)
-            ->between($startDate, $endDate)
-            ->get()
-            ->filter(function($imp) {
-                return isset($imp->metadata['leave_type']);
-            });
-
-        $report = [
-            'employee' => $employee->name,
-            'period' => $startDate->format('Y-m-d') . ' to ' . $endDate->format('Y-m-d'),
-            'leaves' => [],
-            'summary' => [
-                'total' => 0,
-                'by_type' => [],
-                'by_status' => [],
-            ]
-        ];
-
-        foreach ($leaves as $leave) {
-            $days = $leave->start_datetime->diffInDays($leave->end_datetime) + 1;
-            $type = $leave->metadata['leave_type'] ?? 'unknown';
-            $status = $leave->metadata['status'] ?? 'unknown';
-
-            $report['leaves'][] = [
-                'id' => $leave->id,
-                'reason' => $leave->reason,
-                'start_date' => $leave->start_datetime->format('Y-m-d'),
-                'end_date' => $leave->end_datetime->format('Y-m-d'),
-                'days' => $days,
-                'type' => $type,
-                'status' => $status,
-                'requested_at' => $leave->metadata['requested_at'] ?? null,
-                'approved_at' => $leave->metadata['approved_at'] ?? null,
-            ];
-
-            // Mettre à jour le résumé
-            $report['summary']['total'] += $days;
-
-            if (!isset($report['summary']['by_type'][$type])) {
-                $report['summary']['by_type'][$type] = 0;
-            }
-            $report['summary']['by_type'][$type] += $days;
-
-            if (!isset($report['summary']['by_status'][$status])) {
-                $report['summary']['by_status'][$status] = 0;
-            }
-            $report['summary']['by_status'][$status]++;
-        }
-
-        return $report;
-    }
-
-    /**
-     * Valider une demande de congé
-     */
-    private function validateLeaveRequest(array $data): void
-    {
-        $required = ['start_date', 'end_date', 'leave_type'];
-
-        foreach ($required as $field) {
-            if (!isset($data[$field])) {
-                throw new InvalidArgumentException("Le champ '$field' est requis");
-            }
-        }
-
-        $start = Carbon::parse($data['start_date']);
-        $end = Carbon::parse($data['end_date']);
-
-        if ($end->lt($start)) {
-            throw new InvalidArgumentException('La date de fin doit être après la date de début');
-        }
-
-        // Vérifier que la durée ne dépasse pas la limite
-        $maxDays = $this->getMaxLeaveDays($data['leave_type']);
-        $duration = $end->diffInDays($start) + 1;
-
-        if ($duration > $maxDays) {
-            throw new InvalidArgumentException("La durée maximale pour ce type de congé est de $maxDays jours");
-        }
-
-        // Vérifier le préavis (par exemple, 48h pour les congés)
-        $noticePeriod = 48; // heures
-        if ($start->diffInHours(Carbon::now()) < $noticePeriod) {
-            throw new InvalidArgumentException("Un préavis de {$noticePeriod}h est requis");
-        }
-    }
-
-    /**
-     * Annuler les rendez-vous pendant un congé
-     */
-    private function cancelAppointmentsDuringLeave(User $employee, Carbon $start, Carbon $end): array
-    {
-        $appointments = Schedule::for($employee)
-            ->between($start, $end)
-            ->get();
-
-        $cancelled = [];
-
-        foreach ($appointments as $appointment) {
-            // Marquer comme annulé à cause du congé
-            Schedule::for($employee)->update($appointment->id, [
-                'status' => 'cancelled',
-                'metadata' => array_merge($appointment->metadata ?? [], [
-                    'cancelled_reason' => 'employee_leave',
-                    'cancelled_at' => Carbon::now()->toDateTimeString(),
-                    'original_appointment' => [
-                        'title' => $appointment->title,
-                        'patient_id' => $appointment->metadata['patient_id'] ?? null,
-                    ]
-                ])
-            ]);
-
-            $cancelled[] = $appointment;
-
-            // Notifier le patient
-            $this->notifyPatient($appointment, 'cancelled_due_to_leave');
-        }
-
-        return $cancelled;
-    }
-
-    /**
-     * Restaurer les rendez-vous après refus de congé
-     */
-    private function restoreAppointments(User $employee, $leave): void
-    {
-        // Dans une vraie application, vous voudriez restaurer les rendez-vous
-        // qui ont été annulés à cause de ce congé
-        // Cela nécessiterait de les archiver au lieu de les supprimer
-
-        // Pour cet exemple, on ne fait rien
-    }
-
-    /**
-     * Obtenir le nombre maximum de jours pour un type de congé
-     */
-    private function getMaxLeaveDays(string $leaveType): int
-    {
-        $limits = [
-            'vacation' => 30,
-            'sick_leave' => 15,
-            'maternity' => 112,
-            'paternity' => 28,
-            'training' => 10,
-            'other' => 5,
-        ];
-
-        return $limits[$leaveType] ?? 5;
-    }
-
-    /**
-     * Notifier le manager
-     */
-    private function notifyManager(User $employee, $leave, array $data): void
-    {
-        // Implémenter la notification
-        // Mail::to($manager->email)->send(new LeaveRequestNotification($employee, $leave, $data));
-    }
-
-    /**
-     * Notifier l'employé
-     */
-    private function notifyEmployee(User $employee, $leave, string $action, ?string $reason = null): void
-    {
-        // Implémenter la notification
-        // Mail::to($employee->email)->send(new LeaveStatusNotification($leave, $action, $reason));
-    }
-
-    /**
-     * Notifier le patient
-     */
-    private function notifyPatient($appointment, string $reason): void
-    {
-        // Implémenter la notification
-        // if (isset($appointment->metadata['patient_email'])) {
-        //     Mail::to($appointment->metadata['patient_email'])
-        //         ->send(new AppointmentCancellationNotification($appointment, $reason));
-        // }
-    }
-}
+### Problème de performance
+**Solution** : Les index sont déjà optimisés. Vérifiez que votre base de données supporte les contraintes EXCLUDE si vous utilisez PostgreSQL.
 ```

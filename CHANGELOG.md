@@ -4,7 +4,7 @@ Toutes les modifications notables de ce projet seront documentées dans ce fichi
 Le format est basé sur [Keep a Changelog](https://keepachangelog.com/fr/1.0.0/),
 et ce projet suit les principes de [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.0.8] - 2025-12-17
+## [0.0.9] - 2025-12-17
 
 ### 🛡️ Prévention des Chevauchements d'Impediments
 

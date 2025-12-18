@@ -1,14 +1,20 @@
 <?php
+
+declare(strict_types=1);
+
 // ==== src/Facades/Roster.php ====
 
 namespace Roster\Facades;
 
 use Illuminate\Support\Facades\Facade;
+use Roster\Services\AvailabilityService;
+use Roster\Services\ImpedimentService;
+use Roster\Services\ScheduleService;
 
 /**
- * @method static \Roster\Services\ScheduleService schedules()
- * @method static \Roster\Services\AvailabilityService availabilities()
- * @method static \Roster\Services\ImpedimentService impediments()
+ * @method static ScheduleService schedules()
+ * @method static AvailabilityService availabilities()
+ * @method static ImpedimentService impediments()
  */
 class Roster extends Facade
 {

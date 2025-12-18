@@ -1,35 +1,24 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Roster\Services;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use InvalidArgumentException;
 use Roster\Models\Availability;
-use RuntimeException;
 
-class AvailabilityService
+class AvailabilityService extends AbstractSchedulableService
 {
-    protected ?Model $schedulable = null;
-
-    protected array $filters = [];
 
     protected AvailabilityValidator $validator;
 
-    public function __construct(?AvailabilityValidator $validator = null)
+    public function __construct(?AvailabilityValidator $availabilityValidator = null)
     {
-        $this->validator = $validator ?? new AvailabilityValidator;
-    }
-
-    /**
-     * Spécifier le modèle pour lequel gérer les disponibilités
-     */
-    public function for(Model $schedulable): self
-    {
-        $this->schedulable = $schedulable;
-
-        return $this;
+        $this->validator = $availabilityValidator ?? new AvailabilityValidator;
     }
 
     /**
@@ -73,11 +62,11 @@ class AvailabilityService
 
         $availability = $this->find($id);
 
-        if (! $availability) {
+        if (! $availability instanceof Availability) {
             return false;
         }
 
-        if ($data) {
+        if ($data !== []) {
             // Valider les données de base
             $this->validator->validateBasicData($data);
 
@@ -94,6 +83,7 @@ class AvailabilityService
             if (! isset($checkData['start_time']) && $availability->start_time) {
                 $checkData['start_time'] = $availability->start_time->format('H:i:s');
             }
+
             if (! isset($checkData['end_time']) && $availability->end_time) {
                 $checkData['end_time'] = $availability->end_time->format('H:i:s');
             }
@@ -116,7 +106,7 @@ class AvailabilityService
 
         $availability = $this->find($id);
 
-        if (! $availability) {
+        if (! $availability instanceof Availability) {
             return false;
         }
 
@@ -148,6 +138,7 @@ class AvailabilityService
     /**
      * Trouver toutes les disponibilités qui chevauchent
      *
+     * @param  array<string, mixed>  $data
      * @return Collection<int, Availability>
      */
     public function findOverlapping(array $data, ?int $exceptId = null): Collection
@@ -172,11 +163,11 @@ class AvailabilityService
         $allAvailabilities = $query->get();
 
         // Filtrer manuellement pour vérifier l'intersection des jours et le chevauchement
-        return $allAvailabilities->filter(function (Availability $availability) use ($startTime, $endTime, $startDate, $endDate, $days) {
+        return $allAvailabilities->filter(function (Availability $availability) use ($startTime, $endTime, $startDate, $endDate, $days): bool {
             // Vérifier si les jours se chevauchent
             if (! empty($days)) {
                 $commonDays = array_intersect($availability->days, $days);
-                if (empty($commonDays)) {
+                if ($commonDays === []) {
                     return false;
                 }
             }
@@ -203,16 +194,15 @@ class AvailabilityService
         $mergedData = $data;
         $idsToDelete = [];
 
-        /** @var Availability $adjacent */
-        foreach ($adjacentAvailabilities as $adjacent) {
+        foreach ($adjacentAvailabilities as $adjacentAvailability) {
             try {
                 // Créer un objet temporaire avec les données fusionnées
                 $tempAvailability = $this->createAvailabilityFromData($mergedData);
 
                 // Vérifier si elles sont vraiment adjacentes
-                if ($this->validator->areAdjacent($tempAvailability, $adjacent)) {
-                    $mergedData = $this->validator->mergeAdjacent($tempAvailability, $adjacent);
-                    $idsToDelete[] = $adjacent->id;
+                if ($this->validator->areAdjacent($tempAvailability, $adjacentAvailability)) {
+                    $mergedData = $this->validator->mergeAdjacent($tempAvailability, $adjacentAvailability);
+                    $idsToDelete[] = $adjacentAvailability->id;
                 }
             } catch (InvalidArgumentException $e) {
                 // Si la fusion échoue, continuer avec la suivante
@@ -221,7 +211,7 @@ class AvailabilityService
         }
 
         // Supprimer toutes les disponibilités fusionnées
-        if (! empty($idsToDelete)) {
+        if ($idsToDelete !== []) {
             Availability::whereIn('id', $idsToDelete)->delete();
         }
 
@@ -231,6 +221,7 @@ class AvailabilityService
     /**
      * Trouver les disponibilités adjacentes
      *
+     * @param  array<string, mixed>  $data
      * @return Collection<int, Availability>
      */
     public function findAdjacentAvailabilities(array $data): Collection
@@ -252,7 +243,7 @@ class AvailabilityService
         // Créer un objet temporaire pour la comparaison
         $tempAvailability = $this->createAvailabilityFromData($data);
 
-        return $availabilities->filter(function (Availability $availability) use ($tempAvailability) {
+        return $availabilities->filter(function (Availability $availability) use ($tempAvailability): bool {
             return $this->validator->areAdjacent($tempAvailability, $availability);
         });
     }
@@ -260,13 +251,15 @@ class AvailabilityService
     /**
      * Créer un objet Availability temporaire à partir de données
      *
-     * @throws \InvalidArgumentException si end_time est avant start_time ou si les clés sont manquantes
+     * @param  array<string, mixed>  $data
+     *
+     * @throws InvalidArgumentException si end_time est avant start_time ou si les clés sont manquantes
      */
     protected function createAvailabilityFromData(array $data): Availability
     {
         // Vérifier que les champs essentiels existent
         if (! isset($data['start_time'], $data['end_time'])) {
-            throw new \InvalidArgumentException('Both start_time and end_time must be provided.');
+            throw new InvalidArgumentException('Both start_time and end_time must be provided.');
         }
 
         $startTime = Carbon::parse($data['start_time']);
@@ -274,7 +267,7 @@ class AvailabilityService
 
         // Vérification que end_time est après start_time
         if ($endTime->lessThanOrEqualTo($startTime)) {
-            throw new \InvalidArgumentException('End time must be after start time.');
+            throw new InvalidArgumentException('End time must be after start time.');
         }
 
         $availability = new Availability;
@@ -290,40 +283,6 @@ class AvailabilityService
         $availability->end_date = isset($data['end_date']) ? Carbon::parse($data['end_date']) : null;
 
         return $availability;
-    }
-
-    /**
-     * Récupérer toutes les disponibilités
-     *
-     * @return Collection<int, Availability>
-     */
-    public function all(): Collection
-    {
-        $this->validateSchedulable();
-
-        return $this->applyFilters()->get();
-    }
-
-    /**
-     * Récupérer les disponibilités avec les filtres appliqués
-     *
-     * @return Collection<int, Availability>
-     */
-    public function get(): Collection
-    {
-        $this->validateSchedulable();
-
-        return $this->applyFilters()->get();
-    }
-
-    /**
-     * Filtrer par type de disponibilité
-     */
-    public function whereType(string $type): self
-    {
-        $this->filters['type'] = $type;
-
-        return $this;
     }
 
     /**
@@ -353,10 +312,10 @@ class AvailabilityService
             ->where('end_time', '>=', $time);
 
         // Vérifier les dates de validité si présentes
-        $query->where(function ($q) use ($datetime) {
+        $query->where(function ($q) use ($datetime): void {
             $q->whereNull('start_date')
                 ->orWhere('start_date', '<=', $datetime->toDateString());
-        })->where(function ($q) use ($datetime) {
+        })->where(function ($q) use ($datetime): void {
             $q->whereNull('end_date')
                 ->orWhere('end_date', '>=', $datetime->toDateString());
         });
@@ -374,18 +333,18 @@ class AvailabilityService
         $currentDate = $fromDate->copy();
         $maxDaysToCheck = 365; // Limite pour éviter les boucles infinies
 
-        for ($i = 0; $i < $maxDaysToCheck; $i++) {
+        for ($i = 0; $i < $maxDaysToCheck; ++$i) {
             $dayOfWeek = strtolower($currentDate->englishDayOfWeek);
 
             /** @var Collection<int, Availability> $availabilities */
             $availabilities = Availability::where('schedulable_id', $this->schedulable->id)
                 ->where('schedulable_type', get_class($this->schedulable))
                 ->whereJsonContains('days', $dayOfWeek)
-                ->where(function ($q) use ($currentDate) {
+                ->where(function ($q) use ($currentDate): void {
                     $q->whereNull('start_date')
                         ->orWhere('start_date', '<=', $currentDate->toDateString());
                 })
-                ->where(function ($q) use ($currentDate) {
+                ->where(function ($q) use ($currentDate): void {
                     $q->whereNull('end_date')
                         ->orWhere('end_date', '>=', $currentDate->toDateString());
                 })
@@ -440,11 +399,11 @@ class AvailabilityService
             $availabilities = Availability::where('schedulable_id', $this->schedulable->id)
                 ->where('schedulable_type', get_class($this->schedulable))
                 ->whereJsonContains('days', $dayOfWeek)
-                ->where(function ($q) use ($currentDate) {
+                ->where(function ($q) use ($currentDate): void {
                     $q->whereNull('start_date')
                         ->orWhere('start_date', '<=', $currentDate->toDateString());
                 })
-                ->where(function ($q) use ($currentDate) {
+                ->where(function ($q) use ($currentDate): void {
                     $q->whereNull('end_date')
                         ->orWhere('end_date', '>=', $currentDate->toDateString());
                 })
@@ -477,29 +436,9 @@ class AvailabilityService
     }
 
     /**
-     * Réinitialiser les filtres
-     */
-    public function resetFilters(): self
-    {
-        $this->filters = [];
-
-        return $this;
-    }
-
-    /**
-     * Valider que le schedulable est défini
-     */
-    protected function validateSchedulable(): void
-    {
-        if (! $this->schedulable) {
-            throw new RuntimeException('No schedulable specified. Use for() method first.');
-        }
-    }
-
-    /**
      * Appliquer les filtres à la requête
      *
-     * @return \Illuminate\Database\Eloquent\Builder
+     * @return Builder
      */
     protected function applyFilters()
     {

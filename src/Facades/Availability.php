@@ -1,14 +1,17 @@
 <?php
+
+declare(strict_types=1);
+
 // ==== src/Facades/Availability.php ====
 
 namespace Roster\Facades;
 
-use Illuminate\Support\Facades\Facade;
-use Roster\Services\AvailabilityService;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Collection;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Facade;
 use Roster\Models\Availability as AvailabilityModel;
+use Roster\Services\AvailabilityService;
 
 /**
  * @method static AvailabilityService for(Model $schedulable)

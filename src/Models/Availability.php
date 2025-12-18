@@ -1,4 +1,7 @@
 <?php
+
+declare(strict_types=1);
+
 // ==== src/Models/Availability.php ====
 
 namespace Roster\Models;
@@ -62,7 +65,7 @@ class Availability extends Model
     {
         // Vérifier le jour
         $dayOfWeek = strtolower($start->englishDayOfWeek);
-        if (!in_array($dayOfWeek, $this->days)) {
+        if (! in_array($dayOfWeek, $this->days)) {
             return false;
         }
 
@@ -82,10 +85,6 @@ class Availability extends Model
             return false;
         }
 
-        if ($this->end_date && $end->gt($this->end_date)) {
-            return false;
-        }
-
-        return true;
+        return ! ($this->end_date && $end->gt($this->end_date));
     }
 }

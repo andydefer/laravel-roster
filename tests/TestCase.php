@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Roster\Tests;
 
 use Orchestra\Testbench\TestCase as BaseTestCase;
@@ -11,7 +13,7 @@ abstract class TestCase extends BaseTestCase
     {
         parent::setUp();
 
-        $this->loadMigrationsFrom(__DIR__ . '/../database/migrations');
+        $this->loadMigrationsFrom(__DIR__.'/../database/migrations');
 
         // Optionnel : créer une migration pour la table de test
         $this->artisan('migrate', ['--database' => 'testing'])->run();

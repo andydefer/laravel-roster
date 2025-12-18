@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Roster\Enums;
 
 enum ScheduleStatus: string
@@ -20,8 +22,8 @@ enum ScheduleStatus: string
     /**
      * Vérifie si le statut courant est égal à un autre
      */
-    public function is(ScheduleStatus $status): bool
+    public function is(ScheduleStatus $scheduleStatus): bool
     {
-        return $this->value === $status->value;
+        return $this->value === $scheduleStatus->value;
     }
 }

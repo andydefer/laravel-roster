@@ -1,4 +1,7 @@
 <?php
+
+declare(strict_types=1);
+
 // ==== src/Models/Impediment.php ====
 
 namespace Roster\Models;
@@ -28,25 +31,15 @@ class Impediment extends Model
 
     protected static function booted(): void
     {
-        static::creating(function (Impediment $impediment) {
+        self::creating(function (Impediment $impediment): void {
             $impediment->validateAgainstAvailability();
             $impediment->validateNotOverlappingWithSchedules();
         });
 
-        static::updating(function (Impediment $impediment) {
+        self::updating(function (Impediment $impediment): void {
             if ($impediment->isDirty(['start_datetime', 'end_datetime', 'availability_id'])) {
                 $impediment->validateAgainstAvailability();
-                // NE PAS valider les chevauchements ici - les schedules seront supprimés dans le hook updated
-            }
-        });
-
-        static::created(function (Impediment $impediment) {
-            $impediment->deleteOverlappingSchedules();
-        });
-
-        static::updated(function (Impediment $impediment) {
-            if ($impediment->isDirty(['start_datetime', 'end_datetime'])) {
-                $impediment->deleteOverlappingSchedules();
+                $impediment->validateNotOverlappingWithSchedules($impediment->id);
             }
         });
     }
@@ -81,7 +74,7 @@ class Impediment extends Model
      */
     protected function validateAgainstAvailability(): void
     {
-        if (!$this->availability) {
+        if (! $this->availability) {
             throw new InvalidArgumentException('Impediment must belong to an Availability');
         }
 
@@ -89,9 +82,9 @@ class Impediment extends Model
 
         // Vérifier que les jours correspondent
         $dayOfWeek = strtolower($this->start_datetime->englishDayOfWeek);
-        if (!in_array($dayOfWeek, $availability->days)) {
+        if (! in_array($dayOfWeek, $availability->days)) {
             throw new InvalidArgumentException(
-                "Impediment day ({$dayOfWeek}) is not in Availability days"
+                sprintf('Impediment day (%s) is not in Availability days', $dayOfWeek)
             );
         }
 
@@ -129,7 +122,7 @@ class Impediment extends Model
     protected function validateNotOverlappingWithSchedules(?int $excludeId = null): void
     {
         $overlappingSchedules = Schedule::where('availability_id', $this->availability_id)
-            ->where(function ($q) {
+            ->where(function ($q): void {
                 $q->where('start_datetime', '<', $this->end_datetime)
                     ->where('end_datetime', '>', $this->start_datetime);
             })
@@ -148,7 +141,7 @@ class Impediment extends Model
     protected function deleteOverlappingSchedules(): void
     {
         Schedule::where('availability_id', $this->availability_id)
-            ->where(function ($q) {
+            ->where(function ($q): void {
                 $q->where('start_datetime', '<', $this->end_datetime)
                     ->where('end_datetime', '>', $this->start_datetime);
             })
@@ -169,6 +162,7 @@ class Impediment extends Model
     public function isActive(): bool
     {
         $now = Carbon::now();
+
         return $this->start_datetime->lte($now) && $this->end_datetime->gte($now);
     }
 

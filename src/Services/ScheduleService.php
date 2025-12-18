@@ -1,29 +1,24 @@
 <?php
+
+declare(strict_types=1);
+
 // ==== src/Services/ScheduleService.php ====
 
 namespace Roster\Services;
 
-use Roster\Models\Schedule;
-use Roster\Models\Availability;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Collection;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Collection;
 use InvalidArgumentException;
-use RuntimeException;
+use Roster\Models\Availability;
+use Roster\Models\Schedule;
 
-class ScheduleService
+class ScheduleService extends AbstractSchedulableService
 {
     protected ?Model $schedulable = null;
-    protected array $filters = [];
 
-    /**
-     * Spécifier le modèle pour lequel gérer les schedules
-     */
-    public function for(Model $schedulable): self
-    {
-        $this->schedulable = $schedulable;
-        return $this;
-    }
+    protected array $filters = [];
 
     /**
      * Récupérer le modèle schedulable courant
@@ -46,7 +41,7 @@ class ScheduleService
         // Trouver l'Availability correspondante
         $availability = $this->findMatchingAvailability($data);
 
-        if (!$availability) {
+        if (! $availability instanceof Availability) {
             throw new InvalidArgumentException('No matching availability found for this schedule');
         }
 
@@ -58,9 +53,10 @@ class ScheduleService
         return $schedule;
     }
 
-
     /**
      * Mettre à jour un schedule existant
+     *
+     * @param  array<string, mixed>  $data
      */
     public function update(int $id, array $data): bool
     {
@@ -68,22 +64,19 @@ class ScheduleService
 
         $schedule = $this->find($id);
 
-        if (!$schedule) {
+        if (! $schedule instanceof Schedule) {
             return false;
         }
 
-        if ($data) {
-            // Si les dates changent, vérifier la nouvelle Availability
-            if (isset($data['start_datetime'])) {
-                $newAvailability = $this->findMatchingAvailability($data);
+        // Si les dates changent, vérifier la nouvelle Availability
+        if ($data !== [] && isset($data['start_datetime'])) {
+            $newAvailability = $this->findMatchingAvailability($data);
+            if (! $newAvailability instanceof Availability) {
+                throw new InvalidArgumentException('No matching availability found for new schedule time');
+            }
 
-                if (!$newAvailability) {
-                    throw new InvalidArgumentException('No matching availability found for new schedule time');
-                }
-
-                if ($newAvailability->id !== $schedule->availability_id) {
-                    $data['availability_id'] = $newAvailability->id;
-                }
+            if ($newAvailability->id !== $schedule->availability_id) {
+                $data['availability_id'] = $newAvailability->id;
             }
         }
 
@@ -99,7 +92,7 @@ class ScheduleService
 
         $schedule = $this->find($id);
 
-        if (!$schedule) {
+        if (! $schedule instanceof Schedule) {
             return false;
         }
 
@@ -113,40 +106,14 @@ class ScheduleService
     {
         $this->validateSchedulable();
 
-        return Schedule::whereHas('availability', function ($query) {
+        return Schedule::whereHas('availability', function ($query): void {
             $query->where('schedulable_id', $this->schedulable->id)
                 ->where('schedulable_type', get_class($this->schedulable));
         })->find($id);
     }
 
-    /**
-     * Trouver tous les schedules
-     */
-    public function all(): Collection
-    {
-        $this->validateSchedulable();
 
-        return $this->applyFilters()->get();
-    }
 
-    /**
-     * Récupérer les schedules avec les filtres appliqués
-     */
-    public function get(): Collection
-    {
-        $this->validateSchedulable();
-
-        return $this->applyFilters()->get();
-    }
-
-    /**
-     * Filtrer par type d'activité
-     */
-    public function whereType(string $type): self
-    {
-        $this->filters['type'] = $type;
-        return $this;
-    }
 
     /**
      * Filtrer par date de début
@@ -154,6 +121,7 @@ class ScheduleService
     public function whereStartDate(Carbon $date): self
     {
         $this->filters['start_date'] = $date;
+
         return $this;
     }
 
@@ -163,6 +131,7 @@ class ScheduleService
     public function whereEndDate(Carbon $date): self
     {
         $this->filters['end_date'] = $date;
+
         return $this;
     }
 
@@ -172,6 +141,7 @@ class ScheduleService
     public function whereStatus(string $status): self
     {
         $this->filters['status'] = $status;
+
         return $this;
     }
 
@@ -199,7 +169,7 @@ class ScheduleService
         // Trouver une Availability correspondante
         $availability = $this->findAvailabilityForTimeSlot($start, $end, $type);
 
-        if (!$availability) {
+        if (! $availability instanceof Availability) {
             return false;
         }
 
@@ -215,7 +185,7 @@ class ScheduleService
             ->where('end_datetime', '>', $start)
             ->exists();
 
-        return !$hasOverlappingSchedule && !$hasOverlappingImpediment;
+        return ! $hasOverlappingSchedule && ! $hasOverlappingImpediment;
     }
 
     /**
@@ -228,7 +198,7 @@ class ScheduleService
         $now = Carbon::now();
 
         // Chercher dans les 30 prochains jours
-        for ($i = 0; $i < 30; $i++) {
+        for ($i = 0; $i < 30; ++$i) {
             $currentDate = $now->copy()->addDays($i)->startOfDay();
 
             // Récupérer toutes les availabilities pour ce jour
@@ -278,21 +248,16 @@ class ScheduleService
         return $slots;
     }
 
-    /**
-     * Réinitialiser les filtres
-     */
-    public function resetFilters(): self
-    {
-        $this->filters = [];
-        return $this;
-    }
+
 
     /**
      * Valider les données du schedule
+     *
+     * @param  array<string, mixed>  $data
      */
     protected function validateScheduleData(array $data): void
     {
-        if (!isset($data['start_datetime']) || !isset($data['end_datetime'])) {
+        if (! isset($data['start_datetime']) || ! isset($data['end_datetime'])) {
             throw new InvalidArgumentException('Start and end datetime are required');
         }
 
@@ -310,6 +275,8 @@ class ScheduleService
 
     /**
      * Trouver l'Availability correspondante pour un schedule
+     *
+     * @param  array<string, mixed>  $data
      */
     protected function findMatchingAvailability(array $data): ?Availability
     {
@@ -327,10 +294,10 @@ class ScheduleService
         }
 
         // Vérifier les dates de période
-        $query->where(function ($q) use ($start) {
+        $query->where(function ($q) use ($start): void {
             $q->whereNull('start_date')
                 ->orWhere('start_date', '<=', $start->toDateString());
-        })->where(function ($q) use ($end) {
+        })->where(function ($q) use ($end): void {
             $q->whereNull('end_date')
                 ->orWhere('end_date', '>=', $end->toDateString());
         });
@@ -354,10 +321,10 @@ class ScheduleService
         }
 
         // Vérifier les dates de période
-        $query->where(function ($q) use ($start) {
+        $query->where(function ($q) use ($start): void {
             $q->whereNull('start_date')
                 ->orWhere('start_date', '<=', $start->toDateString());
-        })->where(function ($q) use ($end) {
+        })->where(function ($q) use ($end): void {
             $q->whereNull('end_date')
                 ->orWhere('end_date', '>=', $end->toDateString());
         });
@@ -384,10 +351,10 @@ class ScheduleService
         }
 
         // Vérifier les dates de période
-        $query->where(function ($q) use ($date) {
+        $query->where(function ($q) use ($date): void {
             $q->whereNull('start_date')
                 ->orWhere('start_date', '<=', $date->toDateString());
-        })->where(function ($q) use ($date) {
+        })->where(function ($q) use ($date): void {
             $q->whereNull('end_date')
                 ->orWhere('end_date', '>=', $date->toDateString());
         });
@@ -457,7 +424,7 @@ class ScheduleService
             ->setTime($endTime->hour, $endTime->minute, $endTime->second);
 
         // Si une heure de début minimale est spécifiée
-        if ($minStartTime && $minStartTime->gt($currentSlot)) {
+        if ($minStartTime instanceof Carbon && $minStartTime->gt($currentSlot)) {
             $currentSlot = $minStartTime->copy();
         }
 
@@ -482,30 +449,21 @@ class ScheduleService
         return $slots;
     }
 
-    /**
-     * Valider que le schedulable est défini
-     */
-    protected function validateSchedulable(): void
-    {
-        if (!$this->schedulable) {
-            throw new RuntimeException('No schedulable specified. Use for() method first.');
-        }
-    }
 
     /**
      * Appliquer les filtres à la requête
      *
-     * @return \Illuminate\Database\Eloquent\Builder
+     * @return Builder
      */
     protected function applyFilters()
     {
-        $query = Schedule::whereHas('availability', function ($query) {
+        $query = Schedule::whereHas('availability', function ($query): void {
             $query->where('schedulable_id', $this->schedulable->id)
                 ->where('schedulable_type', get_class($this->schedulable));
         });
 
         if (isset($this->filters['type'])) {
-            $query->whereHas('availability', function ($q) {
+            $query->whereHas('availability', function ($q): void {
                 $q->where('type', $this->filters['type']);
             });
         }

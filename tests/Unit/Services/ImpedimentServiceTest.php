@@ -1,53 +1,57 @@
 <?php
+
+declare(strict_types=1);
+
 // ==== tests/Unit/Services/ImpedimentServiceTest.php ====
 
 namespace Roster\Tests\Unit\Services;
 
-use Roster\Services\ImpedimentService;
-use Roster\Models\Impediment;
-use Roster\Models\Availability;
-use Roster\Models\Schedule;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Schema;
-use Roster\Tests\TestCase;
 use InvalidArgumentException;
+use Roster\Exceptions\MissingSchedulableException;
+use Roster\Models\Availability;
+use Roster\Models\Impediment;
+use Roster\Models\Schedule;
+use Roster\Services\ImpedimentService;
+use Roster\Tests\TestCase;
 
-class ImpedimentServiceTest extends TestCase
+final class ImpedimentServiceTest extends TestCase
 {
     use RefreshDatabase;
 
-    protected ImpedimentService $service;
-    protected TestSchedulable $schedulable;
+    private ImpedimentService $impedimentService;
+
+    private TestSchedulable $testSchedulable;
 
     /**
      * Dates fixes pour juin 2027
      */
-    protected Carbon $mondayJune7;    // Lundi 7 juin 2027
-    protected Carbon $tuesdayJune8;   // Mardi 8 juin 2027
+    private Carbon $mondayJune7;   // Mardi 8 juin 2027
 
     protected function setUp(): void
     {
         parent::setUp();
 
-        Schema::create('test_schedulables', function ($table) {
+        Schema::create('test_schedulables', function ($table): void {
             $table->id();
             $table->string('name');
             $table->timestamps();
         });
 
-        $this->service = new ImpedimentService();
-        $this->schedulable = TestSchedulable::create(['name' => 'Test Schedulable']);
+        $this->impedimentService = new ImpedimentService;
+        $this->testSchedulable = TestSchedulable::create(['name' => 'Test Schedulable']);
 
         // Dates fixes de juin 2027
         $this->mondayJune7 = Carbon::create(2027, 6, 7); // Lundi
-        $this->tuesdayJune8 = Carbon::create(2027, 6, 8); // Mardi
+        Carbon::create(2027, 6, 8); // Mardi
     }
 
-    public function test_create_impediment_with_valid_data()
+    public function test_create_impediment_with_valid_data(): void
     {
         $availability = Availability::create([
-            'schedulable_id' => $this->schedulable->id,
+            'schedulable_id' => $this->testSchedulable->id,
             'schedulable_type' => TestSchedulable::class,
             'type' => 'consultation',
             'start_time' => '08:00',
@@ -57,7 +61,7 @@ class ImpedimentServiceTest extends TestCase
             'end_date' => '2027-06-30',
         ]);
 
-        $impediment = $this->service->for($this->schedulable)->create([
+        $impediment = $this->impedimentService->for($this->testSchedulable)->create([
             'reason' => 'Maladie',
             'start_datetime' => $this->mondayJune7->copy()->setTime(9, 0),
             'end_datetime' => $this->mondayJune7->copy()->setTime(12, 0),
@@ -71,10 +75,10 @@ class ImpedimentServiceTest extends TestCase
         $this->assertEquals(['note' => 'Rendez-vous annulé'], $impediment->metadata);
     }
 
-    public function test_create_impediment_prevents_overlapping_impediments()
+    public function test_create_impediment_prevents_overlapping_impediments(): void
     {
-        $availability = Availability::create([
-            'schedulable_id' => $this->schedulable->id,
+        Availability::create([
+            'schedulable_id' => $this->testSchedulable->id,
             'schedulable_type' => TestSchedulable::class,
             'type' => 'consultation',
             'start_time' => '08:00',
@@ -85,7 +89,7 @@ class ImpedimentServiceTest extends TestCase
         ]);
 
         // Créer un premier impediment
-        $firstImpediment = $this->service->for($this->schedulable)->create([
+        $this->impedimentService->for($this->testSchedulable)->create([
             'reason' => 'Pause déjeuner',
             'start_datetime' => $this->mondayJune7->copy()->setTime(12, 0),
             'end_datetime' => $this->mondayJune7->copy()->setTime(13, 0),
@@ -95,17 +99,17 @@ class ImpedimentServiceTest extends TestCase
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('This time slot overlaps with an existing impediment');
 
-        $this->service->for($this->schedulable)->create([
+        $this->impedimentService->for($this->testSchedulable)->create([
             'reason' => 'Réunion',
             'start_datetime' => $this->mondayJune7->copy()->setTime(12, 30),
             'end_datetime' => $this->mondayJune7->copy()->setTime(13, 30),
         ]);
     }
 
-    public function test_create_impediment_allows_non_overlapping_impediments()
+    public function test_create_impediment_allows_non_overlapping_impediments(): void
     {
-        $availability = Availability::create([
-            'schedulable_id' => $this->schedulable->id,
+        Availability::create([
+            'schedulable_id' => $this->testSchedulable->id,
             'schedulable_type' => TestSchedulable::class,
             'type' => 'consultation',
             'start_time' => '08:00',
@@ -116,14 +120,14 @@ class ImpedimentServiceTest extends TestCase
         ]);
 
         // Créer un premier impediment
-        $firstImpediment = $this->service->for($this->schedulable)->create([
+        $firstImpediment = $this->impedimentService->for($this->testSchedulable)->create([
             'reason' => 'Pause déjeuner',
             'start_datetime' => $this->mondayJune7->copy()->setTime(12, 0),
             'end_datetime' => $this->mondayJune7->copy()->setTime(13, 0),
         ]);
 
         // Créer un deuxième impediment qui ne chevauche pas
-        $secondImpediment = $this->service->for($this->schedulable)->create([
+        $secondImpediment = $this->impedimentService->for($this->testSchedulable)->create([
             'reason' => 'Réunion',
             'start_datetime' => $this->mondayJune7->copy()->setTime(14, 0),
             'end_datetime' => $this->mondayJune7->copy()->setTime(15, 0),
@@ -134,10 +138,10 @@ class ImpedimentServiceTest extends TestCase
         $this->assertCount(2, Impediment::all());
     }
 
-    public function test_create_impediment_deletes_overlapping_schedules()
+    public function test_create_impediment_deletes_overlapping_schedules(): void
     {
         $availability = Availability::create([
-            'schedulable_id' => $this->schedulable->id,
+            'schedulable_id' => $this->testSchedulable->id,
             'schedulable_type' => TestSchedulable::class,
             'type' => 'consultation',
             'start_time' => '08:00',
@@ -157,7 +161,7 @@ class ImpedimentServiceTest extends TestCase
         ]);
 
         // Créer un impediment à 9h30-10h30 (NE chevauche PAS, commence exactement à la fin)
-        $impediment = $this->service->for($this->schedulable)->create([
+        $impediment = $this->impedimentService->for($this->testSchedulable)->create([
             'reason' => 'Réunion',
             'start_datetime' => $this->mondayJune7->copy()->setTime(9, 30),
             'end_datetime' => $this->mondayJune7->copy()->setTime(10, 30),
@@ -168,10 +172,10 @@ class ImpedimentServiceTest extends TestCase
         $this->assertDatabaseHas('impediments', ['id' => $impediment->id]);
     }
 
-    public function test_create_impediment_fails_when_end_before_start()
+    public function test_create_impediment_fails_when_end_before_start(): void
     {
         Availability::create([
-            'schedulable_id' => $this->schedulable->id,
+            'schedulable_id' => $this->testSchedulable->id,
             'schedulable_type' => TestSchedulable::class,
             'type' => 'consultation',
             'start_time' => '08:00',
@@ -184,17 +188,17 @@ class ImpedimentServiceTest extends TestCase
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('End datetime must be after start datetime');
 
-        $this->service->for($this->schedulable)->create([
+        $this->impedimentService->for($this->testSchedulable)->create([
             'reason' => 'Test',
             'start_datetime' => $this->mondayJune7->copy()->setTime(10, 0),
             'end_datetime' => $this->mondayJune7->copy()->setTime(9, 0), // End before start
         ]);
     }
 
-    public function test_update_impediment_prevents_overlapping_with_other_impediments()
+    public function test_update_impediment_prevents_overlapping_with_other_impediments(): void
     {
-        $availability = Availability::create([
-            'schedulable_id' => $this->schedulable->id,
+        Availability::create([
+            'schedulable_id' => $this->testSchedulable->id,
             'schedulable_type' => TestSchedulable::class,
             'type' => 'consultation',
             'start_time' => '08:00',
@@ -205,13 +209,13 @@ class ImpedimentServiceTest extends TestCase
         ]);
 
         // Créer deux impediments non chevauchants
-        $impediment1 = $this->service->for($this->schedulable)->create([
+        $this->impedimentService->for($this->testSchedulable)->create([
             'reason' => 'Pause déjeuner',
             'start_datetime' => $this->mondayJune7->copy()->setTime(12, 0),
             'end_datetime' => $this->mondayJune7->copy()->setTime(13, 0),
         ]);
 
-        $impediment2 = $this->service->for($this->schedulable)->create([
+        $impediment2 = $this->impedimentService->for($this->testSchedulable)->create([
             'reason' => 'Réunion',
             'start_datetime' => $this->mondayJune7->copy()->setTime(14, 0),
             'end_datetime' => $this->mondayJune7->copy()->setTime(15, 0),
@@ -221,16 +225,16 @@ class ImpedimentServiceTest extends TestCase
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('This time slot overlaps with another impediment');
 
-        $this->service->for($this->schedulable)->update($impediment2->id, [
+        $this->impedimentService->for($this->testSchedulable)->update($impediment2->id, [
             'start_datetime' => $this->mondayJune7->copy()->setTime(12, 30),
             'end_datetime' => $this->mondayJune7->copy()->setTime(13, 30),
         ]);
     }
 
-    public function test_update_impediment_allows_valid_time_change()
+    public function test_update_impediment_allows_valid_time_change(): void
     {
-        $availability = Availability::create([
-            'schedulable_id' => $this->schedulable->id,
+        Availability::create([
+            'schedulable_id' => $this->testSchedulable->id,
             'schedulable_type' => TestSchedulable::class,
             'type' => 'consultation',
             'start_time' => '08:00',
@@ -240,14 +244,14 @@ class ImpedimentServiceTest extends TestCase
             'end_date' => '2027-06-30',
         ]);
 
-        $impediment = $this->service->for($this->schedulable)->create([
+        $impediment = $this->impedimentService->for($this->testSchedulable)->create([
             'reason' => 'Pause déjeuner',
             'start_datetime' => $this->mondayJune7->copy()->setTime(12, 0),
             'end_datetime' => $this->mondayJune7->copy()->setTime(13, 0),
         ]);
 
         // Mettre à jour avec un horaire non chevauchant
-        $result = $this->service->for($this->schedulable)->update($impediment->id, [
+        $result = $this->impedimentService->for($this->testSchedulable)->update($impediment->id, [
             'start_datetime' => $this->mondayJune7->copy()->setTime(12, 30),
             'end_datetime' => $this->mondayJune7->copy()->setTime(13, 30),
             'reason' => 'Pause déjeuner prolongée',
@@ -259,10 +263,10 @@ class ImpedimentServiceTest extends TestCase
         $this->assertEquals('2027-06-07 12:30:00', $impediment->start_datetime->format('Y-m-d H:i:s'));
     }
 
-    public function test_is_time_slot_blocked_returns_true_with_impediment()
+    public function test_is_time_slot_blocked_returns_true_with_impediment(): void
     {
         $availability = Availability::create([
-            'schedulable_id' => $this->schedulable->id,
+            'schedulable_id' => $this->testSchedulable->id,
             'schedulable_type' => TestSchedulable::class,
             'type' => 'consultation',
             'start_time' => '08:00',
@@ -282,16 +286,16 @@ class ImpedimentServiceTest extends TestCase
         $start = $this->mondayJune7->copy()->setTime(12, 30);
         $end = $this->mondayJune7->copy()->setTime(13, 30);
 
-        $isBlocked = $this->service->for($this->schedulable)
+        $isBlocked = $this->impedimentService->for($this->testSchedulable)
             ->isTimeSlotBlocked($start, $end, 'consultation');
 
         $this->assertTrue($isBlocked);
     }
 
-    public function test_is_time_slot_blocked_returns_false_without_impediment()
+    public function test_is_time_slot_blocked_returns_false_without_impediment(): void
     {
-        $availability = Availability::create([
-            'schedulable_id' => $this->schedulable->id,
+        Availability::create([
+            'schedulable_id' => $this->testSchedulable->id,
             'schedulable_type' => TestSchedulable::class,
             'type' => 'consultation',
             'start_time' => '08:00',
@@ -304,16 +308,16 @@ class ImpedimentServiceTest extends TestCase
         $start = $this->mondayJune7->copy()->setTime(14, 0);
         $end = $this->mondayJune7->copy()->setTime(15, 0);
 
-        $isBlocked = $this->service->for($this->schedulable)
+        $isBlocked = $this->impedimentService->for($this->testSchedulable)
             ->isTimeSlotBlocked($start, $end, 'consultation');
 
         $this->assertFalse($isBlocked);
     }
 
-    public function test_get_available_time_slots_returns_correct_slots()
+    public function test_get_available_time_slots_returns_correct_slots(): void
     {
         $availability = Availability::create([
-            'schedulable_id' => $this->schedulable->id,
+            'schedulable_id' => $this->testSchedulable->id,
             'schedulable_type' => TestSchedulable::class,
             'type' => 'consultation',
             'start_time' => '08:00',
@@ -342,7 +346,7 @@ class ImpedimentServiceTest extends TestCase
         $start = $this->mondayJune7->copy()->setTime(9, 0);
         $end = $this->mondayJune7->copy()->setTime(16, 0);
 
-        $availableSlots = $this->service->for($this->schedulable)
+        $availableSlots = $this->impedimentService->for($this->testSchedulable)
             ->getAvailableTimeSlots($start, $end, 'consultation');
 
         $this->assertCount(3, $availableSlots);
@@ -360,10 +364,10 @@ class ImpedimentServiceTest extends TestCase
         $this->assertEquals('2027-06-07 16:00:00', $availableSlots[2]['end']->format('Y-m-d H:i:s'));
     }
 
-    public function test_get_impediments_between_dates()
+    public function test_get_impediments_between_dates(): void
     {
         $availability = Availability::create([
-            'schedulable_id' => $this->schedulable->id,
+            'schedulable_id' => $this->testSchedulable->id,
             'schedulable_type' => TestSchedulable::class,
             'type' => 'consultation',
             'start_time' => '08:00',
@@ -392,17 +396,17 @@ class ImpedimentServiceTest extends TestCase
         $startDate = Carbon::create(2027, 6, 1);
         $endDate = Carbon::create(2027, 6, 10);
 
-        $impediments = $this->service->for($this->schedulable)
+        $impediments = $this->impedimentService->for($this->testSchedulable)
             ->between($startDate, $endDate);
 
         $this->assertCount(1, $impediments);
         $this->assertEquals('Impediment 1', $impediments->first()->reason);
     }
 
-    public function test_filter_impediments_by_type()
+    public function test_filter_impediments_by_type(): void
     {
         $availability1 = Availability::create([
-            'schedulable_id' => $this->schedulable->id,
+            'schedulable_id' => $this->testSchedulable->id,
             'schedulable_type' => TestSchedulable::class,
             'type' => 'consultation',
             'start_time' => '08:00',
@@ -413,7 +417,7 @@ class ImpedimentServiceTest extends TestCase
         ]);
 
         $availability2 = Availability::create([
-            'schedulable_id' => $this->schedulable->id,
+            'schedulable_id' => $this->testSchedulable->id,
             'schedulable_type' => TestSchedulable::class,
             'type' => 'training',
             'start_time' => '18:00',
@@ -437,7 +441,7 @@ class ImpedimentServiceTest extends TestCase
             'end_datetime' => $this->mondayJune7->copy()->setTime(20, 0),
         ]);
 
-        $consultationImpediments = $this->service->for($this->schedulable)
+        $consultationImpediments = $this->impedimentService->for($this->testSchedulable)
             ->whereType('consultation')
             ->get();
 
@@ -445,22 +449,22 @@ class ImpedimentServiceTest extends TestCase
         $this->assertEquals('Maladie consultation', $consultationImpediments->first()->reason);
     }
 
-    public function test_create_fails_without_schedulable()
+    public function test_create_fails_without_schedulable(): void
     {
-        $this->expectException(\RuntimeException::class);
-        $this->expectExceptionMessage('No schedulable specified. Use for() method first.');
+        $this->expectException(MissingSchedulableException::class);
+        $this->expectExceptionMessage('No schedulable specified. Use the for() method before executing the query.');
 
-        $this->service->create([
+        $this->impedimentService->create([
             'reason' => 'Test',
             'start_datetime' => $this->mondayJune7->copy()->setTime(9, 0),
             'end_datetime' => $this->mondayJune7->copy()->setTime(10, 0),
         ]);
     }
 
-    public function test_delete_impediment()
+    public function test_delete_impediment(): void
     {
-        $availability = Availability::create([
-            'schedulable_id' => $this->schedulable->id,
+        Availability::create([
+            'schedulable_id' => $this->testSchedulable->id,
             'schedulable_type' => TestSchedulable::class,
             'type' => 'consultation',
             'start_time' => '08:00',
@@ -470,20 +474,20 @@ class ImpedimentServiceTest extends TestCase
             'end_date' => '2027-06-30',
         ]);
 
-        $impediment = $this->service->for($this->schedulable)->create([
+        $impediment = $this->impedimentService->for($this->testSchedulable)->create([
             'reason' => 'Test',
             'start_datetime' => $this->mondayJune7->copy()->setTime(9, 0),
             'end_datetime' => $this->mondayJune7->copy()->setTime(10, 0),
         ]);
 
-        $result = $this->service->for($this->schedulable)->delete($impediment->id);
+        $result = $this->impedimentService->for($this->testSchedulable)->delete($impediment->id);
         $this->assertTrue($result);
         $this->assertDatabaseMissing('impediments', ['id' => $impediment->id]);
     }
 
-    public function test_delete_non_existent_impediment_returns_false()
+    public function test_delete_non_existent_impediment_returns_false(): void
     {
-        $result = $this->service->for($this->schedulable)->delete(999);
+        $result = $this->impedimentService->for($this->testSchedulable)->delete(999);
         $this->assertFalse($result);
     }
 }
