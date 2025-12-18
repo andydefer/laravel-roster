@@ -196,15 +196,8 @@ final class ScheduleServiceTest extends TestCase
 
     public function test_find_next_available_slot(): void
     {
-        // Il y a un problème ici : la méthode findNextAvailableSlot() commence à la date actuelle
-        // Donc nous devons soit :
-        // 1. Simuler le temps actuel (mock Carbon)
-        // 2. Ou ajuster la logique pour tester avec une date fixe
+        Carbon::setTestNow('2038-06-06 08:00:00');
 
-        // Option 1 : Simuler Carbon::now() pour retourner une date fixe
-        Carbon::setTestNow('2038-06-06 08:00:00'); // Un jour avant le lundi disponible
-
-        // Block 10:00-11:00 le lundi 7 juin
         Schedule::create([
             'availability_id' => $this->availability->id,
             'title' => 'Blocked',
@@ -221,7 +214,6 @@ final class ScheduleServiceTest extends TestCase
         $this->assertSame('2038-06-07 09:00:00', $nextSlot['start']->format('Y-m-d H:i:s'));
         $this->assertSame('2038-06-07 10:00:00', $nextSlot['end']->format('Y-m-d H:i:s'));
 
-        // Nettoyer le mock
         Carbon::setTestNow();
     }
 
@@ -243,11 +235,10 @@ final class ScheduleServiceTest extends TestCase
             'status' => 'available',
         ]);
 
-        // Create schedule outside period (un autre lundi)
         Schedule::create([
             'availability_id' => $this->availability->id,
             'title' => 'Schedule 3',
-            'start_datetime' => '2038-06-14 10:00:00', // Lundi suivant
+            'start_datetime' => '2038-06-14 10:00:00',
             'end_datetime' => '2038-06-14 11:00:00',
             'status' => 'available',
         ]);

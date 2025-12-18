@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Roster\Exceptions;
+namespace Roster\Exceptions\Enums;
 
 enum MissingResourceType: string
 {

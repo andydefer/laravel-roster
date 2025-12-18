@@ -26,27 +26,22 @@ final class ScheduleFacadeTest extends TestCase
             protected $table = 'test_schedulables';
         };
 
-        // Créer un enregistrement dans la table
         $this->model = $this->model::create();
 
-        // Vérifier quel jour est le 1er juin 2038
         $testDate = Carbon::parse('2038-06-01');
-        $dayOfWeek = strtolower($testDate->englishDayOfWeek); // Ce sera "tuesday"
-
-        // Créer une disponibilité pour les tests - pour le mardi
+        $dayOfWeek = strtolower($testDate->englishDayOfWeek);
         $this->availability = Availability::create([
             'schedulable_id' => $this->model->id,
             'schedulable_type' => get_class($this->model),
             'type' => 'consultation',
             'start_time' => '09:00:00',
             'end_time' => '17:00:00',
-            'days' => [$dayOfWeek], // Utiliser le bon jour
+            'days' => [$dayOfWeek],
         ]);
     }
 
     public function test_facade_can_create_schedule(): void
     {
-        // 1er juin 2038 est un mardi
         $data = [
             'title' => 'Test Consultation',
             'start_datetime' => '2038-06-01 10:00:00',
@@ -121,7 +116,6 @@ final class ScheduleFacadeTest extends TestCase
             'status' => 'booked',
         ]);
 
-        // Filter by status
         $availableSchedules = ScheduleFacade::for($this->model)
             ->whereStatus('available')
             ->get();
@@ -132,7 +126,6 @@ final class ScheduleFacadeTest extends TestCase
 
     public function test_facade_can_check_time_slot_availability(): void
     {
-        // Block 10:00-11:00 with a schedule
         Schedule::create([
             'availability_id' => $this->availability->id,
             'title' => 'Blocked',
@@ -158,7 +151,6 @@ final class ScheduleFacadeTest extends TestCase
 
     public function test_facade_can_find_next_available_slot(): void
     {
-        // Block 10:00-11:00
         Schedule::create([
             'availability_id' => $this->availability->id,
             'title' => 'Booked',
@@ -173,7 +165,7 @@ final class ScheduleFacadeTest extends TestCase
         $this->assertArrayHasKey('start', $nextSlot);
         $this->assertArrayHasKey('end', $nextSlot);
 
-        // Le slot disponible devrait être 09:00-10:00 le prochain jour disponible
+
         $this->assertSame('09:00', $nextSlot['start']->format('H:i'));
         $this->assertSame('10:00', $nextSlot['end']->format('H:i'));
     }

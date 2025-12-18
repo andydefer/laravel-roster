@@ -19,7 +19,6 @@ final class AvailabilityValidatorTest extends TestCase
         $this->availabilityValidator = new AvailabilityValidator();
     }
 
-    // Test: validateBasicData
     public function test_validate_basic_data_with_valid_data(): void
     {
         $data = [
@@ -69,23 +68,19 @@ final class AvailabilityValidatorTest extends TestCase
         $this->availabilityValidator->validateBasicData($data);
     }
 
-    // Test: timeOverlaps
     public function test_time_overlaps_with_overlapping_times(): void
     {
         $existingStart = Carbon::parse('09:00:00');
         $existingEnd = Carbon::parse('17:00:00');
 
-        // Overlap from middle
         $newStart = Carbon::parse('10:00:00');
         $newEnd = Carbon::parse('11:00:00');
         $this->assertTrue($this->availabilityValidator->timeOverlaps($existingStart, $existingEnd, $newStart, $newEnd));
 
-        // Overlap from start
         $newStart = Carbon::parse('08:00:00');
         $newEnd = Carbon::parse('10:00:00');
         $this->assertTrue($this->availabilityValidator->timeOverlaps($existingStart, $existingEnd, $newStart, $newEnd));
 
-        // Complete overlap
         $newStart = Carbon::parse('08:00:00');
         $newEnd = Carbon::parse('18:00:00');
         $this->assertTrue($this->availabilityValidator->timeOverlaps($existingStart, $existingEnd, $newStart, $newEnd));
@@ -96,41 +91,33 @@ final class AvailabilityValidatorTest extends TestCase
         $existingStart = Carbon::parse('09:00:00');
         $existingEnd = Carbon::parse('17:00:00');
 
-        // Before
         $newStart = Carbon::parse('07:00:00');
         $newEnd = Carbon::parse('08:00:00');
         $this->assertFalse($this->availabilityValidator->timeOverlaps($existingStart, $existingEnd, $newStart, $newEnd));
 
-        // After
         $newStart = Carbon::parse('18:00:00');
         $newEnd = Carbon::parse('19:00:00');
         $this->assertFalse($this->availabilityValidator->timeOverlaps($existingStart, $existingEnd, $newStart, $newEnd));
 
-        // Touching end (should not overlap)
         $newStart = Carbon::parse('17:00:00');
         $newEnd = Carbon::parse('18:00:00');
         $this->assertFalse($this->availabilityValidator->timeOverlaps($existingStart, $existingEnd, $newStart, $newEnd));
     }
 
-    // Test: dateRangesOverlap (from trait)
     public function test_date_ranges_overlap_with_various_scenarios(): void
     {
-        // Test 1: Both have no dates (indefinite)
         $this->assertTrue(
             $this->availabilityValidator->dateRangesOverlap(null, null, null, null)
         );
 
-        // Test 2: Existing has no dates, new has dates
         $this->assertTrue(
             $this->availabilityValidator->dateRangesOverlap(null, null, Carbon::parse('2024-01-01'), Carbon::parse('2024-01-31'))
         );
 
-        // Test 3: New has no dates, existing has dates
         $this->assertTrue(
             $this->availabilityValidator->dateRangesOverlap(Carbon::parse('2024-01-01'), Carbon::parse('2024-01-31'), null, null)
         );
 
-        // Test 4: Both have dates and overlap
         $this->assertTrue(
             $this->availabilityValidator->dateRangesOverlap(
                 Carbon::parse('2024-01-01'),
@@ -140,7 +127,6 @@ final class AvailabilityValidatorTest extends TestCase
             )
         );
 
-        // Test 5: Both have dates and don't overlap
         $this->assertFalse(
             $this->availabilityValidator->dateRangesOverlap(
                 Carbon::parse('2024-01-01'),
@@ -150,7 +136,6 @@ final class AvailabilityValidatorTest extends TestCase
             )
         );
 
-        // Test 6: Existing has start date only
         $this->assertTrue(
             $this->availabilityValidator->dateRangesOverlap(
                 Carbon::parse('2024-01-01'),
@@ -160,7 +145,6 @@ final class AvailabilityValidatorTest extends TestCase
             )
         );
 
-        // Test 7: Existing has end date only
         $this->assertTrue(
             $this->availabilityValidator->dateRangesOverlap(
                 null,
@@ -171,10 +155,8 @@ final class AvailabilityValidatorTest extends TestCase
         );
     }
 
-    // Test: overlaps
     public function test_overlaps_with_overlapping_availability(): void
     {
-        // Utilisons des tableaux au lieu d'objets pour tester la logique
         $availabilityData = [
             'start_time' => Carbon::parse('09:00:00'),
             'end_time' => Carbon::parse('17:00:00'),
@@ -187,7 +169,6 @@ final class AvailabilityValidatorTest extends TestCase
         $newStartDate = Carbon::parse('2024-01-15');
         $newEndDate = Carbon::parse('2024-01-20');
 
-        // Test de la logique directement
         $timeOverlaps = $this->availabilityValidator->timeOverlaps(
             $availabilityData['start_time'],
             $availabilityData['end_time'],
@@ -204,7 +185,6 @@ final class AvailabilityValidatorTest extends TestCase
 
         $this->assertTrue($timeOverlaps);
         $this->assertTrue($dateRangesOverlap);
-        // Les deux doivent être vrais pour que overlaps soit vrai
         $this->assertTrue($timeOverlaps && $dateRangesOverlap);
     }
 
@@ -217,7 +197,6 @@ final class AvailabilityValidatorTest extends TestCase
             'end_date' => Carbon::parse('2024-01-31'),
         ];
 
-        // Different time
         $newStartTime = Carbon::parse('18:00:00');
         $newEndTime = Carbon::parse('19:00:00');
         $newStartDate = Carbon::parse('2024-01-15');
@@ -239,7 +218,6 @@ final class AvailabilityValidatorTest extends TestCase
 
         $this->assertFalse($timeOverlaps);
         $this->assertTrue($dateRangesOverlap);
-        // overlaps doit être faux car timeOverlaps est faux
         $this->assertFalse($timeOverlaps && $dateRangesOverlap);
     }
 
@@ -252,7 +230,6 @@ final class AvailabilityValidatorTest extends TestCase
             'end_date' => Carbon::parse('2024-01-31'),
         ];
 
-        // Same time but different dates
         $newStartTime = Carbon::parse('10:00:00');
         $newEndTime = Carbon::parse('11:00:00');
         $newStartDate = Carbon::parse('2024-02-01');
@@ -274,14 +251,11 @@ final class AvailabilityValidatorTest extends TestCase
 
         $this->assertTrue($timeOverlaps);
         $this->assertFalse($dateRangesOverlap);
-        // overlaps doit être faux car dateRangesOverlap est faux
         $this->assertFalse($timeOverlaps && $dateRangesOverlap);
     }
 
-    // Test: areAdjacent
     public function test_are_adjacent_logic(): void
     {
-        // Testons la logique d'adjacence avec des données simples
         $firstData = [
             'schedulable_id' => 1,
             'schedulable_type' => 'TestModel',
@@ -304,7 +278,6 @@ final class AvailabilityValidatorTest extends TestCase
             'end_date' => Carbon::parse('2024-01-31'),
         ];
 
-        // Vérifions chaque condition individuellement
         $sameSchedulable = $firstData['schedulable_id'] === $secondData['schedulable_id'] &&
             $firstData['schedulable_type'] === $secondData['schedulable_type'];
         $this->assertTrue($sameSchedulable);
@@ -326,6 +299,7 @@ final class AvailabilityValidatorTest extends TestCase
         if (!$firstData['end_time']->eq($secondData['start_time'])) {
             $secondData['end_time']->eq($firstData['start_time']);
         }
+
         $this->assertTrue($firstData['end_time']->eq($secondData['start_time']));
     }
 
@@ -341,7 +315,7 @@ final class AvailabilityValidatorTest extends TestCase
         ];
 
         $secondData = [
-            'schedulable_id' => 2, // Different schedulable
+            'schedulable_id' => 2,
             'schedulable_type' => 'Doctor',
             'type' => 'consultation',
             'start_time' => Carbon::parse('12:00:00'),
@@ -368,7 +342,7 @@ final class AvailabilityValidatorTest extends TestCase
         $secondData = [
             'schedulable_id' => 1,
             'schedulable_type' => 'TestModel',
-            'type' => 'training', // Different type
+            'type' => 'training',
             'start_time' => Carbon::parse('12:00:00'),
             'end_time' => Carbon::parse('15:00:00'),
             'days' => ['monday'],
@@ -395,14 +369,13 @@ final class AvailabilityValidatorTest extends TestCase
             'type' => 'consultation',
             'start_time' => Carbon::parse('12:00:00'),
             'end_time' => Carbon::parse('15:00:00'),
-            'days' => ['tuesday'], // Different day
+            'days' => ['tuesday'],
         ];
 
         $commonDays = array_intersect($firstData['days'], $secondData['days']);
         $this->assertEmpty($commonDays);
     }
 
-    // Test: mergeAdjacent
     public function test_merge_adjacent_logic(): void
     {
         $firstData = [
@@ -423,11 +396,9 @@ final class AvailabilityValidatorTest extends TestCase
             'end_date' => Carbon::parse('2024-02-15'),
         ];
 
-        // Simulons la fusion
         $startTime = min($firstData['start_time']->timestamp, $secondData['start_time']->timestamp);
         $endTime = max($firstData['end_time']->timestamp, $secondData['end_time']->timestamp);
 
-        // Gérer les dates de période
         $startDate = null;
         $endDate = null;
 
@@ -460,7 +431,6 @@ final class AvailabilityValidatorTest extends TestCase
         $this->assertSame('2024-02-15', $mergedData['end_date']);
     }
 
-    // Test: hasOverlapping
     public function test_has_overlapping_returns_true_when_overlap_exists(): void
     {
         $this->assertTrue(method_exists($this->availabilityValidator, 'hasOverlapping'));

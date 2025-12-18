@@ -7,7 +7,7 @@ namespace Roster\Services\Core;
 use Illuminate\Support\Carbon;
 use Roster\Exceptions\TimeRangeValidationException;
 use Roster\Exceptions\ValidationException;
-use Roster\Exceptions\ValidationType;
+use Roster\Exceptions\Enums\ValidationType;
 
 class ValidationService
 {

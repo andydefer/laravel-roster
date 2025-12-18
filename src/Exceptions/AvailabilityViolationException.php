@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Roster\Exceptions;
 
+use Roster\Exceptions\Enums\AvailabilityViolationType;
 use Throwable;
 
 /**

@@ -7,8 +7,8 @@ namespace Roster\Services;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
+use Roster\Exceptions\Enums\ValidationType;
 use Roster\Exceptions\ValidationException;
-use Roster\Exceptions\ValidationType;
 use Roster\Models\Availability;
 use Roster\Repositories\AvailabilityRepository;
 use Roster\Services\Core\ValidationService;
@@ -34,7 +34,6 @@ class AvailabilityService extends AbstractSchedulableService
         $this->availabilityRepository = $availabilityRepository;
     }
 
-
     /**
      * Create a new availability with overlap validation.
      *
@@ -56,10 +55,14 @@ class AvailabilityService extends AbstractSchedulableService
         // Automatic merging of adjacent availabilities (always enabled)
         $data = $this->mergeWithAdjacentAvailabilities($data);
 
-        return Availability::create(array_merge($data, [
+        // Prepare data for creation
+        $availabilityData = array_merge($data, [
             'schedulable_id' => $this->schedulable->id,
             'schedulable_type' => get_class($this->schedulable),
-        ]));
+        ]);
+
+        // Delegate to repository
+        return $this->availabilityRepository->create($availabilityData);
     }
 
     /**
@@ -119,7 +122,8 @@ class AvailabilityService extends AbstractSchedulableService
             }
         }
 
-        return $availability->update($data);
+        // Delegate to repository
+        return $this->availabilityRepository->update($id, $data);
     }
 
     /**
@@ -135,7 +139,8 @@ class AvailabilityService extends AbstractSchedulableService
             return false;
         }
 
-        return $availability->delete();
+        // Delegate to repository
+        return $this->availabilityRepository->delete($id);
     }
 
     /**
@@ -145,9 +150,8 @@ class AvailabilityService extends AbstractSchedulableService
     {
         $this->validateSchedulable();
 
-        return Availability::where('schedulable_id', $this->schedulable->id)
-            ->where('schedulable_type', get_class($this->schedulable))
-            ->find($id);
+        // Delegate to repository
+        return $this->availabilityRepository->findById($id);
     }
 
     /**
@@ -174,6 +178,7 @@ class AvailabilityService extends AbstractSchedulableService
         $this->validateSchedulable();
         $this->validationService->parseAndValidateTimeRange($data);
 
+        // Delegate to repository
         return $this->availabilityRepository->findOverlapping($this->schedulable, $data, $exceptId);
     }
 
@@ -187,7 +192,7 @@ class AvailabilityService extends AbstractSchedulableService
     {
         $this->validateSchedulable();
 
-        // Find adjacent availabilities
+        // Find adjacent availabilities via repository
         $adjacentAvailabilities = $this->findAdjacentAvailabilities($data);
 
         if ($adjacentAvailabilities->isEmpty()) {
@@ -214,9 +219,9 @@ class AvailabilityService extends AbstractSchedulableService
             }
         }
 
-        // Delete all merged availabilities
+        // Delete all merged availabilities via repository
         if ($idsToDelete !== []) {
-            Availability::whereIn('id', $idsToDelete)->delete();
+            $this->availabilityRepository->deleteMultiple($idsToDelete);
         }
 
         return $mergedData;
@@ -232,21 +237,13 @@ class AvailabilityService extends AbstractSchedulableService
     {
         $this->validateSchedulable();
 
-        $type = $data['type'] ?? null;
-
-        $query = Availability::where('schedulable_id', $this->schedulable->id)
-            ->where('schedulable_type', get_class($this->schedulable));
-
-        if ($type !== null) {
-            $query->where('type', $type);
-        }
-
-        /** @var Collection<int, Availability> $availabilities */
-        $availabilities = $query->get();
+        // Delegate to repository
+        $availabilities = $this->availabilityRepository->findAdjacentAvailabilities($this->schedulable, $data);
 
         // Create a temporary object for comparison
         $tempAvailability = $this->createAvailabilityFromData($data);
 
+        // Filter adjacents (business logic stays in service)
         return $availabilities->filter(function (Availability $availability) use ($tempAvailability): bool {
             return $this->validator->areAdjacent($tempAvailability, $availability);
         });
@@ -290,10 +287,9 @@ class AvailabilityService extends AbstractSchedulableService
     public function isAvailableAt(Carbon $datetime): bool
     {
         $this->validateSchedulable();
+        // Delegate to repository
         return $this->availabilityRepository->isAvailableAt($this->schedulable, $datetime);
     }
-
-    // Ajouter ces méthodes à la classe AvailabilityService:
 
     /**
      * Check availability for a time period.
@@ -303,6 +299,7 @@ class AvailabilityService extends AbstractSchedulableService
         $this->validateSchedulable();
         $this->validationService->validateTimeRange($start, $end);
 
+        // Delegate to repository
         $availability = $this->availabilityRepository->findForTimeSlot($this->schedulable, $start, $end, $type);
 
         return $availability instanceof Availability;
@@ -333,6 +330,7 @@ class AvailabilityService extends AbstractSchedulableService
         $currentDate = $startDate->copy();
 
         while ($currentDate->lte($endDate)) {
+            // Delegate to repository for data fetching
             $availabilities = $this->availabilityRepository->getForDate($this->schedulable, $currentDate, $type);
 
             /** @var Availability $availability */
@@ -340,7 +338,7 @@ class AvailabilityService extends AbstractSchedulableService
                 $slotStart = $currentDate->copy()->setTimeFrom($availability->start_time);
                 $slotEnd = $currentDate->copy()->setTimeFrom($availability->end_time);
 
-                // Generate slots inside this availability
+                // Generate slots inside this availability (business logic stays here)
                 while ($slotStart->copy()->addMinutes($durationMinutes)->lte($slotEnd)) {
                     $slots[] = [
                         'start' => $slotStart->copy(),
@@ -370,6 +368,7 @@ class AvailabilityService extends AbstractSchedulableService
         $endDate = $end->copy()->endOfDay();
 
         while ($currentDate->lte($endDate)) {
+            // Delegate to repository
             $availabilities = $this->availabilityRepository->getForDate($this->schedulable, $currentDate, $type);
 
             if ($availabilities->isNotEmpty()) {
@@ -401,9 +400,7 @@ class AvailabilityService extends AbstractSchedulableService
         $maxDaysToCheck = 365;
 
         for ($i = 0; $i < $maxDaysToCheck; ++$i) {
-            $dayOfWeek = strtolower($currentDate->englishDayOfWeek);
-
-            /** @var Collection<int, Availability> $availabilities */
+            // Delegate to repository
             $availabilities = $this->availabilityRepository->getForDate($this->schedulable, $currentDate);
 
             /** @var Availability $availability */
@@ -461,6 +458,7 @@ class AvailabilityService extends AbstractSchedulableService
         $currentDate = $startDate->copy();
 
         while ($currentDate->lte($endDate)) {
+            // Delegate to repository
             $availabilities = $this->availabilityRepository->getForDate($this->schedulable, $currentDate);
 
             /** @var Availability $availability */
@@ -468,7 +466,7 @@ class AvailabilityService extends AbstractSchedulableService
                 $slotStart = $currentDate->copy()->setTimeFrom($availability->start_time);
                 $slotEnd = $currentDate->copy()->setTimeFrom($availability->end_time);
 
-                // Generate slots inside this availability
+                // Generate slots inside this availability (business logic)
                 while ($slotStart->copy()->addMinutes($durationMinutes)->lte($slotEnd)) {
                     $slots[] = [
                         'start' => $slotStart->copy(),
@@ -486,19 +484,17 @@ class AvailabilityService extends AbstractSchedulableService
         return $slots;
     }
 
+
     /**
      * Apply filters to the query.
+     * Note: Cette méthode n'est plus utilisée directement car on délègue au repository
+     * Elle est gardée pour compatibilité avec le trait FilterableTrait
      *
      * @return Builder
      */
     protected function applyFilters()
     {
-        $query = Availability::where('schedulable_id', $this->schedulable->id)
-            ->where('schedulable_type', get_class($this->schedulable));
-
-        $this->applyTypeFilter($query, '');
-        $this->applyDayFilter($query);
-
-        return $query;
+        // Délégation au repository
+        return $this->availabilityRepository->applyFilters($this->schedulable, $this->filters);
     }
 }

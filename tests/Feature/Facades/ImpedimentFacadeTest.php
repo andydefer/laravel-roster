@@ -33,7 +33,6 @@ final class ImpedimentFacadeTest extends TestCase
         $this->model->id = 1;
         $this->model->save();
 
-        // Create an availability for testing
         $this->availability = Availability::create([
             'schedulable_id' => $this->model->id,
             'schedulable_type' => get_class($this->model),
@@ -126,7 +125,6 @@ final class ImpedimentFacadeTest extends TestCase
             'end_datetime' => '2024-01-01 15:00:00',
         ]);
 
-        // Filter by date range
         $startDate = Carbon::parse('2024-01-01 12:00:00');
         $endDate = Carbon::parse('2024-01-01 16:00:00');
 
@@ -141,7 +139,6 @@ final class ImpedimentFacadeTest extends TestCase
 
     public function test_facade_can_check_if_time_slot_is_blocked(): void
     {
-        // Create an impediment from 10:00-11:00
         Impediment::create([
             'availability_id' => $this->availability->id,
             'schedulable_id' => $this->model->id,

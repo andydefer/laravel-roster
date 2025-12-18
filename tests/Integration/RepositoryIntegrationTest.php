@@ -38,7 +38,6 @@ final class RepositoryIntegrationTest extends TestCase
 
     public function test_find_for_time_slot_integration(): void
     {
-        // Create availability for Monday 9-12
         $availability = Availability::create([
             'schedulable_id' => $this->model->id,
             'schedulable_type' => get_class($this->model),
@@ -48,8 +47,7 @@ final class RepositoryIntegrationTest extends TestCase
             'days' => ['monday'],
         ]);
 
-        // Test finding availability for valid time slot
-        $start = Carbon::parse('2024-01-01 10:00:00'); // Monday
+        $start = Carbon::parse('2024-01-01 10:00:00');
         $end = Carbon::parse('2024-01-01 11:00:00');
 
         $found = $this->availabilityRepository->findForTimeSlot($this->model, $start, $end);
@@ -57,18 +55,15 @@ final class RepositoryIntegrationTest extends TestCase
         $this->assertInstanceOf(Availability::class, $found);
         $this->assertSame($availability->id, $found->id);
 
-        // Test with type filter
         $foundWithType = $this->availabilityRepository->findForTimeSlot($this->model, $start, $end, 'consultation');
         $this->assertSame($availability->id, $foundWithType->id);
 
-        // Test with wrong type
         $notFoundWithType = $this->availabilityRepository->findForTimeSlot($this->model, $start, $end, 'training');
         $this->assertNotInstanceOf(Availability::class, $notFoundWithType);
     }
 
     public function test_get_for_date_integration(): void
     {
-        // Create multiple availabilities for Monday
         Availability::create([
             'schedulable_id' => $this->model->id,
             'schedulable_type' => get_class($this->model),
@@ -87,7 +82,6 @@ final class RepositoryIntegrationTest extends TestCase
             'days' => ['monday'],
         ]);
 
-        // Create availability for Tuesday (should not be returned)
         Availability::create([
             'schedulable_id' => $this->model->id,
             'schedulable_type' => get_class($this->model),
@@ -97,7 +91,7 @@ final class RepositoryIntegrationTest extends TestCase
             'days' => ['tuesday'],
         ]);
 
-        $date = Carbon::parse('2024-01-01'); // Monday
+        $date = Carbon::parse('2024-01-01');
 
         $availabilities = $this->availabilityRepository->getForDate($this->model, $date);
 
@@ -117,22 +111,18 @@ final class RepositoryIntegrationTest extends TestCase
             'days' => ['monday'],
         ]);
 
-        // Test available time
-        $availableTime = Carbon::parse('2024-01-01 10:00:00'); // Monday
+        $availableTime = Carbon::parse('2024-01-01 10:00:00');
         $this->assertTrue($this->availabilityRepository->isAvailableAt($this->model, $availableTime));
 
-        // Test unavailable time (wrong day)
-        $unavailableDay = Carbon::parse('2024-01-02 10:00:00'); // Tuesday
+        $unavailableDay = Carbon::parse('2024-01-02 10:00:00');
         $this->assertFalse($this->availabilityRepository->isAvailableAt($this->model, $unavailableDay));
 
-        // Test unavailable time (outside hours)
-        $unavailableTime = Carbon::parse('2024-01-01 08:00:00'); // Monday but before hours
+        $unavailableTime = Carbon::parse('2024-01-01 08:00:00');
         $this->assertFalse($this->availabilityRepository->isAvailableAt($this->model, $unavailableTime));
     }
 
     public function test_find_overlapping_integration(): void
     {
-        // Create existing availability
         Availability::create([
             'schedulable_id' => $this->model->id,
             'schedulable_type' => get_class($this->model),
@@ -142,7 +132,6 @@ final class RepositoryIntegrationTest extends TestCase
             'days' => ['monday', 'tuesday'],
         ]);
 
-        // Test overlapping data (same time on Monday)
         $overlappingData = [
             'start_time' => '10:00:00',
             'end_time' => '11:00:00',
@@ -154,7 +143,6 @@ final class RepositoryIntegrationTest extends TestCase
         $this->assertCount(1, $overlapping);
         $this->assertSame('consultation', $overlapping->first()->type);
 
-        // Test non-overlapping data (different day)
         $nonOverlappingData = [
             'start_time' => '10:00:00',
             'end_time' => '11:00:00',
@@ -171,7 +159,6 @@ final class RepositoryIntegrationTest extends TestCase
         $existingStart = Carbon::parse('09:00:00');
         $existingEnd = Carbon::parse('12:00:00');
 
-        // Overlapping from middle
         $this->assertTrue($this->availabilityRepository->timeRangesOverlap(
             $existingStart,
             $existingEnd,
@@ -179,7 +166,6 @@ final class RepositoryIntegrationTest extends TestCase
             Carbon::parse('11:00:00')
         ));
 
-        // Not overlapping (before)
         $this->assertFalse($this->availabilityRepository->timeRangesOverlap(
             $existingStart,
             $existingEnd,
@@ -187,7 +173,6 @@ final class RepositoryIntegrationTest extends TestCase
             Carbon::parse('08:30:00')
         ));
 
-        // Not overlapping (after)
         $this->assertFalse($this->availabilityRepository->timeRangesOverlap(
             $existingStart,
             $existingEnd,
@@ -198,7 +183,6 @@ final class RepositoryIntegrationTest extends TestCase
 
     public function test_date_ranges_overlap_integration(): void
     {
-        // Both have dates and overlap
         $this->assertTrue($this->availabilityRepository->dateRangesOverlap(
             Carbon::parse('2024-01-01'),
             Carbon::parse('2024-01-31'),
@@ -206,7 +190,6 @@ final class RepositoryIntegrationTest extends TestCase
             Carbon::parse('2024-02-15')
         ));
 
-        // Both have dates and don't overlap
         $this->assertFalse($this->availabilityRepository->dateRangesOverlap(
             Carbon::parse('2024-01-01'),
             Carbon::parse('2024-01-31'),
@@ -214,7 +197,6 @@ final class RepositoryIntegrationTest extends TestCase
             Carbon::parse('2024-02-28')
         ));
 
-        // Existing has no dates (indefinite)
         $this->assertTrue($this->availabilityRepository->dateRangesOverlap(
             null,
             null,

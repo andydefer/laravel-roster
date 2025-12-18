@@ -13,6 +13,5 @@ class TestSchedulable extends Model
 
     protected $guarded = [];
 
-    // Utiliser le trait Schedulable si nécessaire
     use HasRoster;
 }

@@ -36,7 +36,6 @@ final class ImpedimentServiceTest extends TestCase
         $this->model->id = 1;
         $this->model->save();
 
-        // Create an availability
         $this->availability = Availability::create([
             'schedulable_id' => $this->model->id,
             'schedulable_type' => get_class($this->model),
@@ -76,7 +75,7 @@ final class ImpedimentServiceTest extends TestCase
     {
         $data = [
             'reason' => 'Test',
-            'start_datetime' => '2024-01-02 10:00:00', // Tuesday, but availability is only Monday
+            'start_datetime' => '2024-01-02 10:00:00',
             'end_datetime' => '2024-01-02 11:00:00',
         ];
 
@@ -88,14 +87,12 @@ final class ImpedimentServiceTest extends TestCase
 
     public function test_create_overlapping_impediment_throws_exception(): void
     {
-        // Create first impediment
         $this->impedimentService->create([
             'reason' => 'First impediment',
             'start_datetime' => '2024-01-01 10:00:00',
             'end_datetime' => '2024-01-01 11:00:00',
         ]);
 
-        // Try to create overlapping impediment
         $this->expectException(OverlappingImpedimentException::class);
 
         $this->impedimentService->create([
@@ -188,7 +185,6 @@ final class ImpedimentServiceTest extends TestCase
 
     public function test_is_time_slot_blocked(): void
     {
-        // Create an impediment
         Impediment::create([
             'availability_id' => $this->availability->id,
             'schedulable_id' => $this->model->id,
@@ -198,23 +194,19 @@ final class ImpedimentServiceTest extends TestCase
             'end_datetime' => '2024-01-01 11:00:00',
         ]);
 
-        // Test blocked slot
         $blockedStart = Carbon::parse('2024-01-01 10:30:00');
         $blockedEnd = Carbon::parse('2024-01-01 10:45:00');
         $this->assertTrue($this->impedimentService->isTimeSlotBlocked($blockedStart, $blockedEnd));
 
-        // Test available slot
         $availableStart = Carbon::parse('2024-01-01 11:30:00');
         $availableEnd = Carbon::parse('2024-01-01 12:00:00');
         $this->assertFalse($this->impedimentService->isTimeSlotBlocked($availableStart, $availableEnd));
 
-        // Test slot with different type (should not be blocked)
         $this->assertFalse($this->impedimentService->isTimeSlotBlocked($blockedStart, $blockedEnd, 'training'));
     }
 
     public function test_get_available_time_slots_with_impediments(): void
     {
-        // Create an impediment from 10:00 to 11:00
         Impediment::create([
             'availability_id' => $this->availability->id,
             'schedulable_id' => $this->model->id,
@@ -231,11 +223,9 @@ final class ImpedimentServiceTest extends TestCase
 
         $this->assertCount(2, $slots);
 
-        // First slot: 09:00 - 10:00
         $this->assertSame('2024-01-01 09:00:00', $slots[0]['start']->format('Y-m-d H:i:s'));
         $this->assertSame('2024-01-01 10:00:00', $slots[0]['end']->format('Y-m-d H:i:s'));
 
-        // Second slot: 11:00 - 12:00
         $this->assertSame('2024-01-01 11:00:00', $slots[1]['start']->format('Y-m-d H:i:s'));
         $this->assertSame('2024-01-01 12:00:00', $slots[1]['end']->format('Y-m-d H:i:s'));
     }
@@ -260,7 +250,6 @@ final class ImpedimentServiceTest extends TestCase
             'end_datetime' => '2024-01-01 15:00:00',
         ]);
 
-        // Create impediment outside period
         Impediment::create([
             'availability_id' => $this->availability->id,
             'schedulable_id' => $this->model->id,

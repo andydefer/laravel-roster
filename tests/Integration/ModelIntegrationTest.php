@@ -42,11 +42,9 @@ final class ModelIntegrationTest extends TestCase
             'days' => ['monday'],
         ]);
 
-        // Test schedulable relationship
         $this->assertInstanceOf(get_class($this->model), $availability->schedulable);
         $this->assertSame($this->model->id, $availability->schedulable->id);
 
-        // Test schedules relationship
         $schedule = Schedule::create([
             'availability_id' => $availability->id,
             'title' => 'Test Schedule',
@@ -58,7 +56,6 @@ final class ModelIntegrationTest extends TestCase
         $this->assertCount(1, $availability->schedules);
         $this->assertSame($schedule->id, $availability->schedules->first()->id);
 
-        // Test impediments relationship
         $impediment = Impediment::create([
             'availability_id' => $availability->id,
             'schedulable_id' => $this->model->id,
@@ -91,14 +88,11 @@ final class ModelIntegrationTest extends TestCase
             'status' => 'available',
         ]);
 
-        // Test availability relationship
         $this->assertInstanceOf(Availability::class, $schedule->availability);
         $this->assertSame($availability->id, $schedule->availability->id);
 
-        // Test type attribute (inherited from availability)
         $this->assertSame('consultation', $schedule->type);
 
-        // Test schedulable relationship (via availability)
         $schedulable = $schedule->schedulable();
         $this->assertNotNull($schedulable);
     }
@@ -123,11 +117,9 @@ final class ModelIntegrationTest extends TestCase
             'end_datetime' => '2024-01-01 12:00:00',
         ]);
 
-        // Test availability relationship
         $this->assertInstanceOf(Availability::class, $impediment->availability);
         $this->assertSame($availability->id, $impediment->availability->id);
 
-        // Test schedulable relationship
         $this->assertInstanceOf(get_class($this->model), $impediment->schedulable);
         $this->assertSame($this->model->id, $impediment->schedulable->id);
     }
@@ -142,26 +134,23 @@ final class ModelIntegrationTest extends TestCase
             'end_date' => Carbon::parse('2024-01-31'),
         ]);
 
-        // Test isAvailableForSchedule with valid schedule
-        $validStart = Carbon::parse('2024-01-01 10:00:00'); // Monday within date range
+        $validStart = Carbon::parse('2024-01-01 10:00:00');
         $validEnd = Carbon::parse('2024-01-01 11:00:00');
         $this->assertTrue($availability->isAvailableForSchedule($validStart, $validEnd));
 
-        // Test with wrong day
-        $wrongDayStart = Carbon::parse('2024-01-03 10:00:00'); // Wednesday
+        $wrongDayStart = Carbon::parse('2024-01-03 10:00:00');
         $wrongDayEnd = Carbon::parse('2024-01-03 11:00:00');
         $this->assertFalse($availability->isAvailableForSchedule($wrongDayStart, $wrongDayEnd));
 
-        // Test outside time range
         $earlyStart = Carbon::parse('2024-01-01 08:00:00');
         $earlyEnd = Carbon::parse('2024-01-01 08:30:00');
         $this->assertFalse($availability->isAvailableForSchedule($earlyStart, $earlyEnd));
 
-        // Test outside date range
         $outsideDateStart = Carbon::parse('2024-02-01 10:00:00');
         $outsideDateEnd = Carbon::parse('2024-02-01 11:00:00');
         $this->assertFalse($availability->isAvailableForSchedule($outsideDateStart, $outsideDateEnd));
     }
+
     public function test_schedule_methods(): void
     {
         $schedule = new Schedule([
@@ -169,7 +158,6 @@ final class ModelIntegrationTest extends TestCase
             'end_datetime' => Carbon::parse('2024-01-01 11:00:00'),
         ]);
 
-        // Test overlapsWith
         $overlapStart = Carbon::parse('2024-01-01 10:30:00');
         $overlapEnd = Carbon::parse('2024-01-01 11:30:00');
         $this->assertTrue($schedule->overlapsWith($overlapStart, $overlapEnd));
@@ -178,12 +166,9 @@ final class ModelIntegrationTest extends TestCase
         $nonOverlapEnd = Carbon::parse('2024-01-01 12:00:00');
         $this->assertFalse($schedule->overlapsWith($nonOverlapStart, $nonOverlapEnd));
 
-        // Test duration - maintenant un float
-        $this->assertSame(60.0, $schedule->getDurationMinutesAttribute());
-        // OU
+        $this->assertEqualsWithDelta(60.0, $schedule->getDurationMinutesAttribute(), PHP_FLOAT_EPSILON);
         $this->assertEquals(60, $schedule->getDurationMinutesAttribute());
 
-        // Test active/upcoming/past status
         $now = Carbon::now();
 
         $activeSchedule = new Schedule([
@@ -210,7 +195,6 @@ final class ModelIntegrationTest extends TestCase
             'end_datetime' => Carbon::parse('2024-01-01 11:00:00'),
         ]);
 
-        // Test overlapsWith
         $overlapStart = Carbon::parse('2024-01-01 10:30:00');
         $overlapEnd = Carbon::parse('2024-01-01 11:30:00');
         $this->assertTrue($impediment->overlapsWith($overlapStart, $overlapEnd));
@@ -219,12 +203,9 @@ final class ModelIntegrationTest extends TestCase
         $nonOverlapEnd = Carbon::parse('2024-01-01 12:00:00');
         $this->assertFalse($impediment->overlapsWith($nonOverlapStart, $nonOverlapEnd));
 
-        // Test duration - maintenant un float
-        $this->assertSame(60.0, $impediment->getDurationMinutesAttribute());
-        // OU
+        $this->assertEqualsWithDelta(60.0, $impediment->getDurationMinutesAttribute(), PHP_FLOAT_EPSILON);
         $this->assertEquals(60, $impediment->getDurationMinutesAttribute());
 
-        // Test active/upcoming/past status
         $now = Carbon::now();
 
         $activeImpediment = new Impediment([

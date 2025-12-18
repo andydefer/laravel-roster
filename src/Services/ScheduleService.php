@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Roster\Exceptions\ValidationException;
-use Roster\Exceptions\ValidationType;
+use Roster\Exceptions\Enums\ValidationType;
 use Roster\Models\Availability;
 use Roster\Models\Schedule;
 use Roster\Contracts\Repository\AvailabilityRepositoryInterface;

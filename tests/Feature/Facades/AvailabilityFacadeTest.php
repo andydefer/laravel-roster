@@ -138,9 +138,8 @@ final class AvailabilityFacadeTest extends TestCase
             'days' => ['monday'],
         ]);
 
-        $availableTime = Carbon::parse('2024-01-01 10:00:00'); // Monday
-        $unavailableTime = Carbon::parse('2024-01-01 08:00:00'); // Monday but before hours
-
+        $availableTime = Carbon::parse('2024-01-01 10:00:00');
+        $unavailableTime = Carbon::parse('2024-01-01 08:00:00');
         $this->assertTrue(
             AvailabilityFacade::for($this->model)->isAvailableAt($availableTime)
         );
@@ -161,7 +160,7 @@ final class AvailabilityFacadeTest extends TestCase
             'days' => ['monday'],
         ]);
 
-        $fromDate = Carbon::parse('2024-01-01 08:00:00'); // Monday before hours
+        $fromDate = Carbon::parse('2024-01-01 08:00:00');
         $nextSlot = AvailabilityFacade::for($this->model)->nextAvailableSlot($fromDate, 60);
 
         $this->assertInstanceOf(Carbon::class, $nextSlot);

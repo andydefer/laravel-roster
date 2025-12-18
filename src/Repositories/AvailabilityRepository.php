@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace Roster\Repositories;
 
-use Illuminate\Support\Collection;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Carbon;
-use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Collection;
 use Roster\Models\Availability;
 use Roster\Services\Core\ValidationService;
 use Roster\Contracts\Repository\AvailabilityRepositoryInterface;
@@ -22,6 +22,58 @@ class AvailabilityRepository implements AvailabilityRepositoryInterface
     public function __construct(ValidationService $validationService)
     {
         $this->validationService = $validationService;
+    }
+
+    /**
+     * Create a new availability.
+     */
+    public function create(array $data): Availability
+    {
+        return Availability::create($data);
+    }
+
+    /**
+     * Update an existing availability.
+     */
+    public function update(int $id, array $data): bool
+    {
+        $availability = $this->findById($id);
+
+        if (!$availability instanceof Availability) {
+            return false;
+        }
+
+        return $availability->update($data);
+    }
+
+    /**
+     * Delete an availability.
+     */
+    public function delete(int $id): bool
+    {
+        $availability = $this->findById($id);
+
+        if (!$availability instanceof Availability) {
+            return false;
+        }
+
+        return $availability->delete();
+    }
+
+    /**
+     * Delete multiple availabilities by IDs.
+     */
+    public function deleteMultiple(array $ids): bool
+    {
+        return Availability::whereIn('id', $ids)->delete() > 0;
+    }
+
+    /**
+     * Find availability by ID.
+     */
+    public function findById(int $id): ?Availability
+    {
+        return Availability::find($id);
     }
 
     /**
@@ -72,6 +124,29 @@ class AvailabilityRepository implements AvailabilityRepositoryInterface
         $availabilities = $builder->orderBy('start_time')->get();
 
         return $availabilities;
+    }
+
+    /**
+     * Get all availabilities for a schedulable.
+     *
+     * @return Collection<int, Availability>
+     */
+    public function getAllForSchedulable(
+        Model $model,
+        ?string $type = null,
+        ?string $day = null
+    ): Collection {
+        $builder = $this->buildBaseQuery($model);
+
+        if ($type) {
+            $builder->where('type', $type);
+        }
+
+        if ($day) {
+            $builder->whereJsonContains('days', strtolower($day));
+        }
+
+        return $builder->orderBy('start_time')->get();
     }
 
     /**
@@ -175,6 +250,52 @@ class AvailabilityRepository implements AvailabilityRepositoryInterface
         Carbon $newEnd
     ): bool {
         return $newStart->lt($existingEnd) && $newEnd->gt($existingStart);
+    }
+
+    /**
+     * Find adjacent availabilities.
+     *
+     * @param array<string, mixed> $data
+     * @return Collection<int, Availability>
+     */
+    public function findAdjacentAvailabilities(
+        Model $model,
+        array $data
+    ): Collection {
+        $type = $data['type'] ?? null;
+
+        $builder = $this->buildBaseQuery($model);
+
+        if ($type !== null) {
+            $builder->where('type', $type);
+        }
+
+        /** @var Collection<int, Availability> $availabilities */
+        $availabilities = $builder->get();
+
+        return $availabilities;
+    }
+
+    /**
+     * Apply filters to query.
+     *
+     * @return Builder
+     */
+    public function applyFilters(
+        Model $model,
+        array $filters = []
+    ) {
+        $builder = $this->buildBaseQuery($model);
+
+        if (isset($filters['type'])) {
+            $builder->where('type', $filters['type']);
+        }
+
+        if (isset($filters['day'])) {
+            $builder->whereJsonContains('days', strtolower($filters['day']));
+        }
+
+        return $builder;
     }
 
     /**

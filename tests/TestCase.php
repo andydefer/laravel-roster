@@ -13,7 +13,6 @@ abstract class TestCase extends OrchestraTestCase
     {
         parent::setUp();
 
-        // Run migrations
         $this->loadMigrationsFrom(__DIR__ . '/../database/migrations');
         $this->loadMigrationsFrom(__DIR__ . '/database/migrations');
     }
@@ -33,7 +32,6 @@ abstract class TestCase extends OrchestraTestCase
      */
     protected function defineEnvironment($app): void
     {
-        // Setup default database to use sqlite :memory:
         $app['config']->set('database.default', 'testbench');
         $app['config']->set('database.connections.testbench', [
             'driver'   => 'sqlite',

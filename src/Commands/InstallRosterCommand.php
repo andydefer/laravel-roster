@@ -35,19 +35,16 @@ class InstallRosterCommand extends Command
     {
         $this->info('Installing the Roster package...');
 
-        // Publish configuration
         $this->call('vendor:publish', [
             '--provider' => 'Vendor\Roster\RosterServiceProvider',
             '--tag' => 'roster-config',
         ]);
 
-        // Publish migrations
         $this->call('vendor:publish', [
             '--provider' => 'Vendor\Roster\RosterServiceProvider',
             '--tag' => 'roster-migrations',
         ]);
 
-        // Run migrations
         $this->call('migrate');
 
         $this->info('Roster package installed successfully!');
