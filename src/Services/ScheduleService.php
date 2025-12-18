@@ -9,7 +9,6 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Roster\Exceptions\TimeRangeValidationException;
-use Roster\Exceptions\TimeRangeValidationType;
 use Roster\Exceptions\ValidationException;
 use Roster\Exceptions\ValidationType;
 use Roster\Models\Availability;
@@ -23,8 +22,6 @@ class ScheduleService extends AbstractSchedulableService
 
     /**
      * Get the current schedulable model.
-     *
-     * @return Model|null
      */
     public function getSchedulable(): ?Model
     {
@@ -35,7 +32,6 @@ class ScheduleService extends AbstractSchedulableService
      * Create a new schedule.
      *
      * @param array<string, mixed> $data
-     * @return Schedule
      */
     public function create(array $data): Schedule
     {
@@ -64,9 +60,7 @@ class ScheduleService extends AbstractSchedulableService
     /**
      * Update an existing schedule.
      *
-     * @param int $id
      * @param array<string, mixed> $data
-     * @return bool
      */
     public function update(int $id, array $data): bool
     {
@@ -109,9 +103,6 @@ class ScheduleService extends AbstractSchedulableService
 
     /**
      * Delete a schedule.
-     *
-     * @param int $id
-     * @return bool
      */
     public function delete(int $id): bool
     {
@@ -128,9 +119,6 @@ class ScheduleService extends AbstractSchedulableService
 
     /**
      * Find a schedule by its ID.
-     *
-     * @param int $id
-     * @return Schedule|null
      */
     public function find(int $id): ?Schedule
     {
@@ -144,9 +132,6 @@ class ScheduleService extends AbstractSchedulableService
 
     /**
      * Filter by start date.
-     *
-     * @param Carbon $date
-     * @return self
      */
     public function whereStartDate(Carbon $date): self
     {
@@ -157,9 +142,6 @@ class ScheduleService extends AbstractSchedulableService
 
     /**
      * Filter by end date.
-     *
-     * @param Carbon $date
-     * @return self
      */
     public function whereEndDate(Carbon $date): self
     {
@@ -170,9 +152,6 @@ class ScheduleService extends AbstractSchedulableService
 
     /**
      * Filter by status.
-     *
-     * @param string $status
-     * @return self
      */
     public function whereStatus(string $status): self
     {
@@ -184,8 +163,6 @@ class ScheduleService extends AbstractSchedulableService
     /**
      * Get schedules for a given period.
      *
-     * @param Carbon $start
-     * @param Carbon $end
      * @return Collection<int, Schedule>
      */
     public function between(Carbon $start, Carbon $end): Collection
@@ -211,11 +188,6 @@ class ScheduleService extends AbstractSchedulableService
 
     /**
      * Check availability for a time slot.
-     *
-     * @param Carbon $start
-     * @param Carbon $end
-     * @param string|null $type
-     * @return bool
      */
     public function isTimeSlotAvailable(Carbon $start, Carbon $end, ?string $type = null): bool
     {
@@ -255,10 +227,6 @@ class ScheduleService extends AbstractSchedulableService
 
     /**
      * Find the next available time slot.
-     *
-     * @param int $durationMinutes
-     * @param string|null $type
-     * @return array|null
      */
     public function findNextAvailableSlot(int $durationMinutes, ?string $type = null): ?array
     {
@@ -296,12 +264,6 @@ class ScheduleService extends AbstractSchedulableService
 
     /**
      * Find all available slots in a period.
-     *
-     * @param Carbon $startDate
-     * @param Carbon $endDate
-     * @param int $durationMinutes
-     * @param string|null $type
-     * @return array
      */
     public function findAvailableSlots(Carbon $startDate, Carbon $endDate, int $durationMinutes, ?string $type = null): array
     {
@@ -353,7 +315,6 @@ class ScheduleService extends AbstractSchedulableService
      * Validate schedule data including time range.
      *
      * @param array<string, mixed> $data
-     * @return void
      */
     protected function validateScheduleData(array $data): void
     {
@@ -375,7 +336,6 @@ class ScheduleService extends AbstractSchedulableService
      * Validate that start datetime is before end datetime.
      *
      * @param array<string, mixed> $data
-     * @return void
      */
     protected function validateTimeRange(array $data): void
     {
@@ -402,7 +362,6 @@ class ScheduleService extends AbstractSchedulableService
      * Find matching availability for a schedule.
      *
      * @param array<string, mixed> $data
-     * @return Availability|null
      */
     protected function findMatchingAvailability(array $data): ?Availability
     {
@@ -443,11 +402,6 @@ class ScheduleService extends AbstractSchedulableService
 
     /**
      * Find an availability for a given time slot.
-     *
-     * @param Carbon $start
-     * @param Carbon $end
-     * @param string|null $type
-     * @return Availability|null
      */
     protected function findAvailabilityForTimeSlot(Carbon $start, Carbon $end, ?string $type = null): ?Availability
     {
@@ -489,8 +443,6 @@ class ScheduleService extends AbstractSchedulableService
     /**
      * Get availabilities for a given date.
      *
-     * @param Carbon $date
-     * @param string|null $type
      * @return Collection<int, Availability>
      */
     protected function getAvailabilitiesForDate(Carbon $date, ?string $type = null): Collection
@@ -520,12 +472,6 @@ class ScheduleService extends AbstractSchedulableService
 
     /**
      * Find a slot in an availability.
-     *
-     * @param Availability $availability
-     * @param Carbon $date
-     * @param int $durationMinutes
-     * @param bool $isToday
-     * @return array|null
      */
     protected function findSlotInAvailability(Availability $availability, Carbon $date, int $durationMinutes, bool $isToday = false): ?array
     {
@@ -575,12 +521,6 @@ class ScheduleService extends AbstractSchedulableService
 
     /**
      * Find all slots in an availability for a given date.
-     *
-     * @param Availability $availability
-     * @param Carbon $date
-     * @param int $durationMinutes
-     * @param Carbon|null $minStartTime
-     * @return array
      */
     protected function findAllSlotsInAvailability(Availability $availability, Carbon $date, int $durationMinutes, ?Carbon $minStartTime = null): array
     {

@@ -9,7 +9,6 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Roster\Exceptions\TimeRangeValidationException;
-use Roster\Exceptions\TimeRangeValidationType;
 use Roster\Exceptions\ValidationException;
 use Roster\Exceptions\ValidationType;
 use Roster\Models\Availability;
@@ -361,7 +360,6 @@ class ImpedimentService extends AbstractSchedulableService
      * Validate that start datetime is before end datetime.
      *
      * @param array<string, mixed> $data
-     * @return void
      */
     protected function validateTimeRange(array $data): void
     {
@@ -452,7 +450,7 @@ class ImpedimentService extends AbstractSchedulableService
         }
 
         if (isset($this->filters['type'])) {
-            $query->whereHas('availability', function ($q) {
+            $query->whereHas('availability', function ($q): void {
                 $q->where('type', $this->filters['type']);
             });
         }

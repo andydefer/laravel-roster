@@ -9,7 +9,6 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Roster\Exceptions\TimeRangeValidationException;
-use Roster\Exceptions\TimeRangeValidationType;
 use Roster\Exceptions\ValidationException;
 use Roster\Exceptions\ValidationType;
 use Roster\Models\Availability;
@@ -25,8 +24,6 @@ class AvailabilityService extends AbstractSchedulableService
 
     /**
      * Get the current schedulable model.
-     *
-     * @return Model|null
      */
     public function getSchedulable(): ?Model
     {
@@ -37,7 +34,6 @@ class AvailabilityService extends AbstractSchedulableService
      * Create a new availability with overlap validation.
      *
      * @param array<string, mixed> $data
-     * @return Availability
      */
     public function create(array $data): Availability
     {
@@ -66,9 +62,7 @@ class AvailabilityService extends AbstractSchedulableService
     /**
      * Update an existing availability.
      *
-     * @param int $id
      * @param array<string, mixed> $data
-     * @return bool
      */
     public function update(int $id, array $data): bool
     {
@@ -128,9 +122,6 @@ class AvailabilityService extends AbstractSchedulableService
 
     /**
      * Delete an availability.
-     *
-     * @param int $id
-     * @return bool
      */
     public function delete(int $id): bool
     {
@@ -147,9 +138,6 @@ class AvailabilityService extends AbstractSchedulableService
 
     /**
      * Find an availability by its ID.
-     *
-     * @param int $id
-     * @return Availability|null
      */
     public function find(int $id): ?Availability
     {
@@ -164,8 +152,6 @@ class AvailabilityService extends AbstractSchedulableService
      * Check if there are overlaps.
      *
      * @param array<string, mixed> $data
-     * @param int|null $exceptId
-     * @return bool
      */
     public function hasOverlapping(array $data, ?int $exceptId = null): bool
     {
@@ -181,7 +167,6 @@ class AvailabilityService extends AbstractSchedulableService
      * Find all overlapping availabilities.
      *
      * @param array<string, mixed> $data
-     * @param int|null $exceptId
      * @return Collection<int, Availability>
      */
     public function findOverlapping(array $data, ?int $exceptId = null): Collection
@@ -226,7 +211,6 @@ class AvailabilityService extends AbstractSchedulableService
      * Validate that start time is before end time.
      *
      * @param array<string, mixed> $data
-     * @return void
      */
     protected function validateTimeRange(array $data): void
     {
@@ -328,7 +312,6 @@ class AvailabilityService extends AbstractSchedulableService
      * Create a temporary Availability object from data.
      *
      * @param array<string, mixed> $data
-     * @return Availability
      */
     protected function createAvailabilityFromData(array $data): Availability
     {
@@ -369,9 +352,6 @@ class AvailabilityService extends AbstractSchedulableService
 
     /**
      * Filter by specific day.
-     *
-     * @param string $day
-     * @return self
      */
     public function whereDay(string $day): self
     {
@@ -382,9 +362,6 @@ class AvailabilityService extends AbstractSchedulableService
 
     /**
      * Check if the schedulable is available at a given time.
-     *
-     * @param Carbon $datetime
-     * @return bool
      */
     public function isAvailableAt(Carbon $datetime): bool
     {
@@ -413,10 +390,6 @@ class AvailabilityService extends AbstractSchedulableService
 
     /**
      * Find the next available slot.
-     *
-     * @param Carbon $fromDate
-     * @param int $durationMinutes
-     * @return Carbon|null
      */
     public function nextAvailableSlot(Carbon $fromDate, int $durationMinutes = 60): ?Carbon
     {

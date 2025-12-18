@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace Roster\Exceptions;
 
-use InvalidArgumentException;
-
 /**
  * Enum containing exception types for the Roster package.
  */

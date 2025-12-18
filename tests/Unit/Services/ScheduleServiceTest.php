@@ -2,14 +2,15 @@
 
 declare(strict_types=1);
 
-// ==== tests/Unit/Services/ScheduleServiceTest.php ====
-
 namespace Roster\Tests\Unit\Services;
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Schema;
-use InvalidArgumentException;
+use Roster\Exceptions\TimeRangeValidationException;
+use Roster\Exceptions\ValidationException;
+use Roster\Exceptions\AvailabilityViolationException;
+use Roster\Exceptions\TimeSlotOverlapException;
 use Roster\Models\Availability;
 use Roster\Models\Impediment;
 use Roster\Models\Schedule;
@@ -87,8 +88,8 @@ final class ScheduleServiceTest extends TestCase
 
     public function test_create_schedule_fails_without_matching_availability(): void
     {
-        $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('No matching availability found for this schedule');
+        $this->expectException(ValidationException::class);
+        $this->expectExceptionMessage('No matching availability found');
 
         $this->scheduleService->for($this->testSchedulable)->create([
             'title' => 'Consultation',
@@ -114,8 +115,8 @@ final class ScheduleServiceTest extends TestCase
         // NE PAS créer d'availability pour le mardi
         // Le test doit échouer car il n'y a pas d'availability pour le mardi
 
-        $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('No matching availability found for this schedule');
+        $this->expectException(ValidationException::class);
+        $this->expectExceptionMessage('No matching availability found');
 
         // Essayer de créer un schedule le mardi
         $this->scheduleService->for($this->testSchedulable)->create([
@@ -152,8 +153,8 @@ final class ScheduleServiceTest extends TestCase
             'end_date' => '2027-06-30',
         ]);
 
-        $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('No matching availability found for this schedule');
+        $this->expectException(ValidationException::class);
+        $this->expectExceptionMessage('No matching availability found');
 
         // Essayer de créer un schedule le mardi avec type spécifique 'consultation'
         // Il ne trouvera pas d'availability 'consultation' pour le mardi
@@ -180,15 +181,10 @@ final class ScheduleServiceTest extends TestCase
             'end_date' => '2027-06-30',
         ]);
 
-        // Pour que le test atteigne la validation de l'horaire dans le modèle Schedule,
-        // il faut que le service trouve d'abord une availability
-        // Le service va trouver l'availability (car même jour) mais le modèle échouera sur l'horaire
 
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(AvailabilityViolationException::class);
         $this->expectExceptionMessage('Schedule time range is outside Availability hours');
 
-        // Essayer de créer un schedule à 8h (avant l'horaire de disponibilité)
-        // Le service trouvera l'availability (car même jour) mais le modèle validera l'horaire
         $this->scheduleService->for($this->testSchedulable)->create([
             'title' => 'Consultation',
             'start_datetime' => $this->mondayJune7->copy()->setTime(8, 0),
@@ -219,7 +215,7 @@ final class ScheduleServiceTest extends TestCase
             'status' => 'available',
         ]);
 
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(TimeSlotOverlapException::class);
         $this->expectExceptionMessage('Schedule overlaps with another schedule');
 
         // Essayer de créer un schedule qui chevauche
@@ -253,7 +249,7 @@ final class ScheduleServiceTest extends TestCase
             'end_datetime' => $this->mondayJune7->copy()->setTime(12, 0),
         ]);
 
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(TimeSlotOverlapException::class);
         $this->expectExceptionMessage('Schedule overlaps with an impediment');
 
         $this->scheduleService->for($this->testSchedulable)->create([
@@ -450,7 +446,7 @@ final class ScheduleServiceTest extends TestCase
             'status' => 'available',
         ]);
 
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(TimeSlotOverlapException::class);
 
         // Essayer de déplacer schedule2 pour qu'il chevauche schedule1
         $this->scheduleService->for($this->testSchedulable)->update($schedule2->id, [

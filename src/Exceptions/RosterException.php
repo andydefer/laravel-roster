@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Roster\Exceptions;
 
+use Throwable;
 use InvalidArgumentException;
 
 /**
@@ -16,7 +17,7 @@ abstract class RosterException extends InvalidArgumentException
         string $message = '',
         protected array $context = [],
         int $code = 0,
-        ?\Throwable $previous = null
+        ?Throwable $previous = null
     ) {
         parent::__construct($message, $code, $previous);
     }

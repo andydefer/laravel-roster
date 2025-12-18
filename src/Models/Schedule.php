@@ -13,7 +13,6 @@ use Roster\Exceptions\AvailabilityViolationType;
 use Roster\Exceptions\MissingResourceException;
 use Roster\Exceptions\MissingResourceType;
 use Roster\Exceptions\TimeRangeValidationException;
-use Roster\Exceptions\TimeRangeValidationType;
 use Roster\Exceptions\TimeSlotOverlapException;
 use Roster\Exceptions\TimeSlotOverlapType;
 

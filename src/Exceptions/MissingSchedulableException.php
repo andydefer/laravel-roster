@@ -16,8 +16,6 @@ final class MissingSchedulableException extends LogicException
 {
     /**
      * Create a new MissingSchedulableException instance.
-     *
-     * @return self
      */
     public static function create(): self
     {

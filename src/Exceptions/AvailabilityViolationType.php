@@ -14,10 +14,10 @@ enum AvailabilityViolationType: string
     public function getDefaultMessage(): string
     {
         return match ($this) {
-            self::DAY_NOT_IN_AVAILABILITY => 'Day is not in allowed availability days',
-            self::TIME_OUTSIDE_AVAILABILITY_HOURS => 'Time range is outside availability hours',
-            self::STARTS_BEFORE_AVAILABILITY => 'Starts before availability start date',
-            self::ENDS_AFTER_AVAILABILITY => 'Ends after availability end date',
+            self::DAY_NOT_IN_AVAILABILITY => 'Schedule day is not available',
+            self::TIME_OUTSIDE_AVAILABILITY_HOURS => 'Schedule time range is outside Availability hours',
+            self::STARTS_BEFORE_AVAILABILITY => 'Schedule starts before availability period',
+            self::ENDS_AFTER_AVAILABILITY => 'Schedule ends after availability period',
         };
     }
 }
