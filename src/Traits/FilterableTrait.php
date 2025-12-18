@@ -6,6 +6,7 @@ namespace Roster\Traits;
 
 use Illuminate\Support\Carbon;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
 
 trait FilterableTrait
 {
@@ -36,16 +37,18 @@ trait FilterableTrait
     /**
      * Apply type filter to query.
      */
-    protected function applyTypeFilter(Builder $builder, string $relation = 'availability'): Builder
+    protected function applyTypeFilter(Builder $builder, string $relation = ''): Builder
     {
-        if (isset($this->filters['type'])) {
-            if ($relation !== '' && $relation !== '0') {
-                $builder->whereHas($relation, function ($q): void {
-                    $q->where('type', $this->filters['type']);
-                });
-            } else {
-                $builder->where('type', $this->filters['type']);
-            }
+        if (!isset($this->filters['type'])) {
+            return $builder;
+        }
+
+        if ($relation !== '' && $relation !== '0') {
+            $builder->whereHas($relation, function ($q): void {
+                $q->where('type', $this->filters['type']);
+            });
+        } else {
+            $builder->where('type', $this->filters['type']);
         }
 
         return $builder;
@@ -76,6 +79,43 @@ trait FilterableTrait
     }
 
     /**
+     * Apply reason filter to query.
+     */
+    protected function applyReasonFilter(Builder $builder): Builder
+    {
+        if (isset($this->filters['reason'])) {
+            $builder->where('reason', 'like', '%' . $this->filters['reason'] . '%');
+        }
+
+        return $builder;
+    }
+
+    /**
+     * Apply availability ID filter to query.
+     */
+    protected function applyAvailabilityIdFilter(Builder $builder): Builder
+    {
+        if (isset($this->filters['availability_id'])) {
+            $builder->where('availability_id', $this->filters['availability_id']);
+        }
+
+        return $builder;
+    }
+
+    /**
+     * Apply schedulable filter to query.
+     */
+    protected function applySchedulableFilter(Builder $builder, ?Model $model = null): Builder
+    {
+        if ($model instanceof Model) {
+            $builder->where('schedulable_id', $model->id)
+                ->where('schedulable_type', get_class($model));
+        }
+
+        return $builder;
+    }
+
+    /**
      * Filter by start date.
      */
     public function whereStartDate(Carbon $date): self
@@ -93,16 +133,32 @@ trait FilterableTrait
         return $this;
     }
 
-
     /**
      * Filter by status.
      */
-    final public function whereStatus(string $status): self
+    public function whereStatus(string $status): self
     {
         $this->filters['status'] = $status;
         return $this;
     }
 
+    /**
+     * Filter by reason (for impediments).
+     */
+    public function whereReason(string $reason): self
+    {
+        $this->filters['reason'] = $reason;
+        return $this;
+    }
+
+    /**
+     * Filter by availability ID.
+     */
+    public function whereAvailabilityId(int $availabilityId): self
+    {
+        $this->filters['availability_id'] = $availabilityId;
+        return $this;
+    }
 
     /**
      * Clear all filters.
@@ -111,5 +167,23 @@ trait FilterableTrait
     {
         $this->filters = [];
         return $this;
+    }
+
+    /**
+     * Get current filters.
+     *
+     * @return array<string, mixed>
+     */
+    public function getFilters(): array
+    {
+        return $this->filters;
+    }
+
+    /**
+     * Check if a filter is set.
+     */
+    public function hasFilter(string $key): bool
+    {
+        return isset($this->filters[$key]);
     }
 }

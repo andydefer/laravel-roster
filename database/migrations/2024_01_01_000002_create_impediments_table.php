@@ -47,18 +47,60 @@ return new class extends Migration
             $table->index(['availability_id', 'start_datetime']);
             $table->index(['availability_id', 'end_datetime']);
             $table->index(['start_datetime', 'end_datetime']);
-
-            // Optional: ensure end > start (MySQL only)
-            if (config('database.default') === 'mysql') {
-                $table->rawIndex(
-                    'CHECK(end_datetime > start_datetime)',
-                    'impediments_valid_dates'
-                );
-            }
         });
 
-        // PostgreSQL: Prevent overlapping time ranges per availability
-        if (config('database.default') === 'pgsql') {
+        // Add database-specific constraints
+        $this->addDatabaseSpecificConstraints();
+    }
+
+    /**
+     * Reverse the migrations.
+     */
+    public function down(): void
+    {
+        Schema::dropIfExists('impediments');
+    }
+
+    /**
+     * Add database-specific constraints.
+     */
+    private function addDatabaseSpecificConstraints(): void
+    {
+        $connection = config('database.default');
+
+        switch ($connection) {
+            case 'mysql':
+                $this->addMysqlConstraints();
+                break;
+            case 'pgsql':
+                $this->addPgsqlConstraints();
+                break;
+            case 'sqlite':
+                $this->addSqliteConstraints();
+                break;
+        }
+    }
+
+    /**
+     * Add MySQL specific constraints.
+     */
+    private function addMysqlConstraints(): void
+    {
+        if (config('roster.database.check_constraints', true)) {
+            DB::statement('
+                ALTER TABLE impediments
+                ADD CONSTRAINT impediments_valid_dates
+                CHECK (end_datetime > start_datetime)
+            ');
+        }
+    }
+
+    /**
+     * Add PostgreSQL specific constraints.
+     */
+    private function addPgsqlConstraints(): void
+    {
+        if (config('roster.database.use_json_constraints', true)) {
             DB::statement('
                 ALTER TABLE impediments
                 ADD CONSTRAINT impediments_no_overlap
@@ -71,10 +113,11 @@ return new class extends Migration
     }
 
     /**
-     * Reverse the migrations.
+     * Add SQLite specific constraints.
      */
-    public function down(): void
+    private function addSqliteConstraints(): void
     {
-        Schema::dropIfExists('impediments');
+        // SQLite doesn't support check constraints in the same way
+        // We'll rely on application-level validation
     }
 };

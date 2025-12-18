@@ -12,7 +12,11 @@ use Roster\Exceptions\ValidationException;
 use Roster\Exceptions\ValidationType;
 use Roster\Models\Availability;
 use Roster\Models\Schedule;
-use Roster\Repositories\AvailabilityRepository;
+use Roster\Contracts\Repository\AvailabilityRepositoryInterface;
+use Roster\Contracts\Repository\ImpedimentRepositoryInterface;
+use Roster\Contracts\Repository\ScheduleRepositoryInterface;
+use Roster\Exceptions\OverlappingScheduleException;
+use Roster\Exceptions\ScheduleImpedimentOverlapException;
 use Roster\Services\Core\ValidationService;
 use Roster\Traits\FilterableTrait;
 
@@ -24,22 +28,22 @@ class ScheduleService extends AbstractSchedulableService
 
     protected ValidationService $validationService;
 
-    protected AvailabilityRepository $availabilityRepository;
+    protected AvailabilityRepositoryInterface $availabilityRepository;
+
+    protected ImpedimentRepositoryInterface $impedimentRepository;
+
+    protected ScheduleRepositoryInterface $scheduleRepository;
 
     public function __construct(
         ValidationService $validationService,
-        AvailabilityRepository $availabilityRepository
+        AvailabilityRepositoryInterface $availabilityRepository,
+        ImpedimentRepositoryInterface $impedimentRepository,
+        ScheduleRepositoryInterface $scheduleRepository
     ) {
         $this->validationService = $validationService;
         $this->availabilityRepository = $availabilityRepository;
-    }
-
-    /**
-     * Get the current schedulable model.
-     */
-    public function getSchedulable(): ?Model
-    {
-        return $this->schedulable;
+        $this->impedimentRepository = $impedimentRepository;
+        $this->scheduleRepository = $scheduleRepository;
     }
 
     /**
@@ -57,6 +61,26 @@ class ScheduleService extends AbstractSchedulableService
 
         if (!$availability instanceof Availability) {
             throw new ValidationException(ValidationType::NO_MATCHING_AVAILABILITY);
+        }
+
+        // Check for overlapping schedules and impediments
+        ['start' => $start, 'end' => $end] = $this->validationService
+            ->parseAndValidateDateTimeRange($data);
+
+        if ($this->scheduleRepository->hasOverlappingSchedule($availability->id, $start, $end)) {
+            throw new OverlappingScheduleException([
+                'availability_id' => $availability->id,
+                'start' => $start->format('Y-m-d H:i:s'),
+                'end' => $end->format('Y-m-d H:i:s'),
+            ]);
+        }
+
+        if ($this->impedimentRepository->hasOverlappingImpediment($availability->id, $start, $end)) {
+            throw new ScheduleImpedimentOverlapException([
+                'availability_id' => $availability->id,
+                'start' => $start->format('Y-m-d H:i:s'),
+                'end' => $end->format('Y-m-d H:i:s'),
+            ]);
         }
 
         return Schedule::create(array_merge($data, [
@@ -96,6 +120,21 @@ class ScheduleService extends AbstractSchedulableService
             $newAvailability = $this->findMatchingAvailability($data);
             if (!$newAvailability instanceof Availability) {
                 throw new ValidationException(ValidationType::NO_MATCHING_AVAILABILITY);
+            }
+
+            // Check for overlaps with new availability
+            ['start' => $start, 'end' => $end] = $this->validationService
+                ->parseAndValidateDateTimeRange(array_merge([
+                    'start_datetime' => $schedule->start_datetime,
+                    'end_datetime' => $schedule->end_datetime,
+                ], $data));
+
+            if ($this->scheduleRepository->hasOverlappingSchedule($newAvailability->id, $start, $end, $id)) {
+                throw ValidationException::withMessage('Schedule overlaps with another schedule');
+            }
+
+            if ($this->impedimentRepository->hasOverlappingImpediment($newAvailability->id, $start, $end)) {
+                throw ValidationException::withMessage('Schedule overlaps with an impediment');
             }
 
             if ($newAvailability->id !== $schedule->availability_id) {
@@ -167,19 +206,105 @@ class ScheduleService extends AbstractSchedulableService
             return false;
         }
 
-        // Check for overlapping schedules
-        $hasOverlappingSchedule = Schedule::where('availability_id', $availability->id)
-            ->where('start_datetime', '<', $end)
-            ->where('end_datetime', '>', $start)
-            ->exists();
+        // Check for overlapping schedules using repository
+        $hasOverlappingSchedule = $this->scheduleRepository->hasOverlappingSchedule($availability->id, $start, $end);
 
-        // Check for overlapping impediments
-        $hasOverlappingImpediment = $availability->impediments()
-            ->where('start_datetime', '<', $end)
-            ->where('end_datetime', '>', $start)
-            ->exists();
+        // Check for overlapping impediments using repository
+        $hasOverlappingImpediment = $this->impedimentRepository->hasOverlappingImpediment($availability->id, $start, $end);
 
         return !$hasOverlappingSchedule && !$hasOverlappingImpediment;
+    }
+
+    // Ajouter ces méthodes à la classe ScheduleService:
+
+    /**
+     * Check if a time period is completely available (no schedules or impediments).
+     */
+    public function isPeriodAvailable(Carbon $start, Carbon $end, ?string $type = null): bool
+    {
+        $this->validateSchedulable();
+        $this->validationService->validateTimeRange($start, $end);
+
+        // Split into 30-minute intervals to check each slot
+        $current = $start->copy();
+        $interval = 30; // minutes
+
+        while ($current->lt($end)) {
+            $slotEnd = $current->copy()->addMinutes($interval);
+            if ($slotEnd->gt($end)) {
+                $slotEnd = $end->copy();
+            }
+
+            if (!$this->isTimeSlotAvailable($current, $slotEnd, $type)) {
+                return false;
+            }
+
+            $current->addMinutes($interval);
+        }
+
+        return true;
+    }
+
+    /**
+     * Get the first available period of a specific duration.
+     */
+    public function findFirstAvailablePeriod(
+        Carbon $startDate,
+        Carbon $endDate,
+        int $durationMinutes,
+        ?string $type = null
+    ): ?array {
+        $this->validateSchedulable();
+        $this->validationService->validateTimeRange($startDate, $endDate, 'date');
+
+        if ($durationMinutes <= 0) {
+            throw new ValidationException(
+                ValidationType::MINIMUM_DURATION_NOT_MET,
+                ['minimum_minutes' => 1, 'provided_minutes' => $durationMinutes]
+            );
+        }
+
+        $currentDate = $startDate->copy();
+        $interval = 15; // minutes
+
+        while ($currentDate->lte($endDate)) {
+            $availabilities = $this->availabilityRepository->getForDate($this->schedulable, $currentDate, $type);
+
+            /** @var Availability $availability */
+            foreach ($availabilities as $availability) {
+                $slotStart = $currentDate->copy()->setTimeFrom($availability->start_time);
+                $slotEnd = $currentDate->copy()->setTimeFrom($availability->end_time);
+
+                // For the first day, start at the later of slot start or start date time
+                if ($currentDate->isSameDay($startDate) && $slotStart->lt($startDate)) {
+                    $slotStart = $startDate->copy();
+                }
+
+                while ($slotStart->copy()->addMinutes($durationMinutes)->lte($slotEnd)) {
+                    $proposedEnd = $slotStart->copy()->addMinutes($durationMinutes);
+
+                    if ($proposedEnd->lte($currentDate) || $proposedEnd->gt($endDate)) {
+                        $slotStart->addMinutes($interval);
+                        continue;
+                    }
+
+                    if ($this->isTimeSlotAvailable($slotStart, $proposedEnd, $type)) {
+                        return [
+                            'start' => $slotStart->copy(),
+                            'end' => $proposedEnd,
+                            'availability_id' => $availability->id,
+                            'type' => $availability->type,
+                        ];
+                    }
+
+                    $slotStart->addMinutes($interval);
+                }
+            }
+
+            $currentDate->addDay()->startOfDay();
+        }
+
+        return null;
     }
 
     /**
@@ -303,7 +428,7 @@ class ScheduleService extends AbstractSchedulableService
                 continue;
             }
 
-            // Check availability
+            // Check availability using repository methods
             if ($this->isTimeSlotAvailable($currentSlot, $proposedEnd, $type)) {
                 return [
                     'start' => $currentSlot->copy(),

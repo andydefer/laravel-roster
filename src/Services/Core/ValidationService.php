@@ -32,7 +32,7 @@ class ValidationService
      */
     public function validateFutureDate(Carbon $date): void
     {
-        if ($date->lt(Carbon::now())) {
+        if (config('roster.availability.validate_future_dates', true) && $date->lt(Carbon::now())) {
             throw ValidationException::withMessage('Cannot schedule in the past');
         }
     }
@@ -43,8 +43,18 @@ class ValidationService
     public function validateMinimumDuration(
         Carbon $start,
         Carbon $end,
-        int $minimumMinutes
+        int $minimumMinutes = null
     ): void {
+        $defaultMinutes = match (true) {
+            str_contains(debug_backtrace()[1]['function'] ?? '', 'Impediment') =>
+            config('roster.durations.minimum_impediment_minutes', 5),
+            str_contains(debug_backtrace()[1]['function'] ?? '', 'Schedule') =>
+            config('roster.durations.minimum_schedule_minutes', 15),
+            default => 1
+        };
+
+        $minimumMinutes = $minimumMinutes ?? $defaultMinutes;
+
         if ($start->diffInMinutes($end) < $minimumMinutes) {
             throw new ValidationException(
                 ValidationType::MINIMUM_DURATION_NOT_MET,
@@ -87,8 +97,8 @@ class ValidationService
     ): array {
         $this->validateRequiredFields($data, [$startField, $endField]);
 
-        $start = Carbon::parse($data[$startField]);
-        $end = Carbon::parse($data[$endField]);
+        $start = Carbon::parse($data[$startField])->setTimezone(config('roster.timezone', 'UTC'));
+        $end = Carbon::parse($data[$endField])->setTimezone(config('roster.timezone', 'UTC'));
 
         $this->validateTimeRange($start, $end);
 
@@ -114,5 +124,13 @@ class ValidationService
         $this->validateTimeRange($start, $end, 'time');
 
         return ['start' => $start, 'end' => $end];
+    }
+
+    /**
+     * Validate timezone.
+     */
+    public function validateTimezone(string $timezone): bool
+    {
+        return in_array($timezone, timezone_identifiers_list(), true);
     }
 }

@@ -1,95 +1,73 @@
 <?php
 
-// ==== config/roster.php ====
+declare(strict_types=1);
 
 return [
     /*
     |--------------------------------------------------------------------------
-    | No Default Schedulable Model
+    | Default Timezone
     |--------------------------------------------------------------------------
     |
-    | This package is designed to work with any model that uses
-    | the Roster\Traits\HasRoster trait. No default model is specified.
+    | The default timezone to use for all datetime operations.
     |
     */
+    'timezone' => env('APP_TIMEZONE', 'UTC'),
 
     /*
     |--------------------------------------------------------------------------
-    | Default Slot Duration
+    | Default Durations
     |--------------------------------------------------------------------------
     |
-    | The default length of each time slot, in minutes.
+    | Default duration settings for various operations.
     |
     */
-    'default_slot_duration' => 60,
-
-    /*
-    |--------------------------------------------------------------------------
-    | Default Slot Interval
-    |--------------------------------------------------------------------------
-    |
-    | The default interval between consecutive slots, in minutes.
-    |
-    */
-    'default_slot_interval' => 30,
-
-    /*
-    |--------------------------------------------------------------------------
-    | Timezone
-    |--------------------------------------------------------------------------
-    |
-    | The default timezone used for scheduling.
-    |
-    */
-    'timezone' => 'UTC',
-
-    /*
-    |--------------------------------------------------------------------------
-    | Days of the Week
-    |--------------------------------------------------------------------------
-    |
-    | Defines the standard days of the week for recurring availabilities.
-    |
-    */
-    'days_of_week' => [
-        'monday',
-        'tuesday',
-        'wednesday',
-        'thursday',
-        'friday',
-        'saturday',
-        'sunday',
+    'durations' => [
+        'minimum_impediment_minutes' => 5,
+        'minimum_schedule_minutes' => 15,
+        'default_slot_duration_minutes' => 60,
+        'default_slot_interval_minutes' => 30,
+        'max_days_to_check' => 365,
+        'search_days_ahead' => 30,
     ],
 
     /*
     |--------------------------------------------------------------------------
-    | Activity Types
+    | Availability Settings
     |--------------------------------------------------------------------------
     |
-    | Defines the possible types of activities that can be scheduled.
+    | Settings related to availability management.
     |
     */
-    'activity_types' => [
-        'consultation',
-        'training',
-        'meeting',
-        'coaching',
-        'appointment',
-        'other',
+    'availability' => [
+        'auto_merge_adjacent' => true,
+        'allow_overlap' => false,
+        'validate_future_dates' => true,
     ],
 
     /*
     |--------------------------------------------------------------------------
-    | Schedule Statuses
+    | Database Settings
     |--------------------------------------------------------------------------
     |
-    | Defines the possible statuses for schedules.
+    | Database-specific settings for the package.
     |
     */
-    'schedule_statuses' => [
-        'available',
-        'booked',
-        'cancelled',
-        'blocked',
+    'database' => [
+        'use_json_constraints' => env('DB_CONNECTION') === 'pgsql',
+        'check_constraints' => env('DB_CONNECTION') === 'mysql',
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Cache Settings
+    |--------------------------------------------------------------------------
+    |
+    | Cache settings for performance optimization.
+    |
+    */
+    'cache' => [
+        'enabled' => env('ROSTER_CACHE_ENABLED', true),
+        'ttl' => env('ROSTER_CACHE_TTL', 3600), // seconds
+        'prefix' => 'roster_',
     ],
 ];

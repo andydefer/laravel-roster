@@ -7,6 +7,11 @@ namespace Roster;
 use Illuminate\Support\ServiceProvider;
 use Roster\Commands\InstallRosterCommand;
 use Roster\Repositories\AvailabilityRepository;
+use Roster\Repositories\ImpedimentRepository;
+use Roster\Repositories\ScheduleRepository;
+use Roster\Contracts\Repository\AvailabilityRepositoryInterface;
+use Roster\Contracts\Repository\ImpedimentRepositoryInterface;
+use Roster\Contracts\Repository\ScheduleRepositoryInterface;
 use Roster\Services\AvailabilityService;
 use Roster\Services\AvailabilityValidator;
 use Roster\Services\Core\SlotFinderService;
@@ -51,6 +56,7 @@ class RosterServiceProvider extends ServiceProvider
         );
 
         $this->registerCoreServices();
+        $this->registerRepositories();
         $this->registerMainServices();
         $this->registerManager();
     }
@@ -61,9 +67,29 @@ class RosterServiceProvider extends ServiceProvider
     protected function registerCoreServices(): void
     {
         $this->app->singleton(ValidationService::class);
-        $this->app->singleton(AvailabilityRepository::class);
         $this->app->singleton(SlotFinderService::class);
         $this->app->singleton(AvailabilityValidator::class);
+    }
+
+    /**
+     * Register repository implementations.
+     */
+    protected function registerRepositories(): void
+    {
+        $this->app->bind(
+            AvailabilityRepositoryInterface::class,
+            AvailabilityRepository::class
+        );
+
+        $this->app->bind(
+            ImpedimentRepositoryInterface::class,
+            ImpedimentRepository::class
+        );
+
+        $this->app->bind(
+            ScheduleRepositoryInterface::class,
+            ScheduleRepository::class
+        );
     }
 
     /**
@@ -74,7 +100,9 @@ class RosterServiceProvider extends ServiceProvider
         $this->app->singleton('roster.schedule', function ($app): ScheduleService {
             return new ScheduleService(
                 $app->make(ValidationService::class),
-                $app->make(AvailabilityRepository::class)
+                $app->make(AvailabilityRepositoryInterface::class),
+                $app->make(ImpedimentRepositoryInterface::class),
+                $app->make(ScheduleRepositoryInterface::class)
             );
         });
 
@@ -82,20 +110,15 @@ class RosterServiceProvider extends ServiceProvider
             return new AvailabilityService(
                 $app->make(AvailabilityValidator::class),
                 $app->make(ValidationService::class),
-                $app->make(AvailabilityRepository::class)
+                $app->make(AvailabilityRepositoryInterface::class)
             );
         });
 
         $this->app->singleton('roster.impediment', function ($app): ImpedimentService {
             return new ImpedimentService(
                 $app->make(ValidationService::class),
-                $app->make(AvailabilityRepository::class)
-            );
-        });
-
-        $this->app->singleton(SlotFinderService::class, function ($app): SlotFinderService {
-            return new SlotFinderService(
-                $app->make(ValidationService::class)
+                $app->make(AvailabilityRepositoryInterface::class),
+                $app->make(ImpedimentRepositoryInterface::class)
             );
         });
 

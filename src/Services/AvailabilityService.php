@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Roster\Services;
 
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Roster\Exceptions\ValidationException;
@@ -30,18 +29,11 @@ class AvailabilityService extends AbstractSchedulableService
         ValidationService $validationService,
         AvailabilityRepository $availabilityRepository
     ) {
-        $this->validator = $availabilityValidator ?? new AvailabilityValidator;
+        $this->validator = $availabilityValidator;
         $this->validationService = $validationService;
         $this->availabilityRepository = $availabilityRepository;
     }
 
-    /**
-     * Get the current schedulable model.
-     */
-    public function getSchedulable(): ?Model
-    {
-        return $this->schedulable;
-    }
 
     /**
      * Create a new availability with overlap validation.
@@ -299,6 +291,95 @@ class AvailabilityService extends AbstractSchedulableService
     {
         $this->validateSchedulable();
         return $this->availabilityRepository->isAvailableAt($this->schedulable, $datetime);
+    }
+
+    // Ajouter ces méthodes à la classe AvailabilityService:
+
+    /**
+     * Check availability for a time period.
+     */
+    public function isAvailableForPeriod(Carbon $start, Carbon $end, ?string $type = null): bool
+    {
+        $this->validateSchedulable();
+        $this->validationService->validateTimeRange($start, $end);
+
+        $availability = $this->availabilityRepository->findForTimeSlot($this->schedulable, $start, $end, $type);
+
+        return $availability instanceof Availability;
+    }
+
+    /**
+     * Find all available slots between two dates.
+     */
+    public function findAvailableSlotsBetween(
+        Carbon $startDate,
+        Carbon $endDate,
+        int $durationMinutes = 60,
+        int $intervalMinutes = 30,
+        ?string $type = null
+    ): array {
+        $this->validateSchedulable();
+        $this->validationService->validateTimeRange($startDate, $endDate, 'date');
+
+        // Validate durations are positive
+        if ($durationMinutes <= 0 || $intervalMinutes <= 0) {
+            throw new ValidationException(
+                ValidationType::MINIMUM_DURATION_NOT_MET,
+                ['minimum_minutes' => 1, 'provided_minutes' => min($durationMinutes, $intervalMinutes)]
+            );
+        }
+
+        $slots = [];
+        $currentDate = $startDate->copy();
+
+        while ($currentDate->lte($endDate)) {
+            $availabilities = $this->availabilityRepository->getForDate($this->schedulable, $currentDate, $type);
+
+            /** @var Availability $availability */
+            foreach ($availabilities as $availability) {
+                $slotStart = $currentDate->copy()->setTimeFrom($availability->start_time);
+                $slotEnd = $currentDate->copy()->setTimeFrom($availability->end_time);
+
+                // Generate slots inside this availability
+                while ($slotStart->copy()->addMinutes($durationMinutes)->lte($slotEnd)) {
+                    $slots[] = [
+                        'start' => $slotStart->copy(),
+                        'end' => $slotStart->copy()->addMinutes($durationMinutes),
+                        'type' => $availability->type,
+                        'availability_id' => $availability->id,
+                    ];
+                    $slotStart->addMinutes($intervalMinutes);
+                }
+            }
+
+            $currentDate->addDay()->startOfDay();
+        }
+
+        return $slots;
+    }
+
+    /**
+     * Check if a time period has any availability.
+     */
+    public function hasAvailabilityBetween(Carbon $start, Carbon $end, ?string $type = null): bool
+    {
+        $this->validateSchedulable();
+        $this->validationService->validateTimeRange($start, $end);
+
+        $currentDate = $start->copy()->startOfDay();
+        $endDate = $end->copy()->endOfDay();
+
+        while ($currentDate->lte($endDate)) {
+            $availabilities = $this->availabilityRepository->getForDate($this->schedulable, $currentDate, $type);
+
+            if ($availabilities->isNotEmpty()) {
+                return true;
+            }
+
+            $currentDate->addDay();
+        }
+
+        return false;
     }
 
     /**

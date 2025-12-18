@@ -12,7 +12,7 @@
     },
     "autoload-dev": {
         "psr-4": {
-            "Roster\\Tests\\": "tests/"
+            "Tests\\": "tests/"
         }
     },
     "description": "Clean and flexible scheduling for Laravel applications.",
@@ -54,14 +54,14 @@
         "php": "^8.2"
     },
     "require-dev": {
-        "orchestra/testbench": "^10.8",
-        "phpunit/phpunit": "^12.5",
-        "symfony/var-dumper": "^7.0",
         "barryvdh/laravel-ide-helper": "^3.6",
-        "phpstan/phpstan": "^2.1",
-        "rector/rector": "^2.2",
+        "larastan/larastan": "^3.8",
         "laravel/pint": "^1.26",
-        "larastan/larastan": "^3.8"
+        "orchestra/testbench": "^10.8",
+        "phpstan/phpstan": "^2.1",
+        "phpunit/phpunit": "^12.5",
+        "rector/rector": "^2.2",
+        "symfony/var-dumper": "^7.0"
     },
     "scripts": {
         "test": "vendor/bin/phpunit",

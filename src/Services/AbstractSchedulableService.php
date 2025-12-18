@@ -36,6 +36,14 @@ abstract class AbstractSchedulableService implements SchedulableServiceContract
     }
 
     /**
+     * Get the current schedulable model.
+     */
+    final public function getSchedulable(): ?Model
+    {
+        return $this->schedulable;
+    }
+
+    /**
      * Clear all applied filters.
      */
     final public function resetFilters(): static
