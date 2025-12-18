@@ -33,7 +33,6 @@ return new class extends Migration
             $table->time('end_time');
             $table->json('days')->comment('Recurring days of the week (e.g., ["monday","wednesday"])');
 
-            // Optional date range for validity
             $table->date('start_date')->nullable()->comment('Start date of the availability period');
             $table->date('end_date')->nullable()->comment('End date of the availability period');
 

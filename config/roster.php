@@ -5,40 +5,51 @@
 return [
     /*
     |--------------------------------------------------------------------------
-    | Pas de modèle Schedulable par défaut
+    | No Default Schedulable Model
     |--------------------------------------------------------------------------
     |
-    | Le package est conçu pour être utilisé avec n'importe quel modèle
-    | qui utilise le trait Roster\Traits\HasRoster.
-    | Nous ne spécifions pas de modèle par défaut.
+    | This package is designed to work with any model that uses
+    | the Roster\Traits\HasRoster trait. No default model is specified.
     |
     */
 
     /*
     |--------------------------------------------------------------------------
-    | Durée par défaut des créneaux
+    | Default Slot Duration
     |--------------------------------------------------------------------------
+    |
+    | The default length of each time slot, in minutes.
+    |
     */
     'default_slot_duration' => 60,
 
     /*
     |--------------------------------------------------------------------------
-    | Intervalle par défaut
+    | Default Slot Interval
     |--------------------------------------------------------------------------
+    |
+    | The default interval between consecutive slots, in minutes.
+    |
     */
     'default_slot_interval' => 30,
 
     /*
     |--------------------------------------------------------------------------
-    | Fuseau horaire
+    | Timezone
     |--------------------------------------------------------------------------
+    |
+    | The default timezone used for scheduling.
+    |
     */
     'timezone' => 'UTC',
 
     /*
     |--------------------------------------------------------------------------
-    | Jours de la semaine
+    | Days of the Week
     |--------------------------------------------------------------------------
+    |
+    | Defines the standard days of the week for recurring availabilities.
+    |
     */
     'days_of_week' => [
         'monday',
@@ -52,8 +63,11 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | Types d'activités disponibles
+    | Activity Types
     |--------------------------------------------------------------------------
+    |
+    | Defines the possible types of activities that can be scheduled.
+    |
     */
     'activity_types' => [
         'consultation',
@@ -66,8 +80,11 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | Statuts de schedule
+    | Schedule Statuses
     |--------------------------------------------------------------------------
+    |
+    | Defines the possible statuses for schedules.
+    |
     */
     'schedule_statuses' => [
         'available',

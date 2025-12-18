@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 /**
@@ -56,7 +57,7 @@ return new class extends Migration
 
         // PostgreSQL: Prevent overlapping time ranges per availability
         if (config('database.default') === 'pgsql') {
-            \Illuminate\Support\Facades\DB::statement('
+            DB::statement('
                 ALTER TABLE impediments
                 ADD CONSTRAINT impediments_no_overlap
                 EXCLUDE USING gist (
