@@ -15,6 +15,7 @@ use Roster\Models\Availability;
 use Roster\Models\Impediment;
 use Roster\Contracts\Repository\AvailabilityRepositoryInterface;
 use Roster\Contracts\Repository\ImpedimentRepositoryInterface;
+use Roster\Contracts\Services\ValidationServiceInterface;
 use Roster\Exceptions\OverlappingImpedimentException;
 use Roster\Services\Core\ValidationService;
 use Roster\Traits\FilterableTrait;
@@ -35,7 +36,7 @@ class ImpedimentService extends AbstractSchedulableService
     protected ImpedimentRepositoryInterface $impedimentRepository;
 
     public function __construct(
-        ValidationService $validationService,
+        ValidationServiceInterface $validationService,
         AvailabilityRepositoryInterface $availabilityRepository,
         ImpedimentRepositoryInterface $impedimentRepository
     ) {

@@ -5,11 +5,12 @@ declare(strict_types=1);
 namespace Roster\Services\Core;
 
 use Illuminate\Support\Carbon;
+use Roster\Contracts\Services\ValidationServiceInterface;
 use Roster\Exceptions\TimeRangeValidationException;
 use Roster\Exceptions\ValidationException;
 use Roster\Exceptions\Enums\ValidationType;
 
-class ValidationService
+class ValidationService implements ValidationServiceInterface
 {
     /**
      * Validate time range with proper context.

@@ -7,6 +7,9 @@ namespace Roster\Services;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
+use Roster\Contracts\Repository\AvailabilityRepositoryInterface;
+use Roster\Contracts\Services\AvailabilityValidatorInterface;
+use Roster\Contracts\Services\ValidationServiceInterface;
 use Roster\Exceptions\Enums\ValidationType;
 use Roster\Exceptions\ValidationException;
 use Roster\Models\Availability;
@@ -18,16 +21,16 @@ class AvailabilityService extends AbstractSchedulableService
 {
     use FilterableTrait;
 
-    protected AvailabilityValidator $validator;
+    protected AvailabilityValidatorInterface $validator;
 
-    protected ValidationService $validationService;
+    protected ValidationServiceInterface $validationService;
 
     protected AvailabilityRepository $availabilityRepository;
 
     public function __construct(
-        AvailabilityValidator $availabilityValidator,
-        ValidationService $validationService,
-        AvailabilityRepository $availabilityRepository
+        AvailabilityValidatorInterface $availabilityValidator,
+        ValidationServiceInterface $validationService,
+        AvailabilityRepositoryInterface $availabilityRepository
     ) {
         $this->validator = $availabilityValidator;
         $this->validationService = $validationService;

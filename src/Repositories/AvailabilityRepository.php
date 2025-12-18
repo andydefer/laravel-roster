@@ -46,6 +46,7 @@ class AvailabilityRepository implements AvailabilityRepositoryInterface
         return $availability->update($data);
     }
 
+
     /**
      * Delete an availability.
      */

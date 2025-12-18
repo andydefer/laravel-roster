@@ -15,6 +15,7 @@ use Roster\Contracts\Repository\ScheduleRepositoryInterface;
 use Roster\Services\AvailabilityService;
 use Roster\Services\AvailabilityValidator;
 use Roster\Services\Core\SlotFinderService;
+use Roster\Services\Core\ScheduleSlotFinder;
 use Roster\Services\Core\ValidationService;
 use Roster\Services\ImpedimentService;
 use Roster\Services\ScheduleService;
@@ -68,6 +69,7 @@ class RosterServiceProvider extends ServiceProvider
     {
         $this->app->singleton(ValidationService::class);
         $this->app->singleton(SlotFinderService::class);
+        $this->app->singleton(ScheduleSlotFinder::class);
         $this->app->singleton(AvailabilityValidator::class);
     }
 
@@ -102,7 +104,8 @@ class RosterServiceProvider extends ServiceProvider
                 $app->make(ValidationService::class),
                 $app->make(AvailabilityRepositoryInterface::class),
                 $app->make(ImpedimentRepositoryInterface::class),
-                $app->make(ScheduleRepositoryInterface::class)
+                $app->make(ScheduleRepositoryInterface::class),
+                $app->make(ScheduleSlotFinder::class)
             );
         });
 
