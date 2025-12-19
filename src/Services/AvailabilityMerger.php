@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Roster\Services;
 
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Roster\Contracts\Repository\AvailabilityRepositoryInterface;
 use Roster\Contracts\Services\AvailabilityMergerInterface;
@@ -15,8 +16,8 @@ use Roster\Models\Availability;
 class AvailabilityMerger implements AvailabilityMergerInterface
 {
     public function __construct(
-        private AvailabilityValidatorInterface $validator,
-        private AvailabilityRepositoryInterface $repository,
+        private AvailabilityValidatorInterface $availabilityValidator,
+        private AvailabilityRepositoryInterface $availabilityRepository,
         private ValidationServiceInterface $validationService
     ) {}
 
@@ -24,7 +25,6 @@ class AvailabilityMerger implements AvailabilityMergerInterface
      * Merge new availability data with adjacent existing ones.
      *
      * @param array<string, mixed> $data
-     * @param object $schedulable
      * @return array<string, mixed>
      */
     public function mergeWithAdjacent(array $data, object $schedulable): array
@@ -42,8 +42,8 @@ class AvailabilityMerger implements AvailabilityMergerInterface
             try {
                 $tempAvailability = $this->createAvailabilityFromData($mergedData, $schedulable);
 
-                if ($this->validator->areAdjacent($tempAvailability, $adjacentAvailability)) {
-                    $mergedData = $this->validator->mergeAdjacent($tempAvailability, $adjacentAvailability);
+                if ($this->availabilityValidator->areAdjacent($tempAvailability, $adjacentAvailability)) {
+                    $mergedData = $this->availabilityValidator->mergeAdjacent($tempAvailability, $adjacentAvailability);
                     $idsToDelete[] = $adjacentAvailability->id;
                 }
             } catch (ValidationException) {
@@ -52,7 +52,7 @@ class AvailabilityMerger implements AvailabilityMergerInterface
         }
 
         if ($idsToDelete !== []) {
-            $this->repository->deleteMultiple($idsToDelete);
+            $this->availabilityRepository->deleteMultiple($idsToDelete);
         }
 
         return $mergedData;
@@ -66,11 +66,11 @@ class AvailabilityMerger implements AvailabilityMergerInterface
      */
     public function findAdjacentAvailabilities(array $data, object $schedulable): Collection
     {
-        $availabilities = $this->repository->findAdjacentAvailabilities($schedulable, $data);
+        $availabilities = $this->availabilityRepository->findAdjacentAvailabilities($schedulable, $data);
         $tempAvailability = $this->createAvailabilityFromData($data, $schedulable);
 
         return $availabilities->filter(function (Availability $availability) use ($tempAvailability): bool {
-            return $this->validator->areAdjacent($tempAvailability, $availability);
+            return $this->availabilityValidator->areAdjacent($tempAvailability, $availability);
         });
     }
 
@@ -93,11 +93,11 @@ class AvailabilityMerger implements AvailabilityMergerInterface
         $availability->type = $data['type'] ?? null;
 
         if (isset($data['start_date'])) {
-            $availability->start_date = \Illuminate\Support\Carbon::parse($data['start_date']);
+            $availability->start_date = Carbon::parse($data['start_date']);
         }
 
         if (isset($data['end_date'])) {
-            $availability->end_date = \Illuminate\Support\Carbon::parse($data['end_date']);
+            $availability->end_date = Carbon::parse($data['end_date']);
         }
 
         return $availability;

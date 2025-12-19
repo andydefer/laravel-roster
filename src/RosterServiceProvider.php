@@ -24,8 +24,8 @@ use Roster\Services\Core\ValidationService;
 use Roster\Services\ImpedimentService;
 use Roster\Services\ScheduleService;
 use Roster\Services\AvailabilityMerger;
-use Roster\Services\SlotFinder;
 use Roster\Services\AvailabilityChecker;
+use Roster\Services\SlotFinderService;
 
 class RosterServiceProvider extends ServiceProvider
 {
@@ -83,7 +83,7 @@ class RosterServiceProvider extends ServiceProvider
 
         // New refactored services (bind to interfaces)
         $this->app->bind(AvailabilityMergerInterface::class, AvailabilityMerger::class);
-        $this->app->bind(SlotFinderInterface::class, SlotFinder::class);
+        $this->app->bind(SlotFinderInterface::class, SlotFinderService::class);
         $this->app->bind(AvailabilityCheckerInterface::class, AvailabilityChecker::class);
     }
 
@@ -119,7 +119,7 @@ class RosterServiceProvider extends ServiceProvider
                 $app->make(AvailabilityRepositoryInterface::class),
                 $app->make(ImpedimentRepositoryInterface::class),
                 $app->make(ScheduleRepositoryInterface::class),
-                $app->make(ScheduleSlotFinder::class)
+                $app->make(SlotFinderInterface::class)
             );
         });
 

@@ -15,10 +15,10 @@ use Roster\Models\Schedule;
 use Roster\Contracts\Repository\AvailabilityRepositoryInterface;
 use Roster\Contracts\Repository\ImpedimentRepositoryInterface;
 use Roster\Contracts\Repository\ScheduleRepositoryInterface;
+use Roster\Contracts\Services\SlotFinderInterface;
 use Roster\Contracts\Services\ValidationServiceInterface;
 use Roster\Exceptions\OverlappingScheduleException;
 use Roster\Exceptions\ScheduleImpedimentOverlapException;
-use Roster\Services\Core\ScheduleSlotFinder;
 use Roster\Traits\FilterableTrait;
 
 class ScheduleService extends AbstractSchedulableService
@@ -35,20 +35,20 @@ class ScheduleService extends AbstractSchedulableService
 
     protected ScheduleRepositoryInterface $scheduleRepository;
 
-    protected ScheduleSlotFinder $slotFinder;
+    protected SlotFinderInterface $slotFinder;
 
     public function __construct(
         ValidationServiceInterface $validationService,
         AvailabilityRepositoryInterface $availabilityRepository,
         ImpedimentRepositoryInterface $impedimentRepository,
         ScheduleRepositoryInterface $scheduleRepository,
-        ScheduleSlotFinder $scheduleSlotFinder
+        SlotFinderInterface $slotFinder
     ) {
         $this->validationService = $validationService;
         $this->availabilityRepository = $availabilityRepository;
         $this->impedimentRepository = $impedimentRepository;
         $this->scheduleRepository = $scheduleRepository;
-        $this->slotFinder = $scheduleSlotFinder;
+        $this->slotFinder = $slotFinder;
     }
 
     /**
@@ -232,7 +232,6 @@ class ScheduleService extends AbstractSchedulableService
         $this->validateSchedulable();
         $this->validationService->validateTimeRange($start, $end);
 
-        // Delegate to ScheduleSlotFinder
         return $this->slotFinder->isPeriodAvailable($this->schedulable, $start, $end, $type);
     }
 
@@ -255,7 +254,6 @@ class ScheduleService extends AbstractSchedulableService
             );
         }
 
-        // Delegate to ScheduleSlotFinder
         return $this->slotFinder->findFirstAvailablePeriod(
             $this->schedulable,
             $startDate,
@@ -280,7 +278,6 @@ class ScheduleService extends AbstractSchedulableService
             );
         }
 
-        // Delegate to ScheduleSlotFinder
         return $this->slotFinder->findNextAvailableSlot($this->schedulable, $durationMinutes, $type);
     }
 

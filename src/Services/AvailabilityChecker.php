@@ -12,7 +12,7 @@ use Roster\Contracts\Services\ValidationServiceInterface;
 class AvailabilityChecker implements AvailabilityCheckerInterface
 {
     public function __construct(
-        private AvailabilityRepositoryInterface $repository,
+        private AvailabilityRepositoryInterface $availabilityRepository,
         private ValidationServiceInterface $validationService
     ) {}
 
@@ -21,7 +21,7 @@ class AvailabilityChecker implements AvailabilityCheckerInterface
      */
     public function isAvailableAt(object $schedulable, Carbon $datetime): bool
     {
-        return $this->repository->isAvailableAt($schedulable, $datetime);
+        return $this->availabilityRepository->isAvailableAt($schedulable, $datetime);
     }
 
     /**
@@ -35,7 +35,7 @@ class AvailabilityChecker implements AvailabilityCheckerInterface
     ): bool {
         $this->validationService->validateTimeRange($start, $end);
 
-        $availability = $this->repository->findForTimeSlot($schedulable, $start, $end, $type);
+        $availability = $this->availabilityRepository->findForTimeSlot($schedulable, $start, $end, $type);
         return $availability !== null;
     }
 
@@ -53,6 +53,6 @@ class AvailabilityChecker implements AvailabilityCheckerInterface
 
         // Note: This method should be implemented in AvailabilityValidator
         // For now, we'll delegate to repository's findOverlapping
-        return $this->repository->findOverlapping($schedulable, $data, $exceptId)->isNotEmpty();
+        return $this->availabilityRepository->findOverlapping($schedulable, $data, $exceptId)->isNotEmpty();
     }
 }

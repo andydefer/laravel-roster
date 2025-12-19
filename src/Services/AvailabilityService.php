@@ -21,12 +21,17 @@ class AvailabilityService extends AbstractSchedulableService
 {
     use FilterableTrait;
 
-    private AvailabilityValidatorInterface $validator;
+    private AvailabilityValidatorInterface $availabilityValidator;
+
     private ValidationServiceInterface $validationService;
-    private AvailabilityRepositoryInterface $repository;
-    private AvailabilityMergerInterface $merger;
+
+    private AvailabilityRepositoryInterface $availabilityRepository;
+
+    private AvailabilityMergerInterface $availabilityMerger;
+
     private SlotFinderInterface $slotFinder;
-    private AvailabilityCheckerInterface $checker;
+
+    private AvailabilityCheckerInterface $availabilityChecker;
 
     public function __construct(
         AvailabilityValidatorInterface $availabilityValidator,
@@ -36,12 +41,12 @@ class AvailabilityService extends AbstractSchedulableService
         SlotFinderInterface $slotFinder,
         AvailabilityCheckerInterface $availabilityChecker
     ) {
-        $this->validator = $availabilityValidator;
+        $this->availabilityValidator = $availabilityValidator;
         $this->validationService = $validationService;
-        $this->repository = $availabilityRepository;
-        $this->merger = $availabilityMerger;
+        $this->availabilityRepository = $availabilityRepository;
+        $this->availabilityMerger = $availabilityMerger;
         $this->slotFinder = $slotFinder;
-        $this->checker = $availabilityChecker;
+        $this->availabilityChecker = $availabilityChecker;
     }
 
     /**
@@ -54,16 +59,16 @@ class AvailabilityService extends AbstractSchedulableService
         $this->validateSchedulable();
 
         // Validate basic data including time range
-        $this->validator->validateBasicData($data);
+        $this->availabilityValidator->validateBasicData($data);
         $this->validationService->parseAndValidateTimeRange($data);
 
         // Check for overlaps (always forbidden)
-        if ($this->checker->hasOverlapping($this->schedulable, $data)) {
+        if ($this->availabilityChecker->hasOverlapping($this->schedulable, $data)) {
             throw ValidationException::withMessage('This availability overlaps with an existing one.');
         }
 
         // Automatic merging of adjacent availabilities (always enabled)
-        $data = $this->merger->mergeWithAdjacent($data, $this->schedulable);
+        $data = $this->availabilityMerger->mergeWithAdjacent($data, $this->schedulable);
 
         // Prepare data for creation
         $availabilityData = array_merge($data, [
@@ -72,7 +77,7 @@ class AvailabilityService extends AbstractSchedulableService
         ]);
 
         // Delegate to repository
-        return $this->repository->create($availabilityData);
+        return $this->availabilityRepository->create($availabilityData);
     }
 
     /**
@@ -91,7 +96,7 @@ class AvailabilityService extends AbstractSchedulableService
 
         if ($data !== []) {
             // Validate basic data
-            $this->validator->validateBasicData($data);
+            $this->availabilityValidator->validateBasicData($data);
 
             // Validate time range if time fields are being updated
             if (isset($data['start_time']) || isset($data['end_time'])) {
@@ -109,13 +114,13 @@ class AvailabilityService extends AbstractSchedulableService
             $checkData = $this->prepareCheckData($availability, $data);
 
             // Check for overlaps with other availabilities (always forbidden)
-            if ($this->checker->hasOverlapping($this->schedulable, $checkData, $id)) {
+            if ($this->availabilityChecker->hasOverlapping($this->schedulable, $checkData, $id)) {
                 throw ValidationException::withMessage('This availability overlaps with an existing one.');
             }
         }
 
         // Delegate to repository
-        return $this->repository->update($id, $data);
+        return $this->availabilityRepository->update($id, $data);
     }
 
     /**
@@ -130,7 +135,7 @@ class AvailabilityService extends AbstractSchedulableService
             return false;
         }
 
-        return $this->repository->delete($id);
+        return $this->availabilityRepository->delete($id);
     }
 
     /**
@@ -139,7 +144,7 @@ class AvailabilityService extends AbstractSchedulableService
     public function find(int $id): ?Availability
     {
         $this->validateSchedulable();
-        return $this->repository->findById($id);
+        return $this->availabilityRepository->findById($id);
     }
 
     /**
@@ -150,7 +155,7 @@ class AvailabilityService extends AbstractSchedulableService
     public function hasOverlapping(array $data, ?int $exceptId = null): bool
     {
         $this->validateSchedulable();
-        return $this->checker->hasOverlapping($this->schedulable, $data, $exceptId);
+        return $this->availabilityChecker->hasOverlapping($this->schedulable, $data, $exceptId);
     }
 
     /**
@@ -163,7 +168,7 @@ class AvailabilityService extends AbstractSchedulableService
     {
         $this->validateSchedulable();
         $this->validationService->parseAndValidateTimeRange($data);
-        return $this->repository->findOverlapping($this->schedulable, $data, $exceptId);
+        return $this->availabilityRepository->findOverlapping($this->schedulable, $data, $exceptId);
     }
 
     /**
@@ -175,7 +180,7 @@ class AvailabilityService extends AbstractSchedulableService
     public function findAdjacentAvailabilities(array $data): Collection
     {
         $this->validateSchedulable();
-        return $this->merger->findAdjacentAvailabilities($data, $this->schedulable);
+        return $this->availabilityMerger->findAdjacentAvailabilities($data, $this->schedulable);
     }
 
     /**
@@ -193,7 +198,7 @@ class AvailabilityService extends AbstractSchedulableService
     public function isAvailableAt(Carbon $datetime): bool
     {
         $this->validateSchedulable();
-        return $this->checker->isAvailableAt($this->schedulable, $datetime);
+        return $this->availabilityChecker->isAvailableAt($this->schedulable, $datetime);
     }
 
     /**
@@ -202,7 +207,7 @@ class AvailabilityService extends AbstractSchedulableService
     public function isAvailableForPeriod(Carbon $start, Carbon $end, ?string $type = null): bool
     {
         $this->validateSchedulable();
-        return $this->checker->isAvailableForPeriod($this->schedulable, $start, $end, $type);
+        return $this->availabilityChecker->isAvailableForPeriod($this->schedulable, $start, $end, $type);
     }
 
     /**
@@ -305,6 +310,6 @@ class AvailabilityService extends AbstractSchedulableService
      */
     protected function applyFilters(): Builder
     {
-        return $this->repository->applyFilters($this->schedulable, $this->filters);
+        return $this->availabilityRepository->applyFilters($this->schedulable, $this->filters);
     }
 }
