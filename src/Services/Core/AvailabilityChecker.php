@@ -2,8 +2,9 @@
 
 declare(strict_types=1);
 
-namespace Roster\Services;
+namespace Roster\Services\Core;
 
+use Roster\Models\Availability;
 use Illuminate\Support\Carbon;
 use Roster\Contracts\Repository\AvailabilityRepositoryInterface;
 use Roster\Contracts\Services\AvailabilityCheckerInterface;
@@ -36,7 +37,7 @@ class AvailabilityChecker implements AvailabilityCheckerInterface
         $this->validationService->validateTimeRange($start, $end);
 
         $availability = $this->availabilityRepository->findForTimeSlot($schedulable, $start, $end, $type);
-        return $availability !== null;
+        return $availability instanceof Availability;
     }
 
     /**

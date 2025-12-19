@@ -40,6 +40,8 @@ final class ImpedimentFacadeTest extends TestCase
             'start_time' => '09:00:00',
             'end_time' => '17:00:00',
             'days' => ['monday'],
+            'start_date' => '2038-06-01',
+            'end_date' => '2038-06-30',
         ]);
     }
 
@@ -47,8 +49,8 @@ final class ImpedimentFacadeTest extends TestCase
     {
         $data = [
             'reason' => 'Out of office',
-            'start_datetime' => '2024-01-01 10:00:00',
-            'end_datetime' => '2024-01-01 11:00:00',
+            'start_datetime' => '2038-06-07 10:00:00',
+            'end_datetime' => '2038-06-07 11:00:00',
         ];
 
         $impediment = ImpedimentFacade::for($this->model)->create($data);
@@ -65,8 +67,8 @@ final class ImpedimentFacadeTest extends TestCase
             'schedulable_id' => $this->model->id,
             'schedulable_type' => get_class($this->model),
             'reason' => 'Test',
-            'start_datetime' => '2024-01-01 10:00:00',
-            'end_datetime' => '2024-01-01 11:00:00',
+            'start_datetime' => '2038-06-07 10:00:00',
+            'end_datetime' => '2038-06-07 11:00:00',
         ]);
 
         $found = ImpedimentFacade::for($this->model)->find($impediment->id);
@@ -83,8 +85,8 @@ final class ImpedimentFacadeTest extends TestCase
             'schedulable_id' => $this->model->id,
             'schedulable_type' => get_class($this->model),
             'reason' => 'Impediment 1',
-            'start_datetime' => '2024-01-01 10:00:00',
-            'end_datetime' => '2024-01-01 11:00:00',
+            'start_datetime' => '2038-06-07 10:00:00',
+            'end_datetime' => '2038-06-07 11:00:00',
         ]);
 
         Impediment::create([
@@ -92,8 +94,8 @@ final class ImpedimentFacadeTest extends TestCase
             'schedulable_id' => $this->model->id,
             'schedulable_type' => get_class($this->model),
             'reason' => 'Impediment 2',
-            'start_datetime' => '2024-01-01 14:00:00',
-            'end_datetime' => '2024-01-01 15:00:00',
+            'start_datetime' => '2038-06-07 14:00:00',
+            'end_datetime' => '2038-06-07 15:00:00',
         ]);
 
         /** @var Collection<int, \Roster\Models\Impediment> $impediments */
@@ -112,8 +114,8 @@ final class ImpedimentFacadeTest extends TestCase
             'schedulable_id' => $this->model->id,
             'schedulable_type' => get_class($this->model),
             'reason' => 'Morning meeting',
-            'start_datetime' => '2024-01-01 10:00:00',
-            'end_datetime' => '2024-01-01 11:00:00',
+            'start_datetime' => '2038-06-07 10:00:00',
+            'end_datetime' => '2038-06-07 11:00:00',
         ]);
 
         Impediment::create([
@@ -121,12 +123,12 @@ final class ImpedimentFacadeTest extends TestCase
             'schedulable_id' => $this->model->id,
             'schedulable_type' => get_class($this->model),
             'reason' => 'Afternoon training',
-            'start_datetime' => '2024-01-01 14:00:00',
-            'end_datetime' => '2024-01-01 15:00:00',
+            'start_datetime' => '2038-06-07 14:00:00',
+            'end_datetime' => '2038-06-07 15:00:00',
         ]);
 
-        $startDate = Carbon::parse('2024-01-01 12:00:00');
-        $endDate = Carbon::parse('2024-01-01 16:00:00');
+        $startDate = Carbon::parse('2038-06-07 12:00:00');
+        $endDate = Carbon::parse('2038-06-07 16:00:00');
 
         $filtered = ImpedimentFacade::for($this->model)
             ->whereStartDate($startDate)
@@ -144,15 +146,15 @@ final class ImpedimentFacadeTest extends TestCase
             'schedulable_id' => $this->model->id,
             'schedulable_type' => get_class($this->model),
             'reason' => 'Meeting',
-            'start_datetime' => '2024-01-01 10:00:00',
-            'end_datetime' => '2024-01-01 11:00:00',
+            'start_datetime' => '2038-06-07 10:00:00',
+            'end_datetime' => '2038-06-07 11:00:00',
         ]);
 
-        $blockedStart = Carbon::parse('2024-01-01 10:30:00');
-        $blockedEnd = Carbon::parse('2024-01-01 10:45:00');
+        $blockedStart = Carbon::parse('2038-06-07 10:30:00');
+        $blockedEnd = Carbon::parse('2038-06-07 10:45:00');
 
-        $availableStart = Carbon::parse('2024-01-01 11:30:00');
-        $availableEnd = Carbon::parse('2024-01-01 12:00:00');
+        $availableStart = Carbon::parse('2038-06-07 11:30:00');
+        $availableEnd = Carbon::parse('2038-06-07 12:00:00');
 
         $this->assertTrue(
             ImpedimentFacade::for($this->model)->isTimeSlotBlocked($blockedStart, $blockedEnd)
@@ -170,8 +172,8 @@ final class ImpedimentFacadeTest extends TestCase
             'schedulable_id' => $this->model->id,
             'schedulable_type' => get_class($this->model),
             'reason' => 'Impediment 1',
-            'start_datetime' => '2024-01-01 10:00:00',
-            'end_datetime' => '2024-01-01 11:00:00',
+            'start_datetime' => '2038-06-07 10:00:00',
+            'end_datetime' => '2038-06-07 11:00:00',
         ]);
 
         Impediment::create([
@@ -179,12 +181,12 @@ final class ImpedimentFacadeTest extends TestCase
             'schedulable_id' => $this->model->id,
             'schedulable_type' => get_class($this->model),
             'reason' => 'Impediment 2',
-            'start_datetime' => '2024-01-02 14:00:00',
-            'end_datetime' => '2024-01-02 15:00:00',
+            'start_datetime' => '2038-06-08 14:00:00',
+            'end_datetime' => '2038-06-08 15:00:00',
         ]);
 
-        $start = Carbon::parse('2024-01-01 00:00:00');
-        $end = Carbon::parse('2024-01-01 23:59:59');
+        $start = Carbon::parse('2038-06-07 00:00:00');
+        $end = Carbon::parse('2038-06-07 23:59:59');
 
         $impediments = ImpedimentFacade::for($this->model)->between($start, $end);
 

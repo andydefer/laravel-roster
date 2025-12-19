@@ -43,6 +43,8 @@ final class ImpedimentServiceTest extends TestCase
             'start_time' => '09:00:00',
             'end_time' => '17:00:00',
             'days' => ['monday'],
+            'start_date' => '2038-06-01',
+            'end_date' => '2038-06-30',
         ]);
 
         $this->impedimentService = app(ImpedimentService::class);
@@ -53,8 +55,8 @@ final class ImpedimentServiceTest extends TestCase
     {
         $data = [
             'reason' => 'Out of office',
-            'start_datetime' => '2024-01-01 10:00:00',
-            'end_datetime' => '2024-01-01 11:00:00',
+            'start_datetime' => '2038-06-07 10:00:00',
+            'end_datetime' => '2038-06-07 11:00:00',
             'metadata' => ['notes' => 'Doctor appointment'],
         ];
 
@@ -75,8 +77,8 @@ final class ImpedimentServiceTest extends TestCase
     {
         $data = [
             'reason' => 'Test',
-            'start_datetime' => '2024-01-02 10:00:00',
-            'end_datetime' => '2024-01-02 11:00:00',
+            'start_datetime' => '2038-07-01 10:00:00',
+            'end_datetime' => '2038-07-01 11:00:00',
         ];
 
         $this->expectException(ValidationException::class);
@@ -89,16 +91,16 @@ final class ImpedimentServiceTest extends TestCase
     {
         $this->impedimentService->create([
             'reason' => 'First impediment',
-            'start_datetime' => '2024-01-01 10:00:00',
-            'end_datetime' => '2024-01-01 11:00:00',
+            'start_datetime' => '2038-06-07 10:00:00',
+            'end_datetime' => '2038-06-07 11:00:00',
         ]);
 
         $this->expectException(OverlappingImpedimentException::class);
 
         $this->impedimentService->create([
             'reason' => 'Overlapping impediment',
-            'start_datetime' => '2024-01-01 10:30:00',
-            'end_datetime' => '2024-01-01 11:30:00',
+            'start_datetime' => '2038-06-07 10:30:00',
+            'end_datetime' => '2038-06-07 11:30:00',
         ]);
     }
 
@@ -109,8 +111,8 @@ final class ImpedimentServiceTest extends TestCase
             'schedulable_id' => $this->model->id,
             'schedulable_type' => get_class($this->model),
             'reason' => 'Original reason',
-            'start_datetime' => '2024-01-01 10:00:00',
-            'end_datetime' => '2024-01-01 11:00:00',
+            'start_datetime' => '2038-06-07 10:00:00',
+            'end_datetime' => '2038-06-07 11:00:00',
         ]);
 
         $updated = $this->impedimentService->update($impediment->id, [
@@ -132,20 +134,20 @@ final class ImpedimentServiceTest extends TestCase
             'schedulable_id' => $this->model->id,
             'schedulable_type' => get_class($this->model),
             'reason' => 'Test',
-            'start_datetime' => '2024-01-01 10:00:00',
-            'end_datetime' => '2024-01-01 11:00:00',
+            'start_datetime' => '2038-06-07 10:00:00',
+            'end_datetime' => '2038-06-07 11:00:00',
         ]);
 
         $updated = $this->impedimentService->update($impediment->id, [
-            'start_datetime' => '2024-01-01 14:00:00',
-            'end_datetime' => '2024-01-01 15:00:00',
+            'start_datetime' => '2038-06-07 14:00:00',
+            'end_datetime' => '2038-06-07 15:00:00',
         ]);
 
         $this->assertTrue($updated);
 
         $impediment->refresh();
-        $this->assertSame('2024-01-01 14:00:00', $impediment->start_datetime->format('Y-m-d H:i:s'));
-        $this->assertSame('2024-01-01 15:00:00', $impediment->end_datetime->format('Y-m-d H:i:s'));
+        $this->assertSame('2038-06-07 14:00:00', $impediment->start_datetime->format('Y-m-d H:i:s'));
+        $this->assertSame('2038-06-07 15:00:00', $impediment->end_datetime->format('Y-m-d H:i:s'));
     }
 
     public function test_delete_impediment(): void
@@ -155,8 +157,8 @@ final class ImpedimentServiceTest extends TestCase
             'schedulable_id' => $this->model->id,
             'schedulable_type' => get_class($this->model),
             'reason' => 'Test',
-            'start_datetime' => '2024-01-01 10:00:00',
-            'end_datetime' => '2024-01-01 11:00:00',
+            'start_datetime' => '2038-06-07 10:00:00',
+            'end_datetime' => '2038-06-07 11:00:00',
         ]);
 
         $deleted = $this->impedimentService->delete($impediment->id);
@@ -172,8 +174,8 @@ final class ImpedimentServiceTest extends TestCase
             'schedulable_id' => $this->model->id,
             'schedulable_type' => get_class($this->model),
             'reason' => 'Test',
-            'start_datetime' => '2024-01-01 10:00:00',
-            'end_datetime' => '2024-01-01 11:00:00',
+            'start_datetime' => '2038-06-07 10:00:00',
+            'end_datetime' => '2038-06-07 11:00:00',
         ]);
 
         $found = $this->impedimentService->find($impediment->id);
@@ -190,16 +192,16 @@ final class ImpedimentServiceTest extends TestCase
             'schedulable_id' => $this->model->id,
             'schedulable_type' => get_class($this->model),
             'reason' => 'Meeting',
-            'start_datetime' => '2024-01-01 10:00:00',
-            'end_datetime' => '2024-01-01 11:00:00',
+            'start_datetime' => '2038-06-07 10:00:00',
+            'end_datetime' => '2038-06-07 11:00:00',
         ]);
 
-        $blockedStart = Carbon::parse('2024-01-01 10:30:00');
-        $blockedEnd = Carbon::parse('2024-01-01 10:45:00');
+        $blockedStart = Carbon::parse('2038-06-07 10:30:00');
+        $blockedEnd = Carbon::parse('2038-06-07 10:45:00');
         $this->assertTrue($this->impedimentService->isTimeSlotBlocked($blockedStart, $blockedEnd));
 
-        $availableStart = Carbon::parse('2024-01-01 11:30:00');
-        $availableEnd = Carbon::parse('2024-01-01 12:00:00');
+        $availableStart = Carbon::parse('2038-06-07 11:30:00');
+        $availableEnd = Carbon::parse('2038-06-07 12:00:00');
         $this->assertFalse($this->impedimentService->isTimeSlotBlocked($availableStart, $availableEnd));
 
         $this->assertFalse($this->impedimentService->isTimeSlotBlocked($blockedStart, $blockedEnd, 'training'));
@@ -212,22 +214,22 @@ final class ImpedimentServiceTest extends TestCase
             'schedulable_id' => $this->model->id,
             'schedulable_type' => get_class($this->model),
             'reason' => 'Blocked',
-            'start_datetime' => '2024-01-01 10:00:00',
-            'end_datetime' => '2024-01-01 11:00:00',
+            'start_datetime' => '2038-06-07 10:00:00',
+            'end_datetime' => '2038-06-07 11:00:00',
         ]);
 
-        $start = Carbon::parse('2024-01-01 09:00:00');
-        $end = Carbon::parse('2024-01-01 12:00:00');
+        $start = Carbon::parse('2038-06-07 09:00:00');
+        $end = Carbon::parse('2038-06-07 12:00:00');
 
         $slots = $this->impedimentService->getAvailableTimeSlots($start, $end);
 
         $this->assertCount(2, $slots);
 
-        $this->assertSame('2024-01-01 09:00:00', $slots[0]['start']->format('Y-m-d H:i:s'));
-        $this->assertSame('2024-01-01 10:00:00', $slots[0]['end']->format('Y-m-d H:i:s'));
+        $this->assertSame('2038-06-07 09:00:00', $slots[0]['start']->format('Y-m-d H:i:s'));
+        $this->assertSame('2038-06-07 10:00:00', $slots[0]['end']->format('Y-m-d H:i:s'));
 
-        $this->assertSame('2024-01-01 11:00:00', $slots[1]['start']->format('Y-m-d H:i:s'));
-        $this->assertSame('2024-01-01 12:00:00', $slots[1]['end']->format('Y-m-d H:i:s'));
+        $this->assertSame('2038-06-07 11:00:00', $slots[1]['start']->format('Y-m-d H:i:s'));
+        $this->assertSame('2038-06-07 12:00:00', $slots[1]['end']->format('Y-m-d H:i:s'));
     }
 
     public function test_between_method_returns_impediments_in_period(): void
@@ -237,8 +239,8 @@ final class ImpedimentServiceTest extends TestCase
             'schedulable_id' => $this->model->id,
             'schedulable_type' => get_class($this->model),
             'reason' => 'Impediment 1',
-            'start_datetime' => '2024-01-01 10:00:00',
-            'end_datetime' => '2024-01-01 11:00:00',
+            'start_datetime' => '2038-06-07 10:00:00',
+            'end_datetime' => '2038-06-07 11:00:00',
         ]);
 
         Impediment::create([
@@ -246,8 +248,8 @@ final class ImpedimentServiceTest extends TestCase
             'schedulable_id' => $this->model->id,
             'schedulable_type' => get_class($this->model),
             'reason' => 'Impediment 2',
-            'start_datetime' => '2024-01-01 14:00:00',
-            'end_datetime' => '2024-01-01 15:00:00',
+            'start_datetime' => '2038-06-07 14:00:00',
+            'end_datetime' => '2038-06-07 15:00:00',
         ]);
 
         Impediment::create([
@@ -255,12 +257,12 @@ final class ImpedimentServiceTest extends TestCase
             'schedulable_id' => $this->model->id,
             'schedulable_type' => get_class($this->model),
             'reason' => 'Impediment 3',
-            'start_datetime' => '2024-01-02 10:00:00',
-            'end_datetime' => '2024-01-02 11:00:00',
+            'start_datetime' => '2038-06-08 10:00:00',
+            'end_datetime' => '2038-06-08 11:00:00',
         ]);
 
-        $start = Carbon::parse('2024-01-01 00:00:00');
-        $end = Carbon::parse('2024-01-01 23:59:59');
+        $start = Carbon::parse('2038-06-07 00:00:00');
+        $end = Carbon::parse('2038-06-07 23:59:59');
 
         $impediments = $this->impedimentService->between($start, $end);
 

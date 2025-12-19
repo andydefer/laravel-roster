@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Cache;
 use Roster\Exceptions\ValidationException;
 use Roster\Exceptions\Enums\ValidationType;
 use Roster\Models\Availability;
@@ -17,7 +18,7 @@ use Roster\Contracts\Repository\ImpedimentRepositoryInterface;
 use Roster\Contracts\Services\SlotFinderInterface;
 use Roster\Contracts\Services\ValidationServiceInterface;
 use Roster\Exceptions\OverlappingImpedimentException;
-use Roster\Services\Core\ValidationService;
+use Roster\Services\Core\AbstractSchedulableService;
 use Roster\Traits\FilterableTrait;
 
 /**
@@ -27,48 +28,114 @@ class ImpedimentService extends AbstractSchedulableService
 {
     use FilterableTrait;
 
-    protected ?Model $schedulable = null;
-
-    protected ValidationService $validationService;
-
+    protected ValidationServiceInterface $validationService;
     protected AvailabilityRepositoryInterface $availabilityRepository;
-
     protected ImpedimentRepositoryInterface $impedimentRepository;
+    protected ?Impediment $currentImpediment = null;
 
     public function __construct(
         ValidationServiceInterface $validationService,
         AvailabilityRepositoryInterface $availabilityRepository,
         ImpedimentRepositoryInterface $impedimentRepository
     ) {
+        parent::__construct();
         $this->validationService = $validationService;
         $this->availabilityRepository = $availabilityRepository;
         $this->impedimentRepository = $impedimentRepository;
     }
 
-    /**
-     * Create a new impediment with overlap validation.
-     *
-     * @param array<string, mixed> $data
-     *
-     * @throws ValidationException
-     */
-    public function create(array $data): Impediment
-    {
-        $this->validateSchedulable();
+    // ========== HOOK METHODS IMPLEMENTATION ==========
 
-        // Validate basic impediment data
-        $this->validateImpedimentData($data);
+    /**
+     * Validate future dates hook
+     */
+    protected function validateFutureDatesHook(string $operation): void
+    {
+        // For impediments, we validate start_datetime is not in the past
+        if (isset($this->data['start_datetime'])) {
+            $startDatetime = Carbon::parse($this->data['start_datetime']);
+
+            if ($startDatetime->isPast() && $operation === 'create') {
+                throw ValidationException::withMessage(
+                    'Impediment start datetime cannot be in the past'
+                );
+            }
+        }
+    }
+
+    /**
+     * Validate duration hook
+     */
+    protected function validateDurationHook(
+        string $operation,
+        int $minImpedimentMinutes,
+        int $minScheduleMinutes,
+        int $defaultDurationMinutes
+    ): void {
+        // For impediments, validate minimum duration
+        if (isset($this->data['start_datetime'], $this->data['end_datetime'])) {
+            $start = Carbon::parse($this->data['start_datetime']);
+            $end = Carbon::parse($this->data['end_datetime']);
+
+            if ($start->diffInMinutes($end) < $minImpedimentMinutes) {
+                throw ValidationException::withMessage(
+                    "Impediment must be at least {$minImpedimentMinutes} minutes"
+                );
+            }
+        }
+    }
+
+    /**
+     * Validate max days hook
+     */
+    protected function validateMaxDaysHook(string $operation, int $maxDays): void
+    {
+        // For impediments, check if duration exceeds max days
+        if (isset($this->data['start_datetime'], $this->data['end_datetime'])) {
+            $start = Carbon::parse($this->data['start_datetime']);
+            $end = Carbon::parse($this->data['end_datetime']);
+
+            if ($start->diffInDays($end) > $maxDays) {
+                throw ValidationException::withMessage(
+                    "Impediment duration cannot exceed {$maxDays} days"
+                );
+            }
+        }
+    }
+
+    /**
+     * Validate timezone hook
+     */
+    protected function validateTimezoneHook(string $timezone): void
+    {
+        // Validate timezone for datetime fields
+        if (isset($this->data['start_datetime']) || isset($this->data['end_datetime'])) {
+            if (!$this->validationService->validateTimezone($timezone)) {
+                throw ValidationException::withMessage(
+                    "Invalid timezone: {$timezone}"
+                );
+            }
+        }
+    }
+
+    /**
+     * Validate before create hook
+     */
+    protected function validateBeforeCreate(): void
+    {
+        // Original validation logic from create()
+        $this->validateImpedimentData($this->data);
 
         // Find matching availability
-        $availability = $this->findMatchingAvailability($data);
+        $availability = $this->findMatchingAvailability($this->data);
 
         if (!$availability instanceof Availability) {
             throw new ValidationException(ValidationType::NO_MATCHING_AVAILABILITY);
         }
 
-        // Check for overlapping impediments using repository
+        // Check for overlapping impediments
         ['start' => $start, 'end' => $end] = $this->validationService
-            ->parseAndValidateDateTimeRange($data);
+            ->parseAndValidateDateTimeRange($this->data);
 
         if ($this->impedimentRepository->hasOverlappingImpediment($availability->id, $start, $end)) {
             throw new OverlappingImpedimentException([
@@ -78,48 +145,72 @@ class ImpedimentService extends AbstractSchedulableService
             ]);
         }
 
-        return Impediment::create(array_merge($data, [
-            'schedulable_id' => $this->schedulable->id,
-            'schedulable_type' => get_class($this->schedulable),
-            'availability_id' => $availability->id,
-        ]));
+        // Store availability ID in data for creation
+        $this->data['availability_id'] = $availability->id;
+        $this->data['schedulable_id'] = $this->schedulable->id;
+        $this->data['schedulable_type'] = get_class($this->schedulable);
     }
 
     /**
-     * Update an existing impediment with overlap validation.
-     *
-     * @param array<string, mixed> $data
-     *
-     * @throws ValidationException
+     * Process before create hook
      */
-    public function update(int $id, array $data): bool
+    protected function processBeforeCreate(): void
     {
-        $this->validateSchedulable();
+        // Additional processing if needed
+        // Ensure metadata is properly formatted
+        if (isset($this->data['metadata']) && !is_array($this->data['metadata'])) {
+            $this->data['metadata'] = json_decode($this->data['metadata'], true) ?? [];
+        }
+    }
 
-        $impediment = $this->find($id);
+    /**
+     * Execute create
+     */
+    protected function executeCreate(): Impediment
+    {
+        return Impediment::create($this->data);
+    }
 
-        if (!$impediment instanceof Impediment) {
-            return false;
+    /**
+     * After create hook
+     */
+    protected function afterCreate($impediment): void
+    {
+        // Clear cache if enabled
+        if (config('roster.cache.enabled', true)) {
+            $this->clearImpedimentCache($impediment->id);
+        }
+    }
+
+    /**
+     * Validate before update hook
+     */
+    protected function validateBeforeUpdate(int $id): void
+    {
+        $this->currentImpediment = $this->find($id);
+
+        if (!$this->currentImpediment instanceof Impediment) {
+            throw ValidationException::withMessage('Impediment not found');
         }
 
-        if ($data !== []) {
-            $availabilityId = $impediment->availability_id;
+        if ($this->data !== []) {
+            $availabilityId = $this->currentImpediment->availability_id;
 
             // Validate time range if datetime fields are being updated
-            if (isset($data['start_datetime']) || isset($data['end_datetime'])) {
+            if (isset($this->data['start_datetime']) || isset($this->data['end_datetime'])) {
                 $validationData = array_merge(
                     [
-                        'start_datetime' => $impediment->start_datetime,
-                        'end_datetime' => $impediment->end_datetime,
+                        'start_datetime' => $this->currentImpediment->start_datetime,
+                        'end_datetime' => $this->currentImpediment->end_datetime,
                     ],
-                    $data
+                    $this->data
                 );
                 $this->validationService->parseAndValidateDateTimeRange($validationData);
             }
 
             // If the start date changes, validate new availability
-            if (isset($data['start_datetime'])) {
-                $newAvailability = $this->findMatchingAvailability($data);
+            if (isset($this->data['start_datetime'])) {
+                $newAvailability = $this->findMatchingAvailability($this->data);
 
                 if (!$newAvailability instanceof Availability) {
                     throw new ValidationException(ValidationType::NO_MATCHING_AVAILABILITY);
@@ -129,23 +220,23 @@ class ImpedimentService extends AbstractSchedulableService
 
                 ['start' => $start, 'end' => $end] = $this->validationService
                     ->parseAndValidateDateTimeRange(array_merge([
-                        'start_datetime' => $impediment->start_datetime,
-                        'end_datetime' => $impediment->end_datetime,
-                    ], $data));
+                        'start_datetime' => $this->currentImpediment->start_datetime,
+                        'end_datetime' => $this->currentImpediment->end_datetime,
+                    ], $this->data));
 
                 if ($this->impedimentRepository->hasOverlappingImpediment($availabilityId, $start, $end, $id)) {
                     throw ValidationException::withMessage('This time slot overlaps with another impediment');
                 }
 
-                if ($newAvailability->id !== $impediment->availability_id) {
-                    $data['availability_id'] = $newAvailability->id;
+                if ($newAvailability->id !== $this->currentImpediment->availability_id) {
+                    $this->data['availability_id'] = $newAvailability->id;
                 }
             } else {
                 // Validate overlap with existing availability
                 $updateData = array_merge([
-                    'start_datetime' => $impediment->start_datetime,
-                    'end_datetime' => $impediment->end_datetime,
-                ], $data);
+                    'start_datetime' => $this->currentImpediment->start_datetime,
+                    'end_datetime' => $this->currentImpediment->end_datetime,
+                ], $this->data);
 
                 ['start' => $start, 'end' => $end] = $this->validationService
                     ->parseAndValidateDateTimeRange($updateData);
@@ -155,8 +246,46 @@ class ImpedimentService extends AbstractSchedulableService
                 }
             }
         }
+    }
 
-        return $impediment->update($data);
+    /**
+     * Process before update hook
+     */
+    protected function processBeforeUpdate(int $id): void
+    {
+        // Additional processing if needed
+    }
+
+    /**
+     * Execute update
+     */
+    protected function executeUpdate(int $id): bool
+    {
+        return $this->currentImpediment->update($this->data);
+    }
+
+    /**
+     * After update hook
+     */
+    protected function afterUpdate(int $id, bool $result): void
+    {
+        if ($result && config('roster.cache.enabled', true)) {
+            $this->clearImpedimentCache($id);
+        }
+    }
+
+    // ========== ORIGINAL METHODS (adapted) ==========
+
+    /**
+     * Find an impediment by its ID.
+     */
+    public function find(int $id): ?Impediment
+    {
+        $this->validateSchedulable();
+
+        return Impediment::where('schedulable_id', $this->schedulable->id)
+            ->where('schedulable_type', get_class($this->schedulable))
+            ->find($id);
     }
 
     /**
@@ -176,21 +305,7 @@ class ImpedimentService extends AbstractSchedulableService
     }
 
     /**
-     * Find an impediment by its ID.
-     */
-    public function find(int $id): ?Impediment
-    {
-        $this->validateSchedulable();
-
-        return Impediment::where('schedulable_id', $this->schedulable->id)
-            ->where('schedulable_type', get_class($this->schedulable))
-            ->find($id);
-    }
-
-    /**
      * Get impediments between two dates.
-     *
-     * @return Collection<int, Impediment>
      */
     public function between(Carbon $start, Carbon $end): Collection
     {
@@ -223,8 +338,6 @@ class ImpedimentService extends AbstractSchedulableService
 
     /**
      * Get available time slots for a period.
-     *
-     * @return Collection<int, array{start: Carbon, end: Carbon}>
      */
     public function getAvailableTimeSlots(Carbon $start, Carbon $end, ?string $type = null): Collection
     {
@@ -245,23 +358,18 @@ class ImpedimentService extends AbstractSchedulableService
 
     /**
      * Validate impediment data.
-     *
-     * @param array<string, mixed> $data
-     *
-     * @throws ValidationException
      */
     protected function validateImpedimentData(array $data): void
     {
         ['start' => $start, 'end' => $end] = $this->validationService
             ->parseAndValidateDateTimeRange($data);
 
-        $this->validationService->validateMinimumDuration($start, $end, 5);
+        $minDuration = config('roster.durations.minimum_impediment_minutes', 5);
+        $this->validationService->validateMinimumDuration($start, $end, $minDuration);
     }
 
     /**
      * Find matching availability for given impediment data.
-     *
-     * @param array<string, mixed> $data
      */
     protected function findMatchingAvailability(array $data): ?Availability
     {
@@ -273,10 +381,8 @@ class ImpedimentService extends AbstractSchedulableService
 
     /**
      * Apply filters to the query.
-     *
-     * @return Builder
      */
-    protected function applyFilters()
+    protected function applyFilters(): Builder
     {
         $query = Impediment::where('schedulable_id', $this->schedulable->id)
             ->where('schedulable_type', get_class($this->schedulable));
@@ -285,5 +391,16 @@ class ImpedimentService extends AbstractSchedulableService
         $this->applyTypeFilter($query);
 
         return $query;
+    }
+
+    /**
+     * Clear impediment cache
+     */
+    private function clearImpedimentCache(int $impedimentId): void
+    {
+        $prefix = config('roster.cache.prefix', 'roster_');
+        $cacheKey = $prefix . 'impediment_' . $impedimentId;
+
+        Cache::forget($cacheKey);
     }
 }

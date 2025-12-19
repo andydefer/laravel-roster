@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Cache;
 use Roster\Exceptions\ValidationException;
 use Roster\Exceptions\Enums\ValidationType;
 use Roster\Models\Availability;
@@ -19,23 +20,19 @@ use Roster\Contracts\Services\SlotFinderInterface;
 use Roster\Contracts\Services\ValidationServiceInterface;
 use Roster\Exceptions\OverlappingScheduleException;
 use Roster\Exceptions\ScheduleImpedimentOverlapException;
+use Roster\Services\Core\AbstractSchedulableService;
 use Roster\Traits\FilterableTrait;
 
 class ScheduleService extends AbstractSchedulableService
 {
     use FilterableTrait;
 
-    protected ?Model $schedulable = null;
-
     protected ValidationServiceInterface $validationService;
-
     protected AvailabilityRepositoryInterface $availabilityRepository;
-
     protected ImpedimentRepositoryInterface $impedimentRepository;
-
     protected ScheduleRepositoryInterface $scheduleRepository;
-
     protected SlotFinderInterface $slotFinder;
+    protected ?Schedule $currentSchedule = null;
 
     public function __construct(
         ValidationServiceInterface $validationService,
@@ -44,6 +41,7 @@ class ScheduleService extends AbstractSchedulableService
         ScheduleRepositoryInterface $scheduleRepository,
         SlotFinderInterface $slotFinder
     ) {
+        parent::__construct();
         $this->validationService = $validationService;
         $this->availabilityRepository = $availabilityRepository;
         $this->impedimentRepository = $impedimentRepository;
@@ -51,18 +49,81 @@ class ScheduleService extends AbstractSchedulableService
         $this->slotFinder = $slotFinder;
     }
 
+    // ========== HOOK METHODS IMPLEMENTATION ==========
+
     /**
-     * Create a new schedule.
-     *
-     * @param array<string, mixed> $data
+     * Validate future dates hook
      */
-    public function create(array $data): Schedule
+    protected function validateFutureDatesHook(string $operation): void
     {
-        $this->validateSchedulable();
-        $this->validateScheduleData($data);
+        // For schedules, validate start_datetime is not in the past
+        if (isset($this->data['start_datetime'])) {
+            $startDatetime = Carbon::parse($this->data['start_datetime']);
+
+            if ($startDatetime->isPast() && $operation === 'create') {
+                throw ValidationException::withMessage(
+                    'Schedule start datetime cannot be in the past'
+                );
+            }
+        }
+    }
+
+    /**
+     * Validate duration hook
+     */
+    protected function validateDurationHook(
+        string $operation,
+        int $minImpedimentMinutes,
+        int $minScheduleMinutes,
+        int $defaultDurationMinutes
+    ): void {
+        // For schedules, validate minimum duration
+        if (isset($this->data['start_datetime'], $this->data['end_datetime'])) {
+            $start = Carbon::parse($this->data['start_datetime']);
+            $end = Carbon::parse($this->data['end_datetime']);
+
+            if ($start->diffInMinutes($end) < $minScheduleMinutes) {
+                throw ValidationException::withMessage(
+                    "Schedule must be at least {$minScheduleMinutes} minutes"
+                );
+            }
+        }
+    }
+
+    /**
+     * Validate max days hook
+     */
+    protected function validateMaxDaysHook(string $operation, int $maxDays): void
+    {
+        // For schedules, this might not apply directly, but could be used for recurring schedules
+        // You can implement if needed
+    }
+
+    /**
+     * Validate timezone hook
+     */
+    protected function validateTimezoneHook(string $timezone): void
+    {
+        // Validate timezone for datetime fields
+        if (isset($this->data['start_datetime']) || isset($this->data['end_datetime'])) {
+            if (!$this->validationService->validateTimezone($timezone)) {
+                throw ValidationException::withMessage(
+                    "Invalid timezone: {$timezone}"
+                );
+            }
+        }
+    }
+
+    /**
+     * Validate before create hook
+     */
+    protected function validateBeforeCreate(): void
+    {
+        // Original validation logic
+        $this->validateScheduleData($this->data);
 
         // Find matching availability
-        $availability = $this->findMatchingAvailability($data);
+        $availability = $this->findMatchingAvailability($this->data);
 
         if (!$availability instanceof Availability) {
             throw new ValidationException(ValidationType::NO_MATCHING_AVAILABILITY);
@@ -70,7 +131,7 @@ class ScheduleService extends AbstractSchedulableService
 
         // Check for overlapping schedules and impediments
         ['start' => $start, 'end' => $end] = $this->validationService
-            ->parseAndValidateDateTimeRange($data);
+            ->parseAndValidateDateTimeRange($this->data);
 
         if ($this->scheduleRepository->hasOverlappingSchedule($availability->id, $start, $end)) {
             throw new OverlappingScheduleException([
@@ -88,45 +149,72 @@ class ScheduleService extends AbstractSchedulableService
             ]);
         }
 
-        // Prepare data for creation
-        $scheduleData = array_merge($data, [
-            'availability_id' => $availability->id,
-        ]);
-
-        // Delegate to repository
-        return $this->scheduleRepository->create($scheduleData);
+        // Store availability ID in data for creation
+        $this->data['availability_id'] = $availability->id;
     }
 
     /**
-     * Update an existing schedule.
-     *
-     * @param array<string, mixed> $data
+     * Process before create hook
      */
-    public function update(int $id, array $data): bool
+    protected function processBeforeCreate(): void
     {
-        $this->validateSchedulable();
+        // Additional processing if needed
+        // Ensure metadata is properly formatted
+        if (isset($this->data['metadata']) && !is_array($this->data['metadata'])) {
+            $this->data['metadata'] = json_decode($this->data['metadata'], true) ?? [];
+        }
 
-        $schedule = $this->find($id);
+        // Set default status if not provided
+        if (!isset($this->data['status'])) {
+            $this->data['status'] = 'available';
+        }
+    }
 
-        if (!$schedule instanceof Schedule) {
-            return false;
+    /**
+     * Execute create
+     */
+    protected function executeCreate(): Schedule
+    {
+        return $this->scheduleRepository->create($this->data);
+    }
+
+    /**
+     * After create hook
+     */
+    protected function afterCreate($schedule): void
+    {
+        // Clear cache if enabled
+        if (config('roster.cache.enabled', true)) {
+            $this->clearScheduleCache($schedule->id);
+        }
+    }
+
+    /**
+     * Validate before update hook
+     */
+    protected function validateBeforeUpdate(int $id): void
+    {
+        $this->currentSchedule = $this->find($id);
+
+        if (!$this->currentSchedule instanceof Schedule) {
+            throw ValidationException::withMessage('Schedule not found');
         }
 
         // Validate time range if datetime fields are being updated
-        if (isset($data['start_datetime']) || isset($data['end_datetime'])) {
+        if (isset($this->data['start_datetime']) || isset($this->data['end_datetime'])) {
             $validationData = array_merge(
                 [
-                    'start_datetime' => $schedule->start_datetime,
-                    'end_datetime' => $schedule->end_datetime,
+                    'start_datetime' => $this->currentSchedule->start_datetime,
+                    'end_datetime' => $this->currentSchedule->end_datetime,
                 ],
-                $data
+                $this->data
             );
             $this->validationService->parseAndValidateDateTimeRange($validationData);
         }
 
         // If dates change, check new availability
-        if ($data !== [] && isset($data['start_datetime'])) {
-            $newAvailability = $this->findMatchingAvailability($data);
+        if ($this->data !== [] && isset($this->data['start_datetime'])) {
+            $newAvailability = $this->findMatchingAvailability($this->data);
             if (!$newAvailability instanceof Availability) {
                 throw new ValidationException(ValidationType::NO_MATCHING_AVAILABILITY);
             }
@@ -134,9 +222,9 @@ class ScheduleService extends AbstractSchedulableService
             // Check for overlaps with new availability
             ['start' => $start, 'end' => $end] = $this->validationService
                 ->parseAndValidateDateTimeRange(array_merge([
-                    'start_datetime' => $schedule->start_datetime,
-                    'end_datetime' => $schedule->end_datetime,
-                ], $data));
+                    'start_datetime' => $this->currentSchedule->start_datetime,
+                    'end_datetime' => $this->currentSchedule->end_datetime,
+                ], $this->data));
 
             if ($this->scheduleRepository->hasOverlappingSchedule($newAvailability->id, $start, $end, $id)) {
                 throw ValidationException::withMessage('Schedule overlaps with another schedule');
@@ -146,13 +234,47 @@ class ScheduleService extends AbstractSchedulableService
                 throw ValidationException::withMessage('Schedule overlaps with an impediment');
             }
 
-            if ($newAvailability->id !== $schedule->availability_id) {
-                $data['availability_id'] = $newAvailability->id;
+            if ($newAvailability->id !== $this->currentSchedule->availability_id) {
+                $this->data['availability_id'] = $newAvailability->id;
             }
         }
+    }
 
-        // Delegate to repository
-        return $this->scheduleRepository->update($id, $data);
+    /**
+     * Process before update hook
+     */
+    protected function processBeforeUpdate(int $id): void
+    {
+        // Additional processing if needed
+    }
+
+    /**
+     * Execute update
+     */
+    protected function executeUpdate(int $id): bool
+    {
+        return $this->scheduleRepository->update($id, $this->data);
+    }
+
+    /**
+     * After update hook
+     */
+    protected function afterUpdate(int $id, bool $result): void
+    {
+        if ($result && config('roster.cache.enabled', true)) {
+            $this->clearScheduleCache($id);
+        }
+    }
+
+    // ========== ORIGINAL METHODS (adapted) ==========
+
+    /**
+     * Find a schedule by its ID.
+     */
+    public function find(int $id): ?Schedule
+    {
+        $this->validateSchedulable();
+        return $this->scheduleRepository->findById($id);
     }
 
     /**
@@ -168,32 +290,17 @@ class ScheduleService extends AbstractSchedulableService
             return false;
         }
 
-        // Delegate to repository
         return $this->scheduleRepository->delete($id);
     }
 
     /**
-     * Find a schedule by its ID.
-     */
-    public function find(int $id): ?Schedule
-    {
-        $this->validateSchedulable();
-
-        // Delegate to repository
-        return $this->scheduleRepository->findById($id);
-    }
-
-    /**
      * Get schedules for a given period.
-     *
-     * @return Collection<int, Schedule>
      */
     public function between(Carbon $start, Carbon $end): Collection
     {
         $this->validateSchedulable();
         $this->validationService->validateTimeRange($start, $end);
 
-        // Delegate to repository
         return $this->scheduleRepository->getBetweenDates(
             $this->schedulable->id,
             get_class($this->schedulable),
@@ -211,7 +318,6 @@ class ScheduleService extends AbstractSchedulableService
         $this->validateSchedulable();
         $this->validationService->validateTimeRange($start, $end);
 
-        // Requête unique avec jointures
         $availability = $this->availabilityRepository->findForTimeSlotWithOverlaps(
             $this->schedulable,
             $start,
@@ -219,13 +325,13 @@ class ScheduleService extends AbstractSchedulableService
             $type
         );
 
-        return $availability instanceof Availability && !$availability->has_overlapping_schedules && !$availability->has_overlapping_impediments;
+        return $availability instanceof Availability
+            && !$availability->has_overlapping_schedules
+            && !$availability->has_overlapping_impediments;
     }
 
-
-
     /**
-     * Check if a time period is completely available (no schedules or impediments).
+     * Check if a time period is completely available.
      */
     public function isPeriodAvailable(Carbon $start, Carbon $end, ?string $type = null): bool
     {
@@ -270,7 +376,6 @@ class ScheduleService extends AbstractSchedulableService
     {
         $this->validateSchedulable();
 
-        // Validate duration is positive
         if ($durationMinutes <= 0) {
             throw new ValidationException(
                 ValidationType::MINIMUM_DURATION_NOT_MET,
@@ -293,7 +398,6 @@ class ScheduleService extends AbstractSchedulableService
         $this->validateSchedulable();
         $this->validationService->validateTimeRange($startDate, $endDate, 'date');
 
-        // Validate duration is positive
         if ($durationMinutes <= 0) {
             throw new ValidationException(
                 ValidationType::MINIMUM_DURATION_NOT_MET,
@@ -301,7 +405,6 @@ class ScheduleService extends AbstractSchedulableService
             );
         }
 
-        // Delegate to ScheduleSlotFinder
         return $this->slotFinder->findAvailableSlots(
             $this->schedulable,
             $startDate,
@@ -313,8 +416,6 @@ class ScheduleService extends AbstractSchedulableService
 
     /**
      * Validate schedule data including time range.
-     *
-     * @param array<string, mixed> $data
      */
     protected function validateScheduleData(array $data): void
     {
@@ -324,8 +425,6 @@ class ScheduleService extends AbstractSchedulableService
 
     /**
      * Find matching availability for a schedule.
-     *
-     * @param array<string, mixed> $data
      */
     protected function findMatchingAvailability(array $data): ?Availability
     {
@@ -338,18 +437,25 @@ class ScheduleService extends AbstractSchedulableService
 
     /**
      * Apply filters to the query.
-     * Note: Cette méthode n'est plus utilisée directement car on délègue au repository
-     * Elle est gardée pour compatibilité avec le trait FilterableTrait
-     *
-     * @return Builder
      */
-    protected function applyFilters()
+    protected function applyFilters(): Builder
     {
-        // Délégation au repository
         return $this->scheduleRepository->applyFilters(
             $this->schedulable->id,
             get_class($this->schedulable),
             $this->filters
         );
+    }
+
+    /**
+     * Clear schedule cache
+     */
+    private function clearScheduleCache(int $scheduleId): void
+    {
+        $prefix = config('roster.cache.prefix', 'roster_');
+        $cacheKey = $prefix . 'schedule_' . $scheduleId;
+
+        Cache::forget($cacheKey);
+        Cache::tags(['schedule_' . $scheduleId])->flush();
     }
 }

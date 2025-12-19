@@ -28,12 +28,26 @@ class ValidationService implements ValidationServiceInterface
         }
     }
 
+    public function validateDurationAndInterval(int $durationMinutes, int $intervalMinutes): void
+    {
+        if ($durationMinutes <= 0 || $intervalMinutes <= 0) {
+            throw new ValidationException(
+                ValidationType::MINIMUM_DURATION_NOT_MET,
+                [
+                    'minimum_minutes' => 1,
+                    'provided_minutes' => min($durationMinutes, $intervalMinutes)
+                ]
+            );
+        }
+    }
+
+
     /**
      * Validate that a date is in the future.
      */
     public function validateFutureDate(Carbon $date): void
     {
-        if (config('roster.availability.validate_future_dates', true) && $date->lt(Carbon::now())) {
+        if (config('roster.validate_future_dates', true) && $date->lt(Carbon::now())) {
             throw ValidationException::withMessage('Cannot schedule in the past');
         }
     }

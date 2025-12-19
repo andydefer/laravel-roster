@@ -5,19 +5,19 @@ declare(strict_types=1);
 namespace Tests\Integration\Services\Core;
 
 use Illuminate\Support\Carbon;
+use Roster\Contracts\Services\ValidationServiceInterface;
 use Roster\Exceptions\TimeRangeValidationException;
 use Roster\Exceptions\ValidationException;
-use Roster\Services\Core\ValidationService;
 use Tests\TestCase;
 
 final class ValidationServiceTest extends TestCase
 {
-    private ValidationService $validationService;
+    private ValidationServiceInterface $validationService;
 
     protected function setUp(): void
     {
         parent::setUp();
-        $this->validationService = app(ValidationService::class);
+        $this->validationService = app(ValidationServiceInterface::class);
     }
 
     public function test_validate_time_range_with_valid_range(): void

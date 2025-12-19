@@ -9,17 +9,17 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Roster\Models\Availability;
-use Roster\Services\Core\ValidationService;
 use Roster\Contracts\Repository\AvailabilityRepositoryInterface;
+use Roster\Contracts\Services\ValidationServiceInterface;
 use Roster\Traits\DateRangeOverlapTrait;
 
 class AvailabilityRepository extends AbstractRepository implements AvailabilityRepositoryInterface
 {
     use DateRangeOverlapTrait;
 
-    protected ValidationService $validationService;
+    protected ValidationServiceInterface $validationService;
 
-    public function __construct(ValidationService $validationService)
+    public function __construct(ValidationServiceInterface $validationService)
     {
         $this->validationService = $validationService;
     }
@@ -456,5 +456,61 @@ class AvailabilityRepository extends AbstractRepository implements AvailabilityR
             $q->whereNull('end_date')
                 ->orWhere('end_date', '>=', $endDate->toDateString());
         });
+    }
+
+    /**
+     * Check if an availability applies to a specific date.
+     *
+     * @param Availability $availability The availability to check
+     * @param Carbon $date The date to check
+     * @return bool True if the availability applies to the date
+     */
+
+
+    public function availabilityAppliesToDate(Availability $availability, Carbon $date): bool
+    {
+        $dayOfWeek = strtolower($date->englishDayOfWeek);
+        if (!in_array($dayOfWeek, $availability->days)) {
+            return false;
+        }
+
+        if ($availability->start_date !== null && $date->lt($availability->start_date)) {
+            return false;
+        }
+
+        return !($availability->end_date !== null && $date->gt($availability->end_date));
+    }
+
+    /**
+     * Load availabilities with pre-loaded schedule and impediment conflicts.
+     *
+     * @param object $schedulable The schedulable entity
+     * @param Carbon $start Start of the date range
+     * @param Carbon $end End of the date range
+     * @param string|null $type Optional availability type filter
+     * @return Collection<Availability> Availabilities with conflicts loaded
+     */
+    public function loadAvailabilitiesWithConflicts(
+        object $schedulable,
+        Carbon $start,
+        Carbon $end,
+        ?string $type = null
+    ): Collection {
+        $availabilities = $this->getForDateRange($schedulable, $start, $end, $type);
+        return $availabilities->load(['schedules', 'impediments']);
+    }
+
+    /**
+     * Filter availabilities for a specific date.
+     *
+     * @param Collection<Availability> $availabilities Collection of availabilities
+     * @param Carbon $date Date to filter for
+     * @return Collection<Availability> Filtered availabilities
+     */
+    public function filterAvailabilitiesForDate(Collection $availabilities, Carbon $date): Collection
+    {
+        return $availabilities->filter(
+            fn(Availability $availability): bool => $this->availabilityAppliesToDate($availability, $date)
+        );
     }
 }

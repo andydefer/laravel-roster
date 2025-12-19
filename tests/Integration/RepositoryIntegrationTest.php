@@ -7,9 +7,9 @@ namespace Tests\Integration;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
+use Roster\Contracts\Services\ValidationServiceInterface;
 use Roster\Models\Availability;
 use Roster\Repositories\AvailabilityRepository;
-use Roster\Services\Core\ValidationService;
 use Tests\TestCase;
 
 final class RepositoryIntegrationTest extends TestCase
@@ -32,7 +32,7 @@ final class RepositoryIntegrationTest extends TestCase
         $this->model->id = 1;
         $this->model->save();
 
-        $validationService = new ValidationService();
+        $validationService = app(ValidationServiceInterface::class);
         $this->availabilityRepository = new AvailabilityRepository($validationService);
     }
 

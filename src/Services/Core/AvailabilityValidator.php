@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Roster\Services;
+namespace Roster\Services\Core;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Carbon;

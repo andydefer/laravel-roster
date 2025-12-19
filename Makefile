@@ -45,6 +45,39 @@ git-tag:
 	git push origin "$$new_tag"; \
 	echo "Pushed new tag: $$new_tag"; \
 	'
+# ---------------------------------------------------
+# Génère un diff git dans un fichier diff.txt
+# avec un prompt pour analyse IA (commit + résumé)
+# ---------------------------------------------------
+# Génère un diff git dans un fichier diff.txt avec un prompt pour analyse IA (commit + résumé)
+
+git-diff:
+	@echo "📝 Generating git diff into diff.txt..."
+	@echo "Tu es un expert en revue de code et en conventions de commits (Conventional Commits)." > diff.txt
+	@echo "" >> diff.txt
+	@echo "À partir du diff Git ci-dessous, fais les choses suivantes :" >> diff.txt
+	@echo "" >> diff.txt
+	@echo "1. Propose un **nom de commit clair et concis**, en respectant les **Conventional Commits**" >> diff.txt
+	@echo "   (ex: feat:, fix:, refactor:, test:, chore:, docs:)." >> diff.txt
+	@echo "" >> diff.txt
+	@echo "2. Rédige un **résumé du travail effectué** en quelques phrases, orienté métier et technique." >> diff.txt
+	@echo "" >> diff.txt
+	@echo "3. Donne une **liste d'exemples concrets de changements**, en t'appuyant sur le diff :" >> diff.txt
+	@echo "   - méthodes ajoutées, modifiées ou supprimées" >> diff.txt
+	@echo "   - responsabilités déplacées ou clarifiées" >> diff.txt
+	@echo "   - améliorations de validation, de logique ou de structure" >> diff.txt
+	@echo "   - impacts fonctionnels éventuels" >> diff.txt
+	@echo "" >> diff.txt
+	@echo "Contraintes :" >> diff.txt
+	@echo "- Ne décris que ce qui est réellement visible dans le diff" >> diff.txt
+	@echo "- Sois précis, factuel et structuré" >> diff.txt
+	@echo "- Évite les suppositions" >> diff.txt
+	@echo "- Utilise un ton professionnel" >> diff.txt
+	@echo "" >> diff.txt
+	@echo "Voici le diff :" >> diff.txt
+	@echo "" >> diff.txt
+	@git diff HEAD >> diff.txt
+	@echo "✅ diff.txt generated successfully"
 
 # ---------------------------------------------------
 # Republier le dernier tag
@@ -109,3 +142,4 @@ lint-all-fix:
 help:
 	@echo "📖 Makefile commands:"; \
 	awk '/^#/{desc=$$0}/^[a-zA-Z0-9_-]+:/{gsub(":", "", $$1); gsub(/^# /, "", desc); printf "%-20s -> %s\n", $$1, desc}' $(MAKEFILE_LIST) | sort
+

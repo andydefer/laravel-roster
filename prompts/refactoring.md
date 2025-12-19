@@ -113,6 +113,25 @@ Pour chaque fichier :
 
 ---
 
+### Autres détails
+
+1. Si vous voyez des annotations comme `/** @var Collection<int, Availability> $dailyAvailabilities */` sur une variable, laissez-les telles quelles, et utilisez uniquement l’anglais dans le code et les commentaires.
+2. Si tu constates que les noms de méthodes d'une classe ou le nom de la classe elle-même ne sont pas pertinents, tu peux proposer des changements **à la fin du code généré**, pour les éléments publics.
+   Pour les **variables locales** et les **méthodes privées ou encapsulées**, dont le renommage n’a **aucun impact externe**, tu as **carte blanche** : tu peux les renommer librement pour améliorer la clarté et la lisibilité. N'OUBLIE PAS DE ME PROPOSER LES RENOMAGES POUR LES METHODES AVEC DES NOMS PAS ASSEZ BONS.
+3. Utilisez **les paramètres nommés** lors de l’instanciation des classes.
+
+Par exemple, l’enregistrement d’une classe dans le container devrait ressembler à ceci :
+
+```php
+$this->app->singleton('roster.impediment', function ($app): ImpedimentService {
+    return new ImpedimentService(
+        availabilityRepository: $app->make(AvailabilityRepositoryInterface::class),
+        impedimentRepository: $app->make(ImpedimentRepositoryInterface::class),
+        validationService: $app->make(ValidationServiceInterface::class),
+    );
+});
+
+
 ### ▶️ DÉMARRAGE
 
 Voici le code à analyser et améliorer :

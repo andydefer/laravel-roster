@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Roster\Services;
+namespace Roster\Services\Core;
 
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;

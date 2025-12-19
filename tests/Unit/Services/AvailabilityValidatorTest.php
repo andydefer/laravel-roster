@@ -6,17 +6,18 @@ namespace Tests\Unit\Services;
 
 use Illuminate\Support\Carbon;
 use InvalidArgumentException;
-use PHPUnit\Framework\TestCase;
-use Roster\Services\AvailabilityValidator;
+use Roster\Contracts\Services\AvailabilityValidatorInterface;
+use Roster\Services\Core\AvailabilityValidator;
+use Tests\TestCase;
 
 final class AvailabilityValidatorTest extends TestCase
 {
-    private AvailabilityValidator $availabilityValidator;
+    private AvailabilityValidatorInterface $availabilityValidator;
 
     protected function setUp(): void
     {
         parent::setUp();
-        $this->availabilityValidator = new AvailabilityValidator();
+        $this->availabilityValidator =  app()->make(AvailabilityValidatorInterface::class);
     }
 
     public function test_validate_basic_data_with_valid_data(): void

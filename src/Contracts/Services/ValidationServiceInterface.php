@@ -39,6 +39,9 @@ interface ValidationServiceInterface
      */
     public function parseAndValidateDateTimeRange(array $data): array;
 
+
+    public function validateDurationAndInterval(int $durationMinutes, int $intervalMinutes): void;
+
     /**
      * Validate a time range.
      *
@@ -79,4 +82,8 @@ interface ValidationServiceInterface
      * @throws ValidationException If the date is not in the future
      */
     public function validateFutureDate(Carbon $date): void;
+
+    public function validateRequiredFields(array $data, array $requiredFields): void;
+
+    public function validateTimezone(string $timezone): bool;
 }

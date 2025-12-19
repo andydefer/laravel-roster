@@ -143,4 +143,16 @@ interface AvailabilityRepositoryInterface
         Model $model,
         array $filters = []
     );
+
+    public function availabilityAppliesToDate(Availability $availability, Carbon $date): bool;
+
+    public function loadAvailabilitiesWithConflicts(
+        object $schedulable,
+        Carbon $start,
+        Carbon $end,
+        ?string $type = null
+    ): Collection;
+
+
+    public function filterAvailabilitiesForDate(Collection $availabilities, Carbon $date): Collection;
 }
