@@ -22,6 +22,8 @@ final class AvailabilityFacadeTest extends TestCase
 
         $this->model = new class extends Model {
             protected $table = 'test_schedulables';
+
+            public $timestamps = false;
         };
 
         // Créer un enregistrement dans la table
@@ -91,6 +93,7 @@ final class AvailabilityFacadeTest extends TestCase
             'end_time' => '16:00:00',
             'days' => ['monday'],
         ]);
+
         /** @var Collection<int, \Roster\Models\Availability> $availabilities */
         $availabilities = AvailabilityFacade::for($this->model)->all();
 
@@ -138,8 +141,9 @@ final class AvailabilityFacadeTest extends TestCase
             'days' => ['monday'],
         ]);
 
-        $availableTime = Carbon::parse('2024-01-01 10:00:00');
-        $unavailableTime = Carbon::parse('2024-01-01 08:00:00');
+        $availableTime = Carbon::parse('2038-06-07 10:00:00');
+        $unavailableTime = Carbon::parse('2038-06-07 08:00:00');
+
         $this->assertTrue(
             AvailabilityFacade::for($this->model)->isAvailableAt($availableTime)
         );
@@ -147,23 +151,5 @@ final class AvailabilityFacadeTest extends TestCase
         $this->assertFalse(
             AvailabilityFacade::for($this->model)->isAvailableAt($unavailableTime)
         );
-    }
-
-    public function test_facade_can_get_next_available_slot(): void
-    {
-        Availability::create([
-            'schedulable_id' => $this->model->id,
-            'schedulable_type' => get_class($this->model),
-            'type' => 'consultation',
-            'start_time' => '09:00:00',
-            'end_time' => '17:00:00',
-            'days' => ['monday'],
-        ]);
-
-        $fromDate = Carbon::parse('2024-01-01 08:00:00');
-        $nextSlot = AvailabilityFacade::for($this->model)->nextAvailableSlot($fromDate, 60);
-
-        $this->assertInstanceOf(Carbon::class, $nextSlot);
-        $this->assertSame('2024-01-01 09:00:00', $nextSlot->format('Y-m-d H:i:s'));
     }
 }

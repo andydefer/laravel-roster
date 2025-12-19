@@ -54,14 +54,14 @@ interface AvailabilityRepositoryInterface
     /**
      * Find availability for a specific time slot.
      *
-     * @param Model $schedulable The schedulable resource
+     * @param Model $model The schedulable resource
      * @param Carbon $start Start time of the slot
      * @param Carbon $end End time of the slot
      * @param string|null $type Optional availability type filter
      * @return Availability|null Matching availability or null
      */
     public function findForTimeSlot(
-        Model $schedulable,
+        Model $model,
         Carbon $start,
         Carbon $end,
         ?string $type = null
@@ -70,13 +70,13 @@ interface AvailabilityRepositoryInterface
     /**
      * Get availabilities for a specific date.
      *
-     * @param Model $schedulable The schedulable resource
+     * @param Model $model The schedulable resource
      * @param Carbon $date Target date
      * @param string|null $type Optional availability type filter
      * @return Collection<int, Availability> Collection of availabilities for the date
      */
     public function getForDate(
-        Model $schedulable,
+        Model $model,
         Carbon $date,
         ?string $type = null
     ): Collection;
@@ -84,13 +84,13 @@ interface AvailabilityRepositoryInterface
     /**
      * Get all availabilities for a schedulable resource.
      *
-     * @param Model $schedulable The schedulable resource
+     * @param Model $model The schedulable resource
      * @param string|null $type Optional availability type filter
      * @param string|null $day Optional day of week filter
      * @return Collection<int, Availability> Collection of all availabilities
      */
     public function getAllForSchedulable(
-        Model $schedulable,
+        Model $model,
         ?string $type = null,
         ?string $day = null
     ): Collection;
@@ -98,25 +98,25 @@ interface AvailabilityRepositoryInterface
     /**
      * Check if a schedulable resource is available at a specific datetime.
      *
-     * @param Model $schedulable The schedulable resource
+     * @param Model $model The schedulable resource
      * @param Carbon $datetime Datetime to check
      * @return bool True if available at the given datetime
      */
     public function isAvailableAt(
-        Model $schedulable,
+        Model $model,
         Carbon $datetime
     ): bool;
 
     /**
      * Find availabilities that overlap with the given time range.
      *
-     * @param Model $schedulable The schedulable resource
+     * @param Model $model The schedulable resource
      * @param array<string, mixed> $availabilityData New availability data
      * @param int|null $exceptId Optional availability ID to exclude from search
      * @return Collection<int, Availability> Collection of overlapping availabilities
      */
     public function findOverlapping(
-        Model $schedulable,
+        Model $model,
         array $availabilityData,
         ?int $exceptId = null
     ): Collection;
@@ -156,14 +156,14 @@ interface AvailabilityRepositoryInterface
     /**
      * Get availabilities for a date range.
      *
-     * @param Model $schedulable The schedulable resource
+     * @param Model $model The schedulable resource
      * @param Carbon $start Start date of the range
      * @param Carbon $end End date of the range
      * @param string|null $type Optional availability type filter
      * @return Collection<int, Availability> Collection of availabilities in the date range
      */
     public function getForDateRange(
-        Model $schedulable,
+        Model $model,
         Carbon $start,
         Carbon $end,
         ?string $type = null
@@ -180,26 +180,26 @@ interface AvailabilityRepositoryInterface
     /**
      * Find availabilities adjacent to the given time range.
      *
-     * @param Model $schedulable The schedulable resource
+     * @param Model $model The schedulable resource
      * @param array<string, mixed> $availabilityData New availability data
      * @return Collection<int, Availability> Collection of adjacent availabilities
      */
     public function findAdjacentAvailabilities(
-        Model $schedulable,
+        Model $model,
         array $availabilityData
     ): Collection;
 
     /**
      * Find availability for a time slot, including those with partial overlaps.
      *
-     * @param Model $schedulable The schedulable resource
+     * @param Model $model The schedulable resource
      * @param Carbon $start Start time of the slot
      * @param Carbon $end End time of the slot
      * @param string|null $type Optional availability type filter
      * @return Availability|null Matching availability or null
      */
     public function findForTimeSlotWithPartialOverlaps(
-        Model $schedulable,
+        Model $model,
         Carbon $start,
         Carbon $end,
         ?string $type = null
@@ -208,12 +208,12 @@ interface AvailabilityRepositoryInterface
     /**
      * Apply filters to availability query builder.
      *
-     * @param Model $schedulable The schedulable resource
+     * @param Model $model The schedulable resource
      * @param array<string, mixed> $filters Query filters
      * @return Builder Eloquent query builder with filters applied
      */
     public function applyFilters(
-        Model $schedulable,
+        Model $model,
         array $filters = []
     ): Builder;
 
@@ -229,14 +229,14 @@ interface AvailabilityRepositoryInterface
     /**
      * Load availabilities with schedule conflicts for a time range.
      *
-     * @param object $schedulable The schedulable resource
+     * @param Model $model The schedulable resource
      * @param Carbon $start Start of time range
      * @param Carbon $end End of time range
      * @param string|null $type Optional availability type filter
      * @return Collection<int, Availability> Collection of availabilities with conflict information
      */
     public function getAvailabilitiesWithConflictInfo(
-        object $schedulable,
+        Model $model,
         Carbon $start,
         Carbon $end,
         ?string $type = null

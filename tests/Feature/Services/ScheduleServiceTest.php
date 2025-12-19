@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Services;
 
+use Illuminate\Support\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
@@ -246,6 +247,7 @@ final class ScheduleServiceTest extends TestCase
         $start = Carbon::parse('2038-06-07 00:00:00');
         $end = Carbon::parse('2038-06-07 23:59:59');
 
+        /** @var Collection<Schedule> $schedules */
         $schedules = $this->scheduleService->between($start, $end);
 
         $this->assertCount(2, $schedules);

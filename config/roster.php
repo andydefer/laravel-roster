@@ -2,6 +2,17 @@
 
 declare(strict_types=1);
 
+use Roster\Models\Availability;
+use Roster\Models\Schedule;
+use Roster\Models\Impediment;
+use Roster\Services\AvailabilityService;
+use Roster\Services\ScheduleService;
+use Roster\Services\ImpedimentService;
+use Roster\Services\Core\ValidationService;
+use Roster\Repositories\AvailabilityRepository;
+use Roster\Repositories\ScheduleRepository;
+use Roster\Repositories\ImpedimentRepository;
+
 /**
  * Roster package configuration file.
  *
@@ -215,22 +226,22 @@ return [
     'custom' => [
         // Custom class bindings
         'models' => [
-            'availability' => \Roster\Models\Availability::class,
-            'schedule' => \Roster\Models\Schedule::class,
-            'impediment' => \Roster\Models\Impediment::class,
+            'availability' => Availability::class,
+            'schedule' => Schedule::class,
+            'impediment' => Impediment::class,
         ],
 
         'services' => [
-            'availability' => \Roster\Services\AvailabilityService::class,
-            'schedule' => \Roster\Services\ScheduleService::class,
-            'impediment' => \Roster\Services\ImpedimentService::class,
-            'validation' => \Roster\Services\Core\ValidationService::class,
+            'availability' => AvailabilityService::class,
+            'schedule' => ScheduleService::class,
+            'impediment' => ImpedimentService::class,
+            'validation' => ValidationService::class,
         ],
 
         'repositories' => [
-            'availability' => \Roster\Repositories\AvailabilityRepository::class,
-            'schedule' => \Roster\Repositories\ScheduleRepository::class,
-            'impediment' => \Roster\Repositories\ImpedimentRepository::class,
+            'availability' => AvailabilityRepository::class,
+            'schedule' => ScheduleRepository::class,
+            'impediment' => ImpedimentRepository::class,
         ],
 
         // Custom error messages

@@ -395,8 +395,6 @@ class AvailabilityRepository extends AbstractRepository implements AvailabilityR
 
     /**
      * Apply filters to query.
-     *
-     * @return Builder
      */
     public function applyFilters(
         Model $model,

@@ -27,8 +27,8 @@ use Roster\Services\AvailabilityService;
  * @method static AvailabilityService whereType(string $type) Filter by availability type.
  * @method static AvailabilityService whereDay(string $day) Filter by day of the week.
  * @method static bool isAvailableAt(Carbon $datetime) Check if the schedulable is available at a given datetime.
- * @method static Carbon|null nextAvailableSlot(Carbon $fromDate, int $durationMinutes = 60) Get the next available slot.
- * @method static array<array{start: Carbon, end: Carbon, type: string, availability_id: int}> availableSlots(
+ * @method static Carbon|null findNextSlot(Carbon $fromDate, int $durationMinutes = 60) Get the next available slot.
+ * @method static array<array{start: Carbon, end: Carbon, type: string, availability_id: int}> findSlotsInPeriod(
  *     Carbon $startDate,
  *     Carbon $endDate,
  *     int $durationMinutes = 60,

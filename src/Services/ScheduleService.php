@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Roster\Services;
 
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
@@ -28,10 +27,15 @@ class ScheduleService extends AbstractSchedulableService
     use FilterableTrait;
 
     protected ValidationServiceInterface $validationService;
+
     protected AvailabilityRepositoryInterface $availabilityRepository;
+
     protected ImpedimentRepositoryInterface $impedimentRepository;
+
     protected ScheduleRepositoryInterface $scheduleRepository;
+
     protected SlotFinderInterface $slotFinder;
+
     protected ?Schedule $currentSchedule = null;
 
     public function __construct(
@@ -41,7 +45,6 @@ class ScheduleService extends AbstractSchedulableService
         ScheduleRepositoryInterface $scheduleRepository,
         SlotFinderInterface $slotFinder
     ) {
-        parent::__construct();
         $this->validationService = $validationService;
         $this->availabilityRepository = $availabilityRepository;
         $this->impedimentRepository = $impedimentRepository;
@@ -84,7 +87,7 @@ class ScheduleService extends AbstractSchedulableService
 
             if ($start->diffInMinutes($end) < $minScheduleMinutes) {
                 throw ValidationException::withMessage(
-                    "Schedule must be at least {$minScheduleMinutes} minutes"
+                    sprintf('Schedule must be at least %d minutes', $minScheduleMinutes)
                 );
             }
         }
@@ -105,12 +108,10 @@ class ScheduleService extends AbstractSchedulableService
     protected function validateTimezoneHook(string $timezone): void
     {
         // Validate timezone for datetime fields
-        if (isset($this->data['start_datetime']) || isset($this->data['end_datetime'])) {
-            if (!$this->validationService->validateTimezone($timezone)) {
-                throw ValidationException::withMessage(
-                    "Invalid timezone: {$timezone}"
-                );
-            }
+        if ((isset($this->data['start_datetime']) || isset($this->data['end_datetime'])) && !$this->validationService->validateTimezone($timezone)) {
+            throw ValidationException::withMessage(
+                'Invalid timezone: ' . $timezone
+            );
         }
     }
 
@@ -383,39 +384,13 @@ class ScheduleService extends AbstractSchedulableService
             );
         }
 
-        return $this->slotFinder->findNextAvailableSlot($this->schedulable, $durationMinutes, $type);
+        return $this->slotFinder->findNextSlot($this->schedulable, $durationMinutes, $type);
     }
 
-    /**
-     * Find all available slots in a period.
-     */
-    public function findAvailableSlots(
-        Carbon $startDate,
-        Carbon $endDate,
-        int $durationMinutes,
-        ?string $type = null
-    ): array {
-        $this->validateSchedulable();
-        $this->validationService->validateTimeRange($startDate, $endDate, 'date');
-
-        if ($durationMinutes <= 0) {
-            throw new ValidationException(
-                ValidationType::MINIMUM_DURATION_NOT_MET,
-                ['minimum_minutes' => 1, 'provided_minutes' => $durationMinutes]
-            );
-        }
-
-        return $this->slotFinder->findAvailableSlots(
-            $this->schedulable,
-            $startDate,
-            $endDate,
-            $durationMinutes,
-            $type
-        );
-    }
 
     /**
      * Validate schedule data including time range.
+     * @param array<string, mixed> $data
      */
     protected function validateScheduleData(array $data): void
     {
@@ -425,6 +400,7 @@ class ScheduleService extends AbstractSchedulableService
 
     /**
      * Find matching availability for a schedule.
+     * @param array<string, mixed> $data
      */
     protected function findMatchingAvailability(array $data): ?Availability
     {

@@ -58,7 +58,7 @@ $updated = Impediment::for($user)->update($id, [
 ]);
 
 // CRÉNEAUX DISPONIBLES - Nouvelle méthode
-$availableSlots = Impediment::for($user)
+$findSlotsInPeriod = Impediment::for($user)
     ->getAvailableTimeSlots($start, $end, 'consultation');
 // Retourne: [
 //   ['start' => '2024-06-03 09:00:00', 'end' => '2024-06-03 10:00:00'],
@@ -130,7 +130,7 @@ impediments {
 - **Nouveau `ScheduleService`** : Service complet de gestion des rendez-vous avec validation des disponibilités
 - **Nouveau `ImpedimentService`** : Service de gestion des blocages temporels avec suppression automatique des conflits
 - **API fluide** : Méthodes chaînables avec `for()`, `whereType()`, `between()`, etc.
-- **Recherche intelligente** : `findNextAvailableSlot()`, `findAvailableSlots()`, `isTimeSlotAvailable()`
+- **Recherche intelligente** : `findNextAvailableSlot()`, `findSlotsInPeriod()`, `isTimeSlotAvailable()`
 
 #### 🏗️ Architecture Redesignée
 - **Hiérarchie claire** : `Schedulable → Availability → (Schedule|Impediment)`
@@ -253,7 +253,7 @@ Schedule::for($user)->create([...]);
 
 // Recherche de créneaux
 $nextSlot = Schedule::for($user)->findNextAvailableSlot(60);
-$slots = Schedule::for($user)->findAvailableSlots($start, $end, 30);
+$slots = Schedule::for($user)->findSlotsInPeriod($start, $end, 30);
 
 // Vérification
 $available = Schedule::for($user)->isTimeSlotAvailable($start, $end);

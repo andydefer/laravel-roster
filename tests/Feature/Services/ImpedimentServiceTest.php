@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Services;
 
+use Illuminate\Support\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Roster\Exceptions\OverlappingImpedimentException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -264,6 +265,7 @@ final class ImpedimentServiceTest extends TestCase
         $start = Carbon::parse('2038-06-07 00:00:00');
         $end = Carbon::parse('2038-06-07 23:59:59');
 
+        /** @var Collection<Impediment> $impediments */
         $impediments = $this->impedimentService->between($start, $end);
 
         $this->assertCount(2, $impediments);

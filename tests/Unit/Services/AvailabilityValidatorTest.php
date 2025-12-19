@@ -7,7 +7,6 @@ namespace Tests\Unit\Services;
 use Illuminate\Support\Carbon;
 use InvalidArgumentException;
 use Roster\Contracts\Services\AvailabilityValidatorInterface;
-use Roster\Services\Core\AvailabilityValidator;
 use Tests\TestCase;
 
 final class AvailabilityValidatorTest extends TestCase

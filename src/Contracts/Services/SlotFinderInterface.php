@@ -10,48 +10,51 @@ use Illuminate\Support\Collection;
 
 interface SlotFinderInterface
 {
-
     /**
-     * Find the next available time slot.
+     * Find the next available slot for a schedulable entity.
      *
-     * @param Model $model The schedulable model
-     * @param int $durationMinutes Duration of the slot in minutes
+     * @param Model $model Schedulable model instance
+     * @param int $durationMinutes Required slot duration in minutes
      * @param string|null $type Optional availability type filter
-     * @return array|null Array with slot details or null if none found
+     * @param bool $returnStartOnly Return only the start time if true
+     * @return array|Carbon|null Slot details array, start time, or null if none
      */
-    public function findNextAvailableSlot(
+    public function findNextSlot(
         Model $model,
         int $durationMinutes,
-        ?string $type = null
-    ): ?array;
+        ?string $type = null,
+        bool $returnStartOnly = false
+    ): array|Carbon|null;
 
     /**
-     * Find all available slots in a period.
+     * Find available slots in a given period.
      *
-     * @param Model $model The schedulable model
-     * @param Carbon $startDate Start date of the period
-     * @param Carbon $endDate End date of the period
-     * @param int $durationMinutes Duration of each slot in minutes
+     * @param Model $model Schedulable model instance
+     * @param Carbon $startDate Period start date
+     * @param Carbon $endDate Period end date
+     * @param int $durationMinutes Slot duration in minutes
+     * @param int $intervalMinutes Interval between slot starts in minutes
      * @param string|null $type Optional availability type filter
-     * @return array Array of available slots
+     * @return array<array<string, mixed>> Array of available slots
      */
-    public function findAvailableSlots(
+    public function findSlotsInPeriod(
         Model $model,
         Carbon $startDate,
         Carbon $endDate,
-        int $durationMinutes,
+        int $durationMinutes = 60,
+        int $intervalMinutes = 30,
         ?string $type = null
     ): array;
 
     /**
-     * Get the first available period of a specific duration.
+     * Find the first available continuous period of specified duration.
      *
-     * @param Model $model The schedulable model
-     * @param Carbon $startDate Start date to search from
-     * @param Carbon $endDate End date to search to
-     * @param int $durationMinutes Duration of the period in minutes
+     * @param Model $model Schedulable model instance
+     * @param Carbon $startDate Search start date
+     * @param Carbon $endDate Search end date
+     * @param int $durationMinutes Required period duration in minutes
      * @param string|null $type Optional availability type filter
-     * @return array|null Array with period details or null if none found
+     * @return array|null Period details or null if none found
      */
     public function findFirstAvailablePeriod(
         Model $model,
@@ -62,11 +65,11 @@ interface SlotFinderInterface
     ): ?array;
 
     /**
-     * Check if a time period is completely available.
+     * Check if an entire time period is available without interruptions.
      *
-     * @param Model $model The schedulable model
-     * @param Carbon $start Start of the period
-     * @param Carbon $end End of the period
+     * @param Model $model Schedulable model instance
+     * @param Carbon $start Period start datetime
+     * @param Carbon $end Period end datetime
      * @param string|null $type Optional availability type filter
      * @return bool True if the entire period is available
      */
@@ -77,83 +80,32 @@ interface SlotFinderInterface
         ?string $type = null
     ): bool;
 
-    // ===== Méthodes provenant de SlotFinderService =====
-
     /**
-     * Find all available slots between two dates.
+     * Check if any availability exists within a time period.
      *
-     * @param object $schedulable The schedulable object
-     * @param Carbon $startDate Start date of the period
-     * @param Carbon $endDate End date of the period
-     * @param int $durationMinutes Duration of each slot in minutes (default: 60)
-     * @param int $intervalMinutes Interval between slot starts in minutes (default: 30)
+     * @param Model $model Schedulable model instance
+     * @param Carbon $start Period start datetime
+     * @param Carbon $end Period end datetime
      * @param string|null $type Optional availability type filter
-     * @return array Array of available slots
+     * @return bool True if any availability exists in the period
      */
-    public function findAvailableSlotsBetween(
-        object $schedulable,
-        Carbon $startDate,
-        Carbon $endDate,
-        int $durationMinutes = 60,
-        int $intervalMinutes = 30,
-        ?string $type = null
-    ): array;
-
-    /**
-     * Find the next available slot.
-     *
-     * @param object $schedulable The schedulable object
-     * @param Carbon $fromDate Date to start searching from
-     * @param int $durationMinutes Duration of the slot in minutes (default: 60)
-     * @return Carbon|null The start time of the next available slot or null
-     */
-    public function nextAvailableSlot(
-        object $schedulable,
-        Carbon $fromDate,
-        int $durationMinutes = 60
-    ): ?Carbon;
-
-    /**
-     * Get all available slots in a period.
-     *
-     * @param object $schedulable The schedulable object
-     * @param Carbon $startDate Start date of the period
-     * @param Carbon $endDate End date of the period
-     * @param int $durationMinutes Duration of each slot in minutes (default: 60)
-     * @param int $intervalMinutes Interval between slot starts in minutes (default: 30)
-     * @return array Array of available slots with details
-     */
-    public function availableSlots(
-        object $schedulable,
-        Carbon $startDate,
-        Carbon $endDate,
-        int $durationMinutes = 60,
-        int $intervalMinutes = 30
-    ): array;
-
-    /**
-     * Check if a time period has any availability.
-     *
-     * @param object $schedulable The schedulable object
-     * @param Carbon $start Start of the period
-     * @param Carbon $end End of the period
-     * @param string|null $type Optional availability type filter
-     * @return bool True if there is any availability in the period
-     */
-    public function hasAvailabilityBetween(
-        object $schedulable,
+    public function hasAnyAvailabilityInPeriod(
+        Model $model,
         Carbon $start,
         Carbon $end,
         ?string $type = null
     ): bool;
 
     /**
-     * Get available slots from impediments.
+     * Calculate available time slots between impediments.
      *
-     * @param Carbon $start Start time of the period
-     * @param Carbon $end End time of the period
+     * Takes a collection of impediments and returns the free time slots
+     * between them within the specified period.
+     *
+     * @param Carbon $start Period start time
+     * @param Carbon $end Period end time
      * @param Collection $impediments Collection of impediments to consider
-     * @return Collection Collection of available slots between impediments
+     * @return Collection<int, array<string, mixed>> Available time slots
      */
     public function getAvailableSlotsFromImpediments(
         Carbon $start,

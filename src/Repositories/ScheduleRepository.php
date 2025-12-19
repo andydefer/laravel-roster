@@ -170,8 +170,6 @@ class ScheduleRepository extends AbstractRepository implements ScheduleRepositor
 
     /**
      * Apply filters to query.
-     *
-     * @return Builder
      */
     public function applyFilters(
         int $schedulableId,

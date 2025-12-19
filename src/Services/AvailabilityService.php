@@ -24,11 +24,17 @@ class AvailabilityService extends AbstractSchedulableService
     use FilterableTrait;
 
     private AvailabilityValidatorInterface $availabilityValidator;
+
     private ValidationServiceInterface $validationService;
+
     private AvailabilityRepositoryInterface $availabilityRepository;
+
     private AvailabilityMergerInterface $availabilityMerger;
+
     private SlotFinderInterface $slotFinder;
+
     private AvailabilityCheckerInterface $availabilityChecker;
+
     private ?Availability $currentAvailability = null;
 
     public function __construct(
@@ -39,7 +45,6 @@ class AvailabilityService extends AbstractSchedulableService
         SlotFinderInterface $slotFinder,
         AvailabilityCheckerInterface $availabilityChecker
     ) {
-        parent::__construct();
         $this->availabilityValidator = $availabilityValidator;
         $this->validationService = $validationService;
         $this->availabilityRepository = $availabilityRepository;
@@ -85,7 +90,7 @@ class AvailabilityService extends AbstractSchedulableService
             $minAvailabilityMinutes = 15;
             if ($startTime->diffInMinutes($endTime) < $minAvailabilityMinutes) {
                 throw ValidationException::withMessage(
-                    "Availability must be at least {$minAvailabilityMinutes} minutes"
+                    sprintf('Availability must be at least %d minutes', $minAvailabilityMinutes)
                 );
             }
         }
@@ -103,7 +108,7 @@ class AvailabilityService extends AbstractSchedulableService
 
             if ($start->diffInDays($end) > $maxDays) {
                 throw ValidationException::withMessage(
-                    "Availability period cannot exceed {$maxDays} days"
+                    sprintf('Availability period cannot exceed %d days', $maxDays)
                 );
             }
         }
@@ -117,7 +122,7 @@ class AvailabilityService extends AbstractSchedulableService
         // Validate timezone for time fields
         if (!$this->validationService->validateTimezone($timezone)) {
             throw ValidationException::withMessage(
-                "Invalid timezone: {$timezone}"
+                'Invalid timezone: ' . $timezone
             );
         }
     }
@@ -311,7 +316,7 @@ class AvailabilityService extends AbstractSchedulableService
     /**
      * Find all available slots between two dates.
      */
-    public function findAvailableSlotsBetween(
+    public function findSlotsInPeriod(
         Carbon $startDate,
         Carbon $endDate,
         int $durationMinutes = 60,
@@ -319,50 +324,13 @@ class AvailabilityService extends AbstractSchedulableService
         ?string $type = null
     ): array {
         $this->validateSchedulable();
-        return $this->slotFinder->findAvailableSlotsBetween(
+        return $this->slotFinder->findSlotsInPeriod(
             $this->schedulable,
             $startDate,
             $endDate,
             $durationMinutes,
             $intervalMinutes,
             $type
-        );
-    }
-
-    /**
-     * Check if a time period has any availability.
-     */
-    public function hasAvailabilityBetween(Carbon $start, Carbon $end, ?string $type = null): bool
-    {
-        $this->validateSchedulable();
-        return $this->slotFinder->hasAvailabilityBetween($this->schedulable, $start, $end, $type);
-    }
-
-    /**
-     * Find the next available slot.
-     */
-    public function nextAvailableSlot(Carbon $fromDate, int $durationMinutes = 60): ?Carbon
-    {
-        $this->validateSchedulable();
-        return $this->slotFinder->nextAvailableSlot($this->schedulable, $fromDate, $durationMinutes);
-    }
-
-    /**
-     * Get all available slots in a period.
-     */
-    public function availableSlots(
-        Carbon $startDate,
-        Carbon $endDate,
-        int $durationMinutes = 60,
-        int $intervalMinutes = 30
-    ): array {
-        $this->validateSchedulable();
-        return $this->slotFinder->availableSlots(
-            $this->schedulable,
-            $startDate,
-            $endDate,
-            $durationMinutes,
-            $intervalMinutes
         );
     }
 

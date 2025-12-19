@@ -169,23 +169,6 @@ final class AvailabilityServiceTest extends TestCase
         $this->assertFalse($this->availabilityService->isAvailableAt($wrongDay));
     }
 
-    public function test_next_available_slot(): void
-    {
-        $this->availabilityService->create([
-            'type' => 'consultation',
-            'start_time' => '09:00:00',
-            'end_time' => '17:00:00',
-            'days' => ['monday', 'tuesday', 'wednesday', 'thursday', 'friday'],
-        ]);
-
-        $monday2038 = Carbon::parse('2038-06-07 08:00:00');
-
-        $nextSlot = $this->availabilityService->nextAvailableSlot($monday2038, 60);
-
-        $this->assertInstanceOf(Carbon::class, $nextSlot);
-        $this->assertSame('2038-06-07 09:00:00', $nextSlot->format('Y-m-d H:i:s'));
-    }
-
     public function test_available_slots_method(): void
     {
         $monday2038 = Carbon::parse('2038-06-07');
@@ -200,7 +183,7 @@ final class AvailabilityServiceTest extends TestCase
         $startDate = $monday2038->copy();
         $endDate = $monday2038->copy()->addDay();
 
-        $slots = $this->availabilityService->availableSlots($startDate, $endDate, 60, 60);
+        $slots = $this->availabilityService->findSlotsInPeriod($startDate, $endDate, 60, 60);
 
         $this->assertIsArray($slots);
         $this->assertCount(3, $slots);

@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Roster\Services;
 
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
@@ -29,8 +28,11 @@ class ImpedimentService extends AbstractSchedulableService
     use FilterableTrait;
 
     protected ValidationServiceInterface $validationService;
+
     protected AvailabilityRepositoryInterface $availabilityRepository;
+
     protected ImpedimentRepositoryInterface $impedimentRepository;
+
     protected ?Impediment $currentImpediment = null;
 
     public function __construct(
@@ -38,7 +40,6 @@ class ImpedimentService extends AbstractSchedulableService
         AvailabilityRepositoryInterface $availabilityRepository,
         ImpedimentRepositoryInterface $impedimentRepository
     ) {
-        parent::__construct();
         $this->validationService = $validationService;
         $this->availabilityRepository = $availabilityRepository;
         $this->impedimentRepository = $impedimentRepository;
@@ -79,7 +80,7 @@ class ImpedimentService extends AbstractSchedulableService
 
             if ($start->diffInMinutes($end) < $minImpedimentMinutes) {
                 throw ValidationException::withMessage(
-                    "Impediment must be at least {$minImpedimentMinutes} minutes"
+                    sprintf('Impediment must be at least %d minutes', $minImpedimentMinutes)
                 );
             }
         }
@@ -97,7 +98,7 @@ class ImpedimentService extends AbstractSchedulableService
 
             if ($start->diffInDays($end) > $maxDays) {
                 throw ValidationException::withMessage(
-                    "Impediment duration cannot exceed {$maxDays} days"
+                    sprintf('Impediment duration cannot exceed %d days', $maxDays)
                 );
             }
         }
@@ -109,12 +110,10 @@ class ImpedimentService extends AbstractSchedulableService
     protected function validateTimezoneHook(string $timezone): void
     {
         // Validate timezone for datetime fields
-        if (isset($this->data['start_datetime']) || isset($this->data['end_datetime'])) {
-            if (!$this->validationService->validateTimezone($timezone)) {
-                throw ValidationException::withMessage(
-                    "Invalid timezone: {$timezone}"
-                );
-            }
+        if ((isset($this->data['start_datetime']) || isset($this->data['end_datetime'])) && !$this->validationService->validateTimezone($timezone)) {
+            throw ValidationException::withMessage(
+                'Invalid timezone: ' . $timezone
+            );
         }
     }
 
@@ -358,6 +357,7 @@ class ImpedimentService extends AbstractSchedulableService
 
     /**
      * Validate impediment data.
+     * @param array<string, mixed> $data
      */
     protected function validateImpedimentData(array $data): void
     {
@@ -370,6 +370,7 @@ class ImpedimentService extends AbstractSchedulableService
 
     /**
      * Find matching availability for given impediment data.
+     * @param array<string, mixed> $data
      */
     protected function findMatchingAvailability(array $data): ?Availability
     {

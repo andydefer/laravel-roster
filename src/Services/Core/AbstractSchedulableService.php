@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Roster\Services\Core;
 
+use Exception;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
@@ -32,8 +33,6 @@ abstract class AbstractSchedulableService implements SchedulableServiceInterface
      * @var array<string, mixed>
      */
     protected array $data = [];
-
-    public function __construct() {}
 
     /**
      * Scope the service to a specific parent model.
@@ -107,7 +106,6 @@ abstract class AbstractSchedulableService implements SchedulableServiceInterface
      * TEMPLATE METHOD: Create with configuration validation
      *
      * @param array<string, mixed> $data
-     * @return mixed
      */
     final public function create(array $data): mixed
     {
@@ -139,7 +137,6 @@ abstract class AbstractSchedulableService implements SchedulableServiceInterface
      * TEMPLATE METHOD: Update with configuration validation
      *
      * @param array<string, mixed> $data
-     * @return bool
      */
     final public function update(int $id, array $data): bool
     {
@@ -183,12 +180,10 @@ abstract class AbstractSchedulableService implements SchedulableServiceInterface
 
         // Apply operation-specific rules
         if ($operation === 'create') {
-            $data = $this->applyCreateConfigurationRules($data);
-        } else {
-            $data = $this->applyUpdateConfigurationRules($data);
+            return $this->applyCreateConfigurationRules($data);
         }
 
-        return $data;
+        return $this->applyUpdateConfigurationRules($data);
     }
 
     /**
@@ -279,10 +274,10 @@ abstract class AbstractSchedulableService implements SchedulableServiceInterface
                     $date = Carbon::parse($value);
                     if ($date->isPast() && !$this->allowPastDatesForField($key)) {
                         throw ValidationException::withMessage(
-                            "Field '{$key}' cannot be in the past"
+                            sprintf("Field '%s' cannot be in the past", $key)
                         );
                     }
-                } catch (\Exception $e) {
+                } catch (Exception $e) {
                     // Not a date field, continue
                     continue;
                 }
