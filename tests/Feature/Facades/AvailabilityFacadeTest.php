@@ -51,7 +51,7 @@ final class AvailabilityFacadeTest extends TestCase
 
         $this->assertInstanceOf(Availability::class, $availability);
         $this->assertSame('consultation', $availability->type);
-        $this->assertDatabaseHas('availabilities', [
+        $this->assertDatabaseHas('roster_availabilities', [
             'schedulable_id' => $this->model->id,
             'type' => 'consultation',
         ]);

@@ -68,7 +68,7 @@ final class ImpedimentServiceTest extends TestCase
         $this->assertSame($this->model->id, $impediment->schedulable_id);
         $this->assertSame(get_class($this->model), $impediment->schedulable_type);
         $this->assertSame($this->availability->id, $impediment->availability_id);
-        $this->assertDatabaseHas('impediments', [
+        $this->assertDatabaseHas('roster_impediments', [
             'reason' => 'Out of office',
             'availability_id' => $this->availability->id,
         ]);
@@ -165,7 +165,7 @@ final class ImpedimentServiceTest extends TestCase
         $deleted = $this->impedimentService->delete($impediment->id);
 
         $this->assertTrue($deleted);
-        $this->assertDatabaseMissing('impediments', ['id' => $impediment->id]);
+        $this->assertDatabaseMissing('roster_impediments', ['id' => $impediment->id]);
     }
 
     public function test_find_impediment_by_id(): void

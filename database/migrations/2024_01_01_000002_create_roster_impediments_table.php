@@ -44,7 +44,6 @@ return new class extends Migration
             $table->index(['availability_id', 'start_datetime']);
             $table->index(['availability_id', 'end_datetime']);
             $table->index(['start_datetime', 'end_datetime']);
-            $table->index(['schedulable_type', 'schedulable_id']);
         });
 
         $this->addDatabaseSpecificConstraints();

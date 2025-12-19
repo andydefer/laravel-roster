@@ -67,7 +67,7 @@ final class ScheduleServiceTest extends TestCase
         $this->assertInstanceOf(Schedule::class, $schedule);
         $this->assertSame('Test Consultation', $schedule->title);
         $this->assertSame($this->availability->id, $schedule->availability_id);
-        $this->assertDatabaseHas('schedules', [
+        $this->assertDatabaseHas('roster_schedules', [
             'title' => 'Test Consultation',
             'availability_id' => $this->availability->id,
         ]);
@@ -148,7 +148,7 @@ final class ScheduleServiceTest extends TestCase
         $deleted = $this->scheduleService->delete($schedule->id);
 
         $this->assertTrue($deleted);
-        $this->assertDatabaseMissing('schedules', ['id' => $schedule->id]);
+        $this->assertDatabaseMissing('roster_schedules', ['id' => $schedule->id]);
     }
 
     public function test_find_schedule_by_id(): void

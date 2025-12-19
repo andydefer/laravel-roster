@@ -48,7 +48,7 @@ final class AvailabilityServiceTest extends TestCase
         $this->assertSame(get_class($this->model), $availability->schedulable_type);
         $this->assertSame('consultation', $availability->type);
         $this->assertSame(['monday', 'tuesday'], $availability->days);
-        $this->assertDatabaseHas('availabilities', [
+        $this->assertDatabaseHas('roster_availabilities', [
             'schedulable_id' => $this->model->id,
             'type' => 'consultation',
         ]);
@@ -128,7 +128,7 @@ final class AvailabilityServiceTest extends TestCase
         $deleted = $this->availabilityService->delete($availability->id);
 
         $this->assertTrue($deleted);
-        $this->assertDatabaseMissing('availabilities', ['id' => $availability->id]);
+        $this->assertDatabaseMissing('roster_availabilities', ['id' => $availability->id]);
     }
 
     public function test_find_availability_by_id(): void
