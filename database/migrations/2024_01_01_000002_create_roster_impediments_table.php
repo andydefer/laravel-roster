@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 /**
- * Creates the `impediments` table for storing temporary availability exceptions.
+ * Creates the `roster_impediments` table for storing temporary availability exceptions.
  *
  * This table stores blocking periods that override normal availability rules.
  * Examples include illness, training, holidays, or maintenance periods.
@@ -16,15 +16,15 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration
 {
     /**
-     * Creates the impediments table structure with database-specific constraints.
+     * Creates the roster_impediments table structure with database-specific constraints.
      */
     public function up(): void
     {
-        Schema::create('impediments', function (Blueprint $table): void {
+        Schema::create('roster_impediments', function (Blueprint $table): void {
             $table->id();
 
             $table->foreignId('availability_id')
-                ->constrained('availabilities')
+                ->constrained('roster_availabilities')
                 ->onDelete('cascade');
 
             $table->morphs('schedulable');
@@ -37,23 +37,25 @@ return new class extends Migration
 
             $table->unique(
                 ['availability_id', 'start_datetime', 'end_datetime'],
-                'impediments_unique_time_slot'
+                'roster_impediments_unique_time_slot'
             );
 
+            // Indexes
             $table->index(['availability_id', 'start_datetime']);
             $table->index(['availability_id', 'end_datetime']);
             $table->index(['start_datetime', 'end_datetime']);
+            $table->index(['schedulable_type', 'schedulable_id']);
         });
 
         $this->addDatabaseSpecificConstraints();
     }
 
     /**
-     * Drops the impediments table.
+     * Drops the roster_impediments table.
      */
     public function down(): void
     {
-        Schema::dropIfExists('impediments');
+        Schema::dropIfExists('roster_impediments');
     }
 
     /**
@@ -83,8 +85,8 @@ return new class extends Migration
     {
         if (config('roster.database.check_constraints', true)) {
             DB::statement('
-                ALTER TABLE impediments
-                ADD CONSTRAINT impediments_valid_dates
+                ALTER TABLE roster_impediments
+                ADD CONSTRAINT roster_impediments_valid_dates
                 CHECK (end_datetime > start_datetime)
             ');
         }
@@ -97,8 +99,8 @@ return new class extends Migration
     {
         if (config('roster.database.use_json_constraints', true)) {
             DB::statement('
-                ALTER TABLE impediments
-                ADD CONSTRAINT impediments_no_overlap
+                ALTER TABLE roster_impediments
+                ADD CONSTRAINT roster_impediments_no_overlap
                 EXCLUDE USING gist (
                     availability_id WITH =,
                     tsrange(start_datetime, end_datetime) WITH &&

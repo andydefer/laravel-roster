@@ -11,7 +11,7 @@ use Roster\Enums\ScheduleStatus;
 
 class Schedule extends Model
 {
-    protected $table = 'schedules';
+    protected $table = 'roster_schedules';
 
     protected $fillable = [
         'availability_id',
@@ -35,7 +35,7 @@ class Schedule extends Model
      */
     public function availability(): BelongsTo
     {
-        return $this->belongsTo(Availability::class);
+        return $this->belongsTo(Availability::class, 'availability_id');
     }
 
     /**

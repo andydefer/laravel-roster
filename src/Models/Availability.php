@@ -11,7 +11,7 @@ use Illuminate\Support\Carbon;
 
 class Availability extends Model
 {
-    protected $table = 'availabilities';
+    protected $table = 'roster_availabilities';
 
     protected $fillable = [
         'schedulable_id',
@@ -45,7 +45,7 @@ class Availability extends Model
      */
     public function schedules(): HasMany
     {
-        return $this->hasMany(Schedule::class);
+        return $this->hasMany(Schedule::class, 'availability_id');
     }
 
     /**
@@ -53,7 +53,7 @@ class Availability extends Model
      */
     public function impediments(): HasMany
     {
-        return $this->hasMany(Impediment::class);
+        return $this->hasMany(Impediment::class, 'availability_id');
     }
 
     /**

@@ -10,7 +10,7 @@ use Illuminate\Support\Carbon;
 
 class Impediment extends Model
 {
-    protected $table = 'impediments';
+    protected $table = 'roster_impediments';
 
     protected $fillable = [
         'availability_id',
@@ -33,7 +33,7 @@ class Impediment extends Model
      */
     public function availability(): BelongsTo
     {
-        return $this->belongsTo(Availability::class);
+        return $this->belongsTo(Availability::class, 'availability_id');
     }
 
     /**

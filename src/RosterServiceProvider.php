@@ -38,7 +38,7 @@ class RosterServiceProvider extends ServiceProvider
      * Bootstrap any package services.
      *
      * Publishes configuration, migrations, and views when running in console mode.
-     * Loads package routes, views, and migrations.
+     * Does NOT load migrations automatically - user must publish them.
      */
     public function boot(): void
     {
@@ -47,9 +47,14 @@ class RosterServiceProvider extends ServiceProvider
             $this->commands([InstallRosterCommand::class]);
         }
 
-        $this->loadRoutesFrom(__DIR__ . '/../routes/web.php');
-        $this->loadViewsFrom(__DIR__ . '/../resources/views', 'roster');
-        $this->loadMigrationsFrom(__DIR__ . '/../database/migrations');
+        // Routes and views only if published
+        if (file_exists(base_path('routes/roster.php'))) {
+            $this->loadRoutesFrom(base_path('routes/roster.php'));
+        }
+
+        if (file_exists(resource_path('views/vendor/roster'))) {
+            $this->loadViewsFrom(resource_path('views/vendor/roster'), 'roster');
+        }
     }
 
     /**
@@ -133,25 +138,32 @@ class RosterServiceProvider extends ServiceProvider
         $this->app->alias('roster.impediment', ImpedimentService::class);
     }
 
-
-
     /**
      * Publish package resources for console usage.
      *
      * Publishes configuration files, migrations, and views to the application.
+     * User MUST publish these resources to use the package.
      */
     private function publishResources(): void
     {
+        // Configuration
         $this->publishes([
             __DIR__ . '/../config/roster.php' => config_path('roster.php'),
         ], 'roster-config');
 
+        // Migrations - préfixées avec roster_
         $this->publishes([
             __DIR__ . '/../database/migrations/' => database_path('migrations'),
         ], 'roster-migrations');
 
+        // Views
         $this->publishes([
             __DIR__ . '/../resources/views' => resource_path('views/vendor/roster'),
         ], 'roster-views');
+
+        // Routes
+        $this->publishes([
+            __DIR__ . '/../routes/web.php' => base_path('routes/roster.php'),
+        ], 'roster-routes');
     }
 }

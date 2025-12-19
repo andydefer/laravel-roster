@@ -7,7 +7,7 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
 /**
- * Creates the `availabilities` table for storing recurring availability rules.
+ * Creates the `roster_availabilities` table for storing recurring availability rules.
  *
  * This table defines theoretical time periods when a schedulable entity
  * (doctor, room, team, equipment) can be booked, including recurring days
@@ -17,11 +17,11 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration
 {
     /**
-     * Creates the availabilities table structure.
+     * Creates the roster_availabilities table structure.
      */
     public function up(): void
     {
-        Schema::create('availabilities', function (Blueprint $table): void {
+        Schema::create('roster_availabilities', function (Blueprint $table): void {
             $table->id();
 
             $table->morphs('schedulable');
@@ -34,14 +34,19 @@ return new class extends Migration
             $table->date('end_date')->nullable()->comment('End date of the availability period');
 
             $table->timestamps();
+
+            // Indexes
+            $table->index(['schedulable_type', 'schedulable_id']);
+            $table->index('type');
+            $table->index(['start_date', 'end_date']);
         });
     }
 
     /**
-     * Drops the availabilities table.
+     * Drops the roster_availabilities table.
      */
     public function down(): void
     {
-        Schema::dropIfExists('availabilities');
+        Schema::dropIfExists('roster_availabilities');
     }
 };
