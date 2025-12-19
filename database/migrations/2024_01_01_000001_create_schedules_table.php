@@ -8,15 +8,15 @@ use Illuminate\Support\Facades\Schema;
 use Roster\Enums\ScheduleStatus;
 
 /**
- * Migration to create the `schedules` table.
+ * Creates the `schedules` table for storing concrete scheduled events.
  *
- * This table stores concrete scheduled events linked to an availability rule.
- * It represents actual bookings (appointments, meetings, etc.) and their statuses.
+ * This table stores actual bookings (appointments, meetings, etc.) linked
+ * to availability rules, including their statuses and metadata.
  */
 return new class extends Migration
 {
     /**
-     * Run the migrations.
+     * Creates the schedules table structure.
      */
     public function up(): void
     {
@@ -42,7 +42,7 @@ return new class extends Migration
     }
 
     /**
-     * Reverse the migrations.
+     * Drops the schedules table.
      */
     public function down(): void
     {

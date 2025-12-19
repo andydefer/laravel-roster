@@ -7,20 +7,17 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
 /**
- * Migration to create the `availabilities` table.
+ * Creates the `availabilities` table for storing recurring availability rules.
  *
- * This table stores recurring availability rules for any schedulable entity
- * (e.g., doctor, room, team, or equipment). It defines the theoretical
- * periods when a schedulable can be booked, including recurring days and
-e ranges.
- * * optional dat
- * Conceptually, this represents "ideal working hours" or "default availability"
- * that can later be constrained by schedules or impediments.
+ * This table defines theoretical time periods when a schedulable entity
+ * (doctor, room, team, equipment) can be booked, including recurring days
+ * and date ranges. Represents "ideal working hours" or "default availability"
+ * that can be constrained by schedules or impediments.
  */
 return new class extends Migration
 {
     /**
-     * Run the migrations.
+     * Creates the availabilities table structure.
      */
     public function up(): void
     {
@@ -41,7 +38,7 @@ return new class extends Migration
     }
 
     /**
-     * Reverse the migrations.
+     * Drops the availabilities table.
      */
     public function down(): void
     {

@@ -50,9 +50,8 @@ git-tag:
 # avec un prompt pour analyse IA (commit + résumé)
 # ---------------------------------------------------
 # Génère un diff git dans un fichier diff.txt avec un prompt pour analyse IA (commit + résumé)
-
 git-diff:
-	@echo "📝 Generating git diff into diff.txt..."
+	@echo "📝 Generating clean git diff into diff.txt..."
 	@echo "Tu es un expert en revue de code et en conventions de commits (Conventional Commits)." > diff.txt
 	@echo "" >> diff.txt
 	@echo "À partir du diff Git ci-dessous, fais les choses suivantes :" >> diff.txt
@@ -76,8 +75,8 @@ git-diff:
 	@echo "" >> diff.txt
 	@echo "Voici le diff :" >> diff.txt
 	@echo "" >> diff.txt
-	@git diff HEAD >> diff.txt
-	@echo "✅ diff.txt generated successfully"
+	@git diff HEAD -- . ':!*.phpunit.result.cache' ':!diff.txt' >> diff.txt
+	@echo "✅ Clean diff.txt generated successfully (excluded test cache files)"
 
 # ---------------------------------------------------
 # Republier le dernier tag

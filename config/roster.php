@@ -2,58 +2,41 @@
 
 declare(strict_types=1);
 
+/**
+ * Roster package configuration file.
+ *
+ * This configuration file defines all customizable settings for the Roster package.
+ * Environment variables can be used to override any default values.
+ *
+ * @package Roster\Config
+ */
 return [
-    /*
-    |--------------------------------------------------------------------------
-    | Core Configuration
-    |--------------------------------------------------------------------------
-    |
-    | Configuration de base du package Roster.
-    |
-    */
-
+    // Core settings
     'timezone' => env('ROSTER_TIMEZONE', env('APP_TIMEZONE', 'UTC')),
-
     'validate_future_dates' => env('ROSTER_VALIDATE_FUTURE_DATES', true),
 
-    /*
-    |--------------------------------------------------------------------------
-    | Durations Configuration
-    |--------------------------------------------------------------------------
-    |
-    | Configuration des durées pour les différentes entités.
-    |
-    */
-
+    // Duration constraints
     'durations' => [
-        // Durées minimales
+        // Minimum durations in minutes
         'minimum_impediment_minutes' => env('ROSTER_MIN_IMPEDIMENT_MINUTES', 5),
         'minimum_schedule_minutes' => env('ROSTER_MIN_SCHEDULE_MINUTES', 15),
         'minimum_availability_minutes' => env('ROSTER_MIN_AVAILABILITY_MINUTES', 15),
 
-        // Durées par défaut
+        // Default slot settings
         'default_slot_duration_minutes' => env('ROSTER_DEFAULT_SLOT_DURATION', 60),
         'default_slot_interval_minutes' => env('ROSTER_DEFAULT_SLOT_INTERVAL', 30),
 
-        // Limites temporelles
+        // Time boundaries
         'max_days_to_check' => env('ROSTER_MAX_DAYS_TO_CHECK', 365),
         'max_availability_period_days' => env('ROSTER_MAX_AVAILABILITY_PERIOD_DAYS', 365),
         'max_impediment_duration_days' => env('ROSTER_MAX_IMPEDIMENT_DURATION_DAYS', 30),
 
-        // Avance maximale pour la planification
+        // Scheduling constraints
         'max_schedule_advance_days' => env('ROSTER_MAX_SCHEDULE_ADVANCE_DAYS', 90),
         'min_schedule_advance_minutes' => env('ROSTER_MIN_SCHEDULE_ADVANCE_MINUTES', 30),
     ],
 
-    /*
-    |--------------------------------------------------------------------------
-    | Availability Configuration
-    |--------------------------------------------------------------------------
-    |
-    | Configuration spécifique aux disponibilités.
-    |
-    */
-
+    // Availability management settings
     'availability' => [
         'merge_adjacent' => env('ROSTER_AVAILABILITY_MERGE_ADJACENT', true),
         'allow_overlap' => env('ROSTER_AVAILABILITY_ALLOW_OVERLAP', false),
@@ -62,15 +45,7 @@ return [
         'maximum_concurrent_availabilities' => env('ROSTER_AVAILABILITY_MAX_CONCURRENT', 10),
     ],
 
-    /*
-    |--------------------------------------------------------------------------
-    | Schedule Configuration
-    |--------------------------------------------------------------------------
-    |
-    | Configuration spécifique aux plannings.
-    |
-    */
-
+    // Schedule management settings
     'schedule' => [
         'default_status' => env('ROSTER_SCHEDULE_DEFAULT_STATUS', 'available'),
         'allow_past_schedules' => env('ROSTER_SCHEDULE_ALLOW_PAST', false),
@@ -78,24 +53,11 @@ return [
         'cancellation_lead_time_minutes' => env('ROSTER_SCHEDULE_CANCELLATION_LEAD_TIME', 60),
         'rescheduling_lead_time_minutes' => env('ROSTER_SCHEDULE_RESCHEDULING_LEAD_TIME', 30),
 
-        // Status autorisés
-        'allowed_statuses' => [
-            'available',
-            'booked',
-            'cancelled',
-            'blocked',
-        ],
+        // Allowed schedule statuses
+        'allowed_statuses' => ['available', 'booked', 'cancelled', 'blocked'],
     ],
 
-    /*
-    |--------------------------------------------------------------------------
-    | Impediment Configuration
-    |--------------------------------------------------------------------------
-    |
-    | Configuration spécifique aux impediments (blocages).
-    |
-    */
-
+    // Impediment management settings
     'impediment' => [
         'require_reason' => env('ROSTER_IMPEDIMENT_REQUIRE_REASON', false),
         'allow_overlap' => env('ROSTER_IMPEDIMENT_ALLOW_OVERLAP', false),
@@ -104,15 +66,7 @@ return [
         'max_future_days' => env('ROSTER_IMPEDIMENT_MAX_FUTURE_DAYS', 365),
     ],
 
-    /*
-    |--------------------------------------------------------------------------
-    | Slot Finder Configuration
-    |--------------------------------------------------------------------------
-    |
-    | Configuration pour la recherche de créneaux disponibles.
-    |
-    */
-
+    // Slot finder settings
     'slot_finder' => [
         'search_step_minutes' => env('ROSTER_SLOT_SEARCH_STEP_MINUTES', 15),
         'max_search_days' => env('ROSTER_SLOT_MAX_SEARCH_DAYS', 365),
@@ -120,22 +74,14 @@ return [
         'consider_schedules' => env('ROSTER_SLOT_CONSIDER_SCHEDULES', true),
         'buffer_minutes' => env('ROSTER_SLOT_BUFFER_MINUTES', 0),
 
-        // Fuseaux horaires pour la recherche
+        // Timezone and working hours configuration
         'timezone_aware' => env('ROSTER_SLOT_TIMEZONE_AWARE', true),
         'prefer_working_hours' => env('ROSTER_SLOT_PREFER_WORKING_HOURS', true),
         'working_hours_start' => env('ROSTER_WORKING_HOURS_START', '09:00'),
         'working_hours_end' => env('ROSTER_WORKING_HOURS_END', '17:00'),
     ],
 
-    /*
-    |--------------------------------------------------------------------------
-    | Database Configuration
-    |--------------------------------------------------------------------------
-    |
-    | Configuration spécifique à la base de données.
-    |
-    */
-
+    // Database configuration
     'database' => [
         'use_json_constraints' => env('ROSTER_DB_USE_JSON_CONSTRAINTS', env('DB_CONNECTION') === 'pgsql'),
         'check_constraints' => env('ROSTER_DB_CHECK_CONSTRAINTS', env('DB_CONNECTION') === 'mysql'),
@@ -143,29 +89,21 @@ return [
         'enable_indexes' => env('ROSTER_DB_ENABLE_INDEXES', true),
         'enable_unique_constraints' => env('ROSTER_DB_ENABLE_UNIQUE_CONSTRAINTS', true),
 
-        // Configuration des migrations
+        // Migration settings
         'migrations' => [
             'publish' => env('ROSTER_PUBLISH_MIGRATIONS', true),
             'auto_run' => env('ROSTER_AUTO_RUN_MIGRATIONS', false),
         ],
     ],
 
-    /*
-    |--------------------------------------------------------------------------
-    | Cache Configuration
-    |--------------------------------------------------------------------------
-    |
-    | Configuration du cache pour l'optimisation des performances.
-    |
-    */
-
+    // Cache configuration
     'cache' => [
         'enabled' => env('ROSTER_CACHE_ENABLED', true),
         'driver' => env('ROSTER_CACHE_DRIVER', env('CACHE_DRIVER', 'file')),
-        'ttl' => env('ROSTER_CACHE_TTL', 3600), // secondes
+        'ttl' => env('ROSTER_CACHE_TTL', 3600),
         'prefix' => env('ROSTER_CACHE_PREFIX', 'roster_'),
 
-        // Configuration spécifique par entité
+        // Entity-specific cache settings
         'availability' => [
             'enabled' => env('ROSTER_CACHE_AVAILABILITY_ENABLED', true),
             'ttl' => env('ROSTER_CACHE_AVAILABILITY_TTL', 1800),
@@ -179,53 +117,36 @@ return [
             'ttl' => env('ROSTER_CACHE_IMPEDIMENT_TTL', 1800),
         ],
 
-        // Tags de cache
         'use_tags' => env('ROSTER_CACHE_USE_TAGS', true),
     ],
 
-    /*
-    |--------------------------------------------------------------------------
-    | Validation Configuration
-    |--------------------------------------------------------------------------
-    |
-    | Configuration pour les validations.
-    |
-    */
-
+    // Validation configuration
     'validation' => [
         'strict_mode' => env('ROSTER_VALIDATION_STRICT_MODE', true),
         'throw_exceptions' => env('ROSTER_VALIDATION_THROW_EXCEPTIONS', true),
         'log_validation_errors' => env('ROSTER_VALIDATION_LOG_ERRORS', false),
 
-        // Champs obligatoires
+        // Required fields for each entity
         'required_fields' => [
             'availability' => ['type', 'start_time', 'end_time', 'days'],
             'schedule' => ['title', 'start_datetime', 'end_datetime'],
             'impediment' => ['start_datetime', 'end_datetime'],
         ],
 
-        // Champs interdits pour les mises à jour
+        // Fields that cannot be updated
         'forbidden_update_fields' => ['id', 'created_at', 'updated_at'],
 
-        // Champs autorisés à avoir des dates passées
+        // Fields that can contain past dates
         'allowed_past_date_fields' => ['end_date', 'end_datetime'],
     ],
 
-    /*
-    |--------------------------------------------------------------------------
-    | Logging Configuration
-    |--------------------------------------------------------------------------
-    |
-    | Configuration pour la journalisation.
-    |
-    */
-
+    // Logging configuration
     'logging' => [
         'enabled' => env('ROSTER_LOGGING_ENABLED', false),
         'level' => env('ROSTER_LOGGING_LEVEL', 'info'),
         'channel' => env('ROSTER_LOGGING_CHANNEL', 'stack'),
 
-        // Événements à logger
+        // Events to log
         'log_events' => [
             'create' => env('ROSTER_LOG_CREATE_EVENTS', true),
             'update' => env('ROSTER_LOG_UPDATE_EVENTS', true),
@@ -234,45 +155,24 @@ return [
             'validation' => env('ROSTER_LOG_VALIDATION_EVENTS', false),
         ],
 
-        // Informations sensibles à masquer
-        'mask_fields' => [
-            'password',
-            'token',
-            'secret',
-            'api_key',
-        ],
+        // Sensitive fields to mask in logs
+        'mask_fields' => ['password', 'token', 'secret', 'api_key'],
     ],
 
-    /*
-    |--------------------------------------------------------------------------
-    | Performance Configuration
-    |--------------------------------------------------------------------------
-    |
-    | Configuration pour l'optimisation des performances.
-    |
-    */
-
+    // Performance optimization settings
     'performance' => [
         'eager_loading' => env('ROSTER_EAGER_LOADING', true),
         'max_query_results' => env('ROSTER_MAX_QUERY_RESULTS', 1000),
-        'query_timeout' => env('ROSTER_QUERY_TIMEOUT', 30), // secondes
+        'query_timeout' => env('ROSTER_QUERY_TIMEOUT', 30),
         'enable_query_log' => env('ROSTER_ENABLE_QUERY_LOG', false),
 
-        // Optimisation des requêtes
+        // Query optimization settings
         'optimize_queries' => env('ROSTER_OPTIMIZE_QUERIES', true),
         'use_subqueries' => env('ROSTER_USE_SUBQUERIES', true),
         'cache_query_results' => env('ROSTER_CACHE_QUERY_RESULTS', true),
     ],
 
-    /*
-    |--------------------------------------------------------------------------
-    | Security Configuration
-    |--------------------------------------------------------------------------
-    |
-    | Configuration de sécurité.
-    |
-    */
-
+    // Security settings
     'security' => [
         'rate_limit' => [
             'enabled' => env('ROSTER_RATE_LIMIT_ENABLED', false),
@@ -283,7 +183,7 @@ return [
         'prevent_sql_injection' => env('ROSTER_PREVENT_SQL_INJECTION', true),
         'validate_input_types' => env('ROSTER_VALIDATE_INPUT_TYPES', true),
 
-        // Protection contre les mises à jour fréquentes
+        // Update protection to prevent abuse
         'update_protection' => [
             'min_minutes_between_updates' => env('ROSTER_MIN_MINUTES_BETWEEN_UPDATES', 1),
             'max_updates_per_hour' => env('ROSTER_MAX_UPDATES_PER_HOUR', 60),
@@ -291,15 +191,7 @@ return [
         ],
     ],
 
-    /*
-    |--------------------------------------------------------------------------
-    | Testing Configuration
-    |--------------------------------------------------------------------------
-    |
-    | Configuration pour les tests.
-    |
-    */
-
+    // Testing configuration
     'testing' => [
         'use_fake_dates' => env('ROSTER_TESTING_USE_FAKE_DATES', false),
         'default_test_date' => env('ROSTER_TESTING_DEFAULT_DATE', '2038-06-01'),
@@ -308,15 +200,7 @@ return [
         'skip_validation_in_tests' => env('ROSTER_TESTING_SKIP_VALIDATION', false),
     ],
 
-    /*
-    |--------------------------------------------------------------------------
-    | Feature Flags
-    |--------------------------------------------------------------------------
-    |
-    | Activation/désactivation des fonctionnalités.
-    |
-    */
-
+    // Feature flags
     'features' => [
         'enable_recurring_schedules' => env('ROSTER_ENABLE_RECURRING_SCHEDULES', false),
         'enable_bulk_operations' => env('ROSTER_ENABLE_BULK_OPERATIONS', true),
@@ -327,17 +211,9 @@ return [
         'enable_analytics' => env('ROSTER_ENABLE_ANALYTICS', false),
     ],
 
-    /*
-    |--------------------------------------------------------------------------
-    | Customization
-    |--------------------------------------------------------------------------
-    |
-    | Personnalisation du comportement.
-    |
-    */
-
+    // Customization options
     'custom' => [
-        // Classes personnalisées
+        // Custom class bindings
         'models' => [
             'availability' => \Roster\Models\Availability::class,
             'schedule' => \Roster\Models\Schedule::class,
@@ -357,7 +233,7 @@ return [
             'impediment' => \Roster\Repositories\ImpedimentRepository::class,
         ],
 
-        // Personnalisation des messages d'erreur
+        // Custom error messages
         'error_messages' => [
             'overlap' => 'This time slot overlaps with an existing resource.',
             'past_date' => 'Cannot schedule in the past.',
@@ -366,7 +242,7 @@ return [
             'invalid_time_range' => 'End time must be after start time.',
         ],
 
-        // Formatage par défaut
+        // Default date/time formats
         'date_format' => env('ROSTER_DATE_FORMAT', 'Y-m-d'),
         'time_format' => env('ROSTER_TIME_FORMAT', 'H:i:s'),
         'datetime_format' => env('ROSTER_DATETIME_FORMAT', 'Y-m-d H:i:s'),

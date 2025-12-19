@@ -8,18 +8,15 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 /**
- * Migration to create the `impediments` table.
+ * Creates the `impediments` table for storing temporary availability exceptions.
  *
- * This table stores temporary exceptions that block availability, even if a schedulable
- * entity would normally be available. Examples: illness, training, holidays.
- *
- * Each impediment is linked to an availability rule and defines a time range that
- * should not be booked.
+ * This table stores blocking periods that override normal availability rules.
+ * Examples include illness, training, holidays, or maintenance periods.
  */
 return new class extends Migration
 {
     /**
-     * Run the migrations.
+     * Creates the impediments table structure with database-specific constraints.
      */
     public function up(): void
     {
@@ -38,7 +35,6 @@ return new class extends Migration
             $table->json('metadata')->nullable()->comment('Optional additional data');
             $table->timestamps();
 
-            // Prevent duplicate impediments for the exact same period
             $table->unique(
                 ['availability_id', 'start_datetime', 'end_datetime'],
                 'impediments_unique_time_slot'
@@ -49,12 +45,11 @@ return new class extends Migration
             $table->index(['start_datetime', 'end_datetime']);
         });
 
-        // Add database-specific constraints
         $this->addDatabaseSpecificConstraints();
     }
 
     /**
-     * Reverse the migrations.
+     * Drops the impediments table.
      */
     public function down(): void
     {
@@ -62,7 +57,7 @@ return new class extends Migration
     }
 
     /**
-     * Add database-specific constraints.
+     * Adds database-specific constraints for data integrity.
      */
     private function addDatabaseSpecificConstraints(): void
     {
@@ -76,13 +71,13 @@ return new class extends Migration
                 $this->addPgsqlConstraints();
                 break;
             case 'sqlite':
-                $this->addSqliteConstraints();
+                // SQLite doesn't support advanced check constraints
                 break;
         }
     }
 
     /**
-     * Add MySQL specific constraints.
+     * Adds MySQL-specific date validation constraints.
      */
     private function addMysqlConstraints(): void
     {
@@ -96,7 +91,7 @@ return new class extends Migration
     }
 
     /**
-     * Add PostgreSQL specific constraints.
+     * Adds PostgreSQL-specific overlap prevention constraints.
      */
     private function addPgsqlConstraints(): void
     {
@@ -110,14 +105,5 @@ return new class extends Migration
                 )
             ');
         }
-    }
-
-    /**
-     * Add SQLite specific constraints.
-     */
-    private function addSqliteConstraints(): void
-    {
-        // SQLite doesn't support check constraints in the same way
-        // We'll rely on application-level validation
     }
 };
