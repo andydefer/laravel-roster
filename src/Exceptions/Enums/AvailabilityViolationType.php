@@ -4,6 +4,12 @@ declare(strict_types=1);
 
 namespace Roster\Exceptions\Enums;
 
+/**
+ * Enum representing types of availability violations.
+ *
+ * This enum defines specific cases where a schedule or impediment
+ * violates the defined availability constraints of a resource.
+ */
 enum AvailabilityViolationType: string
 {
     case DAY_NOT_IN_AVAILABILITY = 'DAY_NOT_IN_AVAILABILITY';
@@ -11,6 +17,11 @@ enum AvailabilityViolationType: string
     case STARTS_BEFORE_AVAILABILITY = 'STARTS_BEFORE_AVAILABILITY';
     case ENDS_AFTER_AVAILABILITY = 'ENDS_AFTER_AVAILABILITY';
 
+    /**
+     * Get the default human-readable message for this violation type.
+     *
+     * @return string The descriptive message explaining the violation
+     */
     public function getDefaultMessage(): string
     {
         return match ($this) {

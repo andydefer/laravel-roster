@@ -12,6 +12,15 @@ use Throwable;
  */
 class MissingResourceException extends RosterException
 {
+    /**
+     * Create a new MissingResourceException instance.
+     *
+     * @param MissingResourceType $type Type of missing resource
+     * @param array $context Additional context about the missing resource
+     * @param string $message Custom error message
+     * @param int $code Error code
+     * @param Throwable|null $previous Previous exception
+     */
     public function __construct(
         MissingResourceType $type,
         array $context = [],

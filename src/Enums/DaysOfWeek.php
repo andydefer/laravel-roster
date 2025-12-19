@@ -6,6 +6,12 @@ namespace Roster\Enums;
 
 use Roster\Traits\EnumValues;
 
+/**
+ * Represents days of the week in a standardized format.
+ *
+ * This enum provides consistent day naming for scheduling and availability
+ * calculations throughout the roster system.
+ */
 enum DaysOfWeek: string
 {
     use EnumValues;

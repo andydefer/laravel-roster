@@ -16,6 +16,7 @@ use Roster\Contracts\Repository\AvailabilityRepositoryInterface;
 use Roster\Contracts\Repository\ImpedimentRepositoryInterface;
 use Roster\Contracts\Services\SlotFinderInterface;
 use Roster\Contracts\Services\ValidationServiceInterface;
+use Roster\Exceptions\Enums\TimeSlotOverlapType;
 use Roster\Exceptions\OverlappingImpedimentException;
 use Roster\Services\Core\AbstractSchedulableService;
 use Roster\Traits\FilterableTrait;
@@ -137,11 +138,14 @@ class ImpedimentService extends AbstractSchedulableService
             ->parseAndValidateDateTimeRange($this->data);
 
         if ($this->impedimentRepository->hasOverlappingImpediments($availability->id, $start, $end)) {
-            throw new OverlappingImpedimentException([
-                'availability_id' => $availability->id,
-                'start' => $start->format('Y-m-d H:i:s'),
-                'end' => $end->format('Y-m-d H:i:s'),
-            ]);
+            throw new OverlappingImpedimentException(
+                TimeSlotOverlapType::IMPEDIMENT_OVERLAP,
+                [
+                    'availability_id' => $availability->id,
+                    'start' => $start->format('Y-m-d H:i:s'),
+                    'end' => $end->format('Y-m-d H:i:s'),
+                ]
+            );
         }
 
         // Store availability ID in data for creation

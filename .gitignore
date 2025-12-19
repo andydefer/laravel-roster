@@ -33,10 +33,10 @@ diff.txt
 all.txt
 
 # Ignore build artifacts
-art/
-Makefile
-examples/
-prompts/
+#art/
+#Makefile
+#examples/
+#prompts/
 
 # Optional: ignore Rector generated cache
 rector.php.cache

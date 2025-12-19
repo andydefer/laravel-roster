@@ -6,6 +6,13 @@ namespace Roster\Enums;
 
 use Roster\Traits\EnumValues;
 
+/**
+ * Represents the type of activity that can be scheduled.
+ *
+ * This enum defines all possible activity types that can be associated
+ * with schedule items in the roster system. Each activity type corresponds
+ * to a specific kind of professional engagement or event.
+ */
 enum ActivityType: string
 {
     use EnumValues;

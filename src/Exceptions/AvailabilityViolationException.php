@@ -12,6 +12,15 @@ use Throwable;
  */
 class AvailabilityViolationException extends RosterException
 {
+    /**
+     * Create a new AvailabilityViolationException instance.
+     *
+     * @param AvailabilityViolationType $type Type of availability violation
+     * @param array $context Additional context about the violation
+     * @param string $message Custom error message
+     * @param int $code Error code
+     * @param Throwable|null $previous Previous exception
+     */
     public function __construct(
         AvailabilityViolationType $type,
         array $context = [],
