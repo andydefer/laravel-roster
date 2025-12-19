@@ -12,6 +12,7 @@ use Roster\Services\Core\ValidationService;
 use Roster\Repositories\AvailabilityRepository;
 use Roster\Repositories\ScheduleRepository;
 use Roster\Repositories\ImpedimentRepository;
+use Roster\Exceptions\Messages\ErrorMessageFactory;
 
 /**
  * Roster package configuration file.
@@ -24,7 +25,28 @@ use Roster\Repositories\ImpedimentRepository;
 return [
     // Core settings
     'timezone' => env('ROSTER_TIMEZONE', env('APP_TIMEZONE', 'UTC')),
-    'validate_future_dates' => env('ROSTER_VALIDATE_FUTURE_DATES', true),
+
+    // Future dates validation - unified setting
+    'validate_future_dates' => [
+        'enabled' => env('ROSTER_VALIDATE_FUTURE_DATES', true),
+
+        // Entity-specific overrides
+        'availability' => [
+            'enabled' => env('ROSTER_VALIDATE_AVAILABILITY_FUTURE_DATES', null), // null = use parent
+            'allow_past' => env('ROSTER_ALLOW_PAST_AVAILABILITIES', false),
+            'field_name' => 'start_date',
+        ],
+        'schedule' => [
+            'enabled' => env('ROSTER_VALIDATE_SCHEDULE_FUTURE_DATES', null), // null = use parent
+            'allow_past' => env('ROSTER_ALLOW_PAST_SCHEDULES', false),
+            'field_name' => 'start_datetime',
+        ],
+        'impediment' => [
+            'enabled' => env('ROSTER_VALIDATE_IMPEDIMENT_FUTURE_DATES', null), // null = use parent
+            'allow_past' => env('ROSTER_ALLOW_PAST_IMPEDIMENTS', false),
+            'field_name' => 'start_datetime',
+        ],
+    ],
 
     // Duration constraints
     'durations' => [
@@ -59,7 +81,6 @@ return [
     // Schedule management settings
     'schedule' => [
         'default_status' => env('ROSTER_SCHEDULE_DEFAULT_STATUS', 'available'),
-        'allow_past_schedules' => env('ROSTER_SCHEDULE_ALLOW_PAST', false),
         'allow_overlap' => env('ROSTER_SCHEDULE_ALLOW_OVERLAP', false),
         'cancellation_lead_time_minutes' => env('ROSTER_SCHEDULE_CANCELLATION_LEAD_TIME', 60),
         'rescheduling_lead_time_minutes' => env('ROSTER_SCHEDULE_RESCHEDULING_LEAD_TIME', 30),
@@ -72,7 +93,6 @@ return [
     'impediment' => [
         'require_reason' => env('ROSTER_IMPEDIMENT_REQUIRE_REASON', false),
         'allow_overlap' => env('ROSTER_IMPEDIMENT_ALLOW_OVERLAP', false),
-        'allow_past_impediments' => env('ROSTER_IMPEDIMENT_ALLOW_PAST', false),
         'max_duration_days' => env('ROSTER_IMPEDIMENT_MAX_DURATION_DAYS', 30),
         'max_future_days' => env('ROSTER_IMPEDIMENT_MAX_FUTURE_DAYS', 365),
     ],

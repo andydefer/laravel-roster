@@ -8,9 +8,12 @@ use Exception;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Cache;
 use Roster\Contracts\Services\SchedulableServiceInterface;
+use Roster\Contracts\Services\ValidationServiceInterface;
 use Roster\Exceptions\MissingSchedulableException;
 use Roster\Exceptions\ValidationException;
+use Roster\Exceptions\Messages\ErrorMessageFactory;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Carbon;
 
@@ -33,6 +36,11 @@ abstract class AbstractSchedulableService implements SchedulableServiceInterface
      * @var array<string, mixed>
      */
     protected array $data = [];
+
+    /**
+     * @var array<string, mixed>
+     */
+    protected array $originalData = [];
 
     /**
      * Scope the service to a specific parent model.
@@ -191,10 +199,8 @@ abstract class AbstractSchedulableService implements SchedulableServiceInterface
      */
     final protected function applyCreateConfigurationRules(array $data): array
     {
-        // Ensure future dates validation is respected
-        if (Config::get('roster.validate_future_dates', true)) {
-            $this->ensureFutureDatesForCreate($data);
-        }
+        // Apply entity-specific default values
+        $data = $this->applyEntitySpecificDefaults($data);
 
         return $data;
     }
@@ -204,7 +210,22 @@ abstract class AbstractSchedulableService implements SchedulableServiceInterface
      */
     final protected function applyUpdateConfigurationRules(array $data): array
     {
-        // Add update-specific rules here
+        // Add update-specific rules here if needed
+        return $data;
+    }
+
+    /**
+     * Apply entity-specific default values
+     */
+    final protected function applyEntitySpecificDefaults(array $data): array
+    {
+        $entityType = $this->getEntityType();
+
+        // Set default status for schedules if not provided
+        if ($entityType === 'schedule' && !isset($data['status'])) {
+            $data['status'] = Config::get('roster.schedule.default_status', 'available');
+        }
+
         return $data;
     }
 
@@ -216,24 +237,52 @@ abstract class AbstractSchedulableService implements SchedulableServiceInterface
      */
     final protected function validateConfigurationRules(string $operation): void
     {
-        // 1. Validate future dates if enabled
-        if (Config::get('roster.validate_future_dates', true)) {
-            $this->validateFutureDates($operation);
+        // 1. Get entity configuration
+        $entityType = $this->getEntityType();
+        $entityConfig = Config::get("roster.validate_future_dates.{$entityType}", []);
+        $globalEnabled = Config::get('roster.validate_future_dates.enabled', true);
+
+        // Check if validation is enabled for this entity
+        $entityEnabled = $entityConfig['enabled'] ?? $globalEnabled;
+
+        // 2. Validate future dates if enabled
+        if ($entityEnabled) {
+            $this->validateFutureDates($operation, $entityType, $entityConfig);
         }
 
-        // 2. Validate durations based on service type
+        // 3. Validate durations based on service type
         $this->validateDurations($operation);
 
-        // 3. Validate other global configuration rules
+        // 4. Validate other global configuration rules
         $this->validateGlobalConfigurationRules($operation);
     }
 
     /**
      * Validate future dates based on configuration
      */
-    final protected function validateFutureDates(string $operation): void
+    final protected function validateFutureDates(string $operation, string $entityType, array $entityConfig): void
     {
-        $this->validateFutureDatesHook($operation);
+        $fieldName = $entityConfig['field_name'] ?? $this->getDefaultDateField($entityType);
+
+        if (!isset($this->data[$fieldName])) {
+            return;
+        }
+
+        try {
+            $date = Carbon::parse($this->data[$fieldName]);
+
+            if ($date->isPast()) {
+                $allowPast = $entityConfig['allow_past'] ?? false;
+
+                if (!$allowPast) {
+                    throw ValidationException::withMessage(
+                        ErrorMessageFactory::pastDate($entityType, $fieldName)
+                    );
+                }
+            }
+        } catch (Exception $e) {
+            // Not a valid date, validation will be handled elsewhere
+        }
     }
 
     /**
@@ -263,45 +312,142 @@ abstract class AbstractSchedulableService implements SchedulableServiceInterface
     }
 
     /**
-     * Ensure future dates for create operation
+     * Get entity type from class name
      */
-    final protected function ensureFutureDatesForCreate(array $data): void
+    final protected function getEntityType(): string
     {
-        // Check for date fields and ensure they're not in the past
-        foreach ($data as $key => $value) {
-            if (str_contains($key, 'date') || str_contains($key, 'datetime')) {
-                try {
-                    $date = Carbon::parse($value);
-                    if ($date->isPast() && !$this->allowPastDatesForField($key)) {
-                        throw ValidationException::withMessage(
-                            sprintf("Field '%s' cannot be in the past", $key)
-                        );
-                    }
-                } catch (Exception $e) {
-                    // Not a date field, continue
-                    continue;
-                }
+        $className = class_basename(static::class);
+        return strtolower(str_replace('Service', '', $className));
+    }
+
+    /**
+     * Get entity display name
+     */
+    final protected function getEntityDisplayName(): string
+    {
+        return ucfirst($this->getEntityType());
+    }
+
+    /**
+     * Get default date field name based on entity type
+     */
+    protected function getDefaultDateField(string $entityType): string
+    {
+        return match ($entityType) {
+            'availability' => 'start_date',
+            default => 'start_datetime'
+        };
+    }
+
+    /**
+     * Get date/time fields for the entity
+     */
+    protected function getDateTimeFields(string $entityType): array
+    {
+        return match ($entityType) {
+            'availability' => ['start_date', 'end_date', 'start_time', 'end_time'],
+            'schedule', 'impediment' => ['start_datetime', 'end_datetime'],
+            default => []
+        };
+    }
+
+    /**
+     * Validate timezone for the entity
+     */
+    protected function validateTimezoneHook(string $timezone): void
+    {
+        $entityType = $this->getEntityType();
+        $dateFields = $this->getDateTimeFields($entityType);
+
+        // Check if any date/time field is being set
+        $hasDateFields = false;
+        foreach ($dateFields as $field) {
+            if (isset($this->data[$field])) {
+                $hasDateFields = true;
+                break;
+            }
+        }
+
+        if ($hasDateFields) {
+            $validationService = $this->getValidationService();
+            if ($validationService && !$validationService->validateTimezone($timezone)) {
+                throw ValidationException::withMessage(
+                    'Invalid timezone: ' . $timezone
+                );
             }
         }
     }
 
     /**
-     * Check if a field is allowed to have past dates
+     * Clear entity cache
      */
-    final protected function allowPastDatesForField(string $field): bool
+    protected function clearEntityCache(int $entityId): void
     {
-        // Some fields might be allowed to have past dates (e.g., historical data)
-        $allowedPastDateFields = Config::get('roster.allowed_past_date_fields', []);
+        if (!Config::get('roster.cache.enabled', true)) {
+            return;
+        }
 
-        return in_array($field, $allowedPastDateFields, true);
+        $prefix = Config::get('roster.cache.prefix', 'roster_');
+        $entityType = $this->getEntityType();
+        $cacheKey = $prefix . $entityType . '_' . $entityId;
+
+        Cache::forget($cacheKey);
+
+        // Clear tags if enabled
+        if (Config::get('roster.cache.use_tags', true)) {
+            Cache::tags([$entityType . '_' . $entityId])->flush();
+        }
     }
 
-    // ========== HOOK METHODS (to be implemented by children) ==========
+    /**
+     * Throw not found exception
+     */
+    protected function throwNotFoundException(): void
+    {
+        throw ValidationException::withMessage(
+            ErrorMessageFactory::notFound($this->getEntityType())
+        );
+    }
 
     /**
-     * Validate future dates hook
+     * Throw overlap exception
      */
-    abstract protected function validateFutureDatesHook(string $operation): void;
+    protected function throwOverlapException(): void
+    {
+        throw ValidationException::withMessage(
+            ErrorMessageFactory::overlap($this->getEntityType())
+        );
+    }
+
+    /**
+     * Throw minimum duration exception
+     */
+    protected function throwMinimumDurationException(int $minutes): void
+    {
+        throw ValidationException::withMessage(
+            ErrorMessageFactory::minimumDuration($this->getEntityType(), $minutes)
+        );
+    }
+
+    /**
+     * Validate common required fields
+     */
+    protected function validateRequiredFields(array $requiredFields = []): void
+    {
+        $entityType = $this->getEntityType();
+        $configFields = Config::get("roster.validation.required_fields.{$entityType}", []);
+        $allRequired = array_unique(array_merge($configFields, $requiredFields));
+
+        foreach ($allRequired as $field) {
+            if (!isset($this->data[$field]) || empty($this->data[$field])) {
+                throw ValidationException::withMessage(
+                    sprintf("Field '%s' is required", $field)
+                );
+            }
+        }
+    }
+
+    // ========== ABSTRACT METHODS ==========
 
     /**
      * Validate duration hook
@@ -323,9 +469,9 @@ abstract class AbstractSchedulableService implements SchedulableServiceInterface
     abstract protected function validateMaxDaysHook(string $operation, int $maxDays): void;
 
     /**
-     * Validate timezone hook
+     * Get validation service instance
      */
-    abstract protected function validateTimezoneHook(string $timezone): void;
+    abstract protected function getValidationService(): ValidationServiceInterface;
 
     /**
      * Validate before create hook
@@ -345,7 +491,14 @@ abstract class AbstractSchedulableService implements SchedulableServiceInterface
     /**
      * After create hook
      */
-    abstract protected function afterCreate(mixed $result): void;
+    protected function afterCreate(mixed $result): void
+    {
+        // Default implementation: clear cache
+        if (method_exists($result, 'getId') || property_exists($result, 'id')) {
+            $id = $result->id ?? $result->getId();
+            $this->clearEntityCache((int)$id);
+        }
+    }
 
     /**
      * Validate before update hook
@@ -365,7 +518,13 @@ abstract class AbstractSchedulableService implements SchedulableServiceInterface
     /**
      * After update hook
      */
-    abstract protected function afterUpdate(int $id, bool $result): void;
+    protected function afterUpdate(int $id, bool $result): void
+    {
+        // Default implementation: clear cache if update was successful
+        if ($result) {
+            $this->clearEntityCache($id);
+        }
+    }
 
     /**
      * Apply filters to the query.
