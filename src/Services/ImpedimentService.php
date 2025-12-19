@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Roster\Services;
 
-use Roster\Services\Core\SlotFinderService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Carbon;
@@ -15,6 +14,7 @@ use Roster\Models\Availability;
 use Roster\Models\Impediment;
 use Roster\Contracts\Repository\AvailabilityRepositoryInterface;
 use Roster\Contracts\Repository\ImpedimentRepositoryInterface;
+use Roster\Contracts\Services\SlotFinderInterface;
 use Roster\Contracts\Services\ValidationServiceInterface;
 use Roster\Exceptions\OverlappingImpedimentException;
 use Roster\Services\Core\ValidationService;
@@ -239,7 +239,7 @@ class ImpedimentService extends AbstractSchedulableService
 
         $impediments = $this->impedimentRepository->findForTimeSlot($availability->id, $start, $end);
 
-        $slotFinderService = app(SlotFinderService::class);
+        $slotFinderService = app(SlotFinderInterface::class);
         return $slotFinderService->getAvailableSlotsFromImpediments($start, $end, $impediments);
     }
 

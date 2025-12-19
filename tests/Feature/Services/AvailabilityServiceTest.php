@@ -4,14 +4,11 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Services;
 
-use Roster\Repositories\AvailabilityRepository;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Carbon;
 use Roster\Exceptions\ValidationException;
 use Roster\Models\Availability;
 use Roster\Services\AvailabilityService;
-use Roster\Services\AvailabilityValidator;
-use Roster\Services\Core\ValidationService;
 use Tests\TestCase;
 
 final class AvailabilityServiceTest extends TestCase
@@ -30,10 +27,8 @@ final class AvailabilityServiceTest extends TestCase
 
         $this->model = $this->model::create();
 
-        $validationService = new ValidationService();
-        $availabilityValidator = new AvailabilityValidator();
-
-        $this->availabilityService = new AvailabilityService($availabilityValidator, $validationService, app(AvailabilityRepository::class));
+        // Utiliser le conteneur Laravel pour obtenir le service
+        $this->availabilityService = app(AvailabilityService::class);
         $this->availabilityService->for($this->model);
     }
 
