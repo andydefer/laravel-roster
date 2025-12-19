@@ -7,7 +7,7 @@ namespace Roster\Services;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
-use Roster\Contracts\SchedulableServiceContract;
+use Roster\Contracts\Services\SchedulableServiceInterface;
 use Roster\Exceptions\MissingSchedulableException;
 
 /**
@@ -16,7 +16,7 @@ use Roster\Exceptions\MissingSchedulableException;
  * Defines the execution workflow and enforces a consistent
  * usage contract for all schedulable services.
  */
-abstract class AbstractSchedulableService implements SchedulableServiceContract
+abstract class AbstractSchedulableService implements SchedulableServiceInterface
 {
     protected ?Model $schedulable = null;
 

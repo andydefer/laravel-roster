@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Roster\Contracts;
+namespace Roster\Contracts\Services;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
@@ -13,7 +13,7 @@ use Illuminate\Support\Collection;
  * Defines the interface for services that work with schedulable entities,
  * providing methods for scoping, filtering, and retrieving data.
  */
-interface SchedulableServiceContract
+interface SchedulableServiceInterface
 {
     /**
      * Scope the service to a specific schedulable model.

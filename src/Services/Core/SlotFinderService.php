@@ -27,7 +27,6 @@ class SlotFinderService
      * @return Collection<int, array{start: Carbon, end: Carbon}>
      */
     public function getAvailableSlotsFromImpediments(
-        Availability $availability,
         Carbon $start,
         Carbon $end,
         Collection $impediments

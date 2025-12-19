@@ -240,7 +240,7 @@ class ImpedimentService extends AbstractSchedulableService
         $impediments = $this->impedimentRepository->findForTimeSlot($availability->id, $start, $end);
 
         $slotFinderService = app(SlotFinderService::class);
-        return $slotFinderService->getAvailableSlotsFromImpediments($availability, $start, $end, $impediments);
+        return $slotFinderService->getAvailableSlotsFromImpediments($start, $end, $impediments);
     }
 
     /**
