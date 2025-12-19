@@ -69,7 +69,7 @@ class AvailabilityRepository extends AbstractRepository implements AvailabilityR
         return $builder->get();
     }
 
-    public function findForTimeSlotWithOverlaps(
+    public function findForTimeSlotWithPartialOverlaps(
         Model $model,
         Carbon $start,
         Carbon $end,
@@ -401,7 +401,7 @@ class AvailabilityRepository extends AbstractRepository implements AvailabilityR
     public function applyFilters(
         Model $model,
         array $filters = []
-    ) {
+    ): Builder {
         $builder = $this->buildBaseQuery($model);
 
         if (isset($filters['type'])) {
@@ -467,7 +467,7 @@ class AvailabilityRepository extends AbstractRepository implements AvailabilityR
      */
 
 
-    public function availabilityAppliesToDate(Availability $availability, Carbon $date): bool
+    public function isAvailabilityValidForDate(Availability $availability, Carbon $date): bool
     {
         $dayOfWeek = strtolower($date->englishDayOfWeek);
         if (!in_array($dayOfWeek, $availability->days)) {
@@ -490,7 +490,7 @@ class AvailabilityRepository extends AbstractRepository implements AvailabilityR
      * @param string|null $type Optional availability type filter
      * @return Collection<Availability> Availabilities with conflicts loaded
      */
-    public function loadAvailabilitiesWithConflicts(
+    public function getAvailabilitiesWithConflictInfo(
         object $schedulable,
         Carbon $start,
         Carbon $end,
@@ -510,7 +510,7 @@ class AvailabilityRepository extends AbstractRepository implements AvailabilityR
     public function filterAvailabilitiesForDate(Collection $availabilities, Carbon $date): Collection
     {
         return $availabilities->filter(
-            fn(Availability $availability): bool => $this->availabilityAppliesToDate($availability, $date)
+            fn(Availability $availability): bool => $this->isAvailabilityValidForDate($availability, $date)
         );
     }
 }

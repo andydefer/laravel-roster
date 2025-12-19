@@ -137,7 +137,7 @@ class ImpedimentService extends AbstractSchedulableService
         ['start' => $start, 'end' => $end] = $this->validationService
             ->parseAndValidateDateTimeRange($this->data);
 
-        if ($this->impedimentRepository->hasOverlappingImpediment($availability->id, $start, $end)) {
+        if ($this->impedimentRepository->hasOverlappingImpediments($availability->id, $start, $end)) {
             throw new OverlappingImpedimentException([
                 'availability_id' => $availability->id,
                 'start' => $start->format('Y-m-d H:i:s'),
@@ -224,7 +224,7 @@ class ImpedimentService extends AbstractSchedulableService
                         'end_datetime' => $this->currentImpediment->end_datetime,
                     ], $this->data));
 
-                if ($this->impedimentRepository->hasOverlappingImpediment($availabilityId, $start, $end, $id)) {
+                if ($this->impedimentRepository->hasOverlappingImpediments($availabilityId, $start, $end, $id)) {
                     throw ValidationException::withMessage('This time slot overlaps with another impediment');
                 }
 
@@ -241,7 +241,7 @@ class ImpedimentService extends AbstractSchedulableService
                 ['start' => $start, 'end' => $end] = $this->validationService
                     ->parseAndValidateDateTimeRange($updateData);
 
-                if ($this->impedimentRepository->hasOverlappingImpediment($availabilityId, $start, $end, $id)) {
+                if ($this->impedimentRepository->hasOverlappingImpediments($availabilityId, $start, $end, $id)) {
                     throw ValidationException::withMessage('This time slot overlaps with another impediment');
                 }
             }
@@ -333,7 +333,7 @@ class ImpedimentService extends AbstractSchedulableService
             return false;
         }
 
-        return $this->impedimentRepository->hasOverlappingImpediment($availability->id, $start, $end);
+        return $this->impedimentRepository->hasOverlappingImpediments($availability->id, $start, $end);
     }
 
     /**

@@ -2,621 +2,842 @@ Tu es un expert en revue de code et en conventions de commits (Conventional Comm
 
 À partir du diff Git ci-dessous, fais les choses suivantes :
 
-1. Propose un **nom de commit clair et concis**, en respectant les **Conventional Commits**
+1. Propose un nom de commit clair et concis en anglais
+   avec le format <type>(<scope>): <description>,
+   en respectant les Conventional Commits
    (ex: feat:, fix:, refactor:, test:, chore:, docs:).
 
-2. Rédige un **résumé du travail effectué** en quelques phrases, orienté métier et technique.
+2. Rédige un résumé du travail effectué en quelques phrases,
+   orienté métier et technique.
 
-3. Donne une **liste d'exemples concrets de changements**, en t'appuyant sur le diff :
+3. Donne une liste d'exemples concrets de changements, en t'appuyant sur le diff :
    - méthodes ajoutées, modifiées ou supprimées
    - responsabilités déplacées ou clarifiées
    - améliorations de validation, de logique ou de structure
    - impacts fonctionnels éventuels
 
 Contraintes :
-- Ne décris que ce qui est réellement visible dans le diff
-- Sois précis, factuel et structuré
-- Évite les suppositions
-- Utilise un ton professionnel
+   - Ne décris que ce qui est réellement visible dans le diff
+   - Sois précis, factuel et structuré
+   - Évite les suppositions
+   - Utilise un ton professionnel
 
 Voici le diff :
 
-diff --git a/.gitignore b/.gitignore
-index ffd3272..e2a17e1 100644
---- a/.gitignore
-+++ b/.gitignore
-@@ -1,2 +1,3 @@
- /vendor/
--all.php
-\ No newline at end of file
-+all.php
-+diff.txt
-\ No newline at end of file
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index bef6dfa..18754ad 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -9,7 +9,7 @@ et ce projet suit les principes de [Semantic Versioning](https://semver.org/spec
+ ### 🛡️ Prévention des Chevauchements d'Impediments
+ 
+ #### 🔒 Validation des Chevauchements
+-- **Nouvelle méthode `hasOverlappingImpediment()`** dans `ImpedimentService`
++- **Nouvelle méthode `hasOverlappingImpediments()`** dans `ImpedimentService`
+ - **Prévention à la création** : Empêche les impediments qui se chevauchent
+ - **Validation à la mise à jour** : Vérifie les chevauchements lors des modifications
+ - **Exclusion intelligente** : Permet d'exclure l'impediment en cours de modification
 diff --git a/Makefile b/Makefile
-index b03b5d5..4cd91cc 100644
+index 4cd91cc..546b2b7 100644
 --- a/Makefile
 +++ b/Makefile
-@@ -50,9 +50,8 @@ git-tag:
+@@ -49,29 +49,32 @@ git-tag:
+ # Génère un diff git dans un fichier diff.txt
  # avec un prompt pour analyse IA (commit + résumé)
  # ---------------------------------------------------
- # Génère un diff git dans un fichier diff.txt avec un prompt pour analyse IA (commit + résumé)
--
+-# Génère un diff git dans un fichier diff.txt avec un prompt pour analyse IA (commit + résumé)
++# Génère un diff git propre dans diff.txt avec prompt pour IA
  git-diff:
--	@echo "📝 Generating git diff into diff.txt..."
-+	@echo "📝 Generating clean git diff into diff.txt..."
+ 	@echo "📝 Generating clean git diff into diff.txt..."
  	@echo "Tu es un expert en revue de code et en conventions de commits (Conventional Commits)." > diff.txt
  	@echo "" >> diff.txt
  	@echo "À partir du diff Git ci-dessous, fais les choses suivantes :" >> diff.txt
-@@ -76,8 +75,8 @@ git-diff:
+ 	@echo "" >> diff.txt
+-	@echo "1. Propose un **nom de commit clair et concis**, en respectant les **Conventional Commits**" >> diff.txt
++	@echo "1. Propose un nom de commit clair et concis en anglais" >> diff.txt
++	@echo "   avec le format <type>(<scope>): <description>," >> diff.txt
++	@echo "   en respectant les Conventional Commits" >> diff.txt
+ 	@echo "   (ex: feat:, fix:, refactor:, test:, chore:, docs:)." >> diff.txt
+ 	@echo "" >> diff.txt
+-	@echo "2. Rédige un **résumé du travail effectué** en quelques phrases, orienté métier et technique." >> diff.txt
++	@echo "2. Rédige un résumé du travail effectué en quelques phrases," >> diff.txt
++	@echo "   orienté métier et technique." >> diff.txt
+ 	@echo "" >> diff.txt
+-	@echo "3. Donne une **liste d'exemples concrets de changements**, en t'appuyant sur le diff :" >> diff.txt
++	@echo "3. Donne une liste d'exemples concrets de changements, en t'appuyant sur le diff :" >> diff.txt
+ 	@echo "   - méthodes ajoutées, modifiées ou supprimées" >> diff.txt
+ 	@echo "   - responsabilités déplacées ou clarifiées" >> diff.txt
+ 	@echo "   - améliorations de validation, de logique ou de structure" >> diff.txt
+ 	@echo "   - impacts fonctionnels éventuels" >> diff.txt
+ 	@echo "" >> diff.txt
+ 	@echo "Contraintes :" >> diff.txt
+-	@echo "- Ne décris que ce qui est réellement visible dans le diff" >> diff.txt
+-	@echo "- Sois précis, factuel et structuré" >> diff.txt
+-	@echo "- Évite les suppositions" >> diff.txt
+-	@echo "- Utilise un ton professionnel" >> diff.txt
++	@echo "   - Ne décris que ce qui est réellement visible dans le diff" >> diff.txt
++	@echo "   - Sois précis, factuel et structuré" >> diff.txt
++	@echo "   - Évite les suppositions" >> diff.txt
++	@echo "   - Utilise un ton professionnel" >> diff.txt
  	@echo "" >> diff.txt
  	@echo "Voici le diff :" >> diff.txt
  	@echo "" >> diff.txt
--	@git diff HEAD >> diff.txt
--	@echo "✅ diff.txt generated successfully"
-+	@git diff HEAD -- . ':!*.phpunit.result.cache' ':!diff.txt' >> diff.txt
-+	@echo "✅ Clean diff.txt generated successfully (excluded test cache files)"
- 
- # ---------------------------------------------------
- # Republier le dernier tag
-diff --git a/config/roster.php b/config/roster.php
-index a66237d..77fea91 100644
---- a/config/roster.php
-+++ b/config/roster.php
-@@ -2,58 +2,41 @@
- 
- declare(strict_types=1);
+diff --git a/src/Contracts/Repository/AvailabilityRepositoryInterface.php b/src/Contracts/Repository/AvailabilityRepositoryInterface.php
+index 04adbf1..4312ae3 100644
+--- a/src/Contracts/Repository/AvailabilityRepositoryInterface.php
++++ b/src/Contracts/Repository/AvailabilityRepositoryInterface.php
+@@ -10,33 +10,58 @@ use Illuminate\Support\Carbon;
+ use Illuminate\Support\Collection;
+ use Roster\Models\Availability;
  
 +/**
-+ * Roster package configuration file.
++ * Repository contract for managing availability records.
 + *
-+ * This configuration file defines all customizable settings for the Roster package.
-+ * Environment variables can be used to override any default values.
-+ *
-+ * @package Roster\Config
++ * Provides methods for creating, updating, deleting, and querying availability data
++ * for schedulable resources (e.g., employees, rooms, equipment).
 + */
- return [
--    /*
--    |--------------------------------------------------------------------------
--    | Core Configuration
--    |--------------------------------------------------------------------------
--    |
--    | Configuration de base du package Roster.
--    |
--    */
--
-+    // Core settings
-     'timezone' => env('ROSTER_TIMEZONE', env('APP_TIMEZONE', 'UTC')),
--
-     'validate_future_dates' => env('ROSTER_VALIDATE_FUTURE_DATES', true),
- 
--    /*
--    |--------------------------------------------------------------------------
--    | Durations Configuration
--    |--------------------------------------------------------------------------
--    |
--    | Configuration des durées pour les différentes entités.
--    |
--    */
--
-+    // Duration constraints
-     'durations' => [
--        // Durées minimales
-+        // Minimum durations in minutes
-         'minimum_impediment_minutes' => env('ROSTER_MIN_IMPEDIMENT_MINUTES', 5),
-         'minimum_schedule_minutes' => env('ROSTER_MIN_SCHEDULE_MINUTES', 15),
-         'minimum_availability_minutes' => env('ROSTER_MIN_AVAILABILITY_MINUTES', 15),
- 
--        // Durées par défaut
-+        // Default slot settings
-         'default_slot_duration_minutes' => env('ROSTER_DEFAULT_SLOT_DURATION', 60),
-         'default_slot_interval_minutes' => env('ROSTER_DEFAULT_SLOT_INTERVAL', 30),
- 
--        // Limites temporelles
-+        // Time boundaries
-         'max_days_to_check' => env('ROSTER_MAX_DAYS_TO_CHECK', 365),
-         'max_availability_period_days' => env('ROSTER_MAX_AVAILABILITY_PERIOD_DAYS', 365),
-         'max_impediment_duration_days' => env('ROSTER_MAX_IMPEDIMENT_DURATION_DAYS', 30),
- 
--        // Avance maximale pour la planification
-+        // Scheduling constraints
-         'max_schedule_advance_days' => env('ROSTER_MAX_SCHEDULE_ADVANCE_DAYS', 90),
-         'min_schedule_advance_minutes' => env('ROSTER_MIN_SCHEDULE_ADVANCE_MINUTES', 30),
-     ],
- 
--    /*
--    |--------------------------------------------------------------------------
--    | Availability Configuration
--    |--------------------------------------------------------------------------
--    |
--    | Configuration spécifique aux disponibilités.
--    |
--    */
--
-+    // Availability management settings
-     'availability' => [
-         'merge_adjacent' => env('ROSTER_AVAILABILITY_MERGE_ADJACENT', true),
-         'allow_overlap' => env('ROSTER_AVAILABILITY_ALLOW_OVERLAP', false),
-@@ -62,15 +45,7 @@ return [
-         'maximum_concurrent_availabilities' => env('ROSTER_AVAILABILITY_MAX_CONCURRENT', 10),
-     ],
- 
--    /*
--    |--------------------------------------------------------------------------
--    | Schedule Configuration
--    |--------------------------------------------------------------------------
--    |
--    | Configuration spécifique aux plannings.
--    |
--    */
--
-+    // Schedule management settings
-     'schedule' => [
-         'default_status' => env('ROSTER_SCHEDULE_DEFAULT_STATUS', 'available'),
-         'allow_past_schedules' => env('ROSTER_SCHEDULE_ALLOW_PAST', false),
-@@ -78,24 +53,11 @@ return [
-         'cancellation_lead_time_minutes' => env('ROSTER_SCHEDULE_CANCELLATION_LEAD_TIME', 60),
-         'rescheduling_lead_time_minutes' => env('ROSTER_SCHEDULE_RESCHEDULING_LEAD_TIME', 30),
- 
--        // Status autorisés
--        'allowed_statuses' => [
--            'available',
--            'booked',
--            'cancelled',
--            'blocked',
--        ],
-+        // Allowed schedule statuses
-+        'allowed_statuses' => ['available', 'booked', 'cancelled', 'blocked'],
-     ],
- 
--    /*
--    |--------------------------------------------------------------------------
--    | Impediment Configuration
--    |--------------------------------------------------------------------------
--    |
--    | Configuration spécifique aux impediments (blocages).
--    |
--    */
--
-+    // Impediment management settings
-     'impediment' => [
-         'require_reason' => env('ROSTER_IMPEDIMENT_REQUIRE_REASON', false),
-         'allow_overlap' => env('ROSTER_IMPEDIMENT_ALLOW_OVERLAP', false),
-@@ -104,15 +66,7 @@ return [
-         'max_future_days' => env('ROSTER_IMPEDIMENT_MAX_FUTURE_DAYS', 365),
-     ],
- 
--    /*
--    |--------------------------------------------------------------------------
--    | Slot Finder Configuration
--    |--------------------------------------------------------------------------
--    |
--    | Configuration pour la recherche de créneaux disponibles.
--    |
--    */
--
-+    // Slot finder settings
-     'slot_finder' => [
-         'search_step_minutes' => env('ROSTER_SLOT_SEARCH_STEP_MINUTES', 15),
-         'max_search_days' => env('ROSTER_SLOT_MAX_SEARCH_DAYS', 365),
-@@ -120,22 +74,14 @@ return [
-         'consider_schedules' => env('ROSTER_SLOT_CONSIDER_SCHEDULES', true),
-         'buffer_minutes' => env('ROSTER_SLOT_BUFFER_MINUTES', 0),
- 
--        // Fuseaux horaires pour la recherche
-+        // Timezone and working hours configuration
-         'timezone_aware' => env('ROSTER_SLOT_TIMEZONE_AWARE', true),
-         'prefer_working_hours' => env('ROSTER_SLOT_PREFER_WORKING_HOURS', true),
-         'working_hours_start' => env('ROSTER_WORKING_HOURS_START', '09:00'),
-         'working_hours_end' => env('ROSTER_WORKING_HOURS_END', '17:00'),
-     ],
- 
--    /*
--    |--------------------------------------------------------------------------
--    | Database Configuration
--    |--------------------------------------------------------------------------
--    |
--    | Configuration spécifique à la base de données.
--    |
--    */
--
-+    // Database configuration
-     'database' => [
-         'use_json_constraints' => env('ROSTER_DB_USE_JSON_CONSTRAINTS', env('DB_CONNECTION') === 'pgsql'),
-         'check_constraints' => env('ROSTER_DB_CHECK_CONSTRAINTS', env('DB_CONNECTION') === 'mysql'),
-@@ -143,29 +89,21 @@ return [
-         'enable_indexes' => env('ROSTER_DB_ENABLE_INDEXES', true),
-         'enable_unique_constraints' => env('ROSTER_DB_ENABLE_UNIQUE_CONSTRAINTS', true),
- 
--        // Configuration des migrations
-+        // Migration settings
-         'migrations' => [
-             'publish' => env('ROSTER_PUBLISH_MIGRATIONS', true),
-             'auto_run' => env('ROSTER_AUTO_RUN_MIGRATIONS', false),
-         ],
-     ],
- 
--    /*
--    |--------------------------------------------------------------------------
--    | Cache Configuration
--    |--------------------------------------------------------------------------
--    |
--    | Configuration du cache pour l'optimisation des performances.
--    |
--    */
--
-+    // Cache configuration
-     'cache' => [
-         'enabled' => env('ROSTER_CACHE_ENABLED', true),
-         'driver' => env('ROSTER_CACHE_DRIVER', env('CACHE_DRIVER', 'file')),
--        'ttl' => env('ROSTER_CACHE_TTL', 3600), // secondes
-+        'ttl' => env('ROSTER_CACHE_TTL', 3600),
-         'prefix' => env('ROSTER_CACHE_PREFIX', 'roster_'),
- 
--        // Configuration spécifique par entité
-+        // Entity-specific cache settings
-         'availability' => [
-             'enabled' => env('ROSTER_CACHE_AVAILABILITY_ENABLED', true),
-             'ttl' => env('ROSTER_CACHE_AVAILABILITY_TTL', 1800),
-@@ -179,53 +117,36 @@ return [
-             'ttl' => env('ROSTER_CACHE_IMPEDIMENT_TTL', 1800),
-         ],
- 
--        // Tags de cache
-         'use_tags' => env('ROSTER_CACHE_USE_TAGS', true),
-     ],
- 
--    /*
--    |--------------------------------------------------------------------------
--    | Validation Configuration
--    |--------------------------------------------------------------------------
--    |
--    | Configuration pour les validations.
--    |
--    */
--
-+    // Validation configuration
-     'validation' => [
-         'strict_mode' => env('ROSTER_VALIDATION_STRICT_MODE', true),
-         'throw_exceptions' => env('ROSTER_VALIDATION_THROW_EXCEPTIONS', true),
-         'log_validation_errors' => env('ROSTER_VALIDATION_LOG_ERRORS', false),
- 
--        // Champs obligatoires
-+        // Required fields for each entity
-         'required_fields' => [
-             'availability' => ['type', 'start_time', 'end_time', 'days'],
-             'schedule' => ['title', 'start_datetime', 'end_datetime'],
-             'impediment' => ['start_datetime', 'end_datetime'],
-         ],
- 
--        // Champs interdits pour les mises à jour
-+        // Fields that cannot be updated
-         'forbidden_update_fields' => ['id', 'created_at', 'updated_at'],
- 
--        // Champs autorisés à avoir des dates passées
-+        // Fields that can contain past dates
-         'allowed_past_date_fields' => ['end_date', 'end_datetime'],
-     ],
- 
--    /*
--    |--------------------------------------------------------------------------
--    | Logging Configuration
--    |--------------------------------------------------------------------------
--    |
--    | Configuration pour la journalisation.
--    |
--    */
--
-+    // Logging configuration
-     'logging' => [
-         'enabled' => env('ROSTER_LOGGING_ENABLED', false),
-         'level' => env('ROSTER_LOGGING_LEVEL', 'info'),
-         'channel' => env('ROSTER_LOGGING_CHANNEL', 'stack'),
- 
--        // Événements à logger
-+        // Events to log
-         'log_events' => [
-             'create' => env('ROSTER_LOG_CREATE_EVENTS', true),
-             'update' => env('ROSTER_LOG_UPDATE_EVENTS', true),
-@@ -234,45 +155,24 @@ return [
-             'validation' => env('ROSTER_LOG_VALIDATION_EVENTS', false),
-         ],
- 
--        // Informations sensibles à masquer
--        'mask_fields' => [
--            'password',
--            'token',
--            'secret',
--            'api_key',
--        ],
-+        // Sensitive fields to mask in logs
-+        'mask_fields' => ['password', 'token', 'secret', 'api_key'],
-     ],
- 
--    /*
--    |--------------------------------------------------------------------------
--    | Performance Configuration
--    |--------------------------------------------------------------------------
--    |
--    | Configuration pour l'optimisation des performances.
--    |
--    */
--
-+    // Performance optimization settings
-     'performance' => [
-         'eager_loading' => env('ROSTER_EAGER_LOADING', true),
-         'max_query_results' => env('ROSTER_MAX_QUERY_RESULTS', 1000),
--        'query_timeout' => env('ROSTER_QUERY_TIMEOUT', 30), // secondes
-+        'query_timeout' => env('ROSTER_QUERY_TIMEOUT', 30),
-         'enable_query_log' => env('ROSTER_ENABLE_QUERY_LOG', false),
- 
--        // Optimisation des requêtes
-+        // Query optimization settings
-         'optimize_queries' => env('ROSTER_OPTIMIZE_QUERIES', true),
-         'use_subqueries' => env('ROSTER_USE_SUBQUERIES', true),
-         'cache_query_results' => env('ROSTER_CACHE_QUERY_RESULTS', true),
-     ],
- 
--    /*
--    |--------------------------------------------------------------------------
--    | Security Configuration
--    |--------------------------------------------------------------------------
--    |
--    | Configuration de sécurité.
--    |
--    */
--
-+    // Security settings
-     'security' => [
-         'rate_limit' => [
-             'enabled' => env('ROSTER_RATE_LIMIT_ENABLED', false),
-@@ -283,7 +183,7 @@ return [
-         'prevent_sql_injection' => env('ROSTER_PREVENT_SQL_INJECTION', true),
-         'validate_input_types' => env('ROSTER_VALIDATE_INPUT_TYPES', true),
- 
--        // Protection contre les mises à jour fréquentes
-+        // Update protection to prevent abuse
-         'update_protection' => [
-             'min_minutes_between_updates' => env('ROSTER_MIN_MINUTES_BETWEEN_UPDATES', 1),
-             'max_updates_per_hour' => env('ROSTER_MAX_UPDATES_PER_HOUR', 60),
-@@ -291,15 +191,7 @@ return [
-         ],
-     ],
- 
--    /*
--    |--------------------------------------------------------------------------
--    | Testing Configuration
--    |--------------------------------------------------------------------------
--    |
--    | Configuration pour les tests.
--    |
--    */
--
-+    // Testing configuration
-     'testing' => [
-         'use_fake_dates' => env('ROSTER_TESTING_USE_FAKE_DATES', false),
-         'default_test_date' => env('ROSTER_TESTING_DEFAULT_DATE', '2038-06-01'),
-@@ -308,15 +200,7 @@ return [
-         'skip_validation_in_tests' => env('ROSTER_TESTING_SKIP_VALIDATION', false),
-     ],
- 
--    /*
--    |--------------------------------------------------------------------------
--    | Feature Flags
--    |--------------------------------------------------------------------------
--    |
--    | Activation/désactivation des fonctionnalités.
--    |
--    */
--
-+    // Feature flags
-     'features' => [
-         'enable_recurring_schedules' => env('ROSTER_ENABLE_RECURRING_SCHEDULES', false),
-         'enable_bulk_operations' => env('ROSTER_ENABLE_BULK_OPERATIONS', true),
-@@ -327,17 +211,9 @@ return [
-         'enable_analytics' => env('ROSTER_ENABLE_ANALYTICS', false),
-     ],
- 
--    /*
--    |--------------------------------------------------------------------------
--    | Customization
--    |--------------------------------------------------------------------------
--    |
--    | Personnalisation du comportement.
--    |
--    */
--
-+    // Customization options
-     'custom' => [
--        // Classes personnalisées
-+        // Custom class bindings
-         'models' => [
-             'availability' => \Roster\Models\Availability::class,
-             'schedule' => \Roster\Models\Schedule::class,
-@@ -357,7 +233,7 @@ return [
-             'impediment' => \Roster\Repositories\ImpedimentRepository::class,
-         ],
- 
--        // Personnalisation des messages d'erreur
-+        // Custom error messages
-         'error_messages' => [
-             'overlap' => 'This time slot overlaps with an existing resource.',
-             'past_date' => 'Cannot schedule in the past.',
-@@ -366,7 +242,7 @@ return [
-             'invalid_time_range' => 'End time must be after start time.',
-         ],
- 
--        // Formatage par défaut
-+        // Default date/time formats
-         'date_format' => env('ROSTER_DATE_FORMAT', 'Y-m-d'),
-         'time_format' => env('ROSTER_TIME_FORMAT', 'H:i:s'),
-         'datetime_format' => env('ROSTER_DATETIME_FORMAT', 'Y-m-d H:i:s'),
-diff --git a/database/migrations/2024_01_01_000000_create_availabilities_table.php b/database/migrations/2024_01_01_000000_create_availabilities_table.php
-index b05a17e..84fd970 100644
---- a/database/migrations/2024_01_01_000000_create_availabilities_table.php
-+++ b/database/migrations/2024_01_01_000000_create_availabilities_table.php
-@@ -7,20 +7,17 @@ use Illuminate\Database\Schema\Blueprint;
- use Illuminate\Support\Facades\Schema;
- 
- /**
-- * Migration to create the `availabilities` table.
-+ * Creates the `availabilities` table for storing recurring availability rules.
-  *
-- * This table stores recurring availability rules for any schedulable entity
-- * (e.g., doctor, room, team, or equipment). It defines the theoretical
-- * periods when a schedulable can be booked, including recurring days and
--e ranges.
-- * * optional dat
-- * Conceptually, this represents "ideal working hours" or "default availability"
-- * that can later be constrained by schedules or impediments.
-+ * This table defines theoretical time periods when a schedulable entity
-+ * (doctor, room, team, equipment) can be booked, including recurring days
-+ * and date ranges. Represents "ideal working hours" or "default availability"
-+ * that can be constrained by schedules or impediments.
-  */
- return new class extends Migration
+ interface AvailabilityRepositoryInterface
  {
      /**
--     * Run the migrations.
-+     * Creates the availabilities table structure.
+-     * Create a new availability.
++     * Create a new availability record.
++     *
++     * @param array<string, mixed> $data Availability data
++     * @return Availability Created availability instance
       */
-     public function up(): void
-     {
-@@ -41,7 +38,7 @@ return new class extends Migration
-     }
+     public function create(array $data): Availability;
  
      /**
--     * Reverse the migrations.
-+     * Drops the availabilities table.
+-     * Update an existing availability.
++     * Update an existing availability record.
++     *
++     * @param int $id Availability ID
++     * @param array<string, mixed> $data Updated availability data
++     * @return bool True if update successful, false otherwise
       */
-     public function down(): void
-     {
-diff --git a/database/migrations/2024_01_01_000001_create_schedules_table.php b/database/migrations/2024_01_01_000001_create_schedules_table.php
-index 05cd300..328b567 100644
---- a/database/migrations/2024_01_01_000001_create_schedules_table.php
-+++ b/database/migrations/2024_01_01_000001_create_schedules_table.php
-@@ -8,15 +8,15 @@ use Illuminate\Support\Facades\Schema;
- use Roster\Enums\ScheduleStatus;
+     public function update(int $id, array $data): bool;
  
- /**
-- * Migration to create the `schedules` table.
-+ * Creates the `schedules` table for storing concrete scheduled events.
-  *
-- * This table stores concrete scheduled events linked to an availability rule.
-- * It represents actual bookings (appointments, meetings, etc.) and their statuses.
-+ * This table stores actual bookings (appointments, meetings, etc.) linked
-+ * to availability rules, including their statuses and metadata.
-  */
- return new class extends Migration
+     /**
+-     * Delete an availability.
++     * Delete an availability record.
++     *
++     * @param int $id Availability ID
++     * @return bool True if deletion successful, false otherwise
+      */
+     public function delete(int $id): bool;
+ 
+     /**
+-     * Find availability by ID.
++     * Find an availability record by its ID.
++     *
++     * @param int $id Availability ID
++     * @return Availability|null Availability instance or null if not found
+      */
+     public function findById(int $id): ?Availability;
+ 
+     /**
+-     * Find availability for a time slot.
++     * Find availability for a specific time slot.
++     *
++     * @param Model $schedulable The schedulable resource
++     * @param Carbon $start Start time of the slot
++     * @param Carbon $end End time of the slot
++     * @param string|null $type Optional availability type filter
++     * @return Availability|null Matching availability or null
+      */
+     public function findForTimeSlot(
+-        Model $model,
++        Model $schedulable,
+         Carbon $start,
+         Carbon $end,
+         ?string $type = null
+@@ -45,47 +70,65 @@ interface AvailabilityRepositoryInterface
+     /**
+      * Get availabilities for a specific date.
+      *
+-     * @return Collection<int, Availability>
++     * @param Model $schedulable The schedulable resource
++     * @param Carbon $date Target date
++     * @param string|null $type Optional availability type filter
++     * @return Collection<int, Availability> Collection of availabilities for the date
+      */
+     public function getForDate(
+-        Model $model,
++        Model $schedulable,
+         Carbon $date,
+         ?string $type = null
+     ): Collection;
+ 
+     /**
+-     * Get all availabilities for a schedulable.
++     * Get all availabilities for a schedulable resource.
+      *
+-     * @return Collection<int, Availability>
++     * @param Model $schedulable The schedulable resource
++     * @param string|null $type Optional availability type filter
++     * @param string|null $day Optional day of week filter
++     * @return Collection<int, Availability> Collection of all availabilities
+      */
+     public function getAllForSchedulable(
+-        Model $model,
++        Model $schedulable,
+         ?string $type = null,
+         ?string $day = null
+     ): Collection;
+ 
+     /**
+-     * Check if schedulable is available at specific datetime.
++     * Check if a schedulable resource is available at a specific datetime.
++     *
++     * @param Model $schedulable The schedulable resource
++     * @param Carbon $datetime Datetime to check
++     * @return bool True if available at the given datetime
+      */
+     public function isAvailableAt(
+-        Model $model,
++        Model $schedulable,
+         Carbon $datetime
+     ): bool;
+ 
+     /**
+-     * Find overlapping availabilities.
++     * Find availabilities that overlap with the given time range.
+      *
+-     * @param array<string, mixed> $data
+-     * @return Collection<int, Availability>
++     * @param Model $schedulable The schedulable resource
++     * @param array<string, mixed> $availabilityData New availability data
++     * @param int|null $exceptId Optional availability ID to exclude from search
++     * @return Collection<int, Availability> Collection of overlapping availabilities
+      */
+     public function findOverlapping(
+-        Model $model,
+-        array $data,
++        Model $schedulable,
++        array $availabilityData,
+         ?int $exceptId = null
+     ): Collection;
+ 
+     /**
+-     * Check if time ranges overlap.
++     * Check if two time ranges overlap.
++     *
++     * @param Carbon $existingStart Existing time range start
++     * @param Carbon $existingEnd Existing time range end
++     * @param Carbon $newStart New time range start
++     * @param Carbon $newEnd New time range end
++     * @return bool True if time ranges overlap
+      */
+     public function timeRangesOverlap(
+         Carbon $existingStart,
+@@ -95,7 +138,13 @@ interface AvailabilityRepositoryInterface
+     ): bool;
+ 
+     /**
+-     * Check if date ranges overlap.
++     * Check if two date ranges overlap.
++     *
++     * @param Carbon|null $existingStartDate Existing date range start (nullable for open-ended)
++     * @param Carbon|null $existingEndDate Existing date range end (nullable for open-ended)
++     * @param Carbon|null $newStartDate New date range start (nullable for open-ended)
++     * @param Carbon|null $newEndDate New date range end (nullable for open-ended)
++     * @return bool True if date ranges overlap
+      */
+     public function dateRangesOverlap(
+         ?Carbon $existingStartDate,
+@@ -104,55 +153,101 @@ interface AvailabilityRepositoryInterface
+         ?Carbon $newEndDate
+     ): bool;
+ 
++    /**
++     * Get availabilities for a date range.
++     *
++     * @param Model $schedulable The schedulable resource
++     * @param Carbon $start Start date of the range
++     * @param Carbon $end End date of the range
++     * @param string|null $type Optional availability type filter
++     * @return Collection<int, Availability> Collection of availabilities in the date range
++     */
+     public function getForDateRange(
+-        Model $model,
++        Model $schedulable,
+         Carbon $start,
+         Carbon $end,
+         ?string $type = null
+     ): Collection;
+ 
+     /**
+-     * Delete multiple availabilities by IDs.
++     * Delete multiple availability records by IDs.
++     *
++     * @param array<int> $ids Array of availability IDs to delete
++     * @return bool True if all deletions successful, false otherwise
+      */
+     public function deleteMultiple(array $ids): bool;
+ 
+     /**
+-     * Find adjacent availabilities.
++     * Find availabilities adjacent to the given time range.
+      *
+-     * @param array<string, mixed> $data
+-     * @return Collection<int, Availability>
++     * @param Model $schedulable The schedulable resource
++     * @param array<string, mixed> $availabilityData New availability data
++     * @return Collection<int, Availability> Collection of adjacent availabilities
+      */
+     public function findAdjacentAvailabilities(
+-        Model $model,
+-        array $data
++        Model $schedulable,
++        array $availabilityData
+     ): Collection;
+ 
+-    public function findForTimeSlotWithOverlaps(
+-        Model $model,
++    /**
++     * Find availability for a time slot, including those with partial overlaps.
++     *
++     * @param Model $schedulable The schedulable resource
++     * @param Carbon $start Start time of the slot
++     * @param Carbon $end End time of the slot
++     * @param string|null $type Optional availability type filter
++     * @return Availability|null Matching availability or null
++     */
++    public function findForTimeSlotWithPartialOverlaps(
++        Model $schedulable,
+         Carbon $start,
+         Carbon $end,
+         ?string $type = null
+     ): ?Availability;
+ 
+     /**
+-     * Apply filters to query.
++     * Apply filters to availability query builder.
+      *
+-     * @return Builder
++     * @param Model $schedulable The schedulable resource
++     * @param array<string, mixed> $filters Query filters
++     * @return Builder Eloquent query builder with filters applied
+      */
+     public function applyFilters(
+-        Model $model,
++        Model $schedulable,
+         array $filters = []
+-    );
++    ): Builder;
+ 
+-    public function availabilityAppliesToDate(Availability $availability, Carbon $date): bool;
++    /**
++     * Check if an availability applies to a specific date.
++     *
++     * @param Availability $availability Availability to check
++     * @param Carbon $date Date to verify
++     * @return bool True if availability applies to the date
++     */
++    public function isAvailabilityValidForDate(Availability $availability, Carbon $date): bool;
+ 
+-    public function loadAvailabilitiesWithConflicts(
++    /**
++     * Load availabilities with schedule conflicts for a time range.
++     *
++     * @param object $schedulable The schedulable resource
++     * @param Carbon $start Start of time range
++     * @param Carbon $end End of time range
++     * @param string|null $type Optional availability type filter
++     * @return Collection<int, Availability> Collection of availabilities with conflict information
++     */
++    public function getAvailabilitiesWithConflictInfo(
+         object $schedulable,
+         Carbon $start,
+         Carbon $end,
+         ?string $type = null
+     ): Collection;
+ 
+-
++    /**
++     * Filter availabilities collection for a specific date.
++     *
++     * @param Collection<int, Availability> $availabilities Collection to filter
++     * @param Carbon $date Target date
++     * @return Collection<int, Availability> Filtered collection for the date
++     */
+     public function filterAvailabilitiesForDate(Collection $availabilities, Carbon $date): Collection;
+ }
+diff --git a/src/Contracts/Repository/ImpedimentRepositoryInterface.php b/src/Contracts/Repository/ImpedimentRepositoryInterface.php
+index 281e50c..7f93e50 100644
+--- a/src/Contracts/Repository/ImpedimentRepositoryInterface.php
++++ b/src/Contracts/Repository/ImpedimentRepositoryInterface.php
+@@ -7,10 +7,20 @@ namespace Roster\Contracts\Repository;
+ use Illuminate\Support\Carbon;
+ use Illuminate\Support\Collection;
+ 
++/**
++ * Repository contract for managing impediment records.
++ *
++ * Provides methods for querying impediments that block or restrict availability time slots.
++ */
+ interface ImpedimentRepositoryInterface
  {
      /**
--     * Run the migrations.
-+     * Creates the schedules table structure.
+-     * Find impediments for a time slot.
++     * Find impediments for a specific time slot within an availability.
++     *
++     * @param int $availabilityId Parent availability ID
++     * @param Carbon $start Start time of the slot
++     * @param Carbon $end End time of the slot
++     * @return Collection<int, object> Collection of impediments in the time slot
       */
-     public function up(): void
-     {
-@@ -42,7 +42,7 @@ return new class extends Migration
-     }
+     public function findForTimeSlot(
+         int $availabilityId,
+@@ -20,8 +30,14 @@ interface ImpedimentRepositoryInterface
  
      /**
--     * Reverse the migrations.
-+     * Drops the schedules table.
+      * Check if a time slot has overlapping impediments.
++     *
++     * @param int $availabilityId Parent availability ID
++     * @param Carbon $start Start time of the slot
++     * @param Carbon $end End time of the slot
++     * @param int|null $excludeId Optional impediment ID to exclude from check
++     * @return bool True if overlapping impediments exist
       */
-     public function down(): void
-     {
-diff --git a/database/migrations/2024_01_01_000002_create_impediments_table.php b/database/migrations/2024_01_01_000002_create_impediments_table.php
-index 9ed419c..4d19df3 100644
---- a/database/migrations/2024_01_01_000002_create_impediments_table.php
-+++ b/database/migrations/2024_01_01_000002_create_impediments_table.php
-@@ -8,18 +8,15 @@ use Illuminate\Support\Facades\DB;
- use Illuminate\Support\Facades\Schema;
+-    public function hasOverlappingImpediment(
++    public function hasOverlappingImpediments(
+         int $availabilityId,
+         Carbon $start,
+         Carbon $end,
+diff --git a/src/Contracts/Repository/ScheduleRepositoryInterface.php b/src/Contracts/Repository/ScheduleRepositoryInterface.php
+index 414103d..a183a94 100644
+--- a/src/Contracts/Repository/ScheduleRepositoryInterface.php
++++ b/src/Contracts/Repository/ScheduleRepositoryInterface.php
+@@ -9,30 +9,54 @@ use Illuminate\Support\Carbon;
+ use Illuminate\Support\Collection;
+ use Roster\Models\Schedule;
  
- /**
-- * Migration to create the `impediments` table.
-+ * Creates the `impediments` table for storing temporary availability exceptions.
-  *
-- * This table stores temporary exceptions that block availability, even if a schedulable
-- * entity would normally be available. Examples: illness, training, holidays.
-- *
-- * Each impediment is linked to an availability rule and defines a time range that
-- * should not be booked.
-+ * This table stores blocking periods that override normal availability rules.
-+ * Examples include illness, training, holidays, or maintenance periods.
-  */
- return new class extends Migration
++/**
++ * Repository contract for managing schedule records.
++ *
++ * Provides methods for creating, updating, deleting, and querying schedule data
++ * associated with availability slots.
++ */
+ interface ScheduleRepositoryInterface
  {
      /**
--     * Run the migrations.
-+     * Creates the impediments table structure with database-specific constraints.
+-     * Create a new schedule.
++     * Create a new schedule record.
++     *
++     * @param array<string, mixed> $data Schedule data
++     * @return Schedule Created schedule instance
       */
-     public function up(): void
+     public function create(array $data): Schedule;
+ 
+     /**
+-     * Update an existing schedule.
++     * Update an existing schedule record.
++     *
++     * @param int $id Schedule ID
++     * @param array<string, mixed> $data Updated schedule data
++     * @return bool True if update successful, false otherwise
+      */
+     public function update(int $id, array $data): bool;
+ 
+     /**
+-     * Delete a schedule.
++     * Delete a schedule record.
++     *
++     * @param int $id Schedule ID
++     * @return bool True if deletion successful, false otherwise
+      */
+     public function delete(int $id): bool;
+ 
+     /**
+-     * Find schedule by ID.
++     * Find a schedule record by its ID.
++     *
++     * @param int $id Schedule ID
++     * @return Schedule|null Schedule instance or null if not found
+      */
+     public function findById(int $id): ?Schedule;
+ 
+     /**
+-     * Find schedules for a time slot.
++     * Find schedules for a specific time slot within an availability.
++     *
++     * @param int $availabilityId Parent availability ID
++     * @param Carbon $start Start time of the slot
++     * @param Carbon $end End time of the slot
++     * @return Collection<int, Schedule> Collection of schedules in the time slot
+      */
+     public function findForTimeSlot(
+         int $availabilityId,
+@@ -42,6 +66,12 @@ interface ScheduleRepositoryInterface
+ 
+     /**
+      * Check if a time slot has overlapping schedules.
++     *
++     * @param int $availabilityId Parent availability ID
++     * @param Carbon $start Start time of the slot
++     * @param Carbon $end End time of the slot
++     * @param int|null $excludeId Optional schedule ID to exclude from check
++     * @return bool True if overlapping schedules exist
+      */
+     public function hasOverlappingSchedule(
+         int $availabilityId,
+@@ -51,7 +81,13 @@ interface ScheduleRepositoryInterface
+     ): bool;
+ 
+     /**
+-     * Find overlapping schedules with time range.
++     * Find schedules that overlap with the given time range.
++     *
++     * @param int $availabilityId Parent availability ID
++     * @param Carbon $start Start time of the range
++     * @param Carbon $end End time of the range
++     * @param int|null $excludeId Optional schedule ID to exclude from search
++     * @return Collection<int, Schedule> Collection of overlapping schedules
+      */
+     public function findOverlappingSchedules(
+         int $availabilityId,
+@@ -61,9 +97,12 @@ interface ScheduleRepositoryInterface
+     ): Collection;
+ 
+     /**
+-     * Get all schedules for a schedulable.
++     * Get all schedules for a schedulable resource.
+      *
+-     * @return Collection<int, Schedule>
++     * @param int $schedulableId ID of the schedulable resource
++     * @param string $schedulableType Type/class of the schedulable resource
++     * @param array<string, mixed> $filters Optional query filters
++     * @return Collection<int, Schedule> Collection of all schedules
+      */
+     public function getAllForSchedulable(
+         int $schedulableId,
+@@ -72,9 +111,16 @@ interface ScheduleRepositoryInterface
+     ): Collection;
+ 
+     /**
+-     * Get schedules between dates.
++     * Get schedules between specific dates for a schedulable resource.
++     *
++     * @param int $schedulableId ID of the schedulable resource
++     * @param string $schedulableType Type/class of the schedulable resource
++     * @param Carbon $start Start date of the range
++     * @param Carbon $end End date of the range
++     * @param array<string, mixed> $filters Optional query filters
++     * @return Collection<int, Schedule> Collection of schedules in the date range
+      */
+-    public function getBetweenDates(
++    public function getForDateRange(
+         int $schedulableId,
+         string $schedulableType,
+         Carbon $start,
+@@ -83,13 +129,16 @@ interface ScheduleRepositoryInterface
+     ): Collection;
+ 
+     /**
+-     * Apply filters to query.
++     * Apply filters to schedule query builder.
+      *
+-     * @return Builder
++     * @param int $schedulableId ID of the schedulable resource
++     * @param string $schedulableType Type/class of the schedulable resource
++     * @param array<string, mixed> $filters Query filters
++     * @return Builder Eloquent query builder with filters applied
+      */
+     public function applyFilters(
+         int $schedulableId,
+         string $schedulableType,
+         array $filters = []
+-    );
++    ): Builder;
+ }
+diff --git a/src/Repositories/AvailabilityRepository.php b/src/Repositories/AvailabilityRepository.php
+index 8ebbb23..1c54b7f 100644
+--- a/src/Repositories/AvailabilityRepository.php
++++ b/src/Repositories/AvailabilityRepository.php
+@@ -69,7 +69,7 @@ class AvailabilityRepository extends AbstractRepository implements AvailabilityR
+         return $builder->get();
+     }
+ 
+-    public function findForTimeSlotWithOverlaps(
++    public function findForTimeSlotWithPartialOverlaps(
+         Model $model,
+         Carbon $start,
+         Carbon $end,
+@@ -401,7 +401,7 @@ class AvailabilityRepository extends AbstractRepository implements AvailabilityR
+     public function applyFilters(
+         Model $model,
+         array $filters = []
+-    ) {
++    ): Builder {
+         $builder = $this->buildBaseQuery($model);
+ 
+         if (isset($filters['type'])) {
+@@ -467,7 +467,7 @@ class AvailabilityRepository extends AbstractRepository implements AvailabilityR
+      */
+ 
+ 
+-    public function availabilityAppliesToDate(Availability $availability, Carbon $date): bool
++    public function isAvailabilityValidForDate(Availability $availability, Carbon $date): bool
      {
-@@ -38,7 +35,6 @@ return new class extends Migration
-             $table->json('metadata')->nullable()->comment('Optional additional data');
-             $table->timestamps();
+         $dayOfWeek = strtolower($date->englishDayOfWeek);
+         if (!in_array($dayOfWeek, $availability->days)) {
+@@ -490,7 +490,7 @@ class AvailabilityRepository extends AbstractRepository implements AvailabilityR
+      * @param string|null $type Optional availability type filter
+      * @return Collection<Availability> Availabilities with conflicts loaded
+      */
+-    public function loadAvailabilitiesWithConflicts(
++    public function getAvailabilitiesWithConflictInfo(
+         object $schedulable,
+         Carbon $start,
+         Carbon $end,
+@@ -510,7 +510,7 @@ class AvailabilityRepository extends AbstractRepository implements AvailabilityR
+     public function filterAvailabilitiesForDate(Collection $availabilities, Carbon $date): Collection
+     {
+         return $availabilities->filter(
+-            fn(Availability $availability): bool => $this->availabilityAppliesToDate($availability, $date)
++            fn(Availability $availability): bool => $this->isAvailabilityValidForDate($availability, $date)
+         );
+     }
+ }
+diff --git a/src/Repositories/ImpedimentRepository.php b/src/Repositories/ImpedimentRepository.php
+index f6eb5fd..01f4bf3 100644
+--- a/src/Repositories/ImpedimentRepository.php
++++ b/src/Repositories/ImpedimentRepository.php
+@@ -86,7 +86,7 @@ class ImpedimentRepository extends AbstractRepository implements ImpedimentRepos
+     /**
+      * Check if a time slot has overlapping impediments.
+      */
+-    public function hasOverlappingImpediment(
++    public function hasOverlappingImpediments(
+         int $availabilityId,
+         Carbon $start,
+         Carbon $end,
+diff --git a/src/Repositories/ScheduleRepository.php b/src/Repositories/ScheduleRepository.php
+index 9beeed5..99671f4 100644
+--- a/src/Repositories/ScheduleRepository.php
++++ b/src/Repositories/ScheduleRepository.php
+@@ -152,7 +152,7 @@ class ScheduleRepository extends AbstractRepository implements ScheduleRepositor
+     /**
+      * Get schedules between dates.
+      */
+-    public function getBetweenDates(
++    public function getForDateRange(
+         int $schedulableId,
+         string $schedulableType,
+         Carbon $start,
+@@ -177,7 +177,7 @@ class ScheduleRepository extends AbstractRepository implements ScheduleRepositor
+         int $schedulableId,
+         string $schedulableType,
+         array $filters = []
+-    ) {
++    ): Builder {
+         $builder = $this->buildSchedulableQuery($schedulableId, $schedulableType);
+         $this->applyCommonFilters($builder, $filters);
  
--            // Prevent duplicate impediments for the exact same period
-             $table->unique(
-                 ['availability_id', 'start_datetime', 'end_datetime'],
-                 'impediments_unique_time_slot'
-@@ -49,12 +45,11 @@ return new class extends Migration
-             $table->index(['start_datetime', 'end_datetime']);
-         });
+diff --git a/src/Services/Core/SlotFinderService.php b/src/Services/Core/SlotFinderService.php
+index b1d5e35..8af8812 100644
+--- a/src/Services/Core/SlotFinderService.php
++++ b/src/Services/Core/SlotFinderService.php
+@@ -46,7 +46,7 @@ class SlotFinderService implements SlotFinderInterface
+         $startDate = $now->copy()->startOfDay();
+         $endDate = $now->copy()->addDays(30)->endOfDay();
  
--        // Add database-specific constraints
-         $this->addDatabaseSpecificConstraints();
+-        $availabilities = $this->availabilityRepository->loadAvailabilitiesWithConflicts(
++        $availabilities = $this->availabilityRepository->getAvailabilitiesWithConflictInfo(
+             $model,
+             $startDate,
+             $endDate,
+@@ -58,7 +58,7 @@ class SlotFinderService implements SlotFinderInterface
+ 
+             /** @var Collection<int, Availability> $dailyAvailabilities */
+             $dailyAvailabilities = $availabilities->filter(
+-                fn(Availability $availability): bool => $this->availabilityRepository->availabilityAppliesToDate($availability, $currentDate)
++                fn(Availability $availability): bool => $this->availabilityRepository->isAvailabilityValidForDate($availability, $currentDate)
+             );
+ 
+             foreach ($dailyAvailabilities as $dailyAvailability) {
+@@ -95,7 +95,7 @@ class SlotFinderService implements SlotFinderInterface
+         int $durationMinutes,
+         ?string $type = null
+     ): array {
+-        $availabilities = $this->availabilityRepository->loadAvailabilitiesWithConflicts(
++        $availabilities = $this->availabilityRepository->getAvailabilitiesWithConflictInfo(
+             $model,
+             $startDate,
+             $endDate,
+@@ -108,7 +108,7 @@ class SlotFinderService implements SlotFinderInterface
+         while ($currentDate->lte($endDate)) {
+             /** @var Collection<int, Availability> $dailyAvailabilities */
+             $dailyAvailabilities = $availabilities->filter(
+-                fn(Availability $availability): bool => $this->availabilityRepository->availabilityAppliesToDate($availability, $currentDate)
++                fn(Availability $availability): bool => $this->availabilityRepository->isAvailabilityValidForDate($availability, $currentDate)
+             );
+ 
+             foreach ($dailyAvailabilities as $dailyAvailability) {
+@@ -144,7 +144,7 @@ class SlotFinderService implements SlotFinderInterface
+         int $durationMinutes,
+         ?string $type = null
+     ): ?array {
+-        $availabilities = $this->availabilityRepository->loadAvailabilitiesWithConflicts(
++        $availabilities = $this->availabilityRepository->getAvailabilitiesWithConflictInfo(
+             $model,
+             $startDate,
+             $endDate,
+@@ -157,7 +157,7 @@ class SlotFinderService implements SlotFinderInterface
+         while ($currentDate->lte($endDate)) {
+             /** @var Collection<int, Availability> $dailyAvailabilities */
+             $dailyAvailabilities = $availabilities->filter(
+-                fn(Availability $availability): bool => $this->availabilityRepository->availabilityAppliesToDate($availability, $currentDate)
++                fn(Availability $availability): bool => $this->availabilityRepository->isAvailabilityValidForDate($availability, $currentDate)
+             );
+ 
+             foreach ($dailyAvailabilities as $dailyAvailability) {
+@@ -196,7 +196,7 @@ class SlotFinderService implements SlotFinderInterface
+         Carbon $end,
+         ?string $type = null
+     ): bool {
+-        $availabilities = $this->availabilityRepository->loadAvailabilitiesWithConflicts(
++        $availabilities = $this->availabilityRepository->getAvailabilitiesWithConflictInfo(
+             $model,
+             $start,
+             $end,
+@@ -218,7 +218,7 @@ class SlotFinderService implements SlotFinderInterface
+                         return false;
+                     }
+ 
+-                    return $this->availabilityRepository->availabilityAppliesToDate($availability, $current) &&
++                    return $this->availabilityRepository->isAvailabilityValidForDate($availability, $current) &&
+                         $availability->start_time->format('H:i') <= $current->format('H:i') &&
+                         $availability->end_time->format('H:i') >= $slotEnd->format('H:i');
+                 }
+@@ -257,7 +257,7 @@ class SlotFinderService implements SlotFinderInterface
+         $this->validationService->validateTimeRange($startDate, $endDate, 'date');
+         $this->validationService->validateDurationAndInterval($durationMinutes, $intervalMinutes);
+ 
+-        $availabilities = $this->availabilityRepository->loadAvailabilitiesWithConflicts(
++        $availabilities = $this->availabilityRepository->getAvailabilitiesWithConflictInfo(
+             $schedulable,
+             $startDate,
+             $endDate,
+@@ -319,7 +319,7 @@ class SlotFinderService implements SlotFinderInterface
+         $startDate = $fromDate->copy()->startOfDay();
+         $endDate = $startDate->copy()->addDays(self::MAX_DAYS_TO_CHECK)->endOfDay();
+ 
+-        $availabilities = $this->availabilityRepository->loadAvailabilitiesWithConflicts(
++        $availabilities = $this->availabilityRepository->getAvailabilitiesWithConflictInfo(
+             $schedulable,
+             $startDate,
+             $endDate
+@@ -370,7 +370,7 @@ class SlotFinderService implements SlotFinderInterface
+         int $durationMinutes = 60,
+         int $intervalMinutes = 30
+     ): array {
+-        $availabilities = $this->availabilityRepository->loadAvailabilitiesWithConflicts(
++        $availabilities = $this->availabilityRepository->getAvailabilitiesWithConflictInfo(
+             $schedulable,
+             $startDate,
+             $endDate
+@@ -428,7 +428,7 @@ class SlotFinderService implements SlotFinderInterface
+         $currentDate = $start->copy()->startOfDay();
+         $endDate = $end->copy()->endOfDay();
+ 
+-        $availabilities = $this->availabilityRepository->loadAvailabilitiesWithConflicts(
++        $availabilities = $this->availabilityRepository->getAvailabilitiesWithConflictInfo(
+             $schedulable,
+             $start,
+             $end,
+@@ -613,11 +613,11 @@ class SlotFinderService implements SlotFinderInterface
+             fn($schedule): bool => $schedule->overlapsWith($start, $end)
+         );
+ 
+-        $hasOverlappingImpediment = $availability->impediments->contains(
++        $hasOverlappingImpediments = $availability->impediments->contains(
+             fn($impediment): bool => $impediment->overlapsWith($start, $end)
+         );
+ 
+-        return !$hasOverlappingSchedule && !$hasOverlappingImpediment;
++        return !$hasOverlappingSchedule && !$hasOverlappingImpediments;
      }
  
      /**
--     * Reverse the migrations.
-+     * Drops the impediments table.
-      */
-     public function down(): void
-     {
-@@ -62,7 +57,7 @@ return new class extends Migration
-     }
+diff --git a/src/Services/ImpedimentService.php b/src/Services/ImpedimentService.php
+index ea499a8..42b4d0b 100644
+--- a/src/Services/ImpedimentService.php
++++ b/src/Services/ImpedimentService.php
+@@ -137,7 +137,7 @@ class ImpedimentService extends AbstractSchedulableService
+         ['start' => $start, 'end' => $end] = $this->validationService
+             ->parseAndValidateDateTimeRange($this->data);
  
-     /**
--     * Add database-specific constraints.
-+     * Adds database-specific constraints for data integrity.
-      */
-     private function addDatabaseSpecificConstraints(): void
-     {
-@@ -76,13 +71,13 @@ return new class extends Migration
-                 $this->addPgsqlConstraints();
-                 break;
-             case 'sqlite':
--                $this->addSqliteConstraints();
-+                // SQLite doesn't support advanced check constraints
-                 break;
+-        if ($this->impedimentRepository->hasOverlappingImpediment($availability->id, $start, $end)) {
++        if ($this->impedimentRepository->hasOverlappingImpediments($availability->id, $start, $end)) {
+             throw new OverlappingImpedimentException([
+                 'availability_id' => $availability->id,
+                 'start' => $start->format('Y-m-d H:i:s'),
+@@ -224,7 +224,7 @@ class ImpedimentService extends AbstractSchedulableService
+                         'end_datetime' => $this->currentImpediment->end_datetime,
+                     ], $this->data));
+ 
+-                if ($this->impedimentRepository->hasOverlappingImpediment($availabilityId, $start, $end, $id)) {
++                if ($this->impedimentRepository->hasOverlappingImpediments($availabilityId, $start, $end, $id)) {
+                     throw ValidationException::withMessage('This time slot overlaps with another impediment');
+                 }
+ 
+@@ -241,7 +241,7 @@ class ImpedimentService extends AbstractSchedulableService
+                 ['start' => $start, 'end' => $end] = $this->validationService
+                     ->parseAndValidateDateTimeRange($updateData);
+ 
+-                if ($this->impedimentRepository->hasOverlappingImpediment($availabilityId, $start, $end, $id)) {
++                if ($this->impedimentRepository->hasOverlappingImpediments($availabilityId, $start, $end, $id)) {
+                     throw ValidationException::withMessage('This time slot overlaps with another impediment');
+                 }
+             }
+@@ -333,7 +333,7 @@ class ImpedimentService extends AbstractSchedulableService
+             return false;
          }
+ 
+-        return $this->impedimentRepository->hasOverlappingImpediment($availability->id, $start, $end);
++        return $this->impedimentRepository->hasOverlappingImpediments($availability->id, $start, $end);
      }
  
      /**
--     * Add MySQL specific constraints.
-+     * Adds MySQL-specific date validation constraints.
-      */
-     private function addMysqlConstraints(): void
-     {
-@@ -96,7 +91,7 @@ return new class extends Migration
-     }
- 
-     /**
--     * Add PostgreSQL specific constraints.
-+     * Adds PostgreSQL-specific overlap prevention constraints.
-      */
-     private function addPgsqlConstraints(): void
-     {
-@@ -111,13 +106,4 @@ return new class extends Migration
-             ');
+diff --git a/src/Services/ScheduleService.php b/src/Services/ScheduleService.php
+index e03e87b..903441e 100644
+--- a/src/Services/ScheduleService.php
++++ b/src/Services/ScheduleService.php
+@@ -141,7 +141,7 @@ class ScheduleService extends AbstractSchedulableService
+             ]);
          }
-     }
--
--    /**
--     * Add SQLite specific constraints.
--     */
--    private function addSqliteConstraints(): void
--    {
--        // SQLite doesn't support check constraints in the same way
--        // We'll rely on application-level validation
--    }
- };
+ 
+-        if ($this->impedimentRepository->hasOverlappingImpediment($availability->id, $start, $end)) {
++        if ($this->impedimentRepository->hasOverlappingImpediments($availability->id, $start, $end)) {
+             throw new ScheduleImpedimentOverlapException([
+                 'availability_id' => $availability->id,
+                 'start' => $start->format('Y-m-d H:i:s'),
+@@ -230,7 +230,7 @@ class ScheduleService extends AbstractSchedulableService
+                 throw ValidationException::withMessage('Schedule overlaps with another schedule');
+             }
+ 
+-            if ($this->impedimentRepository->hasOverlappingImpediment($newAvailability->id, $start, $end)) {
++            if ($this->impedimentRepository->hasOverlappingImpediments($newAvailability->id, $start, $end)) {
+                 throw ValidationException::withMessage('Schedule overlaps with an impediment');
+             }
+ 
+@@ -301,7 +301,7 @@ class ScheduleService extends AbstractSchedulableService
+         $this->validateSchedulable();
+         $this->validationService->validateTimeRange($start, $end);
+ 
+-        return $this->scheduleRepository->getBetweenDates(
++        return $this->scheduleRepository->getForDateRange(
+             $this->schedulable->id,
+             get_class($this->schedulable),
+             $start,
+@@ -318,7 +318,7 @@ class ScheduleService extends AbstractSchedulableService
+         $this->validateSchedulable();
+         $this->validationService->validateTimeRange($start, $end);
+ 
+-        $availability = $this->availabilityRepository->findForTimeSlotWithOverlaps(
++        $availability = $this->availabilityRepository->findForTimeSlotWithPartialOverlaps(
+             $this->schedulable,
+             $start,
+             $end,

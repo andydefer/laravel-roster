@@ -141,7 +141,7 @@ class ScheduleService extends AbstractSchedulableService
             ]);
         }
 
-        if ($this->impedimentRepository->hasOverlappingImpediment($availability->id, $start, $end)) {
+        if ($this->impedimentRepository->hasOverlappingImpediments($availability->id, $start, $end)) {
             throw new ScheduleImpedimentOverlapException([
                 'availability_id' => $availability->id,
                 'start' => $start->format('Y-m-d H:i:s'),
@@ -230,7 +230,7 @@ class ScheduleService extends AbstractSchedulableService
                 throw ValidationException::withMessage('Schedule overlaps with another schedule');
             }
 
-            if ($this->impedimentRepository->hasOverlappingImpediment($newAvailability->id, $start, $end)) {
+            if ($this->impedimentRepository->hasOverlappingImpediments($newAvailability->id, $start, $end)) {
                 throw ValidationException::withMessage('Schedule overlaps with an impediment');
             }
 
@@ -301,7 +301,7 @@ class ScheduleService extends AbstractSchedulableService
         $this->validateSchedulable();
         $this->validationService->validateTimeRange($start, $end);
 
-        return $this->scheduleRepository->getBetweenDates(
+        return $this->scheduleRepository->getForDateRange(
             $this->schedulable->id,
             get_class($this->schedulable),
             $start,
@@ -318,7 +318,7 @@ class ScheduleService extends AbstractSchedulableService
         $this->validateSchedulable();
         $this->validationService->validateTimeRange($start, $end);
 
-        $availability = $this->availabilityRepository->findForTimeSlotWithOverlaps(
+        $availability = $this->availabilityRepository->findForTimeSlotWithPartialOverlaps(
             $this->schedulable,
             $start,
             $end,

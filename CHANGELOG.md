@@ -9,7 +9,7 @@ et ce projet suit les principes de [Semantic Versioning](https://semver.org/spec
 ### 🛡️ Prévention des Chevauchements d'Impediments
 
 #### 🔒 Validation des Chevauchements
-- **Nouvelle méthode `hasOverlappingImpediment()`** dans `ImpedimentService`
+- **Nouvelle méthode `hasOverlappingImpediments()`** dans `ImpedimentService`
 - **Prévention à la création** : Empêche les impediments qui se chevauchent
 - **Validation à la mise à jour** : Vérifie les chevauchements lors des modifications
 - **Exclusion intelligente** : Permet d'exclure l'impediment en cours de modification

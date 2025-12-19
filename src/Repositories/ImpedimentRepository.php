@@ -86,7 +86,7 @@ class ImpedimentRepository extends AbstractRepository implements ImpedimentRepos
     /**
      * Check if a time slot has overlapping impediments.
      */
-    public function hasOverlappingImpediment(
+    public function hasOverlappingImpediments(
         int $availabilityId,
         Carbon $start,
         Carbon $end,

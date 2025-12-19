@@ -152,7 +152,7 @@ class ScheduleRepository extends AbstractRepository implements ScheduleRepositor
     /**
      * Get schedules between dates.
      */
-    public function getBetweenDates(
+    public function getForDateRange(
         int $schedulableId,
         string $schedulableType,
         Carbon $start,
@@ -177,7 +177,7 @@ class ScheduleRepository extends AbstractRepository implements ScheduleRepositor
         int $schedulableId,
         string $schedulableType,
         array $filters = []
-    ) {
+    ): Builder {
         $builder = $this->buildSchedulableQuery($schedulableId, $schedulableType);
         $this->applyCommonFilters($builder, $filters);
 

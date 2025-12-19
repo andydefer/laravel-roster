@@ -46,7 +46,7 @@ class SlotFinderService implements SlotFinderInterface
         $startDate = $now->copy()->startOfDay();
         $endDate = $now->copy()->addDays(30)->endOfDay();
 
-        $availabilities = $this->availabilityRepository->loadAvailabilitiesWithConflicts(
+        $availabilities = $this->availabilityRepository->getAvailabilitiesWithConflictInfo(
             $model,
             $startDate,
             $endDate,
@@ -58,7 +58,7 @@ class SlotFinderService implements SlotFinderInterface
 
             /** @var Collection<int, Availability> $dailyAvailabilities */
             $dailyAvailabilities = $availabilities->filter(
-                fn(Availability $availability): bool => $this->availabilityRepository->availabilityAppliesToDate($availability, $currentDate)
+                fn(Availability $availability): bool => $this->availabilityRepository->isAvailabilityValidForDate($availability, $currentDate)
             );
 
             foreach ($dailyAvailabilities as $dailyAvailability) {
@@ -95,7 +95,7 @@ class SlotFinderService implements SlotFinderInterface
         int $durationMinutes,
         ?string $type = null
     ): array {
-        $availabilities = $this->availabilityRepository->loadAvailabilitiesWithConflicts(
+        $availabilities = $this->availabilityRepository->getAvailabilitiesWithConflictInfo(
             $model,
             $startDate,
             $endDate,
@@ -108,7 +108,7 @@ class SlotFinderService implements SlotFinderInterface
         while ($currentDate->lte($endDate)) {
             /** @var Collection<int, Availability> $dailyAvailabilities */
             $dailyAvailabilities = $availabilities->filter(
-                fn(Availability $availability): bool => $this->availabilityRepository->availabilityAppliesToDate($availability, $currentDate)
+                fn(Availability $availability): bool => $this->availabilityRepository->isAvailabilityValidForDate($availability, $currentDate)
             );
 
             foreach ($dailyAvailabilities as $dailyAvailability) {
@@ -144,7 +144,7 @@ class SlotFinderService implements SlotFinderInterface
         int $durationMinutes,
         ?string $type = null
     ): ?array {
-        $availabilities = $this->availabilityRepository->loadAvailabilitiesWithConflicts(
+        $availabilities = $this->availabilityRepository->getAvailabilitiesWithConflictInfo(
             $model,
             $startDate,
             $endDate,
@@ -157,7 +157,7 @@ class SlotFinderService implements SlotFinderInterface
         while ($currentDate->lte($endDate)) {
             /** @var Collection<int, Availability> $dailyAvailabilities */
             $dailyAvailabilities = $availabilities->filter(
-                fn(Availability $availability): bool => $this->availabilityRepository->availabilityAppliesToDate($availability, $currentDate)
+                fn(Availability $availability): bool => $this->availabilityRepository->isAvailabilityValidForDate($availability, $currentDate)
             );
 
             foreach ($dailyAvailabilities as $dailyAvailability) {
@@ -196,7 +196,7 @@ class SlotFinderService implements SlotFinderInterface
         Carbon $end,
         ?string $type = null
     ): bool {
-        $availabilities = $this->availabilityRepository->loadAvailabilitiesWithConflicts(
+        $availabilities = $this->availabilityRepository->getAvailabilitiesWithConflictInfo(
             $model,
             $start,
             $end,
@@ -218,7 +218,7 @@ class SlotFinderService implements SlotFinderInterface
                         return false;
                     }
 
-                    return $this->availabilityRepository->availabilityAppliesToDate($availability, $current) &&
+                    return $this->availabilityRepository->isAvailabilityValidForDate($availability, $current) &&
                         $availability->start_time->format('H:i') <= $current->format('H:i') &&
                         $availability->end_time->format('H:i') >= $slotEnd->format('H:i');
                 }
@@ -257,7 +257,7 @@ class SlotFinderService implements SlotFinderInterface
         $this->validationService->validateTimeRange($startDate, $endDate, 'date');
         $this->validationService->validateDurationAndInterval($durationMinutes, $intervalMinutes);
 
-        $availabilities = $this->availabilityRepository->loadAvailabilitiesWithConflicts(
+        $availabilities = $this->availabilityRepository->getAvailabilitiesWithConflictInfo(
             $schedulable,
             $startDate,
             $endDate,
@@ -319,7 +319,7 @@ class SlotFinderService implements SlotFinderInterface
         $startDate = $fromDate->copy()->startOfDay();
         $endDate = $startDate->copy()->addDays(self::MAX_DAYS_TO_CHECK)->endOfDay();
 
-        $availabilities = $this->availabilityRepository->loadAvailabilitiesWithConflicts(
+        $availabilities = $this->availabilityRepository->getAvailabilitiesWithConflictInfo(
             $schedulable,
             $startDate,
             $endDate
@@ -370,7 +370,7 @@ class SlotFinderService implements SlotFinderInterface
         int $durationMinutes = 60,
         int $intervalMinutes = 30
     ): array {
-        $availabilities = $this->availabilityRepository->loadAvailabilitiesWithConflicts(
+        $availabilities = $this->availabilityRepository->getAvailabilitiesWithConflictInfo(
             $schedulable,
             $startDate,
             $endDate
@@ -428,7 +428,7 @@ class SlotFinderService implements SlotFinderInterface
         $currentDate = $start->copy()->startOfDay();
         $endDate = $end->copy()->endOfDay();
 
-        $availabilities = $this->availabilityRepository->loadAvailabilitiesWithConflicts(
+        $availabilities = $this->availabilityRepository->getAvailabilitiesWithConflictInfo(
             $schedulable,
             $start,
             $end,
@@ -613,11 +613,11 @@ class SlotFinderService implements SlotFinderInterface
             fn($schedule): bool => $schedule->overlapsWith($start, $end)
         );
 
-        $hasOverlappingImpediment = $availability->impediments->contains(
+        $hasOverlappingImpediments = $availability->impediments->contains(
             fn($impediment): bool => $impediment->overlapsWith($start, $end)
         );
 
-        return !$hasOverlappingSchedule && !$hasOverlappingImpediment;
+        return !$hasOverlappingSchedule && !$hasOverlappingImpediments;
     }
 
     /**
