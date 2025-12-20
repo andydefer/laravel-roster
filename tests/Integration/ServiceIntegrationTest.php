@@ -95,6 +95,7 @@ final class ServiceIntegrationTest extends TestCase
         ]);
     }
 
+
     public function test_schedule_overlapping_validation(): void
     {
         // Créer une availability

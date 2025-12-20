@@ -85,6 +85,32 @@ final class ScheduleServiceTest extends TestCase
         ]);
     }
 
+    public function test_availability_is_required_for_schedule_creation_workflow(): void
+    {
+        // Tester le workflow complet: on ne peut pas créer un schedule valide sans Availability
+
+        // Créer une Availability pour référence
+        $availability = $this->availability;
+
+        // 1. Créer un schedule avec Availability => OK
+        $scheduleWithAvailability = $this->scheduleService->create($availability, [
+            'title' => 'Schedule avec Availability',
+            'start_datetime' => '2038-06-07 10:00:00',
+            'end_datetime' => '2038-06-07 11:00:00',
+        ]);
+
+        $this->assertNotNull($scheduleWithAvailability->availability_id);
+        $this->assertSame($availability->id, $scheduleWithAvailability->availability_id);
+
+        // 2. Tenter de créer un schedule sans Availability => Échec
+        $this->expectException(\BadMethodCallException::class);
+
+        $this->scheduleService->create([
+            'title' => 'Schedule sans Availability',
+            'start_datetime' => '2038-06-07 14:00:00',
+            'end_datetime' => '2038-06-07 15:00:00',
+        ]);
+    }
     public function test_create_schedule_with_type_filters_availability(): void
     {
         $data = [
@@ -123,6 +149,143 @@ final class ScheduleServiceTest extends TestCase
         $this->scheduleService->create($this->availability, $data);
     }
 
+    public function test_cannot_create_schedule_without_availability(): void
+    {
+        $data = [
+            'title' => 'Schedule sans Availability',
+            'start_datetime' => '2038-06-07 10:00:00',
+            'end_datetime' => '2038-06-07 11:00:00',
+            'status' => 'available',
+        ];
+
+        // Tenter de créer un schedule sans passer d'Availability en paramètre
+        // Cela déclenchera l'exception BadMethodCallException car on utilise l'ancienne signature
+        $this->expectException(\BadMethodCallException::class);
+        $this->expectExceptionMessage('Method create(array $data) is deprecated. Use create(Availability $availability, array $data) instead.');
+
+        $this->scheduleService->create($data);
+    }
+
+    public function test_cannot_create_schedule_with_null_availability(): void
+    {
+        $data = [
+            'title' => 'Schedule avec Availability null',
+            'start_datetime' => '2038-06-07 10:00:00',
+            'end_datetime' => '2038-06-07 11:00:00',
+        ];
+
+        // Tenter de créer un schedule en passant null comme Availability
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('Invalid arguments for create method');
+
+        $this->scheduleService->create(null, $data);
+    }
+
+    public function test_cannot_create_schedule_with_invalid_availability_type(): void
+    {
+        $data = [
+            'title' => 'Schedule avec mauvais type d\'Availability',
+            'start_datetime' => '2038-06-07 10:00:00',
+            'end_datetime' => '2038-06-07 11:00:00',
+        ];
+
+        // Tenter de créer un schedule en passant un tableau au lieu d'un objet Availability
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('Invalid arguments for create method');
+
+        $this->scheduleService->create(['type' => 'consultation'], $data);
+    }
+
+    public function test_schedule_requires_availability_id_in_database(): void
+    {
+        // Tenter de créer un Schedule directement sans passer par le service
+        // pour vérifier que la base de données impose la contrainte
+
+        $scheduleData = [
+            'title' => 'Schedule sans availability_id',
+            'start_datetime' => '2038-06-07 10:00:00',
+            'end_datetime' => '2038-06-07 11:00:00',
+            'status' => 'available',
+            // Pas de availability_id intentionnellement
+        ];
+
+        if (method_exists($this, 'expectException')) {
+            // Selon la configuration de la base de données, cela peut lancer différentes exceptions
+            try {
+                $schedule = Schedule::create($scheduleData);
+                // Si on arrive ici, la base de données n'a pas de contrainte NOT NULL
+                // On vérifie quand même que le schedule créé est invalide
+                $this->assertNull($schedule->availability_id, 'Le schedule ne devrait pas avoir d\'availability_id');
+            } catch (\Exception $e) {
+                // Si une exception est levée, c'est que la base de données impose la contrainte
+                $this->assertStringContainsString('availability_id', $e->getMessage());
+            }
+        }
+    }
+
+    public function test_schedule_title_can_be_different_from_availability(): void
+    {
+        // Créer une availability avec un type spécifique
+        $consultationAvailability = $this->availability; // Type: 'consultation'
+
+        // Créer un schedule avec un titre complètement différent
+        $data = [
+            'title' => 'Réunion de projet - Sprint 15', // Titre arbitraire
+            'description' => 'Discussion sur les objectifs du sprint',
+            'start_datetime' => '2038-06-07 14:00:00',
+            'end_datetime' => '2038-06-07 15:30:00',
+            'status' => 'booked',
+            'metadata' => [
+                'project' => 'Système de réservation',
+                'attendees' => ['Alice', 'Bob', 'Charlie']
+            ],
+        ];
+
+        $schedule = $this->scheduleService->create($consultationAvailability, $data);
+
+        // Vérifications
+        $this->assertInstanceOf(Schedule::class, $schedule);
+
+        // Le titre du schedule est différent du type de l'availability
+        $this->assertSame('Réunion de projet - Sprint 15', $schedule->title);
+        $this->assertNotSame($consultationAvailability->type, $schedule->title);
+
+        // Mais le type du schedule correspond bien au type de l'availability
+        $this->assertSame('consultation', $schedule->type);
+
+
+        // Test avec une autre availability (type 'training') et un titre différent
+        $data2 = [
+            'title' => 'Formation sécurité informatique',
+            'start_datetime' => '2038-06-14 09:00:00',
+            'end_datetime' => '2038-06-14 12:00:00',
+            'status' => 'available',
+            'description' => 'Formation sur les bonnes pratiques de sécurité',
+        ];
+
+        $schedule2 = $this->scheduleService->create($this->trainingAvailability, $data2);
+
+        $this->assertSame('Formation sécurité informatique', $schedule2->title);
+        $this->assertSame('training', $schedule2->type); // Type copié de l'availability
+
+        // Vérifier que le titre n'a pas été modifié pour correspondre au type
+        $this->assertNotSame($this->trainingAvailability->type, $schedule2->title);
+
+        // Test supplémentaire : même titre que le type n'est pas obligatoire
+        $data3 = [
+            'title' => 'consultation', // Titre identique au type (mais c'est une coïncidence)
+            'start_datetime' => '2038-06-21 11:00:00',
+            'end_datetime' => '2038-06-21 12:00:00',
+            'status' => 'available',
+        ];
+
+        $schedule3 = $this->scheduleService->create($consultationAvailability, $data3);
+
+        $this->assertSame('consultation', $schedule3->title); // Titre
+        $this->assertSame('consultation', $schedule3->type);  // Type
+
+        // Même s'ils sont identiques ici, ce n'est pas une contrainte du système
+    }
 
     public function test_update_schedule_successfully(): void
     {

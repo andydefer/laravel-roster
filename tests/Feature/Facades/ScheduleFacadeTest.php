@@ -54,6 +54,22 @@ final class ScheduleFacadeTest extends TestCase
         ]);
     }
 
+    public function test_facade_also_requires_availability(): void
+    {
+        $data = [
+            'title' => 'Schedule via Facade sans Availability',
+            'start_datetime' => '2038-06-07 10:00:00',
+            'end_datetime' => '2038-06-07 11:00:00',
+        ];
+
+        // La facade Schedule utilise le même service, donc même comportement
+        $this->expectException(\BadMethodCallException::class);
+        $this->expectExceptionMessage('Method create(array $data) is deprecated. Use create(Availability $availability, array $data) instead.');
+
+        \Roster\Facades\Schedule::for($this->model)->create($data);
+    }
+
+
     public function test_facade_can_create_schedule(): void
     {
         $data = [
