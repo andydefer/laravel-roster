@@ -18,7 +18,7 @@ PSALM = ./vendor/bin/psalm
 # ---------------------------------------------------
 # Source Configuration
 # ---------------------------------------------------
-SOURCE_DIRS = config src database routes tests
+SOURCE_DIRS = src config database routes tests
 IGNORED_FILES = CHANGED_FILES.md FILES_CHECKLIST.md psalm.md phpstan.md pint-test.md Makefile pint.md
 
 
@@ -29,6 +29,7 @@ IGNORED_FILES = CHANGED_FILES.md FILES_CHECKLIST.md psalm.md phpstan.md pint-tes
 .PHONY: pre-commit
 pre-commit:
 	@echo "🔍 Running pre-commit checks..."
+	@make lint-all-fix-md
 	@make test
 	@echo "✅ Pre-commit checks passed"
 

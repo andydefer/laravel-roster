@@ -274,20 +274,22 @@ final class ImpedimentServiceTest extends TestCase
         // Créer plusieurs impediments
         $this->impedimentService->create($this->availability, [
             'reason' => 'Impediment 1',
-            'start_datetime' => '2038-06-07 10:00:00',
+            'start_datetime' => '2038-06-07 10:00:00', // Lundi 7 juin
             'end_datetime' => '2038-06-07 11:00:00',
         ]);
 
         $this->impedimentService->create($this->availability, [
             'reason' => 'Impediment 2',
-            'start_datetime' => '2038-06-07 14:00:00',
+            'start_datetime' => '2038-06-07 14:00:00', // Lundi 7 juin
             'end_datetime' => '2038-06-07 15:00:00',
         ]);
 
+        // CORRECTION : Utiliser un mardi pour l'impediment de juillet
+        // Le 6 juillet 2038 est un mardi
         $this->impedimentService->create($this->julyAvailability, [
             'reason' => 'Impediment 3',
-            'start_datetime' => '2038-07-01 10:00:00', // Juillet
-            'end_datetime' => '2038-07-01 11:00:00',
+            'start_datetime' => '2038-07-06 10:00:00', // Mardi 6 juillet - CORRIGÉ
+            'end_datetime' => '2038-07-06 11:00:00',
         ]);
 
         $start = Carbon::parse('2038-06-07 00:00:00');

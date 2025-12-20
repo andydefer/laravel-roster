@@ -126,6 +126,7 @@ class RosterServiceProvider extends ServiceProvider
                 validationService: $app->make(ValidationServiceInterface::class),
                 availabilityRepository: $app->make(AvailabilityRepositoryInterface::class),
                 impedimentRepository: $app->make(ImpedimentRepositoryInterface::class),
+                scheduleRepository: $app->make(ScheduleRepositoryInterface::class),
             );
         });
 

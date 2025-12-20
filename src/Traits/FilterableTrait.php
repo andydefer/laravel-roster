@@ -84,7 +84,7 @@ trait FilterableTrait
     protected function applyReasonFilter(Builder $builder): Builder
     {
         if (isset($this->filters['reason'])) {
-            $builder->where('reason', 'like', '%'.$this->filters['reason'].'%');
+            $builder->where('reason', 'like', '%' . $this->filters['reason'] . '%');
         }
 
         return $builder;
