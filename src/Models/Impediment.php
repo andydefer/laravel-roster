@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Roster\Models;
 
+use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Carbon;
@@ -58,7 +59,7 @@ class Impediment extends Model
     /**
      * Get the schedulable entity associated with this impediment.
      *
-     * @return \Illuminate\Database\Eloquent\Relations\MorphTo
+     * @return MorphTo
      */
     public function schedulable()
     {

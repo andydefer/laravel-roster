@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Roster\Traits;
 
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Roster\Models\Availability;
 use Roster\Models\Schedule;
 
@@ -17,7 +18,7 @@ trait HasRoster
     /**
      * Defines the schedules relationship (concrete planned time slots).
      *
-     * @return \Illuminate\Database\Eloquent\Relations\MorphMany
+     * @return MorphMany
      */
     public function schedules()
     {
@@ -27,7 +28,7 @@ trait HasRoster
     /**
      * Defines the availabilities relationship (availability rules).
      *
-     * @return \Illuminate\Database\Eloquent\Relations\MorphMany
+     * @return MorphMany
      */
     public function availabilities()
     {

@@ -37,17 +37,17 @@ class AvailabilityValidator implements AvailabilityValidatorInterface
     /**
      * Check for overlapping availabilities.
      *
-     * @param  Model  $schedulable  The schedulable model (e.g., User, Team)
+     * @param Model $model The schedulable model (e.g., User, Team)
      * @param  array<string, mixed>  $data  New availability data
      * @param  int|null  $exceptId  Availability ID to exclude from check (for updates)
      * @return bool True if overlapping availability exists
      */
     public function hasOverlapping(
-        Model $schedulable,
+        Model $model,
         array $data,
         ?int $exceptId = null
     ): bool {
-        $query = $this->buildOverlapQuery($schedulable, $data, $exceptId);
+        $query = $this->buildOverlapQuery($model, $data, $exceptId);
 
         return $query->exists();
     }
@@ -168,6 +168,7 @@ class AvailabilityValidator implements AvailabilityValidatorInterface
 
     /**
      * Validate that at least one day is specified.
+     * @param array<string, mixed> $data
      */
     private function validateDays(array $data): void
     {
@@ -178,6 +179,7 @@ class AvailabilityValidator implements AvailabilityValidatorInterface
 
     /**
      * Validate time range (end time must be after start time).
+     * @param array<string, mixed> $data
      */
     private function validateTimeRange(array $data): void
     {
@@ -195,6 +197,7 @@ class AvailabilityValidator implements AvailabilityValidatorInterface
 
     /**
      * Validate date range (end date must be on or after start date).
+     * @param array<string, mixed> $data
      */
     private function validateDateRange(array $data): void
     {
@@ -212,11 +215,12 @@ class AvailabilityValidator implements AvailabilityValidatorInterface
 
     /**
      * Build query to check for overlapping availabilities.
+     * @param array<string, mixed> $data
      */
-    private function buildOverlapQuery(Model $schedulable, array $data, ?int $exceptId = null)
+    private function buildOverlapQuery(Model $model, array $data, ?int $exceptId = null)
     {
-        $query = Availability::where('schedulable_id', $schedulable->id)
-            ->where('schedulable_type', get_class($schedulable))
+        $query = Availability::where('schedulable_id', $model->id)
+            ->where('schedulable_type', get_class($model))
             ->where(function ($query) use ($data): void {
                 $this->addDaysFilter($query, $data);
             })
@@ -233,6 +237,7 @@ class AvailabilityValidator implements AvailabilityValidatorInterface
 
     /**
      * Add days filter to query.
+     * @param array<string, mixed> $data
      */
     private function addDaysFilter($query, array $data): void
     {
@@ -249,6 +254,7 @@ class AvailabilityValidator implements AvailabilityValidatorInterface
 
     /**
      * Add time range filter to query.
+     * @param array<string, mixed> $data
      */
     private function addTimeRangeFilter($query, array $data): void
     {
@@ -277,7 +283,7 @@ class AvailabilityValidator implements AvailabilityValidatorInterface
      */
     private function haveCommonDays(Availability $first, Availability $second): bool
     {
-        return ! empty(array_intersect($first->days, $second->days));
+        return array_intersect($first->days, $second->days) !== [];
     }
 
     /**
@@ -285,8 +291,11 @@ class AvailabilityValidator implements AvailabilityValidatorInterface
      */
     private function timeRangesTouch(Availability $first, Availability $second): bool
     {
-        return $first->end_time->eq($second->start_time) ||
-            $second->end_time->eq($first->start_time);
+        if ($first->end_time->eq($second->start_time)) {
+            return true;
+        }
+
+        return (bool) $second->end_time->eq($first->start_time);
     }
 
     /**

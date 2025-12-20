@@ -7,18 +7,32 @@ namespace Tests;
 use Orchestra\Testbench\TestCase as OrchestraTestCase;
 use Roster\RosterServiceProvider;
 
+/**
+ * Base test case for Roster package testing.
+ *
+ * Provides common setup for all package tests including:
+ * - Database migrations loading
+ * - Service provider registration
+ * - Test environment configuration
+ */
 abstract class TestCase extends OrchestraTestCase
 {
+    /**
+     * Set up the test environment.
+     */
     protected function setUp(): void
     {
         parent::setUp();
 
-        $this->loadMigrationsFrom(__DIR__.'/../database/migrations');
-        $this->loadMigrationsFrom(__DIR__.'/database/migrations');
+        $this->loadMigrationsFrom(__DIR__ . '/../database/migrations');
+        $this->loadMigrationsFrom(__DIR__ . '/database/migrations');
     }
 
     /**
-     * Get package providers.
+     * Get the package service providers.
+     *
+     * @param mixed $app Laravel application instance
+     * @return array<class-string>
      */
     protected function getPackageProviders($app): array
     {
@@ -28,7 +42,9 @@ abstract class TestCase extends OrchestraTestCase
     }
 
     /**
-     * Define environment setup.
+     * Define environment setup for testing.
+     *
+     * @param mixed $app Laravel application instance
      */
     protected function defineEnvironment($app): void
     {
@@ -41,11 +57,11 @@ abstract class TestCase extends OrchestraTestCase
     }
 
     /**
-     * Define database migrations.
+     * Define database migrations for testing.
      */
     protected function defineDatabaseMigrations(): void
     {
-        $this->loadMigrationsFrom(__DIR__.'/../database/migrations');
-        $this->loadMigrationsFrom(__DIR__.'/database/migrations');
+        $this->loadMigrationsFrom(__DIR__ . '/../database/migrations');
+        $this->loadMigrationsFrom(__DIR__ . '/database/migrations');
     }
 }

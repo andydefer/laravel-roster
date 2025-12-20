@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Integration;
 
+use PHPUnit\Framework\Attributes\CoversClass;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
@@ -12,39 +13,55 @@ use Roster\Models\Impediment;
 use Roster\Models\Schedule;
 use Tests\TestCase;
 
+/**
+ * Integration tests for Roster model relationships and business logic.
+ */
+#[CoversClass(Availability::class)]
+#[CoversClass(Schedule::class)]
+#[CoversClass(Impediment::class)]
 final class ModelIntegrationTest extends TestCase
 {
     use RefreshDatabase;
 
-    private Model $model;
+    /**
+     * Test model instance.
+     */
+    private Model $testModel;
 
+    /**
+     * {@inheritdoc}
+     */
     protected function setUp(): void
     {
         parent::setUp();
 
-        $this->model = new class extends Model
+        $this->testModel = new class extends Model
         {
             protected $table = 'test_schedulables';
 
             public $timestamps = false;
         };
-        $this->model->id = 1;
-        $this->model->save();
+
+        $this->testModel->id = 1;
+        $this->testModel->save();
     }
 
+    /**
+     * Test availability relationships with schedulable, schedules, and impediments.
+     */
     public function test_availability_relationships(): void
     {
         $availability = Availability::create([
-            'schedulable_id' => $this->model->id,
-            'schedulable_type' => get_class($this->model),
+            'schedulable_id' => $this->testModel->id,
+            'schedulable_type' => get_class($this->testModel),
             'type' => 'consultation',
             'start_time' => '09:00:00',
             'end_time' => '12:00:00',
             'days' => ['monday'],
         ]);
 
-        $this->assertInstanceOf(get_class($this->model), $availability->schedulable);
-        $this->assertSame($this->model->id, $availability->schedulable->id);
+        $this->assertInstanceOf(get_class($this->testModel), $availability->schedulable);
+        $this->assertSame($this->testModel->id, $availability->schedulable->id);
 
         $schedule = Schedule::create([
             'availability_id' => $availability->id,
@@ -59,8 +76,8 @@ final class ModelIntegrationTest extends TestCase
 
         $impediment = Impediment::create([
             'availability_id' => $availability->id,
-            'schedulable_id' => $this->model->id,
-            'schedulable_type' => get_class($this->model),
+            'schedulable_id' => $this->testModel->id,
+            'schedulable_type' => get_class($this->testModel),
             'reason' => 'Test',
             'start_datetime' => '2024-01-01 11:00:00',
             'end_datetime' => '2024-01-01 12:00:00',
@@ -70,11 +87,14 @@ final class ModelIntegrationTest extends TestCase
         $this->assertSame($impediment->id, $availability->impediments->first()->id);
     }
 
+    /**
+     * Test schedule relationships and derived attributes.
+     */
     public function test_schedule_relationships_and_attributes(): void
     {
         $availability = Availability::create([
-            'schedulable_id' => $this->model->id,
-            'schedulable_type' => get_class($this->model),
+            'schedulable_id' => $this->testModel->id,
+            'schedulable_type' => get_class($this->testModel),
             'type' => 'consultation',
             'start_time' => '09:00:00',
             'end_time' => '12:00:00',
@@ -98,11 +118,14 @@ final class ModelIntegrationTest extends TestCase
         $this->assertNotNull($schedulable);
     }
 
+    /**
+     * Test impediment relationships with availability and schedulable.
+     */
     public function test_impediment_relationships(): void
     {
         $availability = Availability::create([
-            'schedulable_id' => $this->model->id,
-            'schedulable_type' => get_class($this->model),
+            'schedulable_id' => $this->testModel->id,
+            'schedulable_type' => get_class($this->testModel),
             'type' => 'consultation',
             'start_time' => '09:00:00',
             'end_time' => '12:00:00',
@@ -111,8 +134,8 @@ final class ModelIntegrationTest extends TestCase
 
         $impediment = Impediment::create([
             'availability_id' => $availability->id,
-            'schedulable_id' => $this->model->id,
-            'schedulable_type' => get_class($this->model),
+            'schedulable_id' => $this->testModel->id,
+            'schedulable_type' => get_class($this->testModel),
             'reason' => 'Test',
             'start_datetime' => '2024-01-01 11:00:00',
             'end_datetime' => '2024-01-01 12:00:00',
@@ -121,10 +144,13 @@ final class ModelIntegrationTest extends TestCase
         $this->assertInstanceOf(Availability::class, $impediment->availability);
         $this->assertSame($availability->id, $impediment->availability->id);
 
-        $this->assertInstanceOf(get_class($this->model), $impediment->schedulable);
-        $this->assertSame($this->model->id, $impediment->schedulable->id);
+        $this->assertInstanceOf(get_class($this->testModel), $impediment->schedulable);
+        $this->assertSame($this->testModel->id, $impediment->schedulable->id);
     }
 
+    /**
+     * Test availability validation methods.
+     */
     public function test_availability_methods(): void
     {
         $availability = new Availability([
@@ -152,6 +178,9 @@ final class ModelIntegrationTest extends TestCase
         $this->assertFalse($availability->isAvailableForSchedule($outsideDateStart, $outsideDateEnd));
     }
 
+    /**
+     * Test schedule business logic methods.
+     */
     public function test_schedule_methods(): void
     {
         $schedule = new Schedule([
@@ -189,6 +218,9 @@ final class ModelIntegrationTest extends TestCase
         $this->assertFalse($upcomingSchedule->isPast());
     }
 
+    /**
+     * Test impediment business logic methods.
+     */
     public function test_impediment_methods(): void
     {
         $impediment = new Impediment([

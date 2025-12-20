@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Facades;
 
+use PHPUnit\Framework\Attributes\CoversClass;
+use Roster\Services\ImpedimentService;
 use BadMethodCallException;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -21,9 +23,8 @@ use Tests\TestCase;
 
 /**
  * Tests for the Impediment facade functionality.
- *
- * @covers \Roster\Facades\Impediment
  */
+#[CoversClass(ImpedimentFacade::class)]
 final class ImpedimentFacadeTest extends TestCase
 {
     use RefreshDatabase;
@@ -52,6 +53,7 @@ final class ImpedimentFacadeTest extends TestCase
 
         $this->schedulableModel = new class extends Model {
             protected $table = 'test_schedulables';
+
             public $timestamps = false;
         };
 
@@ -81,13 +83,11 @@ final class ImpedimentFacadeTest extends TestCase
         ]);
     }
 
-
     /**
      * Test that impediment creation fails when overlapping with existing impediment.
      */
     public function test_impediment_creation_fails_when_overlapping_with_existing_impediment(): void
     {
-        // First impediment: 10:00 - 11:00
         ImpedimentFacade::for($this->schedulableModel)->create(
             $this->juneAvailability,
             [
@@ -97,7 +97,6 @@ final class ImpedimentFacadeTest extends TestCase
             ]
         );
 
-        // Try to create overlapping impediment: 10:30 - 11:30 (overlaps)
         $this->expectException(OverlappingImpedimentException::class);
         $this->expectExceptionMessage('Time slot overlaps with an existing impediment');
 
@@ -116,7 +115,6 @@ final class ImpedimentFacadeTest extends TestCase
      */
     public function test_impediment_creation_fails_when_overlapping_with_existing_schedule(): void
     {
-        // First, create a schedule: 10:00 - 11:00
         Schedule::for($this->schedulableModel)->create(
             $this->juneAvailability,
             [
@@ -126,7 +124,6 @@ final class ImpedimentFacadeTest extends TestCase
             ]
         );
 
-        // Try to create impediment that overlaps: 10:30 - 11:30
         $this->expectException(ScheduleImpedimentOverlapException::class);
         $this->expectExceptionMessage('Cannot schedule when impediment exists, or create impediment that overlaps with schedule');
 
@@ -145,7 +142,6 @@ final class ImpedimentFacadeTest extends TestCase
      */
     public function test_non_overlapping_impediment_can_be_created_successfully(): void
     {
-        // First impediment: 10:00 - 11:00
         ImpedimentFacade::for($this->schedulableModel)->create(
             $this->juneAvailability,
             [
@@ -155,7 +151,6 @@ final class ImpedimentFacadeTest extends TestCase
             ]
         );
 
-        // Non-overlapping impediment: 11:30 - 12:30 (doesn't overlap)
         $impediment = ImpedimentFacade::for($this->schedulableModel)->create(
             $this->juneAvailability,
             [
@@ -174,7 +169,6 @@ final class ImpedimentFacadeTest extends TestCase
      */
     public function test_impediment_update_fails_when_overlapping_with_existing_impediment(): void
     {
-        // First impediment: 10:00 - 11:00
         ImpedimentFacade::for($this->schedulableModel)->create(
             $this->juneAvailability,
             [
@@ -184,7 +178,6 @@ final class ImpedimentFacadeTest extends TestCase
             ]
         );
 
-        // Second impediment: 12:00 - 13:00 (initially doesn't overlap)
         $impediment = ImpedimentFacade::for($this->schedulableModel)->create(
             $this->juneAvailability,
             [
@@ -194,7 +187,6 @@ final class ImpedimentFacadeTest extends TestCase
             ]
         );
 
-        // Try to update second impediment to overlap with first: 10:30 - 11:30
         $this->expectException(ValidationException::class);
 
         ImpedimentFacade::for($this->schedulableModel)->update(
@@ -211,7 +203,6 @@ final class ImpedimentFacadeTest extends TestCase
      */
     public function test_impediment_update_fails_when_overlapping_with_existing_schedule(): void
     {
-        // Create a schedule: 10:00 - 11:00
         Schedule::for($this->schedulableModel)->create(
             $this->juneAvailability,
             [
@@ -221,7 +212,6 @@ final class ImpedimentFacadeTest extends TestCase
             ]
         );
 
-        // Create an impediment: 12:00 - 13:00 (initially doesn't overlap)
         $impediment = ImpedimentFacade::for($this->schedulableModel)->create(
             $this->juneAvailability,
             [
@@ -231,7 +221,6 @@ final class ImpedimentFacadeTest extends TestCase
             ]
         );
 
-        // Try to update impediment to overlap with schedule: 10:30 - 11:30
         $this->expectException(ValidationException::class);
         $this->expectExceptionMessage('Cannot create impediment that overlaps with existing schedule');
 
@@ -249,7 +238,6 @@ final class ImpedimentFacadeTest extends TestCase
      */
     public function test_impediment_update_succeeds_when_changing_non_overlapping_attributes(): void
     {
-        // Create an impediment: 10:00 - 11:00
         $impediment = ImpedimentFacade::for($this->schedulableModel)->create(
             $this->juneAvailability,
             [
@@ -260,7 +248,6 @@ final class ImpedimentFacadeTest extends TestCase
             ]
         );
 
-        // Update only the reason and metadata (keeping same time)
         $updateResult = ImpedimentFacade::for($this->schedulableModel)->update(
             $impediment->id,
             [
@@ -283,7 +270,6 @@ final class ImpedimentFacadeTest extends TestCase
      */
     public function test_impediment_update_succeeds_when_moving_to_non_overlapping_slot(): void
     {
-        // First impediment: 10:00 - 11:00
         ImpedimentFacade::for($this->schedulableModel)->create(
             $this->juneAvailability,
             [
@@ -293,7 +279,6 @@ final class ImpedimentFacadeTest extends TestCase
             ]
         );
 
-        // Second impediment: 12:00 - 13:00
         $impediment = ImpedimentFacade::for($this->schedulableModel)->create(
             $this->juneAvailability,
             [
@@ -303,7 +288,6 @@ final class ImpedimentFacadeTest extends TestCase
             ]
         );
 
-        // Move second impediment to 14:00 - 15:00 (no overlaps)
         $updateResult = ImpedimentFacade::for($this->schedulableModel)->update(
             $impediment->id,
             [
@@ -324,7 +308,6 @@ final class ImpedimentFacadeTest extends TestCase
      */
     public function test_impediment_update_should_exclude_self_from_overlap_check(): void
     {
-        // Create an impediment: 10:00 - 11:00
         $impediment = ImpedimentFacade::for($this->schedulableModel)->create(
             $this->juneAvailability,
             [
@@ -334,7 +317,6 @@ final class ImpedimentFacadeTest extends TestCase
             ]
         );
 
-        // Update with slightly different time (10:15 - 11:15) - should not conflict with itself
         $updateResult = ImpedimentFacade::for($this->schedulableModel)->update(
             $impediment->id,
             [
@@ -358,12 +340,11 @@ final class ImpedimentFacadeTest extends TestCase
         $this->expectException(ValidationException::class);
         $this->expectExceptionMessage('No matching availability found');
 
-        // Availability is 09:00-17:00, trying to create impediment outside those hours
         ImpedimentFacade::for($this->schedulableModel)->create(
             $this->juneAvailability,
             [
                 'reason' => 'Late night work',
-                'start_datetime' => '2038-06-07 18:00:00', // Outside availability hours
+                'start_datetime' => '2038-06-07 18:00:00',
                 'end_datetime' => '2038-06-07 19:00:00',
             ]
         );
@@ -377,12 +358,11 @@ final class ImpedimentFacadeTest extends TestCase
         $this->expectException(ValidationException::class);
         $this->expectExceptionMessage('No matching availability found');
 
-        // June availability is only on Mondays, trying to create on Tuesday
         ImpedimentFacade::for($this->schedulableModel)->create(
             $this->juneAvailability,
             [
                 'reason' => 'Tuesday meeting',
-                'start_datetime' => '2038-06-08 10:00:00', // Tuesday June 8
+                'start_datetime' => '2038-06-08 10:00:00',
                 'end_datetime' => '2038-06-08 11:00:00',
             ]
         );
@@ -400,7 +380,7 @@ final class ImpedimentFacadeTest extends TestCase
             [
                 'reason' => 'Reversed times',
                 'start_datetime' => '2038-06-07 11:00:00',
-                'end_datetime' => '2038-06-07 10:00:00', // End before start
+                'end_datetime' => '2038-06-07 10:00:00',
             ]
         );
     }
@@ -413,13 +393,12 @@ final class ImpedimentFacadeTest extends TestCase
         $this->expectException(ValidationException::class);
         $this->expectExceptionMessage('must be at least');
 
-        // Default minimum impediment duration is 5 minutes
         ImpedimentFacade::for($this->schedulableModel)->create(
             $this->juneAvailability,
             [
                 'reason' => 'Too short',
                 'start_datetime' => '2038-06-07 10:00:00',
-                'end_datetime' => '2038-06-07 10:01:00', // Only 1 minute
+                'end_datetime' => '2038-06-07 10:01:00',
             ]
         );
     }
@@ -429,7 +408,6 @@ final class ImpedimentFacadeTest extends TestCase
      */
     public function test_multiple_non_overlapping_impediments_can_coexist(): void
     {
-        // Create first impediment: 10:00 - 11:00
         $impediment1 = ImpedimentFacade::for($this->schedulableModel)->create(
             $this->juneAvailability,
             [
@@ -439,7 +417,6 @@ final class ImpedimentFacadeTest extends TestCase
             ]
         );
 
-        // Create second impediment: 11:30 - 12:30 (touching but not overlapping)
         $impediment2 = ImpedimentFacade::for($this->schedulableModel)->create(
             $this->juneAvailability,
             [
@@ -449,7 +426,6 @@ final class ImpedimentFacadeTest extends TestCase
             ]
         );
 
-        // Create third impediment: 14:00 - 15:00 (separate)
         $impediment3 = ImpedimentFacade::for($this->schedulableModel)->create(
             $this->juneAvailability,
             [
@@ -472,21 +448,19 @@ final class ImpedimentFacadeTest extends TestCase
      */
     public function test_impediment_update_can_move_to_different_availability_if_no_overlaps(): void
     {
-        // Create an impediment in June availability
         $impediment = ImpedimentFacade::for($this->schedulableModel)->create(
             $this->juneAvailability,
             [
                 'reason' => 'June impediment',
-                'start_datetime' => '2038-06-07 10:00:00', // Monday June 7
+                'start_datetime' => '2038-06-07 10:00:00',
                 'end_datetime' => '2038-06-07 11:00:00',
             ]
         );
 
-        // Update to move to July availability (different day of week)
         $updateResult = ImpedimentFacade::for($this->schedulableModel)->update(
             $impediment->id,
             [
-                'start_datetime' => '2038-07-06 10:00:00', // Tuesday July 6
+                'start_datetime' => '2038-07-06 10:00:00',
                 'end_datetime' => '2038-07-06 11:00:00',
             ]
         );
@@ -503,37 +477,35 @@ final class ImpedimentFacadeTest extends TestCase
      */
     public function test_impediment_update_fails_when_moving_to_availability_with_existing_impediment(): void
     {
-        // Create an impediment in July availability: 10:00 - 11:00
         ImpedimentFacade::for($this->schedulableModel)->create(
             $this->julyAvailability,
             [
                 'reason' => 'Existing July impediment',
-                'start_datetime' => '2038-07-06 10:00:00', // Tuesday July 6
+                'start_datetime' => '2038-07-06 10:00:00',
                 'end_datetime' => '2038-07-06 11:00:00',
             ]
         );
 
-        // Create an impediment in June availability
         $impediment = ImpedimentFacade::for($this->schedulableModel)->create(
             $this->juneAvailability,
             [
                 'reason' => 'June impediment to move',
-                'start_datetime' => '2038-06-07 10:00:00', // Monday June 7
+                'start_datetime' => '2038-06-07 10:00:00',
                 'end_datetime' => '2038-06-07 11:00:00',
             ]
         );
 
-        // Try to move June impediment to overlap with July impediment
         $this->expectException(ValidationException::class);
 
         ImpedimentFacade::for($this->schedulableModel)->update(
             $impediment->id,
             [
-                'start_datetime' => '2038-07-06 10:30:00', // Overlaps with existing July impediment
+                'start_datetime' => '2038-07-06 10:30:00',
                 'end_datetime' => '2038-07-06 11:30:00',
             ]
         );
     }
+
     /**
      * Test creating a new impediment through the facade.
      */
@@ -541,7 +513,7 @@ final class ImpedimentFacadeTest extends TestCase
     {
         $impedimentData = [
             'reason' => 'Out of office',
-            'start_datetime' => '2038-06-07 10:00:00', // Monday, June 7, 2038
+            'start_datetime' => '2038-06-07 10:00:00',
             'end_datetime' => '2038-06-07 11:00:00',
         ];
 
@@ -560,7 +532,7 @@ final class ImpedimentFacadeTest extends TestCase
     {
         $impedimentData = [
             'reason' => 'July holiday',
-            'start_datetime' => '2038-07-06 10:00:00', // Tuesday, July 6, 2038
+            'start_datetime' => '2038-07-06 10:00:00',
             'end_datetime' => '2038-07-06 11:00:00',
         ];
 
@@ -683,15 +655,14 @@ final class ImpedimentFacadeTest extends TestCase
      */
     public function test_facade_can_filter_by_reason(): void
     {
-        // SOLUTION RADICALE : Utiliser un schedulable UNIQUE pour ce test
         $uniqueSchedulable = new class extends Model {
             protected $table = 'test_schedulables';
+
             public $timestamps = false;
         };
-        $uniqueSchedulable->id = 999; // ID unique
+        $uniqueSchedulable->id = 999;
         $uniqueSchedulable->save();
 
-        // Créer une availability pour ce schedulable unique AVEC start_date et end_date
         $uniqueAvailability = Availability::create([
             'schedulable_id' => $uniqueSchedulable->id,
             'schedulable_type' => get_class($uniqueSchedulable),
@@ -699,16 +670,15 @@ final class ImpedimentFacadeTest extends TestCase
             'start_time' => '09:00:00',
             'end_time' => '17:00:00',
             'days' => ['monday'],
-            'start_date' => '2038-06-01', // AJOUTER
-            'end_date' => '2038-06-30',   // AJOUTER
+            'start_date' => '2038-06-01',
+            'end_date' => '2038-06-30',
         ]);
 
-        // Créer les impediments avec le schedulable UNIQUE
         ImpedimentFacade::for($uniqueSchedulable)->create(
             $uniqueAvailability,
             [
                 'reason' => 'Doctor appointment only',
-                'start_datetime' => '2038-06-07 10:00:00', // Lundi 7 juin
+                'start_datetime' => '2038-06-07 10:00:00',
                 'end_datetime' => '2038-06-07 11:00:00',
             ]
         );
@@ -717,12 +687,11 @@ final class ImpedimentFacadeTest extends TestCase
             $uniqueAvailability,
             [
                 'reason' => 'Team lunch meeting',
-                'start_datetime' => '2038-06-07 12:00:00', // Lundi 7 juin
+                'start_datetime' => '2038-06-07 12:00:00',
                 'end_datetime' => '2038-06-07 13:00:00',
             ]
         );
 
-        // Maintenant filtrer - devrait trouver exactement 1
         $filteredImpediments = ImpedimentFacade::for($uniqueSchedulable)
             ->resetFilters()
             ->whereReason('Doctor appointment only')
@@ -818,7 +787,7 @@ final class ImpedimentFacadeTest extends TestCase
         $this->assertTrue($deletionResult);
 
         $finalFind = ImpedimentFacade::for($this->schedulableModel)->find($impediment->id);
-        $this->assertNull($finalFind);
+        $this->assertNotInstanceOf(\Roster\Models\Impediment::class, $finalFind);
     }
 
     /**
@@ -890,25 +859,22 @@ final class ImpedimentFacadeTest extends TestCase
             'end_date' => '2038-06-30',
         ]);
 
-        // Réinitialiser les filtres d'abord
         $impediments = ImpedimentFacade::for($this->schedulableModel)
             ->resetFilters()
             ->whereAvailabilityId($anotherAvailability->id)
             ->get();
 
-        $this->assertCount(0, $impediments); // Aucun impediment n'a encore été créé pour cette availability
+        $this->assertCount(0, $impediments);
 
-        // Créer un impediment pour l'autre availability
         ImpedimentFacade::for($this->schedulableModel)->create(
             $anotherAvailability,
             [
                 'reason' => 'Training impediment',
-                'start_datetime' => '2038-06-09 10:00:00', // Mercredi 9 juin
+                'start_datetime' => '2038-06-09 10:00:00',
                 'end_datetime' => '2038-06-09 11:00:00',
             ]
         );
 
-        // Maintenant filtrer
         $impediments = ImpedimentFacade::for($this->schedulableModel)
             ->resetFilters()
             ->whereAvailabilityId($anotherAvailability->id)
@@ -918,6 +884,7 @@ final class ImpedimentFacadeTest extends TestCase
         $this->assertSame('Training impediment', $impediments->first()->reason);
         $this->assertSame($anotherAvailability->id, $impediments->first()->availability_id);
     }
+
     /**
      * Test resetting filters.
      */
@@ -927,7 +894,7 @@ final class ImpedimentFacadeTest extends TestCase
             ->whereReason('test')
             ->resetFilters();
 
-        $this->assertInstanceOf(\Roster\Services\ImpedimentService::class, $service);
+        $this->assertInstanceOf(ImpedimentService::class, $service);
     }
 
     /**
@@ -935,8 +902,8 @@ final class ImpedimentFacadeTest extends TestCase
      */
     public function test_facade_can_get_schedulable(): void
     {
-        $service = ImpedimentFacade::for($this->schedulableModel);
-        $schedulable = $service->getSchedulable();
+        $impedimentService = ImpedimentFacade::for($this->schedulableModel);
+        $schedulable = $impedimentService->getSchedulable();
 
         $this->assertInstanceOf(Model::class, $schedulable);
         $this->assertSame($this->schedulableModel->id, $schedulable->id);

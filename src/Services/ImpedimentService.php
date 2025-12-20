@@ -6,7 +6,6 @@ namespace Roster\Services;
 
 use BadMethodCallException;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use InvalidArgumentException;
@@ -35,24 +34,12 @@ class ImpedimentService extends AbstractSchedulableService
 {
     use FilterableTrait;
 
-    /**
-     * @var ValidationServiceInterface
-     */
     protected ValidationServiceInterface $validationService;
 
-    /**
-     * @var AvailabilityRepositoryInterface
-     */
     protected AvailabilityRepositoryInterface $availabilityRepository;
 
-    /**
-     * @var ImpedimentRepositoryInterface
-     */
     protected ImpedimentRepositoryInterface $impedimentRepository;
 
-    /**
-     * @var ScheduleRepositoryInterface
-     */
     protected ScheduleRepositoryInterface $scheduleRepository;
 
     /**
@@ -60,12 +47,6 @@ class ImpedimentService extends AbstractSchedulableService
      */
     protected ?Impediment $currentImpediment = null;
 
-    /**
-     * @param ValidationServiceInterface $validationService
-     * @param AvailabilityRepositoryInterface $availabilityRepository
-     * @param ImpedimentRepositoryInterface $impedimentRepository
-     * @param ScheduleRepositoryInterface $scheduleRepository
-     */
     public function __construct(
         ValidationServiceInterface $validationService,
         AvailabilityRepositoryInterface $availabilityRepository,
@@ -140,7 +121,7 @@ class ImpedimentService extends AbstractSchedulableService
 
         $availability = $this->availabilityRepository->find($availabilityId);
 
-        if (!$availability) {
+        if (!$availability instanceof Availability) {
             throw new ValidationException(ValidationType::INVALID_AVAILABILITY);
         }
 

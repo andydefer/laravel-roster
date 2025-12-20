@@ -30,9 +30,7 @@ class ScheduleRepository extends AbstractRepository implements ScheduleRepositor
     {
         $schedule = $this->find($id);
 
-        return $schedule instanceof Schedule
-            ? $schedule->update($data)
-            : false;
+        return $schedule instanceof Schedule && $schedule->update($data);
     }
 
     /**
@@ -200,7 +198,6 @@ class ScheduleRepository extends AbstractRepository implements ScheduleRepositor
      * @param int $schedulableId The schedulable ID
      * @param string $schedulableType The schedulable class type
      * @param array<string, mixed> $filters Filters to apply
-     * @return Builder
      */
     public function buildQueryWithFilters(
         int $schedulableId,

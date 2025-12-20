@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Tests\Integration\Services\Core;
+namespace Tests\Integration;
 
 use Illuminate\Support\Carbon;
 use Roster\Contracts\Services\ValidationServiceInterface;
@@ -132,6 +132,7 @@ final class ValidationServiceTest extends TestCase
 
     public function test_validate_timezone_with_valid_timezone(): void
     {
+
         $this->assertTrue($this->validationService->validateTimezone('UTC'));
         $this->assertTrue($this->validationService->validateTimezone('Europe/Paris'));
         $this->assertTrue($this->validationService->validateTimezone('America/New_York'));

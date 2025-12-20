@@ -164,8 +164,6 @@ trait FilterableTrait
      * Adds a start date filter.
      *
      * @param Carbon $date Start date threshold
-     *
-     * @return self
      */
     public function whereStartDate(Carbon $date): self
     {
@@ -178,8 +176,6 @@ trait FilterableTrait
      * Adds an end date filter.
      *
      * @param Carbon $date End date threshold
-     *
-     * @return self
      */
     public function whereEndDate(Carbon $date): self
     {
@@ -192,8 +188,6 @@ trait FilterableTrait
      * Adds a status filter.
      *
      * @param string $status Status value to filter by
-     *
-     * @return self
      */
     public function whereStatus(string $status): self
     {
@@ -206,8 +200,6 @@ trait FilterableTrait
      * Adds a reason filter for impediments.
      *
      * @param string $reason Reason text to filter by (partial match)
-     *
-     * @return self
      */
     public function whereReason(string $reason): self
     {
@@ -220,8 +212,6 @@ trait FilterableTrait
      * Adds an availability ID filter.
      *
      * @param int $availabilityId Availability ID to filter by
-     *
-     * @return self
      */
     public function whereAvailabilityId(int $availabilityId): self
     {
@@ -232,8 +222,6 @@ trait FilterableTrait
 
     /**
      * Clears all active filters.
-     *
-     * @return self
      */
     public function clearFilters(): self
     {

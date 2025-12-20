@@ -30,9 +30,7 @@ class ImpedimentRepository extends AbstractRepository implements ImpedimentRepos
     {
         $impediment = $this->find($id);
 
-        return $impediment instanceof Impediment
-            ? $impediment->update($data)
-            : false;
+        return $impediment instanceof Impediment && $impediment->update($data);
     }
 
     /**

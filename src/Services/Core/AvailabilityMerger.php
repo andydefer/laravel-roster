@@ -35,13 +35,13 @@ class AvailabilityMerger implements AvailabilityMergerInterface
      * merges them when possible, and removes the merged entities to avoid duplicates.
      *
      * @param array<string, mixed> $data The new availability data to merge
-     * @param Model $schedulable The schedulable entity (e.g., User, Team)
+     * @param Model $model The schedulable entity (e.g., User, Team)
      *
      * @return array<string, mixed> The merged availability data
      */
-    public function mergeAdjacentAvailabilities(array $data, Model $schedulable): array
+    public function mergeAdjacentAvailabilities(array $data, Model $model): array
     {
-        $adjacentAvailabilities = $this->getAdjacentAvailabilities($data, $schedulable);
+        $adjacentAvailabilities = $this->getAdjacentAvailabilities($data, $model);
 
         if ($adjacentAvailabilities->isEmpty()) {
             return $data;
@@ -52,7 +52,7 @@ class AvailabilityMerger implements AvailabilityMergerInterface
 
         foreach ($adjacentAvailabilities as $adjacentAvailability) {
             try {
-                $temporaryAvailability = $this->createAvailabilityFromData($mergedData, $schedulable);
+                $temporaryAvailability = $this->createAvailabilityFromData($mergedData, $model);
 
                 if ($this->availabilityValidator->areAdjacent($temporaryAvailability, $adjacentAvailability)) {
                     $mergedData = $this->availabilityValidator->mergeAdjacent(
@@ -77,14 +77,14 @@ class AvailabilityMerger implements AvailabilityMergerInterface
      * Find availabilities adjacent to the provided data.
      *
      * @param array<string, mixed> $data The availability data to check against
-     * @param Model $schedulable The schedulable entity
+     * @param Model $model The schedulable entity
      *
      * @return Collection<int, Availability> Collection of adjacent availabilities
      */
-    public function getAdjacentAvailabilities(array $data, Model $schedulable): Collection
+    public function getAdjacentAvailabilities(array $data, Model $model): Collection
     {
-        $existingAvailabilities = $this->availabilityRepository->findByType($schedulable, $data);
-        $temporaryAvailability = $this->createAvailabilityFromData($data, $schedulable);
+        $existingAvailabilities = $this->availabilityRepository->findByType($model, $data);
+        $temporaryAvailability = $this->createAvailabilityFromData($data, $model);
 
         return $existingAvailabilities->filter(
             fn(Availability $availability): bool => $this->availabilityValidator->areAdjacent(
@@ -98,18 +98,18 @@ class AvailabilityMerger implements AvailabilityMergerInterface
      * Create a temporary Availability instance from raw data.
      *
      * @param array<string, mixed> $data The availability data
-     * @param Model $schedulable The schedulable entity
+     * @param Model $model The schedulable entity
      *
      * @return Availability A temporary Availability instance
      */
-    private function createAvailabilityFromData(array $data, Model $schedulable): Availability
+    private function createAvailabilityFromData(array $data, Model $model): Availability
     {
         ['start' => $startTime, 'end' => $endTime] = $this->validationService
             ->parseAndValidateTimeRange($data);
 
         return new Availability([
-            'schedulable_id' => $schedulable->id,
-            'schedulable_type' => get_class($schedulable),
+            'schedulable_id' => $model->id,
+            'schedulable_type' => get_class($model),
             'start_time' => $startTime,
             'end_time' => $endTime,
             'days' => $data['days'] ?? [],

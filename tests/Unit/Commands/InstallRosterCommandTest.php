@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Commands;
 
-use ReflectionMethod;
-use Symfony\Component\Console\Input\InputDefinition;
-use Symfony\Component\Console\Input\InputOption;
-use ReflectionClass;
 use Illuminate\Console\OutputStyle;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use ReflectionClass;
+use ReflectionMethod;
 use Roster\Commands\InstallRosterCommand;
 use Symfony\Component\Console\Input\ArrayInput;
+use Symfony\Component\Console\Input\InputDefinition;
+use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\Output;
 use Tests\TestCase;
 
@@ -45,7 +45,7 @@ trait CapturesOutput
 }
 
 /**
- * Unit tests for the InstallRosterCommand.
+ * Tests unitaires pour la commande d'installation du package Roster.
  */
 final class InstallRosterCommandTest extends TestCase
 {

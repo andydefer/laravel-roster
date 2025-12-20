@@ -6,7 +6,6 @@ namespace Roster\Services;
 
 use BadMethodCallException;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use InvalidArgumentException;
@@ -36,10 +35,15 @@ class ScheduleService extends AbstractSchedulableService
     use FilterableTrait;
 
     protected ValidationServiceInterface $validationService;
+
     protected AvailabilityRepositoryInterface $availabilityRepository;
+
     protected ImpedimentRepositoryInterface $impedimentRepository;
+
     protected ScheduleRepositoryInterface $scheduleRepository;
+
     protected SlotFinderInterface $slotFinder;
+
     protected ?Schedule $currentSchedule = null;
 
     /**

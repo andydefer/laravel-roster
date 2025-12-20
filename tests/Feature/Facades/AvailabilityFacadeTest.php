@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Facades;
 
+use PHPUnit\Framework\Attributes\CoversClass;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
@@ -14,9 +15,8 @@ use Tests\TestCase;
 
 /**
  * Tests for the Availability facade functionality.
- *
- * @covers \Roster\Facades\Availability
  */
+#[CoversClass(AvailabilityFacade::class)]
 final class AvailabilityFacadeTest extends TestCase
 {
     /**
@@ -33,6 +33,7 @@ final class AvailabilityFacadeTest extends TestCase
 
         $this->schedulableModel = new class extends Model {
             protected $table = 'test_schedulables';
+
             public $timestamps = false;
         };
 
@@ -53,7 +54,7 @@ final class AvailabilityFacadeTest extends TestCase
     /**
      * Test creating a new availability through the facade.
      */
-    public function test_facade_can_create_availability(): void
+    public function test_availability_can_be_created_through_facade(): void
     {
         $availabilityData = [
             'type' => 'consultation',
@@ -76,7 +77,7 @@ final class AvailabilityFacadeTest extends TestCase
     /**
      * Test finding an existing availability by ID.
      */
-    public function test_facade_can_find_availability(): void
+    public function test_existing_availability_can_be_found(): void
     {
         $availability = Availability::create([
             'schedulable_id' => $this->schedulableModel->id,
@@ -96,7 +97,7 @@ final class AvailabilityFacadeTest extends TestCase
     /**
      * Test retrieving all availabilities for the schedulable.
      */
-    public function test_facade_can_get_all_availabilities(): void
+    public function test_all_availabilities_can_be_retrieved(): void
     {
         Availability::create([
             'schedulable_id' => $this->schedulableModel->id,
@@ -189,7 +190,7 @@ final class AvailabilityFacadeTest extends TestCase
     /**
      * Test checking availability at a specific datetime.
      */
-    public function test_facade_can_check_availability_at_time(): void
+    public function test_availability_at_specific_time_can_be_checked(): void
     {
         Availability::create([
             'schedulable_id' => $this->schedulableModel->id,
@@ -267,8 +268,8 @@ final class AvailabilityFacadeTest extends TestCase
             'start_time' => '10:00:00',
             'end_time' => '11:00:00',
             'days' => ['monday'],
-            'start_date' => '2038-01-01', // Ajout requis
-            'end_date' => '2038-12-31',   // Ajout requis
+            'start_date' => '2038-01-01',
+            'end_date' => '2038-12-31',
         ];
 
         $overlapping = AvailabilityFacade::for($this->schedulableModel)
@@ -278,17 +279,14 @@ final class AvailabilityFacadeTest extends TestCase
         $this->assertSame('consultation', $overlapping->first()->type);
     }
 
-
     /**
      * Test finding adjacent availabilities.
      */
     public function test_facade_can_find_adjacent_availabilities(): void
     {
-        // Utiliser les mêmes jours et type pour les trois availabilities
         $commonDay = 'monday';
         $commonType = 'consultation';
 
-        // Créer trois availabilities qui se touchent
         Availability::create([
             'schedulable_id' => $this->schedulableModel->id,
             'schedulable_type' => get_class($this->schedulableModel),
@@ -304,7 +302,7 @@ final class AvailabilityFacadeTest extends TestCase
             'schedulable_id' => $this->schedulableModel->id,
             'schedulable_type' => get_class($this->schedulableModel),
             'type' => $commonType,
-            'start_time' => '12:00:00', // Commence exactement où la première finit
+            'start_time' => '12:00:00',
             'end_time' => '14:00:00',
             'days' => [$commonDay],
             'start_date' => '2038-01-01',
@@ -312,7 +310,7 @@ final class AvailabilityFacadeTest extends TestCase
         ]);
 
         $checkData = [
-            'start_time' => '14:00:00', // Commence exactement où la deuxième finit
+            'start_time' => '14:00:00',
             'end_time' => '17:00:00',
             'days' => [$commonDay],
             'start_date' => '2038-01-01',
@@ -323,7 +321,7 @@ final class AvailabilityFacadeTest extends TestCase
         $adjacent = AvailabilityFacade::for($this->schedulableModel)
             ->findByType($checkData);
 
-        $this->assertCount(1, $adjacent); // Seule la deuxième est adjacente
+        $this->assertCount(1, $adjacent);
         $this->assertSame('12:00:00', $adjacent->first()->start_time->format('H:i:s'));
     }
 
@@ -402,11 +400,11 @@ final class AvailabilityFacadeTest extends TestCase
      */
     public function test_facade_can_reset_filters(): void
     {
-        $service = AvailabilityFacade::for($this->schedulableModel)
+        $availabilityService = AvailabilityFacade::for($this->schedulableModel)
             ->whereType('consultation')
             ->resetFilters();
 
-        $this->assertInstanceOf(AvailabilityService::class, $service);
+        $this->assertInstanceOf(AvailabilityService::class, $availabilityService);
     }
 
     /**
@@ -414,8 +412,8 @@ final class AvailabilityFacadeTest extends TestCase
      */
     public function test_facade_can_get_schedulable(): void
     {
-        $service = AvailabilityFacade::for($this->schedulableModel);
-        $schedulable = $service->getSchedulable();
+        $availabilityService = AvailabilityFacade::for($this->schedulableModel);
+        $schedulable = $availabilityService->getSchedulable();
 
         $this->assertInstanceOf(Model::class, $schedulable);
         $this->assertSame($this->schedulableModel->id, $schedulable->id);

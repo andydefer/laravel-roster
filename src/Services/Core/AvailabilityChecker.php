@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Roster\Services\Core;
 
+use InvalidArgumentException;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Carbon;
 use Roster\Contracts\Repository\AvailabilityRepositoryInterface;
@@ -38,9 +39,8 @@ class AvailabilityChecker implements AvailabilityCheckerInterface
      * @param Carbon $end End of the time period
      * @param string|null $type Optional availability type filter
      * @return bool True if the resource is available for the entire period
-     * @throws \InvalidArgumentException If the time range is invalid
+     * @throws InvalidArgumentException If the time range is invalid
      */
-
     public function isAvailableForPeriod(
         Model $model,
         Carbon $start,
@@ -61,7 +61,7 @@ class AvailabilityChecker implements AvailabilityCheckerInterface
      * @param array<string, mixed> $data Availability data containing start and end times
      * @param int|null $exceptId Optional ID to exclude from overlap checking (for updates)
      * @return bool True if overlapping availabilities exist
-     * @throws \InvalidArgumentException If the time range data is invalid
+     * @throws InvalidArgumentException If the time range data is invalid
      */
     public function hasOverlapping(
         Model $model,

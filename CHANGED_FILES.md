@@ -1,19 +1,23 @@
 # Changed and Untracked Files
-*Updated: sam. 20 déc. 2025 19:33:07 WAT*
+*Updated: sam. 20 déc. 2025 21:00:12 WAT*
 
 ## Files to Review (modifications on checked files)
-1. src/Contracts/Repository/AvailabilityRepositoryInterface.php [x]
-2. src/Contracts/Repository/ScheduleRepositoryInterface.php [x]
-3. src/Repositories/AbstractRepository.php [x]
-4. src/Repositories/AvailabilityRepository.php [x]
-5. src/Repositories/ImpedimentRepository.php [x]
-6. src/Repositories/ScheduleRepository.php [x]
-7. src/Services/AvailabilityService.php [x]
-8. src/Services/Core/AbstractSchedulableService.php [x]
-9. src/Services/Core/ValidationService.php [x]
-10. src/Services/ImpedimentService.php [x]
-11. src/Services/ScheduleService.php [x]
+1. tests/Feature/Facades/AvailabilityFacadeTest.php [x]
+2. tests/Feature/Facades/ImpedimentFacadeTest.php [x]
+3. tests/Feature/Facades/ScheduleFacadeTest.php [x]
+4. tests/Feature/Services/AvailabilityServiceTest.php [x]
+5. tests/Feature/Services/ImpedimentServiceTest.php [x]
+6. tests/Feature/Services/ScheduleServiceTest.php [x]
+7. tests/Integration/ModelIntegrationTest.php [x]
+8. tests/Integration/RepositoryIntegrationTest.php [x]
+9. tests/Integration/ServiceIntegrationTest.php [x]
+10. tests/Integration/ValidationServiceTest.php [x]
+11. tests/TestCase.php [x]
+12. tests/Unit/Commands/InstallRosterCommandTest.php [x]
+13. tests/Unit/Services/AvailabilityValidatorTest.php [x]
 
 ## Other Modified Files
-1. tests/Feature/Services/ImpedimentServiceTest.php [ ]
+1. tests/Unit/Services/Core/ValidationServiceTest.php [ ]
+2. tests/Unit/Services/Enums/DaysOfWeekTest.php [ ]
+3. tests/Unit/Services/TestSchedulable.php [ ]
 

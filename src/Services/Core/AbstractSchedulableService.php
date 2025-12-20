@@ -41,7 +41,6 @@ abstract class AbstractSchedulableService implements SchedulableServiceInterface
      * Scope the service to a specific parent model.
      *
      * @param Model $model The schedulable model to scope to
-     * @return static
      */
     final public function for(Model $model): static
     {
@@ -54,7 +53,6 @@ abstract class AbstractSchedulableService implements SchedulableServiceInterface
      * Set multiple filters at once and merge them with existing filters.
      *
      * @param array<string, mixed> $filtersArray Array of filters to apply
-     * @return static
      */
     final public function setFilters(array $filtersArray): static
     {
@@ -67,7 +65,6 @@ abstract class AbstractSchedulableService implements SchedulableServiceInterface
      *
      * @param string $key The filter key (e.g. 'type', 'reason', 'start_date')
      * @param mixed $value The value to filter by
-     * @return static
      */
     final public function setFilter(string $key, mixed $value): static
     {
@@ -78,8 +75,6 @@ abstract class AbstractSchedulableService implements SchedulableServiceInterface
 
     /**
      * Get the current schedulable model.
-     *
-     * @return Model|null
      */
     final public function getSchedulable(): ?Model
     {
@@ -88,8 +83,6 @@ abstract class AbstractSchedulableService implements SchedulableServiceInterface
 
     /**
      * Clear all applied filters.
-     *
-     * @return static
      */
     final public function resetFilters(): static
     {
@@ -102,7 +95,6 @@ abstract class AbstractSchedulableService implements SchedulableServiceInterface
      * Filter results by type.
      *
      * @param string $type The type to filter by
-     * @return static
      */
     final public function whereType(string $type): static
     {
@@ -113,8 +105,6 @@ abstract class AbstractSchedulableService implements SchedulableServiceInterface
 
     /**
      * Return all matching results.
-     *
-     * @return Collection
      */
     final public function all(): Collection
     {
@@ -124,7 +114,6 @@ abstract class AbstractSchedulableService implements SchedulableServiceInterface
     /**
      * Execute the query with the current filters.
      *
-     * @return Collection
      * @throws MissingSchedulableException
      */
     final public function get(): Collection
@@ -242,7 +231,7 @@ abstract class AbstractSchedulableService implements SchedulableServiceInterface
     final protected function validateConfigurationRules(string $operation): void
     {
         $entityType = $this->getEntityType();
-        $entityConfig = Config::get(key: "roster.validate_future_dates.{$entityType}", default: []);
+        $entityConfig = Config::get(key: 'roster.validate_future_dates.' . $entityType, default: []);
         $globalEnabled = Config::get(key: 'roster.validate_future_dates.enabled', default: true);
         $entityEnabled = $entityConfig['enabled'] ?? $globalEnabled;
 
@@ -403,9 +392,10 @@ abstract class AbstractSchedulableService implements SchedulableServiceInterface
                 $validationService = $this->getValidationService();
                 if (! $validationService->validateTimezone(timezone: $timezone)) {
                     throw ValidationException::withMessage(
-                        message: "Invalid timezone: {$timezone}"
+                        message: 'Invalid timezone: ' . $timezone
                     );
                 }
+
                 break;
             }
         }
@@ -424,12 +414,12 @@ abstract class AbstractSchedulableService implements SchedulableServiceInterface
 
         $prefix = Config::get(key: 'roster.cache.prefix', default: 'roster_');
         $entityType = $this->getEntityType();
-        $cacheKey = "{$prefix}{$entityType}_{$entityId}";
+        $cacheKey = sprintf('%s%s_%d', $prefix, $entityType, $entityId);
 
         Cache::forget(key: $cacheKey);
 
         if (Config::get(key: 'roster.cache.use_tags', default: true)) {
-            Cache::tags(names: ["{$entityType}_{$entityId}"])->flush();
+            Cache::tags(names: [sprintf('%s_%d', $entityType, $entityId)])->flush();
         }
     }
 
@@ -443,7 +433,7 @@ abstract class AbstractSchedulableService implements SchedulableServiceInterface
     {
         $entityType = $this->getEntityType();
         $configFields = Config::get(
-            key: "roster.validation.required_fields.{$entityType}",
+            key: 'roster.validation.required_fields.' . $entityType,
             default: []
         );
         $allRequired = array_unique(array: array_merge($configFields, $requiredFields));
@@ -451,7 +441,7 @@ abstract class AbstractSchedulableService implements SchedulableServiceInterface
         foreach ($allRequired as $field) {
             if (empty($this->data[$field] ?? null)) {
                 throw ValidationException::withMessage(
-                    message: "Field '{$field}' is required"
+                    message: sprintf("Field '%s' is required", $field)
                 );
             }
         }
@@ -548,8 +538,6 @@ abstract class AbstractSchedulableService implements SchedulableServiceInterface
 
     /**
      * Get validation service instance.
-     *
-     * @return ValidationServiceInterface
      */
     abstract protected function getValidationService(): ValidationServiceInterface;
 
@@ -594,8 +582,6 @@ abstract class AbstractSchedulableService implements SchedulableServiceInterface
 
     /**
      * Apply filters to the query.
-     *
-     * @return Builder
      */
     abstract protected function buildQueryWithFilters(): Builder;
 }
