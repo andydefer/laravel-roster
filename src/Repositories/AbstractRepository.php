@@ -42,7 +42,7 @@ abstract class AbstractRepository
      *
      * @return TModel|null The found model or null
      */
-    abstract public function findById(int $id): ?Model;
+    abstract public function find(int $id): ?Model;
 
     /**
      * Get all records.

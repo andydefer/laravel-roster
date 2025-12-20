@@ -147,6 +147,70 @@ final class ImpedimentServiceTest extends TestCase
         ]);
     }
 
+    public function test_create_impediment_outside_availability_days_throws_exception(): void
+    {
+        $data = [
+            'reason' => 'Test',
+            'start_datetime' => '2038-06-08 10:00:00', // Mardi 8 juin (l'Availability n'est que les lundis)
+            'end_datetime' => '2038-06-08 11:00:00',
+        ];
+
+        $this->expectException(ValidationException::class);
+        $this->expectExceptionMessage('No matching availability found');
+
+        $this->impedimentService->create($this->availability, $data);
+    }
+
+    public function test_create_impediment_outside_availability_time_range_throws_exception(): void
+    {
+        $data = [
+            'reason' => 'Test',
+            'start_datetime' => '2038-06-07 08:00:00', // Avant 09:00
+            'end_datetime' => '2038-06-07 08:30:00',
+        ];
+
+        $this->expectException(ValidationException::class);
+        $this->expectExceptionMessage('No matching availability found');
+
+        $this->impedimentService->create($this->availability, $data);
+    }
+
+    public function test_between_with_filters(): void
+    {
+        // Créer des impediments avec différents types et raisons
+        $this->impedimentService->create($this->availability, [
+            'reason' => 'Meeting consultation',
+            'start_datetime' => '2038-06-07 10:00:00',
+            'end_datetime' => '2038-06-07 11:00:00',
+        ]);
+
+        // Ajouter un filtre par raison
+        $this->impedimentService->setFilters(['reason' => 'Meeting']);
+
+        $start = Carbon::parse('2038-06-07 00:00:00');
+        $end = Carbon::parse('2038-06-07 23:59:59');
+
+        $impediments = $this->impedimentService->between($start, $end);
+
+        $this->assertCount(1, $impediments);
+        $this->assertSame('Meeting consultation', $impediments[0]->reason);
+    }
+
+    public function test_create_impediment_with_json_metadata_converts_to_array(): void
+    {
+        $data = [
+            'reason' => 'Test',
+            'start_datetime' => '2038-06-07 10:00:00',
+            'end_datetime' => '2038-06-07 11:00:00',
+            'metadata' => '{"notes": "test", "priority": "high"}',
+        ];
+
+        $impediment = $this->impedimentService->create($this->availability, $data);
+
+        $this->assertIsArray($impediment->metadata);
+        $this->assertSame('test', $impediment->metadata['notes']);
+        $this->assertSame('high', $impediment->metadata['priority']);
+    }
     public function test_update_impediment_successfully(): void
     {
         // Créer d'abord un impediment
@@ -167,6 +231,18 @@ final class ImpedimentServiceTest extends TestCase
         $impediment->refresh();
         $this->assertSame('Updated reason', $impediment->reason);
         $this->assertSame(['notes' => 'Updated notes'], $impediment->metadata);
+    }
+
+    public function test_delete_non_existent_impediment_returns_false(): void
+    {
+        $result = $this->impedimentService->delete(999);
+        $this->assertFalse($result);
+    }
+
+    public function test_find_non_existent_impediment_returns_null(): void
+    {
+        $result = $this->impedimentService->find(999);
+        $this->assertNull($result);
     }
 
     public function test_update_impediment_with_time_change(): void

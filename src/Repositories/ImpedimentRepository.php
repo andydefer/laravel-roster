@@ -28,7 +28,7 @@ class ImpedimentRepository extends AbstractRepository implements ImpedimentRepos
      */
     public function update(int $id, array $data): bool
     {
-        $impediment = $this->findById($id);
+        $impediment = $this->find($id);
 
         return $impediment instanceof Impediment
             ? $impediment->update($data)
@@ -40,7 +40,7 @@ class ImpedimentRepository extends AbstractRepository implements ImpedimentRepos
      */
     public function delete(int $id): bool
     {
-        $impediment = $this->findById($id);
+        $impediment = $this->find($id);
 
         return $impediment instanceof Impediment
             ? $impediment->delete()
@@ -50,7 +50,7 @@ class ImpedimentRepository extends AbstractRepository implements ImpedimentRepos
     /**
      * {@inheritdoc}
      */
-    public function findById(int $id): ?Impediment
+    public function find(int $id): ?Impediment
     {
         return Impediment::find($id);
     }

@@ -234,7 +234,7 @@ class AvailabilityService extends AbstractSchedulableService
     public function find(int $id): ?Availability
     {
         $this->validateSchedulable();
-        return $this->availabilityRepository->findById($id);
+        return $this->availabilityRepository->find($id);
     }
 
     /**

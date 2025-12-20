@@ -43,7 +43,7 @@ class AvailabilityRepository extends AbstractRepository implements AvailabilityR
      */
     public function update(int $id, array $data): bool
     {
-        $availability = $this->findById($id);
+        $availability = $this->find($id);
 
         return match (true) {
             $availability instanceof Availability => $availability->update($data),
@@ -56,7 +56,7 @@ class AvailabilityRepository extends AbstractRepository implements AvailabilityR
      */
     public function delete(int $id): bool
     {
-        $availability = $this->findById($id);
+        $availability = $this->find($id);
 
         return match (true) {
             $availability instanceof Availability => $availability->delete(),
@@ -78,7 +78,7 @@ class AvailabilityRepository extends AbstractRepository implements AvailabilityR
     /**
      * {@inheritdoc}
      */
-    public function findById(int $id): ?Availability
+    public function find(int $id): ?Availability
     {
         return Availability::find($id);
     }

@@ -48,7 +48,7 @@ interface ScheduleRepositoryInterface
      * @param  int  $id  Schedule ID
      * @return Schedule|null Schedule instance or null if not found
      */
-    public function findById(int $id): ?Schedule;
+    public function find(int $id): ?Schedule;
 
     /**
      * Find schedules for a specific time slot within an availability.

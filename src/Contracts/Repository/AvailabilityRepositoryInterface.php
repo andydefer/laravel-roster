@@ -49,7 +49,7 @@ interface AvailabilityRepositoryInterface
      * @param  int  $id  Availability ID
      * @return Availability|null Availability instance or null if not found
      */
-    public function findById(int $id): ?Availability;
+    public function find(int $id): ?Availability;
 
     /**
      * Find availability for a specific time slot.

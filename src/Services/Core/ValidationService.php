@@ -13,7 +13,12 @@ use Roster\Exceptions\ValidationException;
 class ValidationService implements ValidationServiceInterface
 {
     /**
-     * Validate time range with proper context.
+     * Validates that a start time occurs before an end time.
+     *
+     * @param Carbon $start The start datetime
+     * @param Carbon $end The end datetime
+     * @param string $context The context for field naming (e.g., 'datetime', 'time')
+     * @throws TimeRangeValidationException When end time is less than or equal to start time
      */
     public function validateTimeRange(
         Carbon $start,
@@ -22,12 +27,19 @@ class ValidationService implements ValidationServiceInterface
     ): void {
         if ($end->lte($start)) {
             throw new TimeRangeValidationException([
-                'start_'.$context => $start->format('Y-m-d H:i:s'),
-                'end_'.$context => $end->format('Y-m-d H:i:s'),
+                'start_' . $context => $start->format('Y-m-d H:i:s'),
+                'end_' . $context => $end->format('Y-m-d H:i:s'),
             ]);
         }
     }
 
+    /**
+     * Validates that duration and interval minutes are positive integers.
+     *
+     * @param int $durationMinutes Total duration in minutes
+     * @param int $intervalMinutes Interval duration in minutes
+     * @throws ValidationException When either value is zero or negative
+     */
     public function validateDurationAndInterval(int $durationMinutes, int $intervalMinutes): void
     {
         if ($durationMinutes <= 0 || $intervalMinutes <= 0) {
@@ -42,7 +54,10 @@ class ValidationService implements ValidationServiceInterface
     }
 
     /**
-     * Validate that a date is in the future.
+     * Validates that a date is in the future.
+     *
+     * @param Carbon $date The date to validate
+     * @throws ValidationException When date is in the past (if validation is enabled)
      */
     public function validateFutureDate(Carbon $date): void
     {
@@ -52,20 +67,19 @@ class ValidationService implements ValidationServiceInterface
     }
 
     /**
-     * Validate minimum duration.
+     * Validates that a time range meets minimum duration requirements.
+     *
+     * @param Carbon $start The start datetime
+     * @param Carbon $end The end datetime
+     * @param int|null $minimumMinutes Custom minimum minutes (uses defaults based on context if null)
+     * @throws ValidationException When duration is less than required minimum
      */
     public function validateMinimumDuration(
         Carbon $start,
         Carbon $end,
         ?int $minimumMinutes = null
     ): void {
-        $defaultMinutes = match (true) {
-            str_contains(debug_backtrace()[1]['function'] ?? '', 'Impediment') => config('roster.durations.minimum_impediment_minutes', 5),
-            str_contains(debug_backtrace()[1]['function'] ?? '', 'Schedule') => config('roster.durations.minimum_schedule_minutes', 15),
-            default => 1
-        };
-
-        $minimumMinutes = $minimumMinutes ?? $defaultMinutes;
+        $minimumMinutes = $minimumMinutes ?? $this->determineDefaultMinimumMinutes();
 
         if ($start->diffInMinutes($end) < $minimumMinutes) {
             throw new ValidationException(
@@ -79,10 +93,31 @@ class ValidationService implements ValidationServiceInterface
     }
 
     /**
-     * Validate that required fields exist.
+     * Determines the default minimum minutes based on calling context.
      *
-     * @param  array<string, mixed>  $data
-     * @param  array<string>  $requiredFields
+     * @return int The default minimum minutes
+     */
+    private function determineDefaultMinimumMinutes(): int
+    {
+        $callerFunction = debug_backtrace()[1]['function'] ?? '';
+
+        if (str_contains($callerFunction, 'Impediment')) {
+            return config('roster.durations.minimum_impediment_minutes', 5);
+        }
+
+        if (str_contains($callerFunction, 'Schedule')) {
+            return config('roster.durations.minimum_schedule_minutes', 15);
+        }
+
+        return 1;
+    }
+
+    /**
+     * Validates that all required fields exist in the data array.
+     *
+     * @param array<string, mixed> $data The data to validate
+     * @param array<string> $requiredFields List of required field names
+     * @throws ValidationException When any required field is missing
      */
     public function validateRequiredFields(array $data, array $requiredFields): void
     {
@@ -97,10 +132,13 @@ class ValidationService implements ValidationServiceInterface
     }
 
     /**
-     * Parse and validate datetime from array.
+     * Parses and validates datetime range from array data.
      *
-     * @param  array<string, mixed>  $data
-     * @return array{start: Carbon, end: Carbon}
+     * @param array<string, mixed> $data The input data array
+     * @param string $startField The key for start datetime
+     * @param string $endField The key for end datetime
+     * @return array{start: Carbon, end: Carbon} Validated start and end datetime objects
+     * @throws ValidationException When required fields are missing or time range is invalid
      */
     public function parseAndValidateDateTimeRange(
         array $data,
@@ -109,8 +147,9 @@ class ValidationService implements ValidationServiceInterface
     ): array {
         $this->validateRequiredFields($data, [$startField, $endField]);
 
-        $start = Carbon::parse($data[$startField])->setTimezone(config('roster.timezone', 'UTC'));
-        $end = Carbon::parse($data[$endField])->setTimezone(config('roster.timezone', 'UTC'));
+        $timezone = config('roster.timezone', 'UTC');
+        $start = Carbon::parse($data[$startField])->setTimezone($timezone);
+        $end = Carbon::parse($data[$endField])->setTimezone($timezone);
 
         $this->validateTimeRange($start, $end);
 
@@ -118,10 +157,13 @@ class ValidationService implements ValidationServiceInterface
     }
 
     /**
-     * Parse and validate time from array.
+     * Parses and validates time range from array data.
      *
-     * @param  array<string, mixed>  $data
-     * @return array{start: Carbon, end: Carbon}
+     * @param array<string, mixed> $data The input data array
+     * @param string $startField The key for start time
+     * @param string $endField The key for end time
+     * @return array{start: Carbon, end: Carbon} Validated start and end time objects
+     * @throws ValidationException When required fields are missing or time range is invalid
      */
     public function parseAndValidateTimeRange(
         array $data,
@@ -139,7 +181,10 @@ class ValidationService implements ValidationServiceInterface
     }
 
     /**
-     * Validate timezone.
+     * Validates that a timezone string is recognized by PHP.
+     *
+     * @param string $timezone The timezone identifier to validate
+     * @return bool True if the timezone is valid, false otherwise
      */
     public function validateTimezone(string $timezone): bool
     {

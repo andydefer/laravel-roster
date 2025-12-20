@@ -6,6 +6,7 @@ namespace Roster\Services;
 
 use BadMethodCallException;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use InvalidArgumentException;
@@ -25,22 +26,46 @@ use Roster\Services\Core\AbstractSchedulableService;
 use Roster\Traits\FilterableTrait;
 
 /**
- * Service class to manage Impediments for a schedulable model.
+ * Service for managing impediments (blocked time slots) for schedulable models.
+ *
+ * Handles creation, validation, and querying of impediments while ensuring
+ * they respect availability constraints and don't overlap with existing schedules.
  */
 class ImpedimentService extends AbstractSchedulableService
 {
     use FilterableTrait;
 
+    /**
+     * @var ValidationServiceInterface
+     */
     protected ValidationServiceInterface $validationService;
 
+    /**
+     * @var AvailabilityRepositoryInterface
+     */
     protected AvailabilityRepositoryInterface $availabilityRepository;
 
+    /**
+     * @var ImpedimentRepositoryInterface
+     */
     protected ImpedimentRepositoryInterface $impedimentRepository;
 
+    /**
+     * @var ScheduleRepositoryInterface
+     */
     protected ScheduleRepositoryInterface $scheduleRepository;
 
+    /**
+     * @var Impediment|null Current impediment being processed
+     */
     protected ?Impediment $currentImpediment = null;
 
+    /**
+     * @param ValidationServiceInterface $validationService
+     * @param AvailabilityRepositoryInterface $availabilityRepository
+     * @param ImpedimentRepositoryInterface $impedimentRepository
+     * @param ScheduleRepositoryInterface $scheduleRepository
+     */
     public function __construct(
         ValidationServiceInterface $validationService,
         AvailabilityRepositoryInterface $availabilityRepository,
@@ -53,8 +78,9 @@ class ImpedimentService extends AbstractSchedulableService
         $this->scheduleRepository = $scheduleRepository;
     }
 
-    // ========== HOOK METHODS IMPLEMENTATION ==========
-
+    /**
+     * {@inheritDoc}
+     */
     protected function validateDurationHook(
         string $operation,
         int $minImpedimentMinutes,
@@ -71,6 +97,9 @@ class ImpedimentService extends AbstractSchedulableService
         }
     }
 
+    /**
+     * {@inheritDoc}
+     */
     protected function validateMaxDaysHook(string $operation, int $maxDays): void
     {
         if (isset($this->data['start_datetime'], $this->data['end_datetime'])) {
@@ -85,11 +114,17 @@ class ImpedimentService extends AbstractSchedulableService
         }
     }
 
+    /**
+     * {@inheritDoc}
+     */
     protected function getValidationService(): ValidationServiceInterface
     {
         return $this->validationService;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     protected function validateBeforeCreate(): void
     {
         $this->validateImpedimentData();
@@ -103,16 +138,14 @@ class ImpedimentService extends AbstractSchedulableService
             throw new ValidationException(ValidationType::INVALID_AVAILABILITY);
         }
 
-        $availability = $this->availabilityRepository->findById($availabilityId);
+        $availability = $this->availabilityRepository->find($availabilityId);
 
         if (!$availability) {
             throw new ValidationException(ValidationType::INVALID_AVAILABILITY);
         }
 
-        // Valider que l'impediment respecte les contraintes de l'availability
         $this->validateImpedimentAgainstAvailability($availability, $start, $end);
 
-        // Check for overlapping impediments
         if ($this->impedimentRepository->hasOverlappingImpediments($availabilityId, $start, $end)) {
             throw new OverlappingImpedimentException(
                 TimeSlotOverlapType::IMPEDIMENT_OVERLAP,
@@ -124,7 +157,6 @@ class ImpedimentService extends AbstractSchedulableService
             );
         }
 
-        // Check for overlapping schedules (NEW)
         if ($this->scheduleRepository->hasOverlappingSchedule($availabilityId, $start, $end)) {
             throw new ScheduleImpedimentOverlapException(
                 TimeSlotOverlapType::SCHEDULE_IMPEDIMENT_CONFLICT,
@@ -140,23 +172,32 @@ class ImpedimentService extends AbstractSchedulableService
         $this->data['schedulable_type'] = get_class($this->schedulable);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     protected function processBeforeCreate(): void
     {
-        if (isset($this->data['metadata']) && ! is_array($this->data['metadata'])) {
+        if (isset($this->data['metadata']) && !is_array($this->data['metadata'])) {
             $this->data['metadata'] = json_decode($this->data['metadata'], true) ?? [];
         }
     }
 
+    /**
+     * {@inheritDoc}
+     */
     protected function executeCreate(): Impediment
     {
         return Impediment::create($this->data);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     protected function validateBeforeUpdate(int $id): void
     {
         $this->currentImpediment = $this->find($id);
 
-        if (! $this->currentImpediment instanceof Impediment) {
+        if (!$this->currentImpediment instanceof Impediment) {
             $this->throwNotFoundException();
         }
 
@@ -166,7 +207,6 @@ class ImpedimentService extends AbstractSchedulableService
 
         $availabilityId = $this->currentImpediment->availability_id;
 
-        // Validate time range if datetime fields are being updated
         if (isset($this->data['start_datetime']) || isset($this->data['end_datetime'])) {
             $validationData = array_merge(
                 [
@@ -178,11 +218,10 @@ class ImpedimentService extends AbstractSchedulableService
             $this->validationService->parseAndValidateDateTimeRange($validationData);
         }
 
-        // If the start date changes, validate new availability
         if (isset($this->data['start_datetime'])) {
             $newAvailability = $this->findMatchingAvailability();
 
-            if (! $newAvailability instanceof Availability) {
+            if (!$newAvailability instanceof Availability) {
                 throw new ValidationException(ValidationType::NO_MATCHING_AVAILABILITY);
             }
 
@@ -194,24 +233,22 @@ class ImpedimentService extends AbstractSchedulableService
                     'end_datetime' => $this->currentImpediment->end_datetime,
                 ], $this->data));
 
-            // Valider que le nouvel horaire respecte l'availability
             $this->validateImpedimentAgainstAvailability($newAvailability, $start, $end);
 
-            // Check for overlapping impediments (excluding self)
             if ($this->impedimentRepository->hasOverlappingImpediments($availabilityId, $start, $end, $id)) {
                 $this->throwOverlapException();
             }
 
-            // Check for overlapping schedules (NEW)
             if ($this->scheduleRepository->hasOverlappingSchedule($availabilityId, $start, $end)) {
-                throw ValidationException::withMessage('Cannot create impediment that overlaps with existing schedule');
+                throw ValidationException::withMessage(
+                    'Cannot create impediment that overlaps with existing schedule'
+                );
             }
 
             if ($newAvailability->id !== $this->currentImpediment->availability_id) {
                 $this->data['availability_id'] = $newAvailability->id;
             }
         } else {
-            // Validate overlap with existing availability
             $updateData = array_merge([
                 'start_datetime' => $this->currentImpediment->start_datetime,
                 'end_datetime' => $this->currentImpediment->end_datetime,
@@ -220,56 +257,58 @@ class ImpedimentService extends AbstractSchedulableService
             ['start' => $start, 'end' => $end] = $this->validationService
                 ->parseAndValidateDateTimeRange($updateData);
 
-            // Get current availability
             $currentAvailability = $this->currentImpediment->availability;
 
             if ($currentAvailability) {
-                // Valider que le nouvel horaire respecte l'availability
                 $this->validateImpedimentAgainstAvailability($currentAvailability, $start, $end);
             }
 
-            // Check for overlapping impediments (excluding self)
             if ($this->impedimentRepository->hasOverlappingImpediments($availabilityId, $start, $end, $id)) {
                 $this->throwOverlapException();
             }
 
-            // Check for overlapping schedules (NEW)
             if ($this->scheduleRepository->hasOverlappingSchedule($availabilityId, $start, $end)) {
-                throw ValidationException::withMessage('Cannot update impediment to overlap with existing schedule');
+                throw ValidationException::withMessage(
+                    'Cannot update impediment to overlap with existing schedule'
+                );
             }
         }
     }
 
+    /**
+     * {@inheritDoc}
+     */
     protected function processBeforeUpdate(int $id): void
     {
         // Additional processing if needed
     }
 
+    /**
+     * {@inheritDoc}
+     */
     protected function executeUpdate(int $id): bool
     {
         return $this->currentImpediment->update($this->data);
     }
 
-    // ========== CREATE METHOD IMPLEMENTATION ==========
-
     /**
      * Create a new impediment with explicit availability.
      *
-     * @param  Availability|array<string, mixed>  $availabilityOrData  Availability instance or data array
-     * @param  array<string, mixed>|null  $data  Data array if first param is Availability
+     * @param Availability|array<string, mixed> $availabilityOrData Availability instance or data array
+     * @param array<string, mixed>|null $data Data array if first param is Availability
      * @return Impediment Created impediment
      *
      * @throws ValidationException When validation fails
+     * @throws BadMethodCallException When deprecated signature is used
+     * @throws InvalidArgumentException When invalid arguments are provided
      */
     public function create($availabilityOrData, ?array $data = null): Impediment
     {
         if ($availabilityOrData instanceof Availability && $data !== null) {
-            // Nouvelle signature: create(Availability $availability, array $data)
             return $this->createWithAvailability($availabilityOrData, $data);
         }
 
         if (is_array($availabilityOrData) && $data === null) {
-            // Ancienne signature: create(array $data) - maintenue pour compatibilité mais dépréciée
             throw new BadMethodCallException(
                 'Method create(array $data) is deprecated. Use create(Availability $availability, array $data) instead.'
             );
@@ -281,8 +320,8 @@ class ImpedimentService extends AbstractSchedulableService
     /**
      * Create a new impediment with explicit availability.
      *
-     * @param  Availability  $availability  The availability to link to
-     * @param  array<string, mixed>  $data  Impediment data
+     * @param Availability $availability The availability to link to
+     * @param array<string, mixed> $data Impediment data
      * @return Impediment Created impediment
      *
      * @throws ValidationException When validation fails
@@ -292,35 +331,21 @@ class ImpedimentService extends AbstractSchedulableService
         $this->validateSchedulable();
         $this->data = $data;
 
-        // Validate that the availability belongs to this schedulable
         $this->validateAvailabilityOwnership($availability);
 
-        // Parse and validate datetime range
         ['start' => $start, 'end' => $end] = $this->validationService
             ->parseAndValidateDateTimeRange($this->data);
 
-        // Validate that the impediment time slot matches the availability constraints
         $this->validateImpedimentAgainstAvailability($availability, $start, $end);
 
-        // Set the availability_id in data
         $this->data['availability_id'] = $availability->id;
 
-        // 1. Apply configuration rules to data
         $this->data = $this->applyConfigurationRules($this->data, 'create');
-
-        // 2. Validate configuration rules
         $this->validateConfigurationRules('create');
-
-        // 3. Validate business rules (hook for children)
         $this->validateBeforeCreate();
-
-        // 4. Process data (hook for children)
         $this->processBeforeCreate();
 
-        // 5. Execute creation (abstract method)
         $impediment = $this->executeCreate();
-
-        // 6. Post-creation hooks
         $this->afterCreate($impediment);
 
         return $impediment;
@@ -329,15 +354,14 @@ class ImpedimentService extends AbstractSchedulableService
     /**
      * Validate that the impediment time slot matches the availability constraints.
      *
-     * @param  Availability  $availability  The availability to validate against
-     * @param  Carbon  $start  Impediment start datetime
-     * @param  Carbon  $end  Impediment end datetime
+     * @param Availability $availability The availability to validate against
+     * @param Carbon $start Impediment start datetime
+     * @param Carbon $end Impediment end datetime
      *
      * @throws ValidationException When impediment doesn't match availability constraints
      */
     private function validateImpedimentAgainstAvailability(Availability $availability, Carbon $start, Carbon $end): void
     {
-        // 1. Check date range
         $availabilityStart = Carbon::parse($availability->start_date)->startOfDay();
         $availabilityEnd = Carbon::parse($availability->end_date)->endOfDay();
 
@@ -345,13 +369,11 @@ class ImpedimentService extends AbstractSchedulableService
             throw new ValidationException(ValidationType::NO_MATCHING_AVAILABILITY);
         }
 
-        // 2. Check day of week
         $dayOfWeek = strtolower($start->englishDayOfWeek);
         if (!in_array($dayOfWeek, $availability->days)) {
             throw new ValidationException(ValidationType::NO_MATCHING_AVAILABILITY);
         }
 
-        // 3. Check time range
         $availabilityStartTime = Carbon::parse($availability->start_time);
         $availabilityEndTime = Carbon::parse($availability->end_time);
 
@@ -366,7 +388,7 @@ class ImpedimentService extends AbstractSchedulableService
     /**
      * Validate that the availability belongs to the current schedulable.
      *
-     * @param  Availability  $availability  The availability to validate
+     * @param Availability $availability The availability to validate
      *
      * @throws ValidationException When availability doesn't belong to schedulable
      */
@@ -380,8 +402,12 @@ class ImpedimentService extends AbstractSchedulableService
         }
     }
 
-    // ========== OTHER METHODS ==========
-
+    /**
+     * Find an impediment by ID for the current schedulable.
+     *
+     * @param int $id Impediment ID
+     * @return Impediment|null Found impediment or null
+     */
     public function find(int $id): ?Impediment
     {
         $this->validateSchedulable();
@@ -391,18 +417,33 @@ class ImpedimentService extends AbstractSchedulableService
             ->find($id);
     }
 
+    /**
+     * Delete an impediment by ID.
+     *
+     * @param int $id Impediment ID
+     * @return bool True if deleted successfully
+     */
     public function delete(int $id): bool
     {
         $this->validateSchedulable();
         $impediment = $this->find($id);
 
-        if (! $impediment instanceof Impediment) {
+        if (!$impediment instanceof Impediment) {
             return false;
         }
 
         return $impediment->delete();
     }
 
+    /**
+     * Get impediments within a specific time range.
+     *
+     * @param Carbon $start Start datetime
+     * @param Carbon $end End datetime
+     * @return Collection<int, Impediment> Collection of impediments
+     *
+     * @throws ValidationException When time range is invalid
+     */
     public function between(Carbon $start, Carbon $end): Collection
     {
         $this->validateSchedulable();
@@ -415,6 +456,16 @@ class ImpedimentService extends AbstractSchedulableService
             ->get();
     }
 
+    /**
+     * Check if a time slot is blocked by an impediment.
+     *
+     * @param Carbon $start Start datetime
+     * @param Carbon $end End datetime
+     * @param string|null $type Availability type filter
+     * @return bool True if time slot is blocked
+     *
+     * @throws ValidationException When time range is invalid
+     */
     public function isTimeSlotBlocked(Carbon $start, Carbon $end, ?string $type = null): bool
     {
         $this->validateSchedulable();
@@ -422,13 +473,23 @@ class ImpedimentService extends AbstractSchedulableService
 
         $availability = $this->availabilityRepository->findForTimeSlot($this->schedulable, $start, $end, $type);
 
-        if (! $availability instanceof Availability) {
+        if (!$availability instanceof Availability) {
             return false;
         }
 
         return $this->impedimentRepository->hasOverlappingImpediments($availability->id, $start, $end);
     }
 
+    /**
+     * Get available time slots considering impediments.
+     *
+     * @param Carbon $start Start datetime
+     * @param Carbon $end End datetime
+     * @param string|null $type Availability type filter
+     * @return Collection<int, array> Available time slots
+     *
+     * @throws ValidationException When time range is invalid
+     */
     public function getAvailableTimeSlots(Carbon $start, Carbon $end, ?string $type = null): Collection
     {
         $this->validateSchedulable();
@@ -436,7 +497,7 @@ class ImpedimentService extends AbstractSchedulableService
 
         $availability = $this->availabilityRepository->findForTimeSlot($this->schedulable, $start, $end, $type);
 
-        if (! $availability instanceof Availability) {
+        if (!$availability instanceof Availability) {
             return collect();
         }
 
@@ -449,10 +510,10 @@ class ImpedimentService extends AbstractSchedulableService
     /**
      * Check if creating an impediment would overlap with any schedule.
      *
-     * @param  int  $availabilityId  The availability ID
-     * @param  Carbon  $start  Start datetime
-     * @param  Carbon  $end  End datetime
-     * @param  int|null  $exceptImpedimentId  Impediment ID to exclude (for updates)
+     * @param int $availabilityId The availability ID
+     * @param Carbon $start Start datetime
+     * @param Carbon $end End datetime
+     * @param int|null $exceptImpedimentId Impediment ID to exclude (for updates)
      * @return bool True if would overlap with any schedule
      */
     public function wouldOverlapWithSchedule(int $availabilityId, Carbon $start, Carbon $end, ?int $exceptImpedimentId = null): bool
@@ -463,10 +524,10 @@ class ImpedimentService extends AbstractSchedulableService
     /**
      * Check if creating an impediment would overlap with any other impediment.
      *
-     * @param  int  $availabilityId  The availability ID
-     * @param  Carbon  $start  Start datetime
-     * @param  Carbon  $end  End datetime
-     * @param  int|null  $exceptImpedimentId  Impediment ID to exclude (for updates)
+     * @param int $availabilityId The availability ID
+     * @param Carbon $start Start datetime
+     * @param Carbon $end End datetime
+     * @param int|null $exceptImpedimentId Impediment ID to exclude (for updates)
      * @return bool True if would overlap with any other impediment
      */
     public function wouldOverlapWithOtherImpediment(int $availabilityId, Carbon $start, Carbon $end, ?int $exceptImpedimentId = null): bool
@@ -474,6 +535,11 @@ class ImpedimentService extends AbstractSchedulableService
         return $this->impedimentRepository->hasOverlappingImpediments($availabilityId, $start, $end, $exceptImpedimentId);
     }
 
+    /**
+     * Validate impediment data including datetime range and minimum duration.
+     *
+     * @throws ValidationException When validation fails
+     */
     protected function validateImpedimentData(): void
     {
         ['start' => $start, 'end' => $end] = $this->validationService
@@ -483,6 +549,11 @@ class ImpedimentService extends AbstractSchedulableService
         $this->validationService->validateMinimumDuration($start, $end, $minDuration);
     }
 
+    /**
+     * Find availability matching the current data.
+     *
+     * @return Availability|null Matching availability or null
+     */
     protected function findMatchingAvailability(): ?Availability
     {
         ['start' => $start, 'end' => $end] = $this->validationService
@@ -491,6 +562,11 @@ class ImpedimentService extends AbstractSchedulableService
         return $this->availabilityRepository->findForTimeSlot($this->schedulable, $start, $end);
     }
 
+    /**
+     * Build base query with filters applied.
+     *
+     * @return Builder<Impediment>
+     */
     protected function buildQueryWithFilters(): Builder
     {
         $query = Impediment::where('schedulable_id', $this->schedulable->id)
@@ -503,6 +579,11 @@ class ImpedimentService extends AbstractSchedulableService
         return $query;
     }
 
+    /**
+     * Apply date filters to the query.
+     *
+     * @param Builder $builder Query builder
+     */
     private function applyDateFilters(Builder $builder): void
     {
         if (isset($this->filters['start_date'])) {
@@ -514,12 +595,29 @@ class ImpedimentService extends AbstractSchedulableService
         }
     }
 
+    /**
+     * Apply type filter to the query.
+     *
+     * @param Builder $builder Query builder
+     */
     private function applyTypeFilter(Builder $builder): void
     {
         if (isset($this->filters['type'])) {
             $builder->whereHas('availability', function ($q): void {
                 $q->where('type', $this->filters['type']);
             });
+        }
+    }
+
+    /**
+     * Apply reason filter to the query.
+     *
+     * @param Builder $builder Query builder
+     */
+    private function applyReasonFilter(Builder $builder): void
+    {
+        if (isset($this->filters['reason'])) {
+            $builder->where('reason', 'like', '%' . $this->filters['reason'] . '%');
         }
     }
 }

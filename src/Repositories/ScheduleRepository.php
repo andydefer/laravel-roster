@@ -28,7 +28,7 @@ class ScheduleRepository extends AbstractRepository implements ScheduleRepositor
      */
     public function update(int $id, array $data): bool
     {
-        $schedule = $this->findById($id);
+        $schedule = $this->find($id);
 
         return $schedule instanceof Schedule
             ? $schedule->update($data)
@@ -40,7 +40,7 @@ class ScheduleRepository extends AbstractRepository implements ScheduleRepositor
      */
     public function delete(int $id): bool
     {
-        $schedule = $this->findById($id);
+        $schedule = $this->find($id);
 
         return $schedule instanceof Schedule
             ? $schedule->delete()
@@ -50,7 +50,7 @@ class ScheduleRepository extends AbstractRepository implements ScheduleRepositor
     /**
      * {@inheritdoc}
      */
-    public function findById(int $id): ?Schedule
+    public function find(int $id): ?Schedule
     {
         return Schedule::with([
             'availability.schedules' => function ($query): void {

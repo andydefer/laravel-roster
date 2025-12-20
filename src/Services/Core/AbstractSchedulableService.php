@@ -51,6 +51,32 @@ abstract class AbstractSchedulableService implements SchedulableServiceInterface
     }
 
     /**
+     * Set multiple filters at once and merge them with existing filters.
+     *
+     * @param array<string, mixed> $filtersArray Array of filters to apply
+     * @return static
+     */
+    public function setFilters(array $filtersArray): static
+    {
+        $this->filters = array_merge($this->filters, $filtersArray);
+        return $this;
+    }
+
+    /**
+     * Set a filter value for the current service.
+     *
+     * @param string $key The filter key (e.g. 'type', 'reason', 'start_date')
+     * @param mixed $value The value to filter by
+     * @return static
+     */
+    public function setFilter(string $key, mixed $value): static
+    {
+        $this->filters[$key] = $value;
+        return $this;
+    }
+
+
+    /**
      * Get the current schedulable model.
      *
      * @return Model|null
