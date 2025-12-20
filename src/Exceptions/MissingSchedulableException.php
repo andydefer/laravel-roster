@@ -16,7 +16,7 @@ use Roster\Exceptions\Enums\MissingResourceType;
 final class MissingSchedulableException extends LogicException
 {
     /**
-     * Create a new MissingSchedulableException instance.
+     * Creates a new MissingSchedulableException instance.
      */
     public static function create(): self
     {

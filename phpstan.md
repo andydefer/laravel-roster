@@ -1,5 +1,5 @@
 # PHPStan Static Analysis Report
-*Generated: sam. 20 déc. 2025 08:17:29 WAT*
+*Generated: sam. 20 déc. 2025 09:41:43 WAT*
 
  ------ ---------------------------------------------------------------------------------------------------------------------------------------------------------------- 
   Line   src/Contracts/Installation/InstallationExecutorInterface.php                                                                                                    
@@ -741,7 +741,7 @@
          🪪  method.nonObject                                                                                                                                                          
   128    Parameter $impedimentRepository of class Roster\Services\ImpedimentService constructor expects Roster\Contracts\Repository\ImpedimentRepositoryInterface, mixed given.        
          🪪  argument.type                                                                                                                                                             
-  144    Parameter $app of class Roster\Services\Core\ResourcePublisherService constructor expects Illuminate\Contracts\Foundation\Application, mixed given.                           
+  144    Parameter $application of class Roster\Services\Core\ResourcePublisherService constructor expects Illuminate\Contracts\Foundation\Application, mixed given.                   
          🪪  argument.type                                                                                                                                                             
  ------ ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ 
 
@@ -2612,29 +2612,29 @@
  ------ -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- 
   Line   tests/Unit/Commands/InstallRosterCommandTest.php                                                                                                                          
  ------ -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- 
-  62     Parameter #1 $laravel of method Illuminate\Console\Command::setLaravel() expects Illuminate\Contracts\Container\Container, Illuminate\Foundation\Application|null given.  
+  66     Parameter #1 $laravel of method Illuminate\Console\Command::setLaravel() expects Illuminate\Contracts\Container\Container, Illuminate\Foundation\Application|null given.  
          🪪  argument.type                                                                                                                                                         
-  68     PHPDoc tag @var with type Symfony\Component\Console\Output\Output&Tests\Unit\Commands\OutputWithBuffer is not subtype of native type                                      
-         Symfony\Component\Console\Output\Output@anonymous/tests/Unit/Commands/InstallRosterCommandTest.php:68.                                                                    
+  72     PHPDoc tag @var with type Symfony\Component\Console\Output\Output&Tests\Unit\Commands\OutputWithBuffer is not subtype of native type                                      
+         Symfony\Component\Console\Output\Output@anonymous/tests/Unit/Commands/InstallRosterCommandTest.php:72.                                                                    
          🪪  varTag.nativeType                                                                                                                                                     
-  86     Parameter #1 $laravel of method Illuminate\Console\Command::setLaravel() expects Illuminate\Contracts\Container\Container, Illuminate\Foundation\Application|null given.  
+  90     Parameter #1 $laravel of method Illuminate\Console\Command::setLaravel() expects Illuminate\Contracts\Container\Container, Illuminate\Foundation\Application|null given.  
          🪪  argument.type                                                                                                                                                         
-  92     PHPDoc tag @var with type Symfony\Component\Console\Output\Output&Tests\Unit\Commands\OutputWithBuffer is not subtype of native type                                      
-         Symfony\Component\Console\Output\Output@anonymous/tests/Unit/Commands/InstallRosterCommandTest.php:92.                                                                    
+  96     PHPDoc tag @var with type Symfony\Component\Console\Output\Output&Tests\Unit\Commands\OutputWithBuffer is not subtype of native type                                      
+         Symfony\Component\Console\Output\Output@anonymous/tests/Unit/Commands/InstallRosterCommandTest.php:96.                                                                    
          🪪  varTag.nativeType                                                                                                                                                     
-  111    Parameter #1 $laravel of method Illuminate\Console\Command::setLaravel() expects Illuminate\Contracts\Container\Container, Illuminate\Foundation\Application|null given.  
+  115    Parameter #1 $laravel of method Illuminate\Console\Command::setLaravel() expects Illuminate\Contracts\Container\Container, Illuminate\Foundation\Application|null given.  
          🪪  argument.type                                                                                                                                                         
-  146    Parameter #1 $laravel of method Illuminate\Console\Command::setLaravel() expects Illuminate\Contracts\Container\Container, Illuminate\Foundation\Application|null given.  
+  150    Parameter #1 $laravel of method Illuminate\Console\Command::setLaravel() expects Illuminate\Contracts\Container\Container, Illuminate\Foundation\Application|null given.  
          🪪  argument.type                                                                                                                                                         
-  149    PHPDoc tag @var with type Symfony\Component\Console\Output\Output&Tests\Unit\Commands\OutputWithBuffer is not subtype of native type                                      
-         Symfony\Component\Console\Output\Output@anonymous/tests/Unit/Commands/InstallRosterCommandTest.php:149.                                                                   
+  153    PHPDoc tag @var with type Symfony\Component\Console\Output\Output&Tests\Unit\Commands\OutputWithBuffer is not subtype of native type                                      
+         Symfony\Component\Console\Output\Output@anonymous/tests/Unit/Commands/InstallRosterCommandTest.php:153.                                                                   
          🪪  varTag.nativeType                                                                                                                                                     
-  169    Cannot call method expectsOutput() on Illuminate\Testing\PendingCommand|int.                                                                                              
+  173    Cannot call method expectsOutput() on Illuminate\Testing\PendingCommand|int.                                                                                              
          🪪  method.nonObject                                                                                                                                                      
-  191    Parameter #1 $laravel of method Illuminate\Console\Command::setLaravel() expects Illuminate\Contracts\Container\Container, Illuminate\Foundation\Application|null given.  
+  195    Parameter #1 $laravel of method Illuminate\Console\Command::setLaravel() expects Illuminate\Contracts\Container\Container, Illuminate\Foundation\Application|null given.  
          🪪  argument.type                                                                                                                                                         
-  200    PHPDoc tag @var with type Symfony\Component\Console\Output\Output&Tests\Unit\Commands\OutputWithBuffer is not subtype of native type                                      
-         Symfony\Component\Console\Output\Output@anonymous/tests/Unit/Commands/InstallRosterCommandTest.php:200.                                                                   
+  204    PHPDoc tag @var with type Symfony\Component\Console\Output\Output&Tests\Unit\Commands\OutputWithBuffer is not subtype of native type                                      
+         Symfony\Component\Console\Output\Output@anonymous/tests/Unit/Commands/InstallRosterCommandTest.php:204.                                                                   
          🪪  varTag.nativeType                                                                                                                                                     
  ------ -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- 
 

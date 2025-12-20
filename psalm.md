@@ -1,5 +1,5 @@
 # Psalm Static Analysis Report
-*Generated: sam. 20 déc. 2025 08:17:30 WAT*
+*Generated: sam. 20 déc. 2025 09:41:48 WAT*
 
 
 INFO: PropertyNotSetInConstructor - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Commands/InstallRosterCommand.php#L16\src/Commands/[1;31mInstallRosterCommand.php:16:7[0m]8;;\ - Property Roster\Commands\InstallRosterCommand::$laravel is not defined in constructor of Roster\Commands\InstallRosterCommand or in any methods called in the constructor (see https://psalm.dev/074)
@@ -35,7 +35,7 @@ class [30;47mInstallRosterCommand[0m extends Command
 
 
 [0;31mERROR[0m: PossiblyUnusedMethod - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Contracts/Installation/InstallationExecutorInterface.php#L23\src/Contracts/Installation/[1;31mInstallationExecutorInterface.php:23:21[0m]8;;\ - Cannot find any calls to method Roster\Contracts\Installation\InstallationExecutorInterface::addStep (see https://psalm.dev/087)
-    public function [97;41maddStep[0m(InstallationStepInterface $step): self;
+    public function [97;41maddStep[0m(InstallationStepInterface $installationStep): self;
 
 
 [0;31mERROR[0m: PossiblyUnusedMethod - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Contracts/Installation/InstallationExecutorInterface.php#L30\src/Contracts/Installation/[1;31mInstallationExecutorInterface.php:30:21[0m]8;;\ - Cannot find any calls to method Roster\Contracts\Installation\InstallationExecutorInterface::getSteps (see https://psalm.dev/087)
@@ -1222,7 +1222,7 @@ INFO: MissingClosureParamType - ]8;;file:///home/andy-kani/pro/sites/packages/l
 
 
 INFO: MissingClosureParamType - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/RosterServiceProvider.php#L142\src/[1;31mRosterServiceProvider.php:142:74[0m]8;;\ - Parameter $app has no provided type (see https://psalm.dev/153)
-        $this->app->singleton(ResourcePublisherService::class, function ([30;47m$app[0m) {
+        $this->app->singleton(ResourcePublisherService::class, function ([30;47m$app[0m): ResourcePublisherService {
 
 
 INFO: ClassMustBeFinal - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/AvailabilityService.php#L21\src/Services/[1;31mAvailabilityService.php:21:7[0m]8;;\ - Class Roster\Services\AvailabilityService is never extended and is not part of the public API, and thus must be made final. (see https://psalm.dev/361)
@@ -2748,56 +2748,16 @@ INFO: UndefinedMagicPropertyFetch - ]8;;file:///home/andy-kani/pro/sites/packag
     public function [97;41mhasFilter[0m(string $key): bool
 
 
-[0;31mERROR[0m: DuplicateFunction - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/helpers.php#L10\src/[1;31mhelpers.php:10:5[0m]8;;\ - Method config_path has already been defined as a core function (see https://psalm.dev/180)
-    /**
-     * Get the path to the config directory.
-     *
-     * @param  string|null  $path  Optional subpath
-     * @return string Full path to config directory or file
-     */
-    [97;41mfunction config_path(?string $path = ''): string[0m
-
-
 INFO: RiskyTruthyFalsyComparison - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/helpers.php#L12\src/[1;31mhelpers.php:12:16[0m]8;;\ - Operand of type null|string contains type string, which can be falsy and truthy. This can cause possibly unexpected behavior. Use strict comparison instead. (see https://psalm.dev/356)
         return [30;47m$path[0m ? 'config/'.$path : 'config';
-
-
-[0;31mERROR[0m: DuplicateFunction - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/helpers.php#L23\src/[1;31mhelpers.php:23:5[0m]8;;\ - Method database_path has already been defined as a core function (see https://psalm.dev/180)
-    /**
-     * Get the path to the database directory.
-     *
-     * @param  string|null  $path  Optional subpath
-     * @return string Full path to database directory or file
-     */
-    [97;41mfunction database_path(?string $path = ''): string[0m
 
 
 INFO: RiskyTruthyFalsyComparison - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/helpers.php#L25\src/[1;31mhelpers.php:25:16[0m]8;;\ - Operand of type null|string contains type string, which can be falsy and truthy. This can cause possibly unexpected behavior. Use strict comparison instead. (see https://psalm.dev/356)
         return [30;47m$path[0m ? 'database/'.$path : 'database';
 
 
-[0;31mERROR[0m: DuplicateFunction - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/helpers.php#L36\src/[1;31mhelpers.php:36:5[0m]8;;\ - Method base_path has already been defined as a core function (see https://psalm.dev/180)
-    /**
-     * Get the base path of the package.
-     *
-     * @param  string|null  $path  Optional subpath
-     * @return string Full base path of the package
-     */
-    [97;41mfunction base_path(?string $path = ''): string[0m
-
-
 INFO: RiskyTruthyFalsyComparison - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/helpers.php#L40\src/[1;31mhelpers.php:40:16[0m]8;;\ - Operand of type null|string contains type string, which can be falsy and truthy. This can cause possibly unexpected behavior. Use strict comparison instead. (see https://psalm.dev/356)
         return [30;47m$path[0m ? $base.$path : $base;
-
-
-[0;31mERROR[0m: DuplicateFunction - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/helpers.php#L51\src/[1;31mhelpers.php:51:5[0m]8;;\ - Method resource_path has already been defined as a core function (see https://psalm.dev/180)
-    /**
-     * Get the path to the resources directory.
-     *
-     * @param  string|null  $path  Optional subpath
-     * @return string Full path to resources directory or file
-     */
-    [97;41mfunction resource_path(?string $path = ''): string[0m
 
 
 INFO: RiskyTruthyFalsyComparison - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/helpers.php#L55\src/[1;31mhelpers.php:55:16[0m]8;;\ - Operand of type null|string contains type string, which can be falsy and truthy. This can cause possibly unexpected behavior. Use strict comparison instead. (see https://psalm.dev/356)
@@ -2805,7 +2765,7 @@ INFO: RiskyTruthyFalsyComparison - ]8;;file:///home/andy-kani/pro/sites/package
 
 
 ------------------------------
-[0;31m265 errors[0m found
+[0;31m261 errors[0m found
 ------------------------------
 338 other issues found.
 ------------------------------
@@ -2815,5 +2775,5 @@ Run Psalm again with
 to see what it can fix.
 ------------------------------
 
-Checks took 2.07 seconds and used 427.423MB of memory
-Psalm was able to infer types for 87.9701% of the codebase
+Checks took 2.86 seconds and used 405.803MB of memory
+Psalm was able to infer types for 87.9666% of the codebase

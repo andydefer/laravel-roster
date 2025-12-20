@@ -5,10 +5,10 @@ declare(strict_types=1);
 namespace Roster\Exceptions\Enums;
 
 /**
- * Enum representing types of availability violations.
+ * Represents types of availability constraint violations.
  *
- * This enum defines specific cases where a schedule or impediment
- * violates the defined availability constraints of a resource.
+ * Used to classify specific cases where a schedule or impediment violates
+ * the defined availability constraints of a resource.
  */
 enum AvailabilityViolationType: string
 {
@@ -20,7 +20,7 @@ enum AvailabilityViolationType: string
     /**
      * Get the default human-readable message for this violation type.
      *
-     * @return string The descriptive message explaining the violation
+     * @return string Descriptive message explaining the violation
      */
     public function getDefaultMessage(): string
     {

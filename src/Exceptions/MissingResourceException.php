@@ -29,6 +29,23 @@ class MissingResourceException extends RosterException
         ?Throwable $previous = null
     ) {
         $message = $message ?: $type->getDefaultMessage();
-        parent::__construct($type->value, $message, $context, $code, $previous);
+
+        parent::__construct(
+            type: $type->value,
+            message: $message,
+            context: $context,
+            code: $code,
+            previous: $previous
+        );
+    }
+
+    /**
+     * Get the missing resource type enum.
+     *
+     * @return MissingResourceType The type of missing resource
+     */
+    public function getMissingResourceType(): MissingResourceType
+    {
+        return MissingResourceType::from($this->getType());
     }
 }

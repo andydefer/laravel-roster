@@ -8,21 +8,21 @@ use InvalidArgumentException;
 use Throwable;
 
 /**
- * Base exception for the Roster package.
+ * Base exception class for all Roster package exceptions.
  *
- * All custom exceptions in the Roster package should extend this class
- * to ensure consistent exception handling and error reporting.
+ * Provides consistent structure for exception handling, error reporting,
+ * and debugging across the entire package ecosystem.
  */
 abstract class RosterException extends InvalidArgumentException
 {
     /**
      * Create a new RosterException instance.
      *
-     * @param  string  $type  Unique identifier for the exception type
-     * @param  string  $message  Human-readable error message
-     * @param  array  $context  Additional context data for debugging
-     * @param  int  $code  Error code
-     * @param  Throwable|null  $previous  Previous exception in the chain
+     * @param string $type Unique identifier for the exception type
+     * @param string $message Human-readable error message
+     * @param array $context Additional context data for debugging
+     * @param int $code Error code
+     * @param Throwable|null $previous Previous exception in the chain
      */
     public function __construct(
         protected string $type,
@@ -35,9 +35,9 @@ abstract class RosterException extends InvalidArgumentException
     }
 
     /**
-     * Get the exception type identifier.
+     * Get the unique identifier for this exception type.
      *
-     * @return string Unique identifier for this exception type
+     * @return string Exception type identifier
      */
     public function getType(): string
     {
@@ -45,9 +45,9 @@ abstract class RosterException extends InvalidArgumentException
     }
 
     /**
-     * Get the context data associated with the exception.
+     * Get additional context data associated with the exception.
      *
-     * @return array Additional context for debugging
+     * @return array Contextual information for debugging
      */
     public function getContext(): array
     {

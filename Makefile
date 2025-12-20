@@ -26,8 +26,14 @@ IGNORED_FILES = CHANGED_FILES.md FILES_CHECKLIST.md psalm.md phpstan.md pint-tes
 # Version Control Operations
 # ---------------------------------------------------
 
+.PHONY: pre-commit
+pre-commit:
+	@echo "🔍 Running pre-commit checks..."
+	@make test
+	@echo "✅ Pre-commit checks passed"
+
 .PHONY: git-commit-push
-git-commit-push:
+git-commit-push: pre-commit
 	@read -p "Enter commit message: " commit_message; \
 	if [ -z "$$commit_message" ]; then \
 		echo "Error: Commit message cannot be empty"; \
@@ -85,6 +91,24 @@ generate-ai-diff:
 	@echo "   - Sois précis, factuel et structuré" >> diff.txt
 	@echo "   - Évite les suppositions" >> diff.txt
 	@echo "   - Utilise un ton professionnel" >> diff.txt
+	@echo "" >> diff.txt
+	@echo "4. SI et SEULEMENT SI les changements sont cassants (breaking changes) :" >> diff.txt
+	@echo "   - Génère une entrée de CHANGELOG conforme à Keep a Changelog et SemVer." >> diff.txt
+	@echo "   - Le changelog doit apparaître APRES les recommandations ci-dessus." >> diff.txt
+	@echo "   - Utilise STRICTEMENT la structure suivante :" >> diff.txt
+	@echo "" >> diff.txt
+	@echo "     ## [X.0.0] - YYYY-MM-DD" >> diff.txt
+	@echo "     ### Changed" >> diff.txt
+	@echo "     - Description claire du changement cassant" >> diff.txt
+	@echo "" >> diff.txt
+	@echo "     ### Removed (si applicable)" >> diff.txt
+	@echo "     - API, méthode ou comportement supprimé" >> diff.txt
+	@echo "" >> diff.txt
+	@echo "     ### Security (si applicable)" >> diff.txt
+	@echo "     - Impact sécurité lié au changement" >> diff.txt
+	@echo "" >> diff.txt
+	@echo "   - Ne génère PAS de changelog si aucun breaking change n'est détecté." >> diff.txt
+	@echo "   - N'invente PAS de version." >> diff.txt
 	@echo "" >> diff.txt
 	@echo "Voici le diff :" >> diff.txt
 	@echo "" >> diff.txt

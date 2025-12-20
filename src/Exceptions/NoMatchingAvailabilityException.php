@@ -27,6 +27,13 @@ class NoMatchingAvailabilityException extends RosterException
         ?Throwable $previous = null
     ) {
         $message = $message ?: ValidationType::NO_MATCHING_AVAILABILITY->getDefaultMessage();
-        parent::__construct(ValidationType::NO_MATCHING_AVAILABILITY->value, $message, $context, $code, $previous);
+
+        parent::__construct(
+            type: ValidationType::NO_MATCHING_AVAILABILITY->value,
+            message: $message,
+            context: $context,
+            code: $code,
+            previous: $previous
+        );
     }
 }

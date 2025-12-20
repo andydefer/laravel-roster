@@ -28,4 +28,34 @@ enum MissingResourceType: string
             self::MISSING_SCHEDULABLE => 'No schedulable resource specified. Call for() with a schedulable entity before executing the query.',
         };
     }
+
+    /**
+     * Create an enum instance from a message string.
+     *
+     * @param  string  $message  The message to match
+     * @return MissingResourceType|null The matching enum or null if not found
+     */
+    public static function fromMessage(string $message): ?self
+    {
+        foreach (self::cases() as $case) {
+            if ($case->getDefaultMessage() === $message) {
+                return $case;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Convert the enum to an array representation.
+     *
+     * @return array{value: string, message: string} Array with value and message
+     */
+    public function toArray(): array
+    {
+        return [
+            'value' => $this->value,
+            'message' => $this->getDefaultMessage(),
+        ];
+    }
 }
