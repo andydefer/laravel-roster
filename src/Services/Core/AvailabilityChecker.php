@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Roster\Services\Core;
 
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Carbon;
 use Roster\Contracts\Repository\AvailabilityRepositoryInterface;
 use Roster\Contracts\Services\AvailabilityCheckerInterface;
@@ -18,43 +19,57 @@ class AvailabilityChecker implements AvailabilityCheckerInterface
     ) {}
 
     /**
-     * Check if the schedulable is available at a given time.
+     * Check if the schedulable resource is available at a specific datetime.
+     *
+     * @param Model $model The schedulable resource (user, equipment, room, etc.)
+     * @param Carbon $datetime The datetime to check availability for
+     * @return bool True if the resource is available at the given datetime
      */
-    public function isAvailableAt(object $schedulable, Carbon $datetime): bool
+    public function isAvailableAt(Model $model, Carbon $datetime): bool
     {
-        return $this->availabilityRepository->isAvailableAt($schedulable, $datetime);
+        return $this->availabilityRepository->isAvailableAt($model, $datetime);
     }
 
     /**
-     * Check availability for a time period.
+     * Check if the schedulable resource is available for a continuous time period.
+     *
+     * @param Model $model The schedulable resource
+     * @param Carbon $start Start of the time period
+     * @param Carbon $end End of the time period
+     * @param string|null $type Optional availability type filter
+     * @return bool True if the resource is available for the entire period
+     * @throws \InvalidArgumentException If the time range is invalid
      */
+
     public function isAvailableForPeriod(
-        object $schedulable,
+        Model $model,
         Carbon $start,
         Carbon $end,
         ?string $type = null
     ): bool {
         $this->validationService->validateTimeRange($start, $end);
 
-        $availability = $this->availabilityRepository->findForTimeSlot($schedulable, $start, $end, $type);
+        $availability = $this->availabilityRepository->findForTimeSlot($model, $start, $end, $type);
 
         return $availability instanceof Availability;
     }
 
     /**
-     * Check if there are overlaps.
+     * Check if there are overlapping availabilities for the schedulable resource.
      *
-     * @param  array<string, mixed>  $data
+     * @param Model $model The schedulable resource
+     * @param array<string, mixed> $data Availability data containing start and end times
+     * @param int|null $exceptId Optional ID to exclude from overlap checking (for updates)
+     * @return bool True if overlapping availabilities exist
+     * @throws \InvalidArgumentException If the time range data is invalid
      */
     public function hasOverlapping(
-        object $schedulable,
+        Model $model,
         array $data,
         ?int $exceptId = null
     ): bool {
         $this->validationService->parseAndValidateTimeRange($data);
 
-        // Note: This method should be implemented in AvailabilityValidator
-        // For now, we'll delegate to repository's findOverlapping
-        return $this->availabilityRepository->findOverlapping($schedulable, $data, $exceptId)->isNotEmpty();
+        return $this->availabilityRepository->findOverlapping($model, $data, $exceptId)->isNotEmpty();
     }
 }

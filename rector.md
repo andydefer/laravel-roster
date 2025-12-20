@@ -1,11 +1,107 @@
 # Rector Refactoring Report
-*Generated: sam. 20 déc. 2025 17:35:24 WAT*
+*Generated: sam. 20 déc. 2025 18:29:14 WAT*
 
 
-11 files with changes
+14 files with changes
 =====================
 
-1) /home/andy-kani/pro/sites/packages/laravel-roster/src/Models/Availability.php:56
+1) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Feature/Facades/ImpedimentFacadeTest.php:4
+
+    ---------- begin diff ----------
+@@ @@
+
+ namespace Tests\Feature\Facades;
+
++use PHPUnit\Framework\Attributes\CoversClass;
++use Roster\Services\ImpedimentService;
+ use BadMethodCallException;
+ use Illuminate\Database\Eloquent\Model;
+ use Illuminate\Foundation\Testing\RefreshDatabase;
+@@ @@
+
+ /**
+  * Tests for the Impediment facade functionality.
+- *
+- * @covers \Roster\Facades\Impediment
+  */
++#[CoversClass(\Roster\Facades\Impediment::class)]
+ final class ImpedimentFacadeTest extends TestCase
+ {
+     use RefreshDatabase;
+@@ @@
+
+         $this->schedulableModel = new class extends Model {
+             protected $table = 'test_schedulables';
++
+             public $timestamps = false;
+         };
+
+@@ @@
+             ]
+         );
+     }
++
+     /**
+      * Test creating a new impediment through the facade.
+      */
+@@ @@
+         // SOLUTION RADICALE : Utiliser un schedulable UNIQUE pour ce test
+         $uniqueSchedulable = new class extends Model {
+             protected $table = 'test_schedulables';
++
+             public $timestamps = false;
+         };
+         $uniqueSchedulable->id = 999; // ID unique
+@@ @@
+         $this->assertTrue($deletionResult);
+
+         $finalFind = ImpedimentFacade::for($this->schedulableModel)->find($impediment->id);
+-        $this->assertNull($finalFind);
++        $this->assertNotInstanceOf(\Roster\Models\Impediment::class, $finalFind);
+     }
+
+     /**
+@@ @@
+         $this->assertSame('Training impediment', $impediments->first()->reason);
+         $this->assertSame($anotherAvailability->id, $impediments->first()->availability_id);
+     }
++
+     /**
+      * Test resetting filters.
+      */
+     public function test_facade_can_reset_filters(): void
+     {
+-        $service = ImpedimentFacade::for($this->schedulableModel)
++        $impedimentService = ImpedimentFacade::for($this->schedulableModel)
+             ->whereReason('test')
+             ->resetFilters();
+
+-        $this->assertInstanceOf(\Roster\Services\ImpedimentService::class, $service);
++        $this->assertInstanceOf(ImpedimentService::class, $impedimentService);
+     }
+
+     /**
+@@ @@
+      */
+     public function test_facade_can_get_schedulable(): void
+     {
+-        $service = ImpedimentFacade::for($this->schedulableModel);
+-        $schedulable = $service->getSchedulable();
++        $impedimentService = ImpedimentFacade::for($this->schedulableModel);
++        $schedulable = $impedimentService->getSchedulable();
+
+         $this->assertInstanceOf(Model::class, $schedulable);
+         $this->assertSame($this->schedulableModel->id, $schedulable->id);
+    ----------- end diff -----------
+
+Applied rules:
+ * NewlineBetweenClassLikeStmtsRector
+ * RenameVariableToMatchMethodCallReturnTypeRector
+ * CoversAnnotationWithValueToAttributeRector
+ * AssertEmptyNullableObjectToAssertInstanceofRector
+
+
+2) /home/andy-kani/pro/sites/packages/laravel-roster/src/Models/Availability.php:56
 
     ---------- begin diff ----------
 @@ @@
@@ -55,7 +151,7 @@ Applied rules:
  * RemoveUselessReturnTagRector
 
 
-2) /home/andy-kani/pro/sites/packages/laravel-roster/src/Models/Impediment.php:4
+3) /home/andy-kani/pro/sites/packages/laravel-roster/src/Models/Impediment.php:4
 
     ---------- begin diff ----------
 @@ @@
@@ -80,7 +176,7 @@ Applied rules:
 Applied rules:
 
 
-3) /home/andy-kani/pro/sites/packages/laravel-roster/src/Models/Schedule.php:4
+4) /home/andy-kani/pro/sites/packages/laravel-roster/src/Models/Schedule.php:4
 
     ---------- begin diff ----------
 @@ @@
@@ -105,7 +201,7 @@ Applied rules:
 Applied rules:
 
 
-4) /home/andy-kani/pro/sites/packages/laravel-roster/src/Repositories/AvailabilityRepository.php:4
+5) /home/andy-kani/pro/sites/packages/laravel-roster/src/Repositories/AvailabilityRepository.php:4
 
     ---------- begin diff ----------
 @@ @@
@@ -325,30 +421,6 @@ Applied rules:
              isset($filters['type']) && isset($filters['day']) =>
 @@ @@
      /**
-      * Load availabilities with pre-loaded schedule and impediment conflicts.
-      *
--     * @param Model $schedulable The schedulable entity
-+     * @param Model $model The schedulable entity
-      * @param Carbon $start Start of the date range
-      * @param Carbon $end End of the date range
-      * @param string|null $type Optional availability type filter
-@@ @@
-      * @return Collection<int, Availability> Collection of availabilities with conflict info
-      */
-     public function getAvailabilitiesWithConflictInfo(
--        Model $schedulable,
-+        Model $model,
-         Carbon $start,
-         Carbon $end,
-         ?string $type = null
-     ): Collection {
--        $availabilities = $this->getForDateRange($schedulable, $start, $end, $type);
-+        $availabilities = $this->getForDateRange($model, $start, $end, $type);
-
-         return $availabilities->load(['schedules', 'impediments']);
-     }
-@@ @@
-     /**
       * Build base query for availabilities of a schedulable entity.
       *
 -     * @param Model $schedulable The schedulable entity
@@ -400,7 +472,7 @@ Applied rules:
  * RenameParamToMatchTypeRector
 
 
-5) /home/andy-kani/pro/sites/packages/laravel-roster/src/Repositories/ImpedimentRepository.php:30
+6) /home/andy-kani/pro/sites/packages/laravel-roster/src/Repositories/ImpedimentRepository.php:30
 
     ---------- begin diff ----------
 @@ @@
@@ -420,7 +492,7 @@ Applied rules:
  * TernaryToBooleanOrFalseToBooleanAndRector
 
 
-6) /home/andy-kani/pro/sites/packages/laravel-roster/src/Repositories/ScheduleRepository.php:30
+7) /home/andy-kani/pro/sites/packages/laravel-roster/src/Repositories/ScheduleRepository.php:30
 
     ---------- begin diff ----------
 @@ @@
@@ -449,7 +521,7 @@ Applied rules:
  * TernaryToBooleanOrFalseToBooleanAndRector
 
 
-7) /home/andy-kani/pro/sites/packages/laravel-roster/src/Services/AvailabilityService.php:5
+8) /home/andy-kani/pro/sites/packages/laravel-roster/src/Services/AvailabilityService.php:5
 
     ---------- begin diff ----------
 @@ @@
@@ -493,7 +565,7 @@ Applied rules:
  * NewlineBetweenClassLikeStmtsRector
 
 
-8) /home/andy-kani/pro/sites/packages/laravel-roster/src/Services/Core/AbstractSchedulableService.php:41
+9) /home/andy-kani/pro/sites/packages/laravel-roster/src/Services/Core/AbstractSchedulableService.php:41
 
     ---------- begin diff ----------
 @@ @@
@@ -627,7 +699,232 @@ Applied rules:
  * RemoveUselessReturnTagRector
 
 
-9) /home/andy-kani/pro/sites/packages/laravel-roster/src/Services/ImpedimentService.php:105
+10) /home/andy-kani/pro/sites/packages/laravel-roster/src/Services/Core/AvailabilityChecker.php:4
+
+    ---------- begin diff ----------
+@@ @@
+
+ namespace Roster\Services\Core;
+
++use InvalidArgumentException;
+ use Illuminate\Database\Eloquent\Model;
+ use Illuminate\Support\Carbon;
+ use Roster\Contracts\Repository\AvailabilityRepositoryInterface;
+@@ @@
+      * @param Carbon $end End of the time period
+      * @param string|null $type Optional availability type filter
+      * @return bool True if the resource is available for the entire period
+-     * @throws \InvalidArgumentException If the time range is invalid
++     * @throws InvalidArgumentException If the time range is invalid
+      */
+-
+     public function isAvailableForPeriod(
+         Model $model,
+         Carbon $start,
+@@ @@
+      * @param array<string, mixed> $data Availability data containing start and end times
+      * @param int|null $exceptId Optional ID to exclude from overlap checking (for updates)
+      * @return bool True if overlapping availabilities exist
+-     * @throws \InvalidArgumentException If the time range data is invalid
++     * @throws InvalidArgumentException If the time range data is invalid
+      */
+     public function hasOverlapping(
+         Model $model,
+    ----------- end diff -----------
+
+Applied rules:
+
+
+11) /home/andy-kani/pro/sites/packages/laravel-roster/src/Services/Core/AvailabilityMerger.php:35
+
+    ---------- begin diff ----------
+@@ @@
+      * merges them when possible, and removes the merged entities to avoid duplicates.
+      *
+      * @param array<string, mixed> $data The new availability data to merge
+-     * @param Model $schedulable The schedulable entity (e.g., User, Team)
++     * @param Model $model The schedulable entity (e.g., User, Team)
+      *
+      * @return array<string, mixed> The merged availability data
+      */
+-    public function mergeAdjacentAvailabilities(array $data, Model $schedulable): array
++    public function mergeAdjacentAvailabilities(array $data, Model $model): array
+     {
+-        $adjacentAvailabilities = $this->getAdjacentAvailabilities($data, $schedulable);
++        $adjacentAvailabilities = $this->getAdjacentAvailabilities($data, $model);
+
+         if ($adjacentAvailabilities->isEmpty()) {
+             return $data;
+@@ @@
+
+         foreach ($adjacentAvailabilities as $adjacentAvailability) {
+             try {
+-                $temporaryAvailability = $this->createAvailabilityFromData($mergedData, $schedulable);
++                $temporaryAvailability = $this->createAvailabilityFromData($mergedData, $model);
+
+                 if ($this->availabilityValidator->areAdjacent($temporaryAvailability, $adjacentAvailability)) {
+                     $mergedData = $this->availabilityValidator->mergeAdjacent(
+@@ @@
+      * Find availabilities adjacent to the provided data.
+      *
+      * @param array<string, mixed> $data The availability data to check against
+-     * @param Model $schedulable The schedulable entity
++     * @param Model $model The schedulable entity
+      *
+      * @return Collection<int, Availability> Collection of adjacent availabilities
+      */
+-    public function getAdjacentAvailabilities(array $data, Model $schedulable): Collection
++    public function getAdjacentAvailabilities(array $data, Model $model): Collection
+     {
+-        $existingAvailabilities = $this->availabilityRepository->findByType($schedulable, $data);
+-        $temporaryAvailability = $this->createAvailabilityFromData($data, $schedulable);
++        $existingAvailabilities = $this->availabilityRepository->findByType($model, $data);
++        $temporaryAvailability = $this->createAvailabilityFromData($data, $model);
+
+         return $existingAvailabilities->filter(
+             fn(Availability $availability): bool => $this->availabilityValidator->areAdjacent(
+@@ @@
+      * Create a temporary Availability instance from raw data.
+      *
+      * @param array<string, mixed> $data The availability data
+-     * @param Model $schedulable The schedulable entity
++     * @param Model $model The schedulable entity
+      *
+      * @return Availability A temporary Availability instance
+      */
+-    private function createAvailabilityFromData(array $data, Model $schedulable): Availability
++    private function createAvailabilityFromData(array $data, Model $model): Availability
+     {
+         ['start' => $startTime, 'end' => $endTime] = $this->validationService
+             ->parseAndValidateTimeRange($data);
+
+         return new Availability([
+-            'schedulable_id' => $schedulable->id,
+-            'schedulable_type' => get_class($schedulable),
++            'schedulable_id' => $model->id,
++            'schedulable_type' => get_class($model),
+             'start_time' => $startTime,
+             'end_time' => $endTime,
+             'days' => $data['days'] ?? [],
+    ----------- end diff -----------
+
+Applied rules:
+ * RenameParamToMatchTypeRector
+
+
+12) /home/andy-kani/pro/sites/packages/laravel-roster/src/Services/Core/AvailabilityValidator.php:37
+
+    ---------- begin diff ----------
+@@ @@
+     /**
+      * Check for overlapping availabilities.
+      *
+-     * @param  Model  $schedulable  The schedulable model (e.g., User, Team)
++     * @param Model $model The schedulable model (e.g., User, Team)
+      * @param  array<string, mixed>  $data  New availability data
+      * @param  int|null  $exceptId  Availability ID to exclude from check (for updates)
+      * @return bool True if overlapping availability exists
+      */
+     public function hasOverlapping(
+-        Model $schedulable,
++        Model $model,
+         array $data,
+         ?int $exceptId = null
+     ): bool {
+-        $query = $this->buildOverlapQuery($schedulable, $data, $exceptId);
++        $query = $this->buildOverlapQuery($model, $data, $exceptId);
+
+         return $query->exists();
+     }
+@@ @@
+
+     /**
+      * Validate that at least one day is specified.
++     * @param array<string, mixed> $data
+      */
+     private function validateDays(array $data): void
+     {
+@@ @@
+
+     /**
+      * Validate time range (end time must be after start time).
++     * @param array<string, mixed> $data
+      */
+     private function validateTimeRange(array $data): void
+     {
+@@ @@
+
+     /**
+      * Validate date range (end date must be on or after start date).
++     * @param array<string, mixed> $data
+      */
+     private function validateDateRange(array $data): void
+     {
+@@ @@
+
+     /**
+      * Build query to check for overlapping availabilities.
++     * @param array<string, mixed> $data
+      */
+-    private function buildOverlapQuery(Model $schedulable, array $data, ?int $exceptId = null)
++    private function buildOverlapQuery(Model $model, array $data, ?int $exceptId = null)
+     {
+-        $query = Availability::where('schedulable_id', $schedulable->id)
+-            ->where('schedulable_type', get_class($schedulable))
++        $query = Availability::where('schedulable_id', $model->id)
++            ->where('schedulable_type', get_class($model))
+             ->where(function ($query) use ($data): void {
+                 $this->addDaysFilter($query, $data);
+             })
+@@ @@
+
+     /**
+      * Add days filter to query.
++     * @param array<string, mixed> $data
+      */
+     private function addDaysFilter($query, array $data): void
+     {
+@@ @@
+
+     /**
+      * Add time range filter to query.
++     * @param array<string, mixed> $data
+      */
+     private function addTimeRangeFilter($query, array $data): void
+     {
+@@ @@
+      */
+     private function haveCommonDays(Availability $first, Availability $second): bool
+     {
+-        return ! empty(array_intersect($first->days, $second->days));
++        return array_intersect($first->days, $second->days) !== [];
+     }
+
+     /**
+@@ @@
+      */
+     private function timeRangesTouch(Availability $first, Availability $second): bool
+     {
+-        return $first->end_time->eq($second->start_time) ||
+-            $second->end_time->eq($first->start_time);
++        if ($first->end_time->eq($second->start_time)) {
++            return true;
++        }
++        return (bool) $second->end_time->eq($first->start_time);
+     }
+
+     /**
+    ----------- end diff -----------
+
+Applied rules:
+ * ReturnBinaryOrToEarlyReturnRector
+ * RenameParamToMatchTypeRector
+ * DisallowedEmptyRuleFixerRector
+ * AddParamArrayDocblockFromDimFetchAccessRector
+ * ClassMethodArrayDocblockParamFromLocalCallsRector
+
+
+13) /home/andy-kani/pro/sites/packages/laravel-roster/src/Services/ImpedimentService.php:105
 
     ---------- begin diff ----------
 @@ @@
@@ -645,7 +942,7 @@ Applied rules:
  * NullableCompareToNullRector
 
 
-10) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Feature/Facades/AvailabilityFacadeTest.php:4
+14) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Feature/Facades/AvailabilityFacadeTest.php:4
 
     ---------- begin diff ----------
 @@ @@
@@ -708,101 +1005,5 @@ Applied rules:
  * CoversAnnotationWithValueToAttributeRector
 
 
-11) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Feature/Facades/ImpedimentFacadeTest.php:4
-
-    ---------- begin diff ----------
-@@ @@
-
- namespace Tests\Feature\Facades;
-
-+use PHPUnit\Framework\Attributes\CoversClass;
-+use Roster\Services\ImpedimentService;
- use BadMethodCallException;
- use Illuminate\Database\Eloquent\Model;
- use Illuminate\Foundation\Testing\RefreshDatabase;
-@@ @@
-
- /**
-  * Tests for the Impediment facade functionality.
-- *
-- * @covers \Roster\Facades\Impediment
-  */
-+#[CoversClass(\Roster\Facades\Impediment::class)]
- final class ImpedimentFacadeTest extends TestCase
- {
-     use RefreshDatabase;
-@@ @@
-
-         $this->schedulableModel = new class extends Model {
-             protected $table = 'test_schedulables';
-+
-             public $timestamps = false;
-         };
-
-@@ @@
-             ]
-         );
-     }
-+
-     /**
-      * Test creating a new impediment through the facade.
-      */
-@@ @@
-         // SOLUTION RADICALE : Utiliser un schedulable UNIQUE pour ce test
-         $uniqueSchedulable = new class extends Model {
-             protected $table = 'test_schedulables';
-+
-             public $timestamps = false;
-         };
-         $uniqueSchedulable->id = 999; // ID unique
-@@ @@
-         $this->assertTrue($deletionResult);
-
-         $finalFind = ImpedimentFacade::for($this->schedulableModel)->find($impediment->id);
--        $this->assertNull($finalFind);
-+        $this->assertNotInstanceOf(\Roster\Models\Impediment::class, $finalFind);
-     }
-
-     /**
-@@ @@
-         $this->assertSame('Training impediment', $impediments->first()->reason);
-         $this->assertSame($anotherAvailability->id, $impediments->first()->availability_id);
-     }
-+
-     /**
-      * Test resetting filters.
-      */
-     public function test_facade_can_reset_filters(): void
-     {
--        $service = ImpedimentFacade::for($this->schedulableModel)
-+        $impedimentService = ImpedimentFacade::for($this->schedulableModel)
-             ->whereReason('test')
-             ->resetFilters();
-
--        $this->assertInstanceOf(\Roster\Services\ImpedimentService::class, $service);
-+        $this->assertInstanceOf(ImpedimentService::class, $impedimentService);
-     }
-
-     /**
-@@ @@
-      */
-     public function test_facade_can_get_schedulable(): void
-     {
--        $service = ImpedimentFacade::for($this->schedulableModel);
--        $schedulable = $service->getSchedulable();
-+        $impedimentService = ImpedimentFacade::for($this->schedulableModel);
-+        $schedulable = $impedimentService->getSchedulable();
-
-         $this->assertInstanceOf(Model::class, $schedulable);
-         $this->assertSame($this->schedulableModel->id, $schedulable->id);
-    ----------- end diff -----------
-
-Applied rules:
- * NewlineBetweenClassLikeStmtsRector
- * RenameVariableToMatchMethodCallReturnTypeRector
- * CoversAnnotationWithValueToAttributeRector
- * AssertEmptyNullableObjectToAssertInstanceofRector
-
-
- [OK] 11 files would have been changed (dry-run) by Rector                                                              
+ [OK] 14 files would have been changed (dry-run) by Rector                                                              
 

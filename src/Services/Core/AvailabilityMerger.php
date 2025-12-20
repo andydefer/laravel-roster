@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Roster\Services\Core;
 
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Roster\Contracts\Repository\AvailabilityRepositoryInterface;
@@ -13,23 +14,34 @@ use Roster\Contracts\Services\ValidationServiceInterface;
 use Roster\Exceptions\ValidationException;
 use Roster\Models\Availability;
 
+/**
+ * Service responsible for merging availability data with adjacent existing availabilities.
+ *
+ * This service handles the logic for detecting and merging overlapping or adjacent
+ * availability periods to maintain data consistency and avoid conflicts.
+ */
 class AvailabilityMerger implements AvailabilityMergerInterface
 {
     public function __construct(
-        private AvailabilityValidatorInterface $availabilityValidator,
-        private AvailabilityRepositoryInterface $availabilityRepository,
-        private ValidationServiceInterface $validationService
+        private readonly AvailabilityValidatorInterface $availabilityValidator,
+        private readonly AvailabilityRepositoryInterface $availabilityRepository,
+        private readonly ValidationServiceInterface $validationService
     ) {}
 
     /**
      * Merge new availability data with adjacent existing ones.
      *
-     * @param  array<string, mixed>  $data
-     * @return array<string, mixed>
+     * This method identifies availabilities that are adjacent to the new data,
+     * merges them when possible, and removes the merged entities to avoid duplicates.
+     *
+     * @param array<string, mixed> $data The new availability data to merge
+     * @param Model $schedulable The schedulable entity (e.g., User, Team)
+     *
+     * @return array<string, mixed> The merged availability data
      */
-    public function mergeWithAdjacent(array $data, object $schedulable): array
+    public function mergeAdjacentAvailabilities(array $data, Model $schedulable): array
     {
-        $adjacentAvailabilities = $this->findAdjacentAvailabilities($data, $schedulable);
+        $adjacentAvailabilities = $this->getAdjacentAvailabilities($data, $schedulable);
 
         if ($adjacentAvailabilities->isEmpty()) {
             return $data;
@@ -40,10 +52,13 @@ class AvailabilityMerger implements AvailabilityMergerInterface
 
         foreach ($adjacentAvailabilities as $adjacentAvailability) {
             try {
-                $tempAvailability = $this->createAvailabilityFromData($mergedData, $schedulable);
+                $temporaryAvailability = $this->createAvailabilityFromData($mergedData, $schedulable);
 
-                if ($this->availabilityValidator->areAdjacent($tempAvailability, $adjacentAvailability)) {
-                    $mergedData = $this->availabilityValidator->mergeAdjacent($tempAvailability, $adjacentAvailability);
+                if ($this->availabilityValidator->areAdjacent($temporaryAvailability, $adjacentAvailability)) {
+                    $mergedData = $this->availabilityValidator->mergeAdjacent(
+                        $temporaryAvailability,
+                        $adjacentAvailability
+                    );
                     $idsToDelete[] = $adjacentAvailability->id;
                 }
             } catch (ValidationException) {
@@ -59,47 +74,48 @@ class AvailabilityMerger implements AvailabilityMergerInterface
     }
 
     /**
-     * Find adjacent availabilities.
+     * Find availabilities adjacent to the provided data.
      *
-     * @param  array<string, mixed>  $data
-     * @return Collection<int, Availability>
+     * @param array<string, mixed> $data The availability data to check against
+     * @param Model $schedulable The schedulable entity
+     *
+     * @return Collection<int, Availability> Collection of adjacent availabilities
      */
-    public function findAdjacentAvailabilities(array $data, object $schedulable): Collection
+    public function getAdjacentAvailabilities(array $data, Model $schedulable): Collection
     {
-        $availabilities = $this->availabilityRepository->findByType($schedulable, $data);
-        $tempAvailability = $this->createAvailabilityFromData($data, $schedulable);
+        $existingAvailabilities = $this->availabilityRepository->findByType($schedulable, $data);
+        $temporaryAvailability = $this->createAvailabilityFromData($data, $schedulable);
 
-        return $availabilities->filter(function (Availability $availability) use ($tempAvailability): bool {
-            return $this->availabilityValidator->areAdjacent($tempAvailability, $availability);
-        });
+        return $existingAvailabilities->filter(
+            fn(Availability $availability): bool => $this->availabilityValidator->areAdjacent(
+                $temporaryAvailability,
+                $availability
+            )
+        );
     }
 
     /**
-     * Create temporary Availability object from data.
+     * Create a temporary Availability instance from raw data.
      *
-     * @param  array<string, mixed>  $data
+     * @param array<string, mixed> $data The availability data
+     * @param Model $schedulable The schedulable entity
+     *
+     * @return Availability A temporary Availability instance
      */
-    private function createAvailabilityFromData(array $data, object $schedulable): Availability
+    private function createAvailabilityFromData(array $data, Model $schedulable): Availability
     {
         ['start' => $startTime, 'end' => $endTime] = $this->validationService
             ->parseAndValidateTimeRange($data);
 
-        $availability = new Availability;
-        $availability->schedulable_id = $schedulable->id;
-        $availability->schedulable_type = get_class($schedulable);
-        $availability->start_time = $startTime;
-        $availability->end_time = $endTime;
-        $availability->days = $data['days'] ?? [];
-        $availability->type = $data['type'] ?? null;
-
-        if (isset($data['start_date'])) {
-            $availability->start_date = Carbon::parse($data['start_date']);
-        }
-
-        if (isset($data['end_date'])) {
-            $availability->end_date = Carbon::parse($data['end_date']);
-        }
-
-        return $availability;
+        return new Availability([
+            'schedulable_id' => $schedulable->id,
+            'schedulable_type' => get_class($schedulable),
+            'start_time' => $startTime,
+            'end_time' => $endTime,
+            'days' => $data['days'] ?? [],
+            'type' => $data['type'] ?? null,
+            'start_date' => isset($data['start_date']) ? Carbon::parse($data['start_date']) : null,
+            'end_date' => isset($data['end_date']) ? Carbon::parse($data['end_date']) : null,
+        ]);
     }
 }

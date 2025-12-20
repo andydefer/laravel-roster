@@ -412,19 +412,19 @@ class AvailabilityRepository extends AbstractRepository implements AvailabilityR
     /**
      * Load availabilities with pre-loaded schedule and impediment conflicts.
      *
-     * @param Model $schedulable The schedulable entity
+     * @param Model $model The schedulable entity
      * @param Carbon $start Start of the date range
      * @param Carbon $end End of the date range
      * @param string|null $type Optional availability type filter
      * @return Collection<int, Availability> Collection of availabilities with conflict info
      */
     public function getAvailabilitiesWithConflictInfo(
-        Model $schedulable,
+        Model $model,
         Carbon $start,
         Carbon $end,
         ?string $type = null
     ): Collection {
-        $availabilities = $this->getForDateRange($schedulable, $start, $end, $type);
+        $availabilities = $this->getForDateRange($model, $start, $end, $type);
 
         return $availabilities->load(['schedules', 'impediments']);
     }

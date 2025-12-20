@@ -135,7 +135,7 @@ class AvailabilityService extends AbstractSchedulableService
      */
     protected function processBeforeCreate(): void
     {
-        $this->data = $this->availabilityMerger->mergeWithAdjacent($this->data, $this->schedulable);
+        $this->data = $this->availabilityMerger->mergeAdjacentAvailabilities($this->data, $this->schedulable);
         $this->data['schedulable_id'] = $this->schedulable->id;
         $this->data['schedulable_type'] = get_class($this->schedulable);
     }
@@ -292,7 +292,7 @@ class AvailabilityService extends AbstractSchedulableService
     public function findByType(array $data): Collection
     {
         $this->validateSchedulable();
-        return $this->availabilityMerger->findAdjacentAvailabilities($data, $this->schedulable);
+        return $this->availabilityMerger->getAdjacentAvailabilities($data, $this->schedulable);
     }
 
     /**

@@ -1,11 +1,11 @@
 # Pint Formatting Test Report
-*Generated: sam. 20 déc. 2025 17:35:23 WAT*
+*Generated: sam. 20 déc. 2025 18:29:12 WAT*
 
 
-  .⨯⨯⨯⨯.............⨯⨯..⨯⨯...⨯.....⨯.⨯⨯⨯⨯⨯.⨯....⨯.......⨯...........⨯⨯.⨯..........
+  .⨯⨯⨯⨯.............⨯⨯.⨯⨯⨯.⨯⨯⨯.....⨯.⨯⨯⨯⨯⨯.⨯....⨯.......⨯...........⨯⨯.⨯..........
 
   ──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────── Laravel  
-    FAIL   ................................................................................................................................................. 80 files, 21 style issues  
+    FAIL   ................................................................................................................................................. 80 files, 24 style issues  
   ⨯ src/Exceptions/Messages/ErrorMessageFactory.php                                                                                                         concat_space, phpdoc_align  
   ⨯ src/Exceptions/OverlappingImpedimentException.php                                                                                                                     phpdoc_align  
   ⨯ src/Exceptions/OverlappingScheduleException.php                                                                                                                       phpdoc_align  
@@ -20,8 +20,11 @@
   ⨯ src/RosterServiceProvider.php                                                                                                                                         concat_space  
   ⨯ src/Services/AvailabilityService.php class_attributes_separation, phpdoc_separation, no_unused_imports, not_operator_with_successor_space, blank_line_before_statement, phpdoc_al…  
   ⨯ src/Services/Core/AbstractSchedulableService.php no_superfluous_phpdoc_tags, unary_operator_spaces, phpdoc_separation, phpdoc_trim, not_operator_with_successor_space, phpdoc_ali…  
-  ⨯ src/Services/Core/ResourcePublisherService.php    increment_style, concat_space, unary_operator_spaces, braces_position, not_operator_with_successor_space, single_line_empty_body  
-  ⨯ src/Services/Core/SlotFinderService.php   function_declaration, increment_style, unary_operator_spaces, braces_position, not_operator_with_successor_space, single_line_empty_body  
+  ⨯ src/Services/Core/AvailabilityChecker.php                                    class_attributes_separation, braces_position, phpdoc_separation, single_line_empty_body, phpdoc_align  
+  ⨯ src/Services/Core/AvailabilityMerger.php                                            function_declaration, braces_position, phpdoc_separation, single_line_empty_body, phpdoc_align  
+  ⨯ src/Services/Core/AvailabilityValidator.php  class_attributes_separation, unary_operator_spaces, phpdoc_separation, not_operator_with_successor_space, blank_line_before_statement  
+  ⨯ src/Services/Core/ResourcePublisherService.php             increment_style, concat_space, braces_position, not_operator_with_successor_space, single_line_empty_body, phpdoc_align  
+  ⨯ src/Services/Core/SlotFinderService.php function_declaration, increment_style, unary_operator_spaces, braces_position, not_operator_with_successor_space, single_line_empty_body,…  
   ⨯ src/Services/ImpedimentService.php                                                                                        unary_operator_spaces, not_operator_with_successor_space  
   ⨯ src/Traits/FilterableTrait.php                                                                              concat_space, unary_operator_spaces, not_operator_with_successor_space  
   ⨯ tests/Feature/Facades/AvailabilityFacadeTest.php                                                                                      class_attributes_separation, braces_position  

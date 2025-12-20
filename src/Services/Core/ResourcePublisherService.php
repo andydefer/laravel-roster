@@ -9,12 +9,15 @@ use Illuminate\Filesystem\Filesystem;
 use Symfony\Component\Console\Output\OutputInterface;
 
 /**
- * Service for publishing package resources.
+ * Service for publishing package resources like config files, migrations, views, and routes.
  */
 class ResourcePublisherService
 {
     /**
      * Create a new ResourcePublisherService instance.
+     *
+     * @param Application $application Laravel application instance
+     * @param Filesystem $filesystem Filesystem instance for file operations
      */
     public function __construct(
         private readonly Application $application,
@@ -22,9 +25,9 @@ class ResourcePublisherService
     ) {}
 
     /**
-     * Get all publishable resources with their tags.
+     * Get all publishable resources with their source, destination, and tags.
      *
-     * @return array<string, array<string, string>>
+     * @return array<string, array<string, string>> Resource types mapped to their configurations
      */
     public function getPublishableResources(): array
     {
@@ -53,7 +56,12 @@ class ResourcePublisherService
     }
 
     /**
-     * Publish a specific resource.
+     * Publish a specific resource type.
+     *
+     * @param string $resourceType Type of resource to publish (config, migrations, views, routes)
+     * @param bool $force Whether to force overwrite existing files
+     * @param OutputInterface|null $output Console output interface for logging
+     * @return bool True if any files were published, false otherwise
      */
     public function publishResource(
         string $resourceType,
@@ -62,29 +70,72 @@ class ResourcePublisherService
     ): bool {
         $resources = $this->getPublishableResources();
 
-        if (! isset($resources[$resourceType])) {
+        if (!array_key_exists($resourceType, $resources)) {
             return false;
         }
 
         $config = $resources[$resourceType];
 
-        if ($this->shouldPublishDirectory($config['source'])) {
-            return $this->publishDirectory($config['source'], $config['destination'], $force, $output);
+        if ($this->shouldTreatAsDirectory($config['source'])) {
+            return $this->publishDirectory(
+                source: $config['source'],
+                destination: $config['destination'],
+                force: $force,
+                output: $output
+            );
         }
 
-        return $this->publishFile($config['source'], $config['destination'], $force, $output);
+        return $this->publishSingleFile(
+            source: $config['source'],
+            destination: $config['destination'],
+            force: $force,
+            output: $output
+        );
     }
 
     /**
-     * Check if a source should be treated as a directory.
+     * Check if a resource type has already been published.
+     *
+     * @param string $resourceType Type of resource to check
+     * @return bool True if the resource exists at the destination
      */
-    private function shouldPublishDirectory(string $source): bool
+    public function isPublished(string $resourceType): bool
+    {
+        $resources = $this->getPublishableResources();
+
+        if (!array_key_exists($resourceType, $resources)) {
+            return false;
+        }
+
+        $config = $resources[$resourceType];
+
+        if ($this->shouldTreatAsDirectory($config['source'])) {
+            return $this->filesystem->exists($config['destination']) &&
+                $this->filesystem->isDirectory($config['destination']);
+        }
+
+        return $this->filesystem->exists($config['destination']);
+    }
+
+    /**
+     * Determine if a source path should be treated as a directory.
+     *
+     * @param string $source Source path to check
+     * @return bool True if the source should be published as a directory
+     */
+    private function shouldTreatAsDirectory(string $source): bool
     {
         return is_dir($source) || str_contains($source, 'migrations') || str_contains($source, 'views');
     }
 
     /**
-     * Publish a directory of resources.
+     * Publish all files from a source directory to a destination directory.
+     *
+     * @param string $source Source directory path
+     * @param string $destination Destination directory path
+     * @param bool $force Whether to force overwrite existing files
+     * @param OutputInterface|null $output Console output interface for logging
+     * @return bool True if any files were published, false otherwise
      */
     private function publishDirectory(
         string $source,
@@ -92,7 +143,7 @@ class ResourcePublisherService
         bool $force,
         ?OutputInterface $output
     ): bool {
-        if (! $this->filesystem->exists($source)) {
+        if (!$this->filesystem->exists($source)) {
             return false;
         }
 
@@ -101,9 +152,9 @@ class ResourcePublisherService
 
         foreach ($files as $file) {
             $relativePath = $file->getRelativePathname();
-            $targetPath = $destination.'/'.$relativePath;
+            $targetPath = $destination . '/' . $relativePath;
 
-            if ($this->shouldCopyFile($targetPath, $force)) {
+            if ($this->shouldCopyFile(targetPath: $targetPath, force: $force)) {
                 $this->filesystem->ensureDirectoryExists(dirname($targetPath));
                 $this->filesystem->copy($file->getPathname(), $targetPath);
                 ++$publishedCount;
@@ -118,24 +169,30 @@ class ResourcePublisherService
     }
 
     /**
-     * Publish a single file.
+     * Publish a single file from source to destination.
+     *
+     * @param string $source Source file path
+     * @param string $destination Destination file path
+     * @param bool $force Whether to force overwrite existing file
+     * @param OutputInterface|null $output Console output interface for logging
+     * @return bool True if the file was published, false otherwise
      */
-    private function publishFile(
+    private function publishSingleFile(
         string $source,
         string $destination,
         bool $force,
         ?OutputInterface $output
     ): bool {
-        if (! $this->filesystem->exists($source)) {
+        if (!$this->filesystem->exists($source)) {
             return false;
         }
 
-        if ($this->shouldCopyFile($destination, $force)) {
+        if ($this->shouldCopyFile(targetPath: $destination, force: $force)) {
             $this->filesystem->ensureDirectoryExists(dirname($destination));
             $this->filesystem->copy($source, $destination);
 
             if ($output instanceof OutputInterface) {
-                $output->writeln('<info>Published:</info> '.basename($destination));
+                $output->writeln('<info>Published:</info> ' . basename($destination));
             }
 
             return true;
@@ -145,35 +202,18 @@ class ResourcePublisherService
     }
 
     /**
-     * Determine if a file should be copied.
+     * Determine if a file should be copied based on existence and force flag.
+     *
+     * @param string $targetPath Destination path to check
+     * @param bool $force Whether to force overwrite
+     * @return bool True if the file should be copied
      */
-    private function shouldCopyFile(string $destination, bool $force): bool
+    private function shouldCopyFile(string $targetPath, bool $force): bool
     {
         if ($force) {
             return true;
         }
 
-        return ! $this->filesystem->exists($destination);
-    }
-
-    /**
-     * Check if a resource has already been published.
-     */
-    public function isPublished(string $resourceType): bool
-    {
-        $resources = $this->getPublishableResources();
-
-        if (! isset($resources[$resourceType])) {
-            return false;
-        }
-
-        $config = $resources[$resourceType];
-
-        if ($this->shouldPublishDirectory($config['source'])) {
-            return $this->filesystem->exists($config['destination']) &&
-                $this->filesystem->isDirectory($config['destination']);
-        }
-
-        return $this->filesystem->exists($config['destination']);
+        return !$this->filesystem->exists($targetPath);
     }
 }

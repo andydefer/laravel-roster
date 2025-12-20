@@ -20,7 +20,7 @@ interface AvailabilityMergerInterface
      * @param  Model  $model  Schedulable entity model
      * @return array<string, mixed> Merged availability data
      */
-    public function mergeWithAdjacent(array $data, Model $model): array;
+    public function mergeAdjacentAvailabilities(array $data, Model $model): array;
 
     /**
      * Find availabilities adjacent to the specified time range.
@@ -32,5 +32,5 @@ interface AvailabilityMergerInterface
      * @param  Model  $model  Schedulable entity model
      * @return Collection<int, Availability> Collection of adjacent availabilities
      */
-    public function findAdjacentAvailabilities(array $data, Model $model): Collection;
+    public function getAdjacentAvailabilities(array $data, Model $model): Collection;
 }
