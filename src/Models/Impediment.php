@@ -8,6 +8,23 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Carbon;
 
+/**
+ * Represents an impediment that blocks scheduling within a specific time period.
+ *
+ * An impediment is a time period where a schedulable resource is unavailable
+ * for any scheduling due to various reasons (maintenance, absence, etc.).
+ *
+ * @property int $id
+ * @property int $availability_id
+ * @property int $schedulable_id
+ * @property string $schedulable_type
+ * @property string $reason
+ * @property Carbon $start_datetime
+ * @property Carbon $end_datetime
+ * @property array $metadata
+ * @property-read float $duration_minutes
+ * @property-read Availability $availability
+ */
 class Impediment extends Model
 {
     protected $table = 'roster_impediments';
@@ -29,7 +46,9 @@ class Impediment extends Model
     ];
 
     /**
-     * Relationship to parent Availability.
+     * Get the availability this impediment belongs to.
+     *
+     * @return BelongsTo<Availability, Impediment>
      */
     public function availability(): BelongsTo
     {
@@ -37,7 +56,9 @@ class Impediment extends Model
     }
 
     /**
-     * Polymorphic relationship to schedulable entity.
+     * Get the schedulable entity associated with this impediment.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\MorphTo
      */
     public function schedulable()
     {
@@ -45,7 +66,11 @@ class Impediment extends Model
     }
 
     /**
-     * Check if the Impediment overlaps with a given period.
+     * Determine if this impediment overlaps with a given time period.
+     *
+     * @param Carbon $start The start of the period to check
+     * @param Carbon $end The end of the period to check
+     * @return bool True if the impediment overlaps with the period
      */
     public function overlapsWith(Carbon $start, Carbon $end): bool
     {
@@ -53,7 +78,9 @@ class Impediment extends Model
     }
 
     /**
-     * Get duration in minutes.
+     * Get the duration of the impediment in minutes.
+     *
+     * @return float Duration in minutes
      */
     public function getDurationMinutesAttribute(): float
     {
@@ -61,7 +88,9 @@ class Impediment extends Model
     }
 
     /**
-     * Check if the Impediment is currently active.
+     * Check if the impediment is currently active.
+     *
+     * @return bool True if the impediment is currently active
      */
     public function isActive(): bool
     {
@@ -71,7 +100,9 @@ class Impediment extends Model
     }
 
     /**
-     * Check if the Impediment is upcoming.
+     * Check if the impediment is scheduled to start in the future.
+     *
+     * @return bool True if the impediment is upcoming
      */
     public function isUpcoming(): bool
     {
@@ -79,7 +110,9 @@ class Impediment extends Model
     }
 
     /**
-     * Check if the Impediment is past.
+     * Check if the impediment has already ended.
+     *
+     * @return bool True if the impediment is in the past
      */
     public function isPast(): bool
     {

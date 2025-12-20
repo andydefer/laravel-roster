@@ -10,10 +10,13 @@ use Illuminate\Support\Collection;
 use Roster\Contracts\Repository\ImpedimentRepositoryInterface;
 use Roster\Models\Impediment;
 
+/**
+ * Repository for managing Impediment entities.
+ */
 class ImpedimentRepository extends AbstractRepository implements ImpedimentRepositoryInterface
 {
     /**
-     * Create a new impediment.
+     * {@inheritdoc}
      */
     public function create(array $data): Impediment
     {
@@ -21,35 +24,31 @@ class ImpedimentRepository extends AbstractRepository implements ImpedimentRepos
     }
 
     /**
-     * Update an existing impediment.
+     * {@inheritdoc}
      */
     public function update(int $id, array $data): bool
     {
         $impediment = $this->findById($id);
 
-        if (! $impediment instanceof Impediment) {
-            return false;
-        }
-
-        return $impediment->update($data);
+        return $impediment instanceof Impediment
+            ? $impediment->update($data)
+            : false;
     }
 
     /**
-     * Delete an impediment.
+     * {@inheritdoc}
      */
     public function delete(int $id): bool
     {
         $impediment = $this->findById($id);
 
-        if (! $impediment instanceof Impediment) {
-            return false;
-        }
-
-        return $impediment->delete();
+        return $impediment instanceof Impediment
+            ? $impediment->delete()
+            : false;
     }
 
     /**
-     * Find impediment by ID.
+     * {@inheritdoc}
      */
     public function findById(int $id): ?Impediment
     {
@@ -57,7 +56,7 @@ class ImpedimentRepository extends AbstractRepository implements ImpedimentRepos
     }
 
     /**
-     * Get all impediments.
+     * {@inheritdoc}
      */
     public function getAll(): Collection
     {
@@ -68,6 +67,11 @@ class ImpedimentRepository extends AbstractRepository implements ImpedimentRepos
 
     /**
      * Find impediments for a time slot.
+     *
+     * @param int $availabilityId The availability ID
+     * @param Carbon $start Start of time slot
+     * @param Carbon $end End of time slot
+     * @return Collection<int, Impediment>
      */
     public function findForTimeSlot(
         int $availabilityId,
@@ -83,6 +87,12 @@ class ImpedimentRepository extends AbstractRepository implements ImpedimentRepos
 
     /**
      * Check if a time slot has overlapping impediments.
+     *
+     * @param int $availabilityId The availability ID
+     * @param Carbon $start Start of time slot
+     * @param Carbon $end End of time slot
+     * @param int|null $excludeId Impediment ID to exclude
+     * @return bool True if overlapping impediments exist
      */
     public function hasOverlappingImpediments(
         int $availabilityId,
@@ -103,6 +113,12 @@ class ImpedimentRepository extends AbstractRepository implements ImpedimentRepos
 
     /**
      * Find overlapping impediments with time range.
+     *
+     * @param int $availabilityId The availability ID
+     * @param Carbon $start Start of time range
+     * @param Carbon $end End of time range
+     * @param int|null $excludeId Impediment ID to exclude
+     * @return Collection<int, Impediment>
      */
     public function findOverlappingImpediments(
         int $availabilityId,

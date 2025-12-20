@@ -9,10 +9,27 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Support\Carbon;
 
+/**
+ * Represents an availability period for a schedulable resource.
+ *
+ * An availability defines when a resource (user, team, equipment, etc.)
+ * is available for scheduling, including time windows, days of week,
+ * and date ranges.
+ */
 class Availability extends Model
 {
+    /**
+     * The table associated with the model.
+     *
+     * @var string
+     */
     protected $table = 'roster_availabilities';
 
+    /**
+     * The attributes that are mass assignable.
+     *
+     * @var array<int, string>
+     */
     protected $fillable = [
         'schedulable_id',
         'schedulable_type',
@@ -24,6 +41,11 @@ class Availability extends Model
         'end_date',
     ];
 
+    /**
+     * The attributes that should be cast.
+     *
+     * @var array<string, string>
+     */
     protected $casts = [
         'start_time' => 'datetime:H:i',
         'end_time' => 'datetime:H:i',
@@ -33,7 +55,9 @@ class Availability extends Model
     ];
 
     /**
-     * Polymorphic relationship to the owner.
+     * Get the schedulable resource that owns this availability.
+     *
+     * @return MorphTo
      */
     public function schedulable(): MorphTo
     {
@@ -41,7 +65,9 @@ class Availability extends Model
     }
 
     /**
-     * Relationship to Schedules.
+     * Get the schedules associated with this availability.
+     *
+     * @return HasMany
      */
     public function schedules(): HasMany
     {
@@ -49,7 +75,9 @@ class Availability extends Model
     }
 
     /**
-     * Relationship to Impediments.
+     * Get the impediments associated with this availability.
+     *
+     * @return HasMany
      */
     public function impediments(): HasMany
     {
@@ -57,32 +85,75 @@ class Availability extends Model
     }
 
     /**
-     * Check if a given time period is available for a Schedule.
+     * Determine if a specific time period is available for scheduling.
+     *
+     * Checks if the given time period falls within this availability's
+     * defined days, time window, and date range.
+     *
+     * @param Carbon $start Start time of the period to check
+     * @param Carbon $end End time of the period to check
+     * @return bool True if the period is available, false otherwise
      */
     public function isAvailableForSchedule(Carbon $start, Carbon $end): bool
     {
-        // Check day
-        $dayOfWeek = strtolower($start->englishDayOfWeek);
-        if (! in_array($dayOfWeek, $this->days)) {
+        if (! $this->isAvailableOnDay($start)) {
             return false;
         }
 
-        // Check time
+        if (! $this->isWithinTimeWindow($start, $end)) {
+            return false;
+        }
+
+        return $this->isWithinDateRange($start, $end);
+    }
+
+    /**
+     * Check if the availability includes the given day of week.
+     *
+     * @param Carbon $date Date to check
+     * @return bool True if the day is available, false otherwise
+     */
+    private function isAvailableOnDay(Carbon $date): bool
+    {
+        $dayOfWeek = strtolower($date->englishDayOfWeek);
+
+        return in_array($dayOfWeek, $this->days, true);
+    }
+
+    /**
+     * Check if the time period falls within the availability's time window.
+     *
+     * @param Carbon $start Start time to check
+     * @param Carbon $end End time to check
+     * @return bool True if within time window, false otherwise
+     */
+    private function isWithinTimeWindow(Carbon $start, Carbon $end): bool
+    {
         $startTime = $start->format('H:i:s');
         $endTime = $end->format('H:i:s');
+        $availabilityStart = $this->start_time->format('H:i:s');
+        $availabilityEnd = $this->end_time->format('H:i:s');
 
-        if (
-            $startTime < $this->start_time->format('H:i:s') ||
-            $endTime > $this->end_time->format('H:i:s')
-        ) {
-            return false;
-        }
+        return $startTime >= $availabilityStart && $endTime <= $availabilityEnd;
+    }
 
-        // Check period dates
+    /**
+     * Check if the time period falls within the availability's date range.
+     *
+     * @param Carbon $start Start date to check
+     * @param Carbon $end End date to check
+     * @return bool True if within date range, false otherwise
+     */
+    private function isWithinDateRange(Carbon $start, Carbon $end): bool
+    {
         if ($this->start_date && $start->lt($this->start_date)) {
             return false;
         }
 
-        return ! ($this->end_date && $end->gt($this->end_date));
+        if ($this->end_date && $end->gt($this->end_date)) {
+            return false;
+        }
+
+        return true;
     }
 }

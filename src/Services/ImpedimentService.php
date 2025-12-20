@@ -408,7 +408,7 @@ class ImpedimentService extends AbstractSchedulableService
         $this->validateSchedulable();
         $this->validationService->validateTimeRange($start, $end);
 
-        return $this->applyFilters()
+        return $this->buildQueryWithFilters()
             ->where('start_datetime', '>=', $start)
             ->where('end_datetime', '<=', $end)
             ->orderBy('start_datetime')
@@ -491,7 +491,7 @@ class ImpedimentService extends AbstractSchedulableService
         return $this->availabilityRepository->findForTimeSlot($this->schedulable, $start, $end);
     }
 
-    protected function applyFilters(): Builder
+    protected function buildQueryWithFilters(): Builder
     {
         $query = Impediment::where('schedulable_id', $this->schedulable->id)
             ->where('schedulable_type', get_class($this->schedulable));

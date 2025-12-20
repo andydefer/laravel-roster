@@ -226,7 +226,7 @@ class AvailabilityService extends AbstractSchedulableService
         return $this->availabilityRepository->findOverlapping($this->schedulable, $data, $exceptId);
     }
 
-    public function findAdjacentAvailabilities(array $data): Collection
+    public function findByType(array $data): Collection
     {
         $this->validateSchedulable();
 
@@ -295,8 +295,8 @@ class AvailabilityService extends AbstractSchedulableService
         return $checkData;
     }
 
-    protected function applyFilters(): Builder
+    protected function buildQueryWithFilters(): Builder
     {
-        return $this->availabilityRepository->applyFilters($this->schedulable, $this->filters);
+        return $this->availabilityRepository->buildQueryWithFilters($this->schedulable, $this->filters);
     }
 }

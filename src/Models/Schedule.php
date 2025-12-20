@@ -9,6 +9,24 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Carbon;
 use Roster\Enums\ScheduleStatus;
 
+/**
+ * Represents a scheduled event within an availability period.
+ *
+ * A schedule is a booked time slot within an availability, representing
+ * an actual commitment or appointment that has been scheduled.
+ *
+ * @property int $id
+ * @property int $availability_id
+ * @property string $title
+ * @property string|null $description
+ * @property Carbon $start_datetime
+ * @property Carbon $end_datetime
+ * @property ScheduleStatus $status
+ * @property array $metadata
+ * @property-read float $duration_minutes
+ * @property-read string $type
+ * @property-read Availability $availability
+ */
 class Schedule extends Model
 {
     protected $table = 'roster_schedules';
@@ -31,7 +49,9 @@ class Schedule extends Model
     ];
 
     /**
-     * Relationship to parent Availability.
+     * Get the availability this schedule belongs to.
+     *
+     * @return BelongsTo<Availability, Schedule>
      */
     public function availability(): BelongsTo
     {
@@ -39,15 +59,19 @@ class Schedule extends Model
     }
 
     /**
-     * Relationship to Schedulable (via Availability).
+     * Get the schedulable entity through the parent availability.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\Relation|null
      */
     public function schedulable()
     {
-        return $this->availability ? $this->availability->schedulable() : null;
+        return $this->availability?->schedulable();
     }
 
     /**
-     * Access type from parent Availability.
+     * Get the type from the parent availability.
+     *
+     * @return string The availability type
      */
     public function getTypeAttribute(): string
     {
@@ -55,7 +79,11 @@ class Schedule extends Model
     }
 
     /**
-     * Check if the Schedule overlaps with a given period.
+     * Determine if this schedule overlaps with a given time period.
+     *
+     * @param Carbon $start The start of the period to check
+     * @param Carbon $end The end of the period to check
+     * @return bool True if the schedule overlaps with the period
      */
     public function overlapsWith(Carbon $start, Carbon $end): bool
     {
@@ -63,7 +91,9 @@ class Schedule extends Model
     }
 
     /**
-     * Get duration in minutes.
+     * Get the duration of the schedule in minutes.
+     *
+     * @return float Duration in minutes
      */
     public function getDurationMinutesAttribute(): float
     {
@@ -71,7 +101,9 @@ class Schedule extends Model
     }
 
     /**
-     * Check if the Schedule is currently active.
+     * Check if the schedule is currently active.
+     *
+     * @return bool True if the schedule is currently active
      */
     public function isActive(): bool
     {
@@ -81,7 +113,9 @@ class Schedule extends Model
     }
 
     /**
-     * Check if the Schedule is upcoming.
+     * Check if the schedule is scheduled to start in the future.
+     *
+     * @return bool True if the schedule is upcoming
      */
     public function isUpcoming(): bool
     {
@@ -89,7 +123,9 @@ class Schedule extends Model
     }
 
     /**
-     * Check if the Schedule is past.
+     * Check if the schedule has already ended.
+     *
+     * @return bool True if the schedule is in the past
      */
     public function isPast(): bool
     {

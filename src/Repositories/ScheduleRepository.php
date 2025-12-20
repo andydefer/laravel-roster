@@ -10,10 +10,13 @@ use Illuminate\Support\Collection;
 use Roster\Contracts\Repository\ScheduleRepositoryInterface;
 use Roster\Models\Schedule;
 
+/**
+ * Repository for managing Schedule entities.
+ */
 class ScheduleRepository extends AbstractRepository implements ScheduleRepositoryInterface
 {
     /**
-     * Create a new schedule.
+     * {@inheritdoc}
      */
     public function create(array $data): Schedule
     {
@@ -21,35 +24,31 @@ class ScheduleRepository extends AbstractRepository implements ScheduleRepositor
     }
 
     /**
-     * Update an existing schedule.
+     * {@inheritdoc}
      */
     public function update(int $id, array $data): bool
     {
         $schedule = $this->findById($id);
 
-        if (! $schedule instanceof Schedule) {
-            return false;
-        }
-
-        return $schedule->update($data);
+        return $schedule instanceof Schedule
+            ? $schedule->update($data)
+            : false;
     }
 
     /**
-     * Delete a schedule.
+     * {@inheritdoc}
      */
     public function delete(int $id): bool
     {
         $schedule = $this->findById($id);
 
-        if (! $schedule instanceof Schedule) {
-            return false;
-        }
-
-        return $schedule->delete();
+        return $schedule instanceof Schedule
+            ? $schedule->delete()
+            : false;
     }
 
     /**
-     * Find schedule by ID.
+     * {@inheritdoc}
      */
     public function findById(int $id): ?Schedule
     {
@@ -65,7 +64,7 @@ class ScheduleRepository extends AbstractRepository implements ScheduleRepositor
     }
 
     /**
-     * Get all schedules.
+     * {@inheritdoc}
      */
     public function getAll(): Collection
     {
@@ -76,6 +75,11 @@ class ScheduleRepository extends AbstractRepository implements ScheduleRepositor
 
     /**
      * Find schedules for a time slot.
+     *
+     * @param int $availabilityId The availability ID
+     * @param Carbon $start Start of time slot
+     * @param Carbon $end End of time slot
+     * @return Collection<int, Schedule>
      */
     public function findForTimeSlot(
         int $availabilityId,
@@ -91,6 +95,12 @@ class ScheduleRepository extends AbstractRepository implements ScheduleRepositor
 
     /**
      * Check if a time slot has overlapping schedules.
+     *
+     * @param int $availabilityId The availability ID
+     * @param Carbon $start Start of time slot
+     * @param Carbon $end End of time slot
+     * @param int|null $excludeId Schedule ID to exclude
+     * @return bool True if overlapping schedules exist
      */
     public function hasOverlappingSchedule(
         int $availabilityId,
@@ -111,6 +121,12 @@ class ScheduleRepository extends AbstractRepository implements ScheduleRepositor
 
     /**
      * Find overlapping schedules with time range.
+     *
+     * @param int $availabilityId The availability ID
+     * @param Carbon $start Start of time range
+     * @param Carbon $end End of time range
+     * @param int|null $excludeId Schedule ID to exclude
+     * @return Collection<int, Schedule>
      */
     public function findOverlappingSchedules(
         int $availabilityId,
@@ -134,6 +150,9 @@ class ScheduleRepository extends AbstractRepository implements ScheduleRepositor
     /**
      * Get all schedules for a schedulable.
      *
+     * @param int $schedulableId The schedulable ID
+     * @param string $schedulableType The schedulable class type
+     * @param array<string, mixed> $filters Additional filters
      * @return Collection<int, Schedule>
      */
     public function getAllForSchedulable(
@@ -142,7 +161,7 @@ class ScheduleRepository extends AbstractRepository implements ScheduleRepositor
         array $filters = []
     ): Collection {
         $builder = $this->buildSchedulableQuery($schedulableId, $schedulableType)
-            ->with(['availability', 'availability.schedules', 'availability.impediments']); // <-- Eager loading pour éviter N+1
+            ->with(['availability', 'availability.schedules', 'availability.impediments']);
 
         $this->applyCommonFilters($builder, $filters);
 
@@ -151,6 +170,13 @@ class ScheduleRepository extends AbstractRepository implements ScheduleRepositor
 
     /**
      * Get schedules between dates.
+     *
+     * @param int $schedulableId The schedulable ID
+     * @param string $schedulableType The schedulable class type
+     * @param Carbon $start Start of date range
+     * @param Carbon $end End of date range
+     * @param array<string, mixed> $filters Additional filters
+     * @return Collection<int, Schedule>
      */
     public function getForDateRange(
         int $schedulableId,
@@ -170,8 +196,13 @@ class ScheduleRepository extends AbstractRepository implements ScheduleRepositor
 
     /**
      * Apply filters to query.
+     *
+     * @param int $schedulableId The schedulable ID
+     * @param string $schedulableType The schedulable class type
+     * @param array<string, mixed> $filters Filters to apply
+     * @return Builder
      */
-    public function applyFilters(
+    public function buildQueryWithFilters(
         int $schedulableId,
         string $schedulableType,
         array $filters = []
@@ -196,13 +227,14 @@ class ScheduleRepository extends AbstractRepository implements ScheduleRepositor
     /**
      * Apply common filters to query.
      *
-     * @param  array<string, mixed>  $filters
+     * @param Builder $builder The query builder
+     * @param array<string, mixed> $filters Filters to apply
      */
     private function applyCommonFilters(Builder $builder, array $filters): void
     {
         if (isset($filters['type'])) {
-            $builder->whereHas('availability', function ($q) use ($filters): void {
-                $q->where('type', $filters['type']);
+            $builder->whereHas('availability', function ($query) use ($filters): void {
+                $query->where('type', $filters['type']);
             });
         }
 

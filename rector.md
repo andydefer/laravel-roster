@@ -1,29 +1,11 @@
 # Rector Refactoring Report
-*Generated: sam. 20 déc. 2025 15:22:56 WAT*
+*Generated: sam. 20 déc. 2025 16:37:05 WAT*
 
 
-3 files with changes
+9 files with changes
 ====================
 
-1) /home/andy-kani/pro/sites/packages/laravel-roster/src/Services/ImpedimentService.php:105
-
-    ---------- begin diff ----------
-@@ @@
-
-         $availability = $this->availabilityRepository->findById($availabilityId);
-
--        if (!$availability) {
-+        if (!$availability instanceof Availability) {
-             throw new ValidationException(ValidationType::INVALID_AVAILABILITY);
-         }
-    ----------- end diff -----------
-
-Applied rules:
- * FlipTypeControlToUseExclusiveTypeRector
- * NullableCompareToNullRector
-
-
-2) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Feature/Facades/AvailabilityFacadeTest.php:4
+1) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Feature/Facades/AvailabilityFacadeTest.php:4
 
     ---------- begin diff ----------
 @@ @@
@@ -86,7 +68,7 @@ Applied rules:
  * CoversAnnotationWithValueToAttributeRector
 
 
-3) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Feature/Facades/ImpedimentFacadeTest.php:4
+2) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Feature/Facades/ImpedimentFacadeTest.php:4
 
     ---------- begin diff ----------
 @@ @@
@@ -182,5 +164,467 @@ Applied rules:
  * AssertEmptyNullableObjectToAssertInstanceofRector
 
 
- [OK] 3 files would have been changed (dry-run) by Rector                                                               
+3) /home/andy-kani/pro/sites/packages/laravel-roster/src/Models/Availability.php:56
+
+    ---------- begin diff ----------
+@@ @@
+
+     /**
+      * Get the schedulable resource that owns this availability.
+-     *
+-     * @return MorphTo
+      */
+     public function schedulable(): MorphTo
+     {
+@@ @@
+
+     /**
+      * Get the schedules associated with this availability.
+-     *
+-     * @return HasMany
+      */
+     public function schedules(): HasMany
+     {
+@@ @@
+
+     /**
+      * Get the impediments associated with this availability.
+-     *
+-     * @return HasMany
+      */
+     public function impediments(): HasMany
+     {
+@@ @@
+         if ($this->start_date && $start->lt($this->start_date)) {
+             return false;
+         }
+-
+-        if ($this->end_date && $end->gt($this->end_date)) {
+-            return false;
+-        }
+-
+-        return true;
++        return !($this->end_date && $end->gt($this->end_date));
+     }
+ }
+    ----------- end diff -----------
+
+Applied rules:
+ * SimplifyIfReturnBoolRector
+ * RemoveUselessReturnTagRector
+
+
+4) /home/andy-kani/pro/sites/packages/laravel-roster/src/Models/Impediment.php:4
+
+    ---------- begin diff ----------
+@@ @@
+
+ namespace Roster\Models;
+
++use Illuminate\Database\Eloquent\Relations\MorphTo;
+ use Illuminate\Database\Eloquent\Model;
+ use Illuminate\Database\Eloquent\Relations\BelongsTo;
+ use Illuminate\Support\Carbon;
+@@ @@
+     /**
+      * Get the schedulable entity associated with this impediment.
+      *
+-     * @return \Illuminate\Database\Eloquent\Relations\MorphTo
++     * @return MorphTo
+      */
+     public function schedulable()
+     {
+    ----------- end diff -----------
+
+Applied rules:
+
+
+5) /home/andy-kani/pro/sites/packages/laravel-roster/src/Models/Schedule.php:4
+
+    ---------- begin diff ----------
+@@ @@
+
+ namespace Roster\Models;
+
++use Illuminate\Database\Eloquent\Relations\Relation;
+ use Illuminate\Database\Eloquent\Model;
+ use Illuminate\Database\Eloquent\Relations\BelongsTo;
+ use Illuminate\Support\Carbon;
+@@ @@
+     /**
+      * Get the schedulable entity through the parent availability.
+      *
+-     * @return \Illuminate\Database\Eloquent\Relations\Relation|null
++     * @return Relation|null
+      */
+     public function schedulable()
+     {
+    ----------- end diff -----------
+
+Applied rules:
+
+
+6) /home/andy-kani/pro/sites/packages/laravel-roster/src/Repositories/AvailabilityRepository.php:4
+
+    ---------- begin diff ----------
+@@ @@
+
+ namespace Roster\Repositories;
+
++use InvalidArgumentException;
+ use Illuminate\Database\Eloquent\Builder;
+ use Illuminate\Database\Eloquent\Model;
+ use Illuminate\Support\Carbon;
+@@ @@
+     /**
+      * Get availabilities for a specific date range.
+      *
+-     * @param Model $schedulable The schedulable entity
++     * @param Model $model The schedulable entity
+      * @param Carbon $start Start of date range
+      * @param Carbon $end End of date range
+      * @param string|null $type Optional availability type filter
+@@ @@
+      * @return Collection<int, Availability> Collection of availabilities within the date range
+      */
+     public function getForDateRange(
+-        Model $schedulable,
++        Model $model,
+         Carbon $start,
+         Carbon $end,
+         ?string $type = null
+     ): Collection {
+-        $builder = $this->buildBaseQuery($schedulable)
++        $builder = $this->buildBaseQuery($model)
+             ->where(function ($query) use ($end): void {
+                 $query->whereNull('start_date')
+                     ->orWhere('start_date', '<=', $end);
+@@ @@
+     /**
+      * Find availability for a time slot with conflict information.
+      *
+-     * @param Model $schedulable The schedulable entity
++     * @param Model $model The schedulable entity
+      * @param Carbon $start Start of time slot
+      * @param Carbon $end End of time slot
+      * @param string|null $type Optional availability type filter
+      * @return Availability|null The matching availability with conflict info or null
+-     * @throws \InvalidArgumentException If the time range is invalid
++     * @throws InvalidArgumentException If the time range is invalid
+      */
+     public function findForTimeSlotWithConflictInfo(
+-        Model $schedulable,
++        Model $model,
+         Carbon $start,
+         Carbon $end,
+         ?string $type = null
+@@ @@
+     ): ?Availability {
+         $this->validationService->validateTimeRange($start, $end);
+
+-        return Availability::where('schedulable_id', $schedulable->id)
+-            ->where('schedulable_type', get_class($schedulable))
++        return Availability::where('schedulable_id', $model->id)
++            ->where('schedulable_type', get_class($model))
+             ->when($type, function ($query) use ($type): void {
+                 $query->where('type', $type);
+             })
+@@ @@
+     /**
+      * Find availability for a specific time slot.
+      *
+-     * @param Model $schedulable The schedulable entity
++     * @param Model $model The schedulable entity
+      * @param Carbon $start Start of time slot
+      * @param Carbon $end End of time slot
+      * @param string|null $type Optional availability type filter
+      * @return Availability|null The matching availability or null
+-     * @throws \InvalidArgumentException If the time range is invalid
++     * @throws InvalidArgumentException If the time range is invalid
+      */
+     public function findForTimeSlot(
+-        Model $schedulable,
++        Model $model,
+         Carbon $start,
+         Carbon $end,
+         ?string $type = null
+@@ @@
+     ): ?Availability {
+         $this->validationService->validateTimeRange($start, $end);
+
+-        $builder = $this->buildBaseQuery($schedulable);
++        $builder = $this->buildBaseQuery($model);
+
+         if ($type) {
+             $builder->where('type', $type);
+@@ @@
+     /**
+      * Get availabilities for a specific date.
+      *
+-     * @param Model $schedulable The schedulable entity
++     * @param Model $model The schedulable entity
+      * @param Carbon $date The date to check
+      * @param string|null $type Optional availability type filter
+      * @return Collection<int, Availability> Collection of availabilities for the date
+      */
+     public function getForDate(
+-        Model $schedulable,
++        Model $model,
+         Carbon $date,
+         ?string $type = null
+     ): Collection {
+-        $builder = $this->buildBaseQuery($schedulable)
++        $builder = $this->buildBaseQuery($model)
+             ->whereJsonContains('days', strtolower($date->englishDayOfWeek));
+
+         if ($type) {
+@@ @@
+     /**
+      * Get all availabilities for a schedulable entity.
+      *
+-     * @param Model $schedulable The schedulable entity
++     * @param Model $model The schedulable entity
+      * @param string|null $type Optional availability type filter
+      * @param string|null $day Optional day filter
+      * @return Collection<int, Availability> Collection of availabilities
+      */
+     public function getAllForSchedulable(
+-        Model $schedulable,
++        Model $model,
+         ?string $type = null,
+         ?string $day = null
+     ): Collection {
+-        $builder = $this->buildBaseQuery($schedulable)
++        $builder = $this->buildBaseQuery($model)
+             ->with(['schedules', 'impediments']);
+
+         if ($type) {
+@@ @@
+     /**
+      * Check if schedulable is available at specific datetime.
+      *
+-     * @param Model $schedulable The schedulable entity
++     * @param Model $model The schedulable entity
+      * @param Carbon $datetime The datetime to check
+      * @return bool True if available at the given datetime
+      */
+-    public function isAvailableAt(Model $schedulable, Carbon $datetime): bool
++    public function isAvailableAt(Model $model, Carbon $datetime): bool
+     {
+         $dayOfWeek = strtolower($datetime->englishDayOfWeek);
+         $time = $datetime->format('H:i:s');
+
+-        $builder = $this->buildBaseQuery($schedulable)
++        $builder = $this->buildBaseQuery($model)
+             ->whereJsonContains('days', $dayOfWeek)
+             ->where('start_time', '<=', $time)
+             ->where('end_time', '>=', $time);
+@@ @@
+     /**
+      * Find overlapping availabilities.
+      *
+-     * @param Model $schedulable The schedulable entity
++     * @param Model $model The schedulable entity
+      * @param array<string, mixed> $data The availability data to check
+      * @param int|null $exceptId ID to exclude from search
+      * @return Collection<int, Availability> Collection of overlapping availabilities
+-     * @throws \InvalidArgumentException If time range is invalid
++     * @throws InvalidArgumentException If time range is invalid
+      */
+     public function findOverlapping(
+-        Model $schedulable,
++        Model $model,
+         array $data,
+         ?int $exceptId = null
+     ): Collection {
+@@ @@
+         $startDate = isset($data['start_date']) ? Carbon::parse($data['start_date']) : null;
+         $endDate = isset($data['end_date']) ? Carbon::parse($data['end_date']) : null;
+
+-        $builder = $this->buildBaseQuery($schedulable);
++        $builder = $this->buildBaseQuery($model);
+
+         if ($exceptId !== null) {
+             $builder->where('id', '!=', $exceptId);
+@@ @@
+     /**
+      * Find related availabilities based on search criteria.
+      *
+-     * @param Model $schedulable The schedulable entity
++     * @param Model $model The schedulable entity
+      * @param array<string, mixed> $data Search criteria
+      * @return Collection<int, Availability> Collection of related availabilities
+      */
+-    public function findByType(Model $schedulable, array $data): Collection
++    public function findByType(Model $model, array $data): Collection
+     {
+         $type = $data['type'] ?? null;
+
+-        $builder = $this->buildBaseQuery($schedulable);
++        $builder = $this->buildBaseQuery($model);
+
+         if ($type !== null) {
+             $builder->where('type', $type);
+@@ @@
+     /**
+      * Build filtered query for availabilities.
+      *
+-     * @param Model $schedulable The schedulable entity
++     * @param Model $model The schedulable entity
+      * @param array<string, mixed> $filters Filters to apply
+      * @return Builder Eloquent query builder
+      */
+-    public function buildQueryWithFilters(Model $schedulable, array $filters = []): Builder
++    public function buildQueryWithFilters(Model $model, array $filters = []): Builder
+     {
+-        $builder = $this->buildBaseQuery($schedulable);
++        $builder = $this->buildBaseQuery($model);
+
+         match (true) {
+             isset($filters['type']) && isset($filters['day']) =>
+@@ @@
+     /**
+      * Load availabilities with pre-loaded schedule and impediment conflicts.
+      *
+-     * @param Model $schedulable The schedulable entity
++     * @param Model $model The schedulable entity
+      * @param Carbon $start Start of the date range
+      * @param Carbon $end End of the date range
+      * @param string|null $type Optional availability type filter
+@@ @@
+      * @return Collection<int, Availability> Collection of availabilities with conflict info
+      */
+     public function getAvailabilitiesWithConflictInfo(
+-        Model $schedulable,
++        Model $model,
+         Carbon $start,
+         Carbon $end,
+         ?string $type = null
+     ): Collection {
+-        $availabilities = $this->getForDateRange($schedulable, $start, $end, $type);
++        $availabilities = $this->getForDateRange($model, $start, $end, $type);
+
+         return $availabilities->load(['schedules', 'impediments']);
+     }
+@@ @@
+     /**
+      * Build base query for availabilities of a schedulable entity.
+      *
+-     * @param Model $schedulable The schedulable entity
++     * @param Model $model The schedulable entity
+      * @return Builder Base query builder
+      */
+-    private function buildBaseQuery(Model $schedulable): Builder
++    private function buildBaseQuery(Model $model): Builder
+     {
+-        return Availability::where('schedulable_id', $schedulable->id)
+-            ->where('schedulable_type', get_class($schedulable));
++        return Availability::where('schedulable_id', $model->id)
++            ->where('schedulable_type', get_class($model));
+     }
+
+     /**
+@@ @@
+      */
+     private function applyDayFilters(Builder $builder, array $days): void
+     {
+-        if (empty($days)) {
++        if ($days === []) {
+             return;
+         }
+
+@@ @@
+     /**
+      * Apply date filter to relation query using strategy pattern.
+      *
+-     * @param Builder $query Relation query builder
++     * @param Builder $builder Relation query builder
+      * @param Carbon|null $startDate Optional start date
+      * @param Carbon|null $endDate Optional end date
+      */
+-    private function applyRelationDateFilter(Builder $query, ?Carbon $startDate, ?Carbon $endDate): void
++    private function applyRelationDateFilter(Builder $builder, ?Carbon $startDate, ?Carbon $endDate): void
+     {
+         match (true) {
+             $startDate instanceof Carbon && $endDate instanceof Carbon =>
+-            $query->where(function ($q) use ($startDate, $endDate): void {
++            $builder->where(function ($q) use ($startDate, $endDate): void {
+                 $q->whereBetween('start_datetime', [$startDate, $endDate])
+                     ->orWhereBetween('end_datetime', [$startDate, $endDate])
+                     ->orWhere(function ($subQuery) use ($startDate, $endDate): void {
+    ----------- end diff -----------
+
+Applied rules:
+ * SimplifyEmptyCheckOnEmptyArrayRector
+ * RenameParamToMatchTypeRector
+
+
+7) /home/andy-kani/pro/sites/packages/laravel-roster/src/Repositories/ImpedimentRepository.php:30
+
+    ---------- begin diff ----------
+@@ @@
+     {
+         $impediment = $this->findById($id);
+
+-        return $impediment instanceof Impediment
+-            ? $impediment->update($data)
+-            : false;
++        return $impediment instanceof Impediment && $impediment->update($data);
+     }
+
+     /**
+    ----------- end diff -----------
+
+Applied rules:
+ * TernaryToBooleanOrFalseToBooleanAndRector
+
+
+8) /home/andy-kani/pro/sites/packages/laravel-roster/src/Repositories/ScheduleRepository.php:30
+
+    ---------- begin diff ----------
+@@ @@
+     {
+         $schedule = $this->findById($id);
+
+-        return $schedule instanceof Schedule
+-            ? $schedule->update($data)
+-            : false;
++        return $schedule instanceof Schedule && $schedule->update($data);
+     }
+
+     /**
+@@ @@
+      * @param int $schedulableId The schedulable ID
+      * @param string $schedulableType The schedulable class type
+      * @param array<string, mixed> $filters Filters to apply
+-     * @return Builder
+      */
+     public function buildQueryWithFilters(
+         int $schedulableId,
+    ----------- end diff -----------
+
+Applied rules:
+ * RemoveUselessReturnTagRector
+ * TernaryToBooleanOrFalseToBooleanAndRector
+
+
+9) /home/andy-kani/pro/sites/packages/laravel-roster/src/Services/ImpedimentService.php:105
+
+    ---------- begin diff ----------
+@@ @@
+
+         $availability = $this->availabilityRepository->findById($availabilityId);
+
+-        if (!$availability) {
++        if (!$availability instanceof Availability) {
+             throw new ValidationException(ValidationType::INVALID_AVAILABILITY);
+         }
+    ----------- end diff -----------
+
+Applied rules:
+ * FlipTypeControlToUseExclusiveTypeRector
+ * NullableCompareToNullRector
+
+
+ [OK] 9 files would have been changed (dry-run) by Rector                                                               
 

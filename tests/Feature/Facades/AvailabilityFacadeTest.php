@@ -321,7 +321,7 @@ final class AvailabilityFacadeTest extends TestCase
         ];
 
         $adjacent = AvailabilityFacade::for($this->schedulableModel)
-            ->findAdjacentAvailabilities($checkData);
+            ->findByType($checkData);
 
         $this->assertCount(1, $adjacent); // Seule la deuxième est adjacente
         $this->assertSame('12:00:00', $adjacent->first()->start_time->format('H:i:s'));

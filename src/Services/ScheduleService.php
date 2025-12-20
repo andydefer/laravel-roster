@@ -312,7 +312,7 @@ class ScheduleService extends AbstractSchedulableService
         $this->validateSchedulable();
         $this->validationService->validateTimeRange($start, $end);
 
-        $availability = $this->availabilityRepository->findForTimeSlotWithPartialOverlaps(
+        $availability = $this->availabilityRepository->findForTimeSlotWithConflictInfo(
             $this->schedulable,
             $start,
             $end,
@@ -387,9 +387,9 @@ class ScheduleService extends AbstractSchedulableService
         return $this->availabilityRepository->findForTimeSlot($this->schedulable, $start, $end, $type);
     }
 
-    protected function applyFilters(): Builder
+    protected function buildQueryWithFilters(): Builder
     {
-        return $this->scheduleRepository->applyFilters(
+        return $this->scheduleRepository->buildQueryWithFilters(
             $this->schedulable->id,
             get_class($this->schedulable),
             $this->filters

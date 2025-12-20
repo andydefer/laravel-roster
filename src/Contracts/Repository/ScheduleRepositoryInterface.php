@@ -136,7 +136,7 @@ interface ScheduleRepositoryInterface
      * @param  array<string, mixed>  $filters  Query filters
      * @return Builder Eloquent query builder with filters applied
      */
-    public function applyFilters(
+    public function buildQueryWithFilters(
         int $schedulableId,
         string $schedulableType,
         array $filters = []

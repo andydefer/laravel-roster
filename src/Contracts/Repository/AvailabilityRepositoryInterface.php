@@ -130,7 +130,7 @@ interface AvailabilityRepositoryInterface
      * @param  Carbon  $newEnd  New time range end
      * @return bool True if time ranges overlap
      */
-    public function timeRangesOverlap(
+    public function doTimeRangesOverlap(
         Carbon $existingStart,
         Carbon $existingEnd,
         Carbon $newStart,
@@ -184,7 +184,7 @@ interface AvailabilityRepositoryInterface
      * @param  array<string, mixed>  $availabilityData  New availability data
      * @return Collection<int, Availability> Collection of adjacent availabilities
      */
-    public function findAdjacentAvailabilities(
+    public function findByType(
         Model $model,
         array $availabilityData
     ): Collection;
@@ -198,7 +198,7 @@ interface AvailabilityRepositoryInterface
      * @param  string|null  $type  Optional availability type filter
      * @return Availability|null Matching availability or null
      */
-    public function findForTimeSlotWithPartialOverlaps(
+    public function findForTimeSlotWithConflictInfo(
         Model $model,
         Carbon $start,
         Carbon $end,
@@ -212,7 +212,7 @@ interface AvailabilityRepositoryInterface
      * @param  array<string, mixed>  $filters  Query filters
      * @return Builder Eloquent query builder with filters applied
      */
-    public function applyFilters(
+    public function buildQueryWithFilters(
         Model $model,
         array $filters = []
     ): Builder;
@@ -224,7 +224,7 @@ interface AvailabilityRepositoryInterface
      * @param  Carbon  $date  Date to verify
      * @return bool True if availability applies to the date
      */
-    public function isAvailabilityValidForDate(Availability $availability, Carbon $date): bool;
+    public function isAvailableOnDate(Availability $availability, Carbon $date): bool;
 
     /**
      * Load availabilities with schedule conflicts for a time range.

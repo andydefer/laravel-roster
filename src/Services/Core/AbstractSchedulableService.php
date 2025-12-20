@@ -97,7 +97,7 @@ abstract class AbstractSchedulableService implements SchedulableServiceInterface
     {
         $this->validateSchedulable();
 
-        return $this->applyFilters()->get();
+        return $this->buildQueryWithFilters()->get();
     }
 
     /**
@@ -211,7 +211,7 @@ abstract class AbstractSchedulableService implements SchedulableServiceInterface
     {
         // 1. Get entity configuration
         $entityType = $this->getEntityType();
-        $entityConfig = Config::get('roster.validate_future_dates.'.$entityType, []);
+        $entityConfig = Config::get('roster.validate_future_dates.' . $entityType, []);
         $globalEnabled = Config::get('roster.validate_future_dates.enabled', true);
 
         // Check if validation is enabled for this entity
@@ -347,7 +347,7 @@ abstract class AbstractSchedulableService implements SchedulableServiceInterface
             $validationService = $this->getValidationService();
             if (! $validationService->validateTimezone($timezone)) {
                 throw ValidationException::withMessage(
-                    'Invalid timezone: '.$timezone
+                    'Invalid timezone: ' . $timezone
                 );
             }
         }
@@ -364,13 +364,13 @@ abstract class AbstractSchedulableService implements SchedulableServiceInterface
 
         $prefix = Config::get('roster.cache.prefix', 'roster_');
         $entityType = $this->getEntityType();
-        $cacheKey = $prefix.$entityType.'_'.$entityId;
+        $cacheKey = $prefix . $entityType . '_' . $entityId;
 
         Cache::forget($cacheKey);
 
         // Clear tags if enabled
         if (Config::get('roster.cache.use_tags', true)) {
-            Cache::tags([$entityType.'_'.$entityId])->flush();
+            Cache::tags([$entityType . '_' . $entityId])->flush();
         }
     }
 
@@ -410,7 +410,7 @@ abstract class AbstractSchedulableService implements SchedulableServiceInterface
     protected function validateRequiredFields(array $requiredFields = []): void
     {
         $entityType = $this->getEntityType();
-        $configFields = Config::get('roster.validation.required_fields.'.$entityType, []);
+        $configFields = Config::get('roster.validation.required_fields.' . $entityType, []);
         $allRequired = array_unique(array_merge($configFields, $requiredFields));
 
         foreach ($allRequired as $field) {
@@ -504,5 +504,5 @@ abstract class AbstractSchedulableService implements SchedulableServiceInterface
      *
      * @return Builder
      */
-    abstract protected function applyFilters();
+    abstract protected function buildQueryWithFilters();
 }

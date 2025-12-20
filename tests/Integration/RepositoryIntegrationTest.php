@@ -160,21 +160,21 @@ final class RepositoryIntegrationTest extends TestCase
         $existingStart = Carbon::parse('09:00:00');
         $existingEnd = Carbon::parse('12:00:00');
 
-        $this->assertTrue($this->availabilityRepository->timeRangesOverlap(
+        $this->assertTrue($this->availabilityRepository->doTimeRangesOverlap(
             $existingStart,
             $existingEnd,
             Carbon::parse('10:00:00'),
             Carbon::parse('11:00:00')
         ));
 
-        $this->assertFalse($this->availabilityRepository->timeRangesOverlap(
+        $this->assertFalse($this->availabilityRepository->doTimeRangesOverlap(
             $existingStart,
             $existingEnd,
             Carbon::parse('08:00:00'),
             Carbon::parse('08:30:00')
         ));
 
-        $this->assertFalse($this->availabilityRepository->timeRangesOverlap(
+        $this->assertFalse($this->availabilityRepository->doTimeRangesOverlap(
             $existingStart,
             $existingEnd,
             Carbon::parse('12:30:00'),

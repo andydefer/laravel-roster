@@ -66,7 +66,7 @@ class AvailabilityMerger implements AvailabilityMergerInterface
      */
     public function findAdjacentAvailabilities(array $data, object $schedulable): Collection
     {
-        $availabilities = $this->availabilityRepository->findAdjacentAvailabilities($schedulable, $data);
+        $availabilities = $this->availabilityRepository->findByType($schedulable, $data);
         $tempAvailability = $this->createAvailabilityFromData($data, $schedulable);
 
         return $availabilities->filter(function (Availability $availability) use ($tempAvailability): bool {

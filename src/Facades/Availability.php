@@ -30,7 +30,7 @@ use Roster\Services\AvailabilityService;
  * @method static bool isAvailableForPeriod(Carbon $start, Carbon $end, ?string $type = null) Check availability for a time period
  * @method static bool hasOverlapping(array $data, ?int $exceptId = null) Check if availability overlaps with existing ones
  * @method static Collection<int, AvailabilityModel> findOverlapping(array $data, ?int $exceptId = null) Find overlapping availabilities
- * @method static Collection<int, AvailabilityModel> findAdjacentAvailabilities(array $data) Find availabilities adjacent to given data
+ * @method static Collection<int, AvailabilityModel> findByType(array $data) Find availabilities adjacent to given data
  * @method static array<string, mixed> findSlotsInPeriod(Carbon $startDate, Carbon $endDate, int $durationMinutes = 60, int $intervalMinutes = 30, ?string $type = null) Find available time slots within period
  * @method static AvailabilityService resetFilters() Clear all applied filters
  * @method static Model|null getSchedulable() Get the current schedulable entity
