@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Roster;
 
+use Illuminate\Filesystem\Filesystem;
 use Illuminate\Support\ServiceProvider;
 use Roster\Commands\InstallRosterCommand;
 use Roster\Contracts\Repository\AvailabilityRepositoryInterface;
@@ -25,6 +26,7 @@ use Roster\Services\Core\SlotFinderService;
 use Roster\Services\Core\ValidationService;
 use Roster\Services\ImpedimentService;
 use Roster\Services\ScheduleService;
+use Roster\Services\Core\ResourcePublisherService;
 
 /**
  * Service provider for the Roster package.
@@ -39,28 +41,26 @@ class RosterServiceProvider extends ServiceProvider
      *
      * Publishes configuration, migrations, and views when running in console mode.
      * Does NOT load migrations automatically - user must publish them.
+     *
+     * @return void
      */
     public function boot(): void
     {
         if ($this->app->runningInConsole()) {
+            $this->registerResourcePublisher();
             $this->publishResources();
             $this->commands([InstallRosterCommand::class]);
         }
 
-        // Routes and views only if published
-        if (file_exists(base_path('routes/roster.php'))) {
-            $this->loadRoutesFrom(base_path('routes/roster.php'));
-        }
-
-        if (file_exists(resource_path('views/vendor/roster'))) {
-            $this->loadViewsFrom(resource_path('views/vendor/roster'), 'roster');
-        }
+        $this->loadPublishedResources();
     }
 
     /**
      * Register the service provider.
      *
      * Merges package configuration and registers all service bindings.
+     *
+     * @return void
      */
     public function register(): void
     {
@@ -75,6 +75,8 @@ class RosterServiceProvider extends ServiceProvider
      * Register reusable core services.
      *
      * Binds interfaces to their concrete implementations for core service components.
+     *
+     * @return void
      */
     protected function registerCoreServices(): void
     {
@@ -89,6 +91,8 @@ class RosterServiceProvider extends ServiceProvider
      * Register repository implementations.
      *
      * Binds repository interfaces to their concrete implementations.
+     *
+     * @return void
      */
     protected function registerRepositories(): void
     {
@@ -101,6 +105,8 @@ class RosterServiceProvider extends ServiceProvider
      * Register main domain services with their dependencies.
      *
      * Creates singleton instances of the main business services and aliases them.
+     *
+     * @return void
      */
     protected function registerDomainServices(): void
     {
@@ -139,10 +145,27 @@ class RosterServiceProvider extends ServiceProvider
     }
 
     /**
+     * Register the resource publisher service.
+     *
+     * @return void
+     */
+    private function registerResourcePublisher(): void
+    {
+        $this->app->singleton(ResourcePublisherService::class, function ($app) {
+            return new ResourcePublisherService(
+                app: $app,
+                filesystem: new Filesystem()
+            );
+        });
+    }
+
+    /**
      * Publish package resources for console usage.
      *
      * Publishes configuration files, migrations, and views to the application.
      * User MUST publish these resources to use the package.
+     *
+     * @return void
      */
     private function publishResources(): void
     {
@@ -165,5 +188,23 @@ class RosterServiceProvider extends ServiceProvider
         $this->publishes([
             __DIR__ . '/../routes/web.php' => base_path('routes/roster.php'),
         ], 'roster-routes');
+    }
+
+    /**
+     * Load published resources if they exist.
+     *
+     * @return void
+     */
+    private function loadPublishedResources(): void
+    {
+        $routesPath = base_path('routes/roster.php');
+        if (file_exists($routesPath)) {
+            $this->loadRoutesFrom($routesPath);
+        }
+
+        $viewsPath = resource_path('views/vendor/roster');
+        if (file_exists($viewsPath)) {
+            $this->loadViewsFrom($viewsPath, 'roster');
+        }
     }
 }

@@ -1,56 +1,66 @@
-# ---------------------------------------------------
-# Variables
-# ---------------------------------------------------
-PINT = ./vendor/bin/pint
-RESOURCES_DIR = resources
-PHPSTAN = ./vendor/bin/phpstan
-RECTOR = ./vendor/bin/rector
-# ARTISAN = php artisan  # Pas utilisé dans un package
+# ===================================================
+# PHP/Laravel Package Development Makefile
+# ===================================================
+# This Makefile provides utilities for package development,
+# including code quality checks, version management, and file tracking.
+# ===================================================
+
 
 # ---------------------------------------------------
-# Commit & push tous les changements
+# Tool Executables
 # ---------------------------------------------------
-# Commit & push tous les changements
+PINT = ./vendor/bin/pint
+PHPSTAN = ./vendor/bin/phpstan
+RECTOR = ./vendor/bin/rector
+PSALM = ./vendor/bin/psalm
+
+
+# ---------------------------------------------------
+# Source Configuration
+# ---------------------------------------------------
+SOURCE_DIRS = config src database routes tests
+IGNORED_FILES = CHANGED_FILES.md FILES_CHECKLIST.md psalm.md Makefile
+
+
+# ---------------------------------------------------
+# Version Control Operations
+# ---------------------------------------------------
+
+.PHONY: git-commit-push
 git-commit-push:
-	@read -p "Enter commit message: " msg; \
-	if [ -z "$$msg" ]; then \
-		echo "Commit message cannot be empty!"; \
+	@read -p "Enter commit message: " commit_message; \
+	if [ -z "$$commit_message" ]; then \
+		echo "Error: Commit message cannot be empty"; \
 		exit 1; \
 	fi; \
 	git add .; \
-	git commit -m "$$msg"; \
+	git commit -m "$$commit_message"; \
 	git push
 
-# ---------------------------------------------------
-# Gestion des tags: major, minor, patch
-# ---------------------------------------------------
-# Gestion des tags: major, minor, patch
+.PHONY: git-tag
 git-tag:
 	@bash -c '\
-	read -p "Tag type (major/minor/patch): " type; \
+	read -p "Tag type (major/minor/patch): " tag_type; \
 	last_tag=$$(git tag --sort=-v:refname | head -n 1); \
 	if [ -z "$$last_tag" ]; then last_tag="0.0.0"; fi; \
 	major=$$(echo $$last_tag | cut -d. -f1); \
 	minor=$$(echo $$last_tag | cut -d. -f2); \
 	patch=$$(echo $$last_tag | cut -d. -f3); \
-	if [ "$$type" = "major" ]; then \
+	if [ "$$tag_type" = "major" ]; then \
 		major=$$((major + 1)); minor=0; patch=0; \
-	elif [ "$$type" = "minor" ]; then \
+	elif [ "$$tag_type" = "minor" ]; then \
 		minor=$$((minor + 1)); patch=0; \
-	elif [ "$$type" = "patch" ]; then \
+	elif [ "$$tag_type" = "patch" ]; then \
 		patch=$$((patch + 1)); \
-	else echo "Invalid type: $$type"; exit 1; fi; \
+	else echo "Invalid type: $$tag_type"; exit 1; fi; \
 	new_tag="$$major.$$minor.$$patch"; \
 	git tag -a "$$new_tag" -m "Release $$new_tag"; \
 	git push origin "$$new_tag"; \
-	echo "Pushed new tag: $$new_tag"; \
+	echo "Released new tag: $$new_tag"; \
 	'
-# ---------------------------------------------------
-# Génère un diff git dans un fichier diff.txt
-# avec un prompt pour analyse IA (commit + résumé)
-# ---------------------------------------------------
-# Génère un diff git propre dans diff.txt avec prompt pour IA
-git-diff:
+
+.PHONY: generate-ai-diff
+generate-ai-diff:
 	@echo "📝 Generating clean git diff into diff.txt..."
 	@echo "Tu es un expert en revue de code et en conventions de commits (Conventional Commits)." > diff.txt
 	@echo "" >> diff.txt
@@ -81,10 +91,7 @@ git-diff:
 	@git diff HEAD -- . ':!*.phpunit.result.cache' ':!diff.txt' >> diff.txt
 	@echo "✅ Clean diff.txt generated successfully (excluded test cache files)"
 
-# ---------------------------------------------------
-# Republier le dernier tag
-# ---------------------------------------------------
-# Republie le dernier tag sur l'origine
+.PHONY: git-tag-republish
 git-tag-republish:
 	@bash -c '\
 	last_tag=$$(git tag --sort=-v:refname | head -n 1); \
@@ -94,87 +101,218 @@ git-tag-republish:
 	echo "Tag $$last_tag republished"; \
 	'
 
-# ---------------------------------------------------
-# Exécute PHPUnit
-# ---------------------------------------------------
-# Exécute les tests PHPUnit
-test:
-	@vendor/bin/phpunit
 
 # ---------------------------------------------------
-# Génère un fichier Markdown listant tous les fichiers
-# avec checkbox
+# File Management Operations
 # ---------------------------------------------------
-# Génère un fichier Markdown listant tous les fichiers avec checkbox
-for-clean:
-	@echo "📄 Generating FILES_CHECKLIST.md..."
-	@echo "# 📂 Project File Checklist\n" > FILES_CHECKLIST.md
-	@find config src database routes tests -type f | sort | \
-	awk '{ printf "%d. %s [ ]\n", NR, $$0 }' >> FILES_CHECKLIST.md
-	@echo "✅ FILES_CHECKLIST.md generated successfully"
 
-# ---------------------------------------------------
-# Liste des fichiers modifiés depuis le dernier commit
-# ---------------------------------------------------
-# Liste des fichiers modifiés depuis le dernier commit
-changed-files:
-	@echo "📝 Generating list of changed and untracked files..."
-	@(git diff --name-only HEAD; git ls-files --others --exclude-standard) | \
-	sort | uniq | \
-	awk '{ printf "%d. - [ ] %s\n", NR, $$0 }' \
-	> CHANGED_FILES.md
-	@echo "✅ CHANGED_FILES.md generated"
+.PHONY: update-checklist
+update-checklist:
+	@echo "Updating FILES_CHECKLIST.md..."
+	@if [ -f FILES_CHECKLIST.md ]; then \
+		echo "Preserving existing checklist with checkmarks..."; \
+		grep -E '^[0-9]+\. .* \[[ xX]\]$$' FILES_CHECKLIST.md > .existing_checklist.tmp; \
+		awk -F' ' '{ \
+			file_path=""; \
+			for(i=2;i<NF;i++) { \
+				if(i>2) file_path=file_path" "; \
+				file_path=file_path$$i; \
+			} \
+			checkmark_state=$$NF; \
+			print file_path " " checkmark_state \
+		}' .existing_checklist.tmp > .existing_files.tmp; \
+	else \
+		touch .existing_files.tmp; \
+		touch FILES_CHECKLIST.md; \
+	fi; \
+	echo "# Project File Checklist" > FILES_CHECKLIST.md; \
+	echo "*Last updated: $$(date)*" >> FILES_CHECKLIST.md; \
+	echo "" >> FILES_CHECKLIST.md; \
+	echo "## Previously Checked Files" >> FILES_CHECKLIST.md; \
+	file_count=1; \
+	grep '\[x\]' .existing_files.tmp | sort | uniq | while read -r line; do \
+		file_path=$$(echo "$$line" | awk '{$$NF=""; print $$0}' | sed 's/ $$//'); \
+		echo "$$file_count. $$file_path [x]" >> FILES_CHECKLIST.md; \
+		file_count=$$((file_count + 1)); \
+	done; \
+	previously_checked_files=$$(grep '\[x\]' .existing_files.tmp | awk '{$$NF=""; print $$0}' | sed 's/ $$//'); \
+	echo "" >> FILES_CHECKLIST.md; \
+	echo "## Other Files" >> FILES_CHECKLIST.md; \
+	file_count=1; \
+	find $(SOURCE_DIRS) -type f | sort | while read -r file_path; do \
+		if ! echo "$$previously_checked_files" | grep -Fxq "$$file_path" 2>/dev/null; then \
+			echo "$$file_count. $$file_path [ ]" >> FILES_CHECKLIST.md; \
+			file_count=$$((file_count + 1)); \
+		fi; \
+	done; \
+	rm -f .existing_checklist.tmp .existing_files.tmp; \
+	echo "FILES_CHECKLIST.md updated successfully (states preserved, duplicates avoided)"
 
-# ---------------------------------------------------
-# Concatène tout le code PHP de src dans all.txt
-# ---------------------------------------------------
-# Parcourt src/, tests/ et database/ et écrit tout le contenu PHP dans all.txt
+.PHONY: list-modified-files
+list-modified-files:
+	@echo "Updating CHANGED_FILES.md..."
+	@previously_checked_files=$$(grep -E '^[0-9]+\. .* \[[xX]\]' FILES_CHECKLIST.md | sed 's/^[0-9]\+\. //' | sed 's/ *\[[xX]\]$$//'); \
+	modified_file_count=0; \
+	all_files=$$( (git diff --name-only; git ls-files --others --exclude-standard) | sort -u ); \
+	echo "# Changed and Untracked Files" > CHANGED_FILES.md; \
+	echo "*Updated: $$(date)*" >> CHANGED_FILES.md; \
+	echo "" >> CHANGED_FILES.md; \
+	echo "## Files to Review (modifications on checked files)" >> CHANGED_FILES.md; \
+	for file_path in $$all_files; do \
+		if echo "$$previously_checked_files" | grep -Fxq "$$file_path"; then \
+			modified_file_count=$$((modified_file_count + 1)); \
+			echo "$$modified_file_count. $$file_path [x]" >> CHANGED_FILES.md; \
+		fi; \
+	done; \
+	if [ $$modified_file_count -eq 0 ]; then \
+		echo "*(No modified files in this category)*" >> CHANGED_FILES.md; \
+	fi; \
+	echo "" >> CHANGED_FILES.md; \
+	echo "## Other Modified Files" >> CHANGED_FILES.md; \
+	modified_file_count=0; \
+	for file_path in $$all_files; do \
+		should_skip_file=0; \
+		for ignored_file in $$(echo -e "$(IGNORED_FILES)"); do \
+			if [ "$$file_path" = "$$ignored_file" ]; then should_skip_file=1; break; fi; \
+		done; \
+		if [ $$should_skip_file -eq 0 ] && ! echo "$$previously_checked_files" | grep -Fxq "$$file_path"; then \
+			modified_file_count=$$((modified_file_count + 1)); \
+			echo "$$modified_file_count. $$file_path [ ]" >> CHANGED_FILES.md; \
+		fi; \
+	done; \
+	if [ $$modified_file_count -eq 0 ]; then \
+		echo "*(No modified files in this category)*" >> CHANGED_FILES.md; \
+	fi; \
+	echo "" >> CHANGED_FILES.md; \
+	echo "CHANGED_FILES.md updated successfully"
+
+.PHONY: update-all
+update-all: update-checklist list-modified-files
+	@echo "All updates completed successfully!"
+
+.PHONY: concat-all
 concat-all:
-	@echo "🔹 Concaténation de tous les fichiers PHP de src/, tests/ et database/ dans all.txt..."
-	@find src tests database -type f -name "*.php" -exec sh -c 'echo "\n\n// ==== {} ====\n\n"; cat {}' \; > all.txt
-	@echo "✅ Fichier all.txt généré avec succès."
+	@echo "Concatenating all PHP files from source directories into all.txt..."
+	@find $(SOURCE_DIRS) -type f -name "*.php" -exec sh -c 'echo ""; echo "// ==== {} ==="; echo ""; cat {}' \; > all.txt
+	@echo "File all.txt generated successfully."
+
 
 # ---------------------------------------------------
-# Linters & Formatters (prefix: lint-)
+# Testing
 # ---------------------------------------------------
-# Lint PHP avec Pint
+
+.PHONY: test
+test:
+	@./vendor/bin/phpunit
+
+
+# ---------------------------------------------------
+# Code Quality Tools
+# ---------------------------------------------------
+
+.PHONY: lint-php
 lint-php:
 	@$(PINT)
 
-# Fix PHP avec Pint
+.PHONY: lint-php-fix
 lint-php-fix:
 	@$(PINT) --test
 
-# Lint PHP avec PHPStan
+.PHONY: lint-phpstan
 lint-phpstan:
 	@clear && $(PHPSTAN) analyse src tests --level=max
 
-# Applique Rector pour refactorer le code
+.PHONY: lint-rector
 lint-rector:
 	@$(RECTOR) process
 
-# Exécute tous les linters
-lint-all:
-	@make lint-php lint-phpstan
+.PHONY: lint-psalm
+lint-psalm:
+	@echo "Running Psalm on all code..."
+	@$(PSALM) --show-info=true
+	@echo "Psalm analysis completed."
 
-# Exécute tous les fixers
+.PHONY: lint-psalm-md
+lint-psalm-md:
+	@echo "Running Psalm on all code..."
+	@echo "# Psalm Analysis Report" > psalm.md
+	@$(PSALM) --show-info=true --no-progress >> psalm.md 2>&1 || true
+	@echo "Psalm analysis completed. Results in psalm.md"
+
+.PHONY: lint-all
+lint-all:
+	@make lint-php lint-phpstan lint-psalm
+
+.PHONY: lint-all-fix
 lint-all-fix:
 	@make lint-php-fix lint-rector
 
+
 # ---------------------------------------------------
-# Affiche l'aide
+# Release Management Workflow
 # ---------------------------------------------------
-# Affiche l'aide
+
+.PHONY: pre-release
+pre-release:
+	@echo "Running pre-release checks..."
+	@make test
+	@make lint-all
+	@echo "✅ All pre-release checks passed"
+
+.PHONY: release
+release: pre-release
+	@echo "Creating release..."
+	@make git-tag
+	@echo "✅ Release created successfully"
+
+.PHONY: post-release
+post-release:
+	@echo "Performing post-release cleanup..."
+	@make update-all
+	@echo "✅ Post-release cleanup completed"
+
+
+# ---------------------------------------------------
+# Help & Documentation
+# ---------------------------------------------------
+.PHONY: help
 help:
-	@echo "📖 Makefile commands:"; \
-	awk '/^#/{desc=$$0}/^[a-zA-Z0-9_-]+:/{gsub(":", "", $$1); gsub(/^# /, "", desc); printf "%-20s -> %s\n", $$1, desc}' $(MAKEFILE_LIST) | sort
+	@echo "Commandes disponibles :"
+	@echo ""
+	@echo "Contrôle de version :"
+	@echo "  git-commit-push       Commit et push de tous les changements"
+	@echo "  git-tag               Créer et pousser un nouveau tag de version"
+	@echo "  generate-ai-diff      Générer un diff propre pour revue par l'IA"
+	@echo "  git-tag-republish     Forcer le push du dernier tag"
+	@echo ""
+	@echo "Gestion des fichiers :"
+	@echo "  update-checklist      Mettre à jour la checklist des fichiers"
+	@echo "  list-modified-files   Lister les fichiers modifiés"
+	@echo "  update-all            Mettre à jour checklist et fichiers modifiés"
+	@echo "  concat-all            Concaténer tous les fichiers PHP"
+	@echo ""
+	@echo "Tests :"
+	@echo "  test                  Exécuter les tests PHPUnit"
+	@echo ""
+	@echo "Qualité du code :"
+	@echo "  lint-php              Exécuter le formateur de code Pint"
+	@echo "  lint-php-fix          Tester le formatage avec Pint sans appliquer"
+	@echo "  lint-phpstan          Exécuter l'analyse statique PHPStan"
+	@echo "  lint-rector           Appliquer le refactoring avec Rector"
+	@echo "  lint-psalm            Exécuter l'analyse Psalm"
+	@echo "  lint-psalm-md         Exécuter Psalm et sauvegarder les résultats en Markdown"
+	@echo "  lint-all              Exécuter tous les linters"
+	@echo "  lint-all-fix          Exécuter tous les correcteurs"
+	@echo ""
+	@echo "Gestion des releases :"
+	@echo "  pre-release           Exécuter toutes les vérifications avant la release"
+	@echo "  release               Créer une nouvelle release (inclut pre-release)"
+	@echo "  post-release          Nettoyer après la release"
+	@echo ""
+	@echo "Aide :"
+	@echo "  help                  Afficher ce message d'aide"
 
 # ---------------------------------------------------
-# Static Analysis: Psalm & PHPStan
+# Default Target
 # ---------------------------------------------------
-
-# Lancer Psalm pour analyser tout le code
-lint-psalm:
-	@echo "🔹 Exécution de Psalm sur tout le code..."
-	@vendor/bin/psalm --show-info=true
-	@echo "✅ Analyse Psalm terminée."
+.DEFAULT_GOAL := help

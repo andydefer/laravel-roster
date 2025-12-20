@@ -6,9 +6,40 @@ namespace Tests\Unit\Commands;
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Artisan;
-use Illuminate\Support\Facades\File;
 use Roster\Commands\InstallRosterCommand;
+use Symfony\Component\Console\Output\Output;
+use Symfony\Component\Console\Input\ArrayInput;
+use Illuminate\Console\OutputStyle;
 use Tests\TestCase;
+
+/**
+ * Interface pour capturer le buffer de sortie.
+ */
+interface OutputWithBuffer
+{
+    public function getOutput(): string;
+}
+
+/**
+ * Trait réutilisable pour capturer le output.
+ */
+trait CapturesOutput
+{
+    private string $buffer = '';
+
+    protected function doWrite(string $message, bool $newline): void
+    {
+        $this->buffer .= $message;
+        if ($newline) {
+            $this->buffer .= PHP_EOL;
+        }
+    }
+
+    public function getOutput(): string
+    {
+        return $this->buffer;
+    }
+}
 
 /**
  * Unit tests for the InstallRosterCommand.
@@ -17,140 +48,161 @@ class InstallRosterCommandTest extends TestCase
 {
     use RefreshDatabase;
 
-    private InstallRosterCommand $command;
-
-    protected function setUp(): void
+    public function test_command_can_be_instantiated(): void
     {
-        parent::setUp();
+        $command = new InstallRosterCommand();
 
-        $this->command = new InstallRosterCommand();
-        $this->command->setLaravel($this->app);
+        $this->assertSame('roster:install', $command->getName());
+        $this->assertSame('Install the Roster package', $command->getDescription());
+        $this->assertStringContainsString('force', $command->getDefinition()->getOption('force')->getName());
     }
 
-    /** @test */
-    public function it_should_skip_confirmation_when_force_option_is_used(): void
+    public function test_displays_correct_publishing_details(): void
     {
-        // Test via reflection since method is private
-        $method = new \ReflectionMethod($this->command, 'shouldSkipConfirmation');
+        $command = new InstallRosterCommand();
+        $command->setLaravel($this->app);
+
+        $method = new \ReflectionMethod($command, 'displayPublishingDetails');
         $method->setAccessible(true);
 
-        $this->command->input = new \Symfony\Component\Console\Input\ArrayInput([
-            '--force' => true
-        ]);
-
-        $this->assertTrue($method->invoke($this->command));
-    }
-
-    /** @test */
-    public function it_should_not_skip_confirmation_when_force_option_is_not_used(): void
-    {
-        $method = new \ReflectionMethod($this->command, 'shouldSkipConfirmation');
-        $method->setAccessible(true);
-
-        $this->command->input = new \Symfony\Component\Console\Input\ArrayInput([]);
-
-        $this->assertFalse($method->invoke($this->command));
-    }
-
-    /** @test */
-    public function it_displays_correct_publishing_details(): void
-    {
-        $this->command->output = new \Symfony\Component\Console\Output\BufferedOutput();
-
-        $method = new \ReflectionMethod($this->command, 'displayPublishingDetails');
-        $method->setAccessible(true);
-
-        $method->invoke($this->command);
-
-        $output = $this->command->output->fetch();
-
-        $this->assertStringContainsString('Configuration (config/roster.php)', $output);
-        $this->assertStringContainsString('Database migrations (roster_* tables)', $output);
-        $this->assertStringContainsString('Routes (routes/roster.php)', $output);
-        $this->assertStringContainsString('Views (resources/views/vendor/roster)', $output);
-    }
-
-    /** @test */
-    public function it_publishes_resources_successfully(): void
-    {
-        Artisan::shouldReceive('call')
-            ->with('vendor:publish', \Mockery::any())
-            ->once()
-            ->andReturn(0);
-
-        $this->command->output = new \Symfony\Component\Console\Output\BufferedOutput();
-
-        $method = new \ReflectionMethod($this->command, 'publishResources');
-        $method->setAccessible(true);
-
-        $method->invoke($this->command);
-
-        $output = $this->command->output->fetch();
-        $this->assertStringContainsString('Publishing resources...', $output);
-    }
-
-    /** @test */
-    public function it_runs_migrations_successfully(): void
-    {
-        Artisan::shouldReceive('call')
-            ->with('migrate', [])
-            ->once()
-            ->andReturn(0);
-
-        $this->command->output = new \Symfony\Component\Console\Output\BufferedOutput();
-
-        $method = new \ReflectionMethod($this->command, 'runMigrations');
-        $method->setAccessible(true);
-
-        $method->invoke($this->command);
-
-        $output = $this->command->output->fetch();
-        $this->assertStringContainsString('Running migrations...', $output);
-    }
-
-    /** @test */
-    public function it_displays_success_message_with_next_steps(): void
-    {
-        $this->command->output = new \Symfony\Component\Console\Output\BufferedOutput();
-
-        $method = new \ReflectionMethod($this->command, 'displaySuccessMessage');
-        $method->setAccessible(true);
-
-        $method->invoke($this->command);
-
-        $output = $this->command->output->fetch();
-
-        $this->assertStringContainsString('Roster package installed successfully!', $output);
-        $this->assertStringContainsString('Review config/roster.php', $output);
-        $this->assertStringContainsString('Add the HasRoster trait', $output);
-        $this->assertStringContainsString('Use the facades', $output);
-        $this->assertStringContainsString('Check routes/roster.php', $output);
-    }
-
-    /** @test */
-    public function it_handles_cancellation_gracefully(): void
-    {
-        $this->command->input = new \Symfony\Component\Console\Input\ArrayInput([]);
-        $this->command->output = new \Symfony\Component\Console\Output\BufferedOutput();
-
-        // Mock confirm to return false
-        $this->command->confirm = function ($question, $default = false) {
-            return false;
+        /** @var Output&OutputWithBuffer $output */
+        $output = new class extends Output implements OutputWithBuffer {
+            use CapturesOutput;
         };
 
-        $this->command->handle();
+        $command->setOutput(new OutputStyle(new ArrayInput([]), $output));
 
-        $output = $this->command->output->fetch();
-        $this->assertStringContainsString('Installation cancelled.', $output);
+        $method->invoke($command);
+
+        $this->assertStringContainsString('Configuration (config/roster.php)', $output->getOutput());
+        $this->assertStringContainsString('Database migrations (roster_* tables)', $output->getOutput());
+        $this->assertStringContainsString('Routes (routes/roster.php)', $output->getOutput());
+        $this->assertStringContainsString('Views (resources/views/vendor/roster)', $output->getOutput());
     }
 
-    /** @test */
-    public function it_completes_full_installation_with_force_option(): void
+    public function test_displays_success_message_with_next_steps(): void
+    {
+        $command = new InstallRosterCommand();
+        $command->setLaravel($this->app);
+
+        $method = new \ReflectionMethod($command, 'displaySuccessMessage');
+        $method->setAccessible(true);
+
+        /** @var Output&OutputWithBuffer $output */
+        $output = new class extends Output implements OutputWithBuffer {
+            use CapturesOutput;
+        };
+
+        $command->setOutput(new OutputStyle(new ArrayInput([]), $output));
+
+        $method->invoke($command);
+
+        $this->assertStringContainsString('Roster package installed successfully!', $output->getOutput());
+        $this->assertStringContainsString('Review config/roster.php', $output->getOutput());
+        $this->assertStringContainsString('Add the HasRoster trait', $output->getOutput());
+        $this->assertStringContainsString('Use the facades', $output->getOutput());
+        $this->assertStringContainsString('Check routes/roster.php', $output->getOutput());
+    }
+
+    public function test_private_methods_return_correct_values(): void
+    {
+        $command = new InstallRosterCommand();
+        $command->setLaravel($this->app);
+
+        $method = new \ReflectionMethod($command, 'shouldSkipConfirmation');
+        $method->setAccessible(true);
+
+        $inputDefinition = new \Symfony\Component\Console\Input\InputDefinition([
+            new \Symfony\Component\Console\Input\InputOption('force'),
+        ]);
+
+        $inputWithForce = new ArrayInput(['--force' => true], $inputDefinition);
+
+        $reflection = new \ReflectionClass($command);
+        $inputProperty = $reflection->getProperty('input');
+        $inputProperty->setAccessible(true);
+        $inputProperty->setValue($command, $inputWithForce);
+
+        $this->assertTrue($method->invoke($command));
+
+        $inputWithoutForce = new ArrayInput([], $inputDefinition);
+        $inputProperty->setValue($command, $inputWithoutForce);
+
+        $this->assertFalse($method->invoke($command));
+    }
+
+    public function test_handles_cancellation_gracefully(): void
+    {
+        $command = $this->getMockBuilder(InstallRosterCommand::class)
+            ->onlyMethods(['confirm'])
+            ->getMock();
+
+        $command->expects($this->once())
+            ->method('confirm')
+            ->with('Continue?', true)
+            ->willReturn(false);
+
+        $command->setLaravel($this->app);
+
+        /** @var Output&OutputWithBuffer $output */
+        $output = new class extends Output implements OutputWithBuffer {
+            use CapturesOutput;
+        };
+
+        $command->setOutput(new OutputStyle(new ArrayInput([], $command->getDefinition()), $output));
+
+        $input = new ArrayInput([], $command->getDefinition());
+        $reflection = new \ReflectionClass($command);
+        $inputProperty = $reflection->getProperty('input');
+        $inputProperty->setAccessible(true);
+        $inputProperty->setValue($command, $input);
+
+        $command->handle();
+
+        $this->assertStringContainsString('Installation cancelled.', $output->getOutput());
+    }
+
+    public function test_completes_successfully_with_force_option(): void
     {
         $this->artisan('roster:install', ['--force' => true])
             ->expectsOutput('🚀 Installing Roster package...')
             ->expectsOutput('📤 Publishing resources...')
             ->expectsOutput('📊 Running migrations...')
             ->assertExitCode(0);
+    }
+
+    public function test_asks_for_confirmation_without_force_option(): void
+    {
+        $command = $this->getMockBuilder(InstallRosterCommand::class)
+            ->onlyMethods(['confirm', 'call'])
+            ->getMock();
+
+        $command->expects($this->once())
+            ->method('confirm')
+            ->with('Continue?', true)
+            ->willReturn(true);
+
+        $command->expects($this->exactly(2))
+            ->method('call')
+            ->willReturn(0);
+
+        $command->setLaravel($this->app);
+
+        $input = new ArrayInput([], $command->getDefinition());
+        $reflection = new \ReflectionClass($command);
+        $inputProperty = $reflection->getProperty('input');
+        $inputProperty->setAccessible(true);
+        $inputProperty->setValue($command, $input);
+
+        /** @var Output&OutputWithBuffer $output */
+        $output = new class extends Output implements OutputWithBuffer {
+            use CapturesOutput;
+        };
+
+        $command->setOutput(new OutputStyle($input, $output));
+
+        $command->handle();
+
+        $this->assertStringContainsString('Installing Roster package', $output->getOutput());
     }
 }
