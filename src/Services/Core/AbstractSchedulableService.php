@@ -185,6 +185,7 @@ abstract class AbstractSchedulableService implements SchedulableServiceInterface
 
     /**
      * Apply entity-specific default values
+     * @param array<string, mixed> $data
      */
     final protected function applyEntitySpecificDefaults(array $data): array
     {
@@ -208,7 +209,7 @@ abstract class AbstractSchedulableService implements SchedulableServiceInterface
     {
         // 1. Get entity configuration
         $entityType = $this->getEntityType();
-        $entityConfig = Config::get("roster.validate_future_dates.{$entityType}", []);
+        $entityConfig = Config::get('roster.validate_future_dates.' . $entityType, []);
         $globalEnabled = Config::get('roster.validate_future_dates.enabled', true);
 
         // Check if validation is enabled for this entity
@@ -228,10 +229,12 @@ abstract class AbstractSchedulableService implements SchedulableServiceInterface
 
     /**
      * Validate future dates based on configuration
+     * @param array<string, mixed> $entityConfig
      */
     final protected function validateFutureDates(string $operation, string $entityType, array $entityConfig): void
     {
-        $fieldName = $entityConfig['field_name'] ?? $this->getDefaultDateField($entityType);
+        $fieldName = $entityConfig['validation_field'] ?? $this->getDefaultDateField($entityType);
+
 
         if (!isset($this->data[$fieldName])) {
             return;
@@ -249,7 +252,7 @@ abstract class AbstractSchedulableService implements SchedulableServiceInterface
                     );
                 }
             }
-        } catch (Exception $e) {
+        } catch (Exception $exception) {
             // Not a valid date, validation will be handled elsewhere
         }
     }
@@ -272,7 +275,7 @@ abstract class AbstractSchedulableService implements SchedulableServiceInterface
     final protected function validateGlobalConfigurationRules(string $operation): void
     {
         // Check max days to check for date ranges
-        $maxDays = Config::get('roster.durations.max_days_to_check', 365);
+        $maxDays = Config::get('roster.durations.max_search_period_days', 365);
         $this->validateMaxDaysHook($operation, $maxDays);
 
         // Validate timezone
@@ -330,8 +333,8 @@ abstract class AbstractSchedulableService implements SchedulableServiceInterface
 
         // Check if any date/time field is being set
         $hasDateFields = false;
-        foreach ($dateFields as $field) {
-            if (isset($this->data[$field])) {
+        foreach ($dateFields as $dateField) {
+            if (isset($this->data[$dateField])) {
                 $hasDateFields = true;
                 break;
             }
@@ -339,7 +342,7 @@ abstract class AbstractSchedulableService implements SchedulableServiceInterface
 
         if ($hasDateFields) {
             $validationService = $this->getValidationService();
-            if ($validationService && !$validationService->validateTimezone($timezone)) {
+            if (!$validationService->validateTimezone($timezone)) {
                 throw ValidationException::withMessage(
                     'Invalid timezone: ' . $timezone
                 );
@@ -404,7 +407,7 @@ abstract class AbstractSchedulableService implements SchedulableServiceInterface
     protected function validateRequiredFields(array $requiredFields = []): void
     {
         $entityType = $this->getEntityType();
-        $configFields = Config::get("roster.validation.required_fields.{$entityType}", []);
+        $configFields = Config::get('roster.validation.required_fields.' . $entityType, []);
         $allRequired = array_unique(array_merge($configFields, $requiredFields));
 
         foreach ($allRequired as $field) {

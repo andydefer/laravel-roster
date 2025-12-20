@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Services;
 
+use BadMethodCallException;
 use Illuminate\Support\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Roster\Exceptions\OverlappingImpedimentException;
@@ -95,6 +96,7 @@ final class ImpedimentServiceTest extends TestCase
         // Créer un autre modèle avec sa propre availability
         $otherModel = new class extends Model {
             protected $table = 'test_schedulables';
+
             public $timestamps = false;
         };
         $otherModel->id = 2;
@@ -305,7 +307,7 @@ final class ImpedimentServiceTest extends TestCase
             'end_datetime' => '2038-06-07 11:00:00',
         ];
 
-        $this->expectException(\BadMethodCallException::class);
+        $this->expectException(BadMethodCallException::class);
         $this->expectExceptionMessage('Method create(array $data) is deprecated. Use create(Availability $availability, array $data) instead.');
 
         // Tenter d'utiliser l'ancienne API

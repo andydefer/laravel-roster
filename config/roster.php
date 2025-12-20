@@ -2,19 +2,8 @@
 
 declare(strict_types=1);
 
-use Roster\Models\Availability;
-use Roster\Models\Schedule;
-use Roster\Models\Impediment;
-use Roster\Services\AvailabilityService;
-use Roster\Services\ScheduleService;
-use Roster\Services\ImpedimentService;
-use Roster\Services\Core\ValidationService;
-use Roster\Repositories\AvailabilityRepository;
-use Roster\Repositories\ScheduleRepository;
-use Roster\Repositories\ImpedimentRepository;
-
 /**
- * Roster package configuration file.
+ * Configuration settings for the Roster package.
  *
  * This configuration file defines all customizable settings for the Roster package.
  * Environment variables can be used to override any default values.
@@ -31,19 +20,19 @@ return [
 
         // Entity-specific overrides
         'availability' => [
-            'enabled' => env('ROSTER_VALIDATE_AVAILABILITY_FUTURE_DATES', null), // null = use parent
+            'enabled' => env('ROSTER_VALIDATE_AVAILABILITY_FUTURE_DATES'), // null = use parent
             'allow_past' => env('ROSTER_ALLOW_PAST_AVAILABILITIES', false),
-            'field_name' => 'start_date',
+            'validation_field' => 'start_date',
         ],
         'schedule' => [
-            'enabled' => env('ROSTER_VALIDATE_SCHEDULE_FUTURE_DATES', null), // null = use parent
+            'enabled' => env('ROSTER_VALIDATE_SCHEDULE_FUTURE_DATES'), // null = use parent
             'allow_past' => env('ROSTER_ALLOW_PAST_SCHEDULES', false),
-            'field_name' => 'start_datetime',
+            'validation_field' => 'start_datetime',
         ],
         'impediment' => [
-            'enabled' => env('ROSTER_VALIDATE_IMPEDIMENT_FUTURE_DATES', null), // null = use parent
+            'enabled' => env('ROSTER_VALIDATE_IMPEDIMENT_FUTURE_DATES'), // null = use parent
             'allow_past' => env('ROSTER_ALLOW_PAST_IMPEDIMENTS', false),
-            'field_name' => 'start_datetime',
+            'validation_field' => 'start_datetime',
         ],
     ],
 
@@ -59,12 +48,12 @@ return [
         'default_slot_interval_minutes' => env('ROSTER_DEFAULT_SLOT_INTERVAL', 30),
 
         // Time boundaries
-        'max_days_to_check' => env('ROSTER_MAX_DAYS_TO_CHECK', 365),
+        'max_search_period_days' => env('ROSTER_max_search_period_days', 365),
         'max_availability_period_days' => env('ROSTER_MAX_AVAILABILITY_PERIOD_DAYS', 365),
         'max_impediment_duration_days' => env('ROSTER_MAX_IMPEDIMENT_DURATION_DAYS', 30),
 
         // Scheduling constraints
-        'max_schedule_advance_days' => env('ROSTER_MAX_SCHEDULE_ADVANCE_DAYS', 90),
+        'max_scheduling_horizon_days' => env('ROSTER_max_scheduling_horizon_days', 90),
         'min_schedule_advance_minutes' => env('ROSTER_MIN_SCHEDULE_ADVANCE_MINUTES', 30),
     ],
 
@@ -85,7 +74,7 @@ return [
         'rescheduling_lead_time_minutes' => env('ROSTER_SCHEDULE_RESCHEDULING_LEAD_TIME', 30),
 
         // Allowed schedule statuses
-        'allowed_statuses' => ['available', 'booked', 'cancelled', 'blocked'],
+        'valid_statuses' => ['available', 'booked', 'cancelled', 'blocked'],
     ],
 
     // Impediment management settings
@@ -95,7 +84,6 @@ return [
         'max_duration_days' => env('ROSTER_IMPEDIMENT_MAX_DURATION_DAYS', 30),
         'max_future_days' => env('ROSTER_IMPEDIMENT_MAX_FUTURE_DAYS', 365),
     ],
-
 
     // Database configuration
     'database' => [
@@ -135,5 +123,4 @@ return [
 
         'use_tags' => env('ROSTER_CACHE_USE_TAGS', true),
     ],
-
 ];

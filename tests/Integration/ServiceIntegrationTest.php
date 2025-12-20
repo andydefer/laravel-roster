@@ -23,28 +23,30 @@ final class ServiceIntegrationTest extends TestCase
     use RefreshDatabase;
 
     private AvailabilityService $availabilityService;
+
     private ScheduleService $scheduleService;
+
     private ImpedimentService $impedimentService;
-    private Model $schedulable;
 
     protected function setUp(): void
     {
         parent::setUp();
 
-        $this->schedulable = new class extends Model {
+        $model = new class extends Model {
             protected $table = 'test_schedulables';
+
             public $timestamps = false;
         };
-        $this->schedulable->id = 1;
-        $this->schedulable->save();
+        $model->id = 1;
+        $model->save();
 
         $this->availabilityService = app(AvailabilityService::class);
         $this->scheduleService = app(ScheduleService::class);
         $this->impedimentService = app(ImpedimentService::class);
 
-        $this->availabilityService->for($this->schedulable);
-        $this->scheduleService->for($this->schedulable);
-        $this->impedimentService->for($this->schedulable);
+        $this->availabilityService->for($model);
+        $this->scheduleService->for($model);
+        $this->impedimentService->for($model);
     }
 
     public function test_complete_workflow_availability_schedule_impediment(): void
@@ -98,7 +100,7 @@ final class ServiceIntegrationTest extends TestCase
 
     public function test_schedule_overlapping_validation(): void
     {
-        // Créer une availability
+
         $availability = $this->availabilityService->create([
             'type' => 'consultation',
             'start_time' => '09:00:00',
@@ -178,14 +180,14 @@ final class ServiceIntegrationTest extends TestCase
     public function test_availability_merging_and_adjacent_slots(): void
     {
         // Créer deux availabilities adjacentes
-        $availability1 = $this->availabilityService->create([
+        $this->availabilityService->create([
             'type' => 'consultation',
             'start_time' => '09:00:00',
             'end_time' => '12:00:00',
             'days' => ['monday'],
         ]);
 
-        $availability2 = $this->availabilityService->create([
+        $this->availabilityService->create([
             'type' => 'consultation',
             'start_time' => '12:00:00',
             'end_time' => '15:00:00',
@@ -280,7 +282,7 @@ final class ServiceIntegrationTest extends TestCase
     public function test_wrong_availability_validation(): void
     {
         // Créer une availability pour ce schedulable
-        $availability1 = $this->availabilityService->create([
+        $this->availabilityService->create([
             'type' => 'consultation',
             'start_time' => '09:00:00',
             'end_time' => '17:00:00',
@@ -290,6 +292,7 @@ final class ServiceIntegrationTest extends TestCase
         // Créer un autre schedulable avec sa propre availability
         $otherSchedulable = new class extends Model {
             protected $table = 'test_schedulables';
+
             public $timestamps = false;
         };
         $otherSchedulable->id = 2;
@@ -347,7 +350,7 @@ final class ServiceIntegrationTest extends TestCase
 
         // Vérifier qu'il n'existe plus
         $foundAfterDelete = $this->impedimentService->find($impediment->id);
-        $this->assertNull($foundAfterDelete);
+        $this->assertNotInstanceOf(Impediment::class, $foundAfterDelete);
     }
 
     public function test_schedule_update_workflow(): void

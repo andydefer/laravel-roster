@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 /**
- * Creates the `roster_impediments` table for storing temporary availability exceptions.
+ * Creates the roster_impediments table for storing temporary availability exceptions.
  *
  * This table stores blocking periods that override normal availability rules.
  * Examples include illness, training, holidays, or maintenance periods.
@@ -33,6 +33,7 @@ return new class extends Migration
             $table->dateTime('start_datetime')->comment('Start of the blocked period');
             $table->dateTime('end_datetime')->comment('End of the blocked period');
             $table->json('metadata')->nullable()->comment('Optional additional data');
+
             $table->timestamps();
 
             $table->unique(
@@ -40,7 +41,6 @@ return new class extends Migration
                 'roster_impediments_unique_time_slot'
             );
 
-            // Indexes
             $table->index(['availability_id', 'start_datetime']);
             $table->index(['availability_id', 'end_datetime']);
             $table->index(['start_datetime', 'end_datetime']);
@@ -62,19 +62,14 @@ return new class extends Migration
      */
     private function addDatabaseSpecificConstraints(): void
     {
-        $connection = config('database.default');
+        $driver = Schema::connection($this->getConnection())->getConnection()->getDriverName();
 
-        switch ($connection) {
-            case 'mysql':
-                $this->addMysqlConstraints();
-                break;
-            case 'pgsql':
-                $this->addPgsqlConstraints();
-                break;
-            case 'sqlite':
-                // SQLite doesn't support advanced check constraints
-                break;
-        }
+        match ($driver) {
+            'mysql' => $this->addMysqlConstraints(),
+            'pgsql' => $this->addPgsqlConstraints(),
+            'sqlite' => null, // SQLite doesn't support advanced check constraints
+            default => null,
+        };
     }
 
     /**

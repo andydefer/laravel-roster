@@ -23,11 +23,17 @@ class AvailabilityService extends AbstractSchedulableService
     use FilterableTrait;
 
     private AvailabilityValidatorInterface $availabilityValidator;
+
     private ValidationServiceInterface $validationService;
+
     private AvailabilityRepositoryInterface $availabilityRepository;
+
     private AvailabilityMergerInterface $availabilityMerger;
+
     private SlotFinderInterface $slotFinder;
+
     private AvailabilityCheckerInterface $availabilityChecker;
+
     private ?Availability $currentAvailability = null;
 
     public function __construct(
@@ -175,12 +181,12 @@ class AvailabilityService extends AbstractSchedulableService
         $this->processBeforeCreate();
 
         // 5. Execute creation (abstract method)
-        $result = $this->executeCreate();
+        $availability = $this->executeCreate();
 
         // 6. Post-creation hooks
-        $this->afterCreate($result);
+        $this->afterCreate($availability);
 
-        return $result;
+        return $availability;
     }
 
     // ========== OTHER METHODS ==========

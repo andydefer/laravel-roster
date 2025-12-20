@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Facades;
 
+use BadMethodCallException;
 use Illuminate\Support\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Carbon;
@@ -63,10 +64,10 @@ final class ScheduleFacadeTest extends TestCase
         ];
 
         // La facade Schedule utilise le même service, donc même comportement
-        $this->expectException(\BadMethodCallException::class);
+        $this->expectException(BadMethodCallException::class);
         $this->expectExceptionMessage('Method create(array $data) is deprecated. Use create(Availability $availability, array $data) instead.');
 
-        \Roster\Facades\Schedule::for($this->model)->create($data);
+        ScheduleFacade::for($this->model)->create($data);
     }
 
 
@@ -113,7 +114,7 @@ final class ScheduleFacadeTest extends TestCase
             'end_datetime' => '2038-06-01 11:00:00',
         ];
 
-        $this->expectException(\BadMethodCallException::class);
+        $this->expectException(BadMethodCallException::class);
         $this->expectExceptionMessage('Method create(array $data) is deprecated. Use create(Availability $availability, array $data) instead.');
 
         // Tenter d'utiliser l'ancienne API
@@ -295,7 +296,7 @@ final class ScheduleFacadeTest extends TestCase
 
         // Vérifier qu'il existe
         $found = ScheduleFacade::for($this->model)->find($schedule->id);
-        $this->assertNotNull($found);
+        $this->assertInstanceOf(\Roster\Models\Schedule::class, $found);
 
         // Le supprimer
         $deleted = ScheduleFacade::for($this->model)->delete($schedule->id);
@@ -303,7 +304,7 @@ final class ScheduleFacadeTest extends TestCase
 
         // Vérifier qu'il n'existe plus
         $foundAfterDelete = ScheduleFacade::for($this->model)->find($schedule->id);
-        $this->assertNull($foundAfterDelete);
+        $this->assertNotInstanceOf(\Roster\Models\Schedule::class, $foundAfterDelete);
     }
 
     public function test_facade_can_update_schedule(): void

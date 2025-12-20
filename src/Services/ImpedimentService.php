@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Roster\Services;
 
+use BadMethodCallException;
+use InvalidArgumentException;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
@@ -28,8 +30,11 @@ class ImpedimentService extends AbstractSchedulableService
     use FilterableTrait;
 
     protected ValidationServiceInterface $validationService;
+
     protected AvailabilityRepositoryInterface $availabilityRepository;
+
     protected ImpedimentRepositoryInterface $impedimentRepository;
+
     protected ?Impediment $currentImpediment = null;
 
     public function __construct(
@@ -203,14 +208,16 @@ class ImpedimentService extends AbstractSchedulableService
         if ($availabilityOrData instanceof Availability && $data !== null) {
             // Nouvelle signature: create(Availability $availability, array $data)
             return $this->createWithAvailability($availabilityOrData, $data);
-        } elseif (is_array($availabilityOrData) && $data === null) {
+        }
+
+        if (is_array($availabilityOrData) && $data === null) {
             // Ancienne signature: create(array $data) - maintenue pour compatibilité mais dépréciée
-            throw new \BadMethodCallException(
+            throw new BadMethodCallException(
                 'Method create(array $data) is deprecated. Use create(Availability $availability, array $data) instead.'
             );
-        } else {
-            throw new \InvalidArgumentException('Invalid arguments for create method');
         }
+
+        throw new InvalidArgumentException('Invalid arguments for create method');
     }
 
     /**
@@ -245,12 +252,12 @@ class ImpedimentService extends AbstractSchedulableService
         $this->processBeforeCreate();
 
         // 5. Execute creation (abstract method)
-        $result = $this->executeCreate();
+        $impediment = $this->executeCreate();
 
         // 6. Post-creation hooks
-        $this->afterCreate($result);
+        $this->afterCreate($impediment);
 
-        return $result;
+        return $impediment;
     }
 
     /**
@@ -363,21 +370,21 @@ class ImpedimentService extends AbstractSchedulableService
         return $query;
     }
 
-    private function applyDateFilters(Builder $query): void
+    private function applyDateFilters(Builder $builder): void
     {
         if (isset($this->filters['start_date'])) {
-            $query->where('start_datetime', '>=', $this->filters['start_date']);
+            $builder->where('start_datetime', '>=', $this->filters['start_date']);
         }
 
         if (isset($this->filters['end_date'])) {
-            $query->where('end_datetime', '<=', $this->filters['end_date']);
+            $builder->where('end_datetime', '<=', $this->filters['end_date']);
         }
     }
 
-    private function applyTypeFilter(Builder $query): void
+    private function applyTypeFilter(Builder $builder): void
     {
         if (isset($this->filters['type'])) {
-            $query->whereHas('availability', function ($q) {
+            $builder->whereHas('availability', function ($q): void {
                 $q->where('type', $this->filters['type']);
             });
         }

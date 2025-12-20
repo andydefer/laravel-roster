@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Roster\Commands;
 
+use Roster\RosterServiceProvider;
 use Illuminate\Console\Command;
 
 /**
@@ -30,17 +31,15 @@ class InstallRosterCommand extends Command
 
     /**
      * Execute the console command.
+     *
+     * @return void
      */
     public function handle(): void
     {
         $this->info('🚀 Installing Roster package...');
 
-        if (!$this->option('force')) {
-            $this->warn('📦 This will publish:');
-            $this->line('   - Configuration (config/roster.php)');
-            $this->line('   - Database migrations (roster_* tables)');
-            $this->line('   - Routes (routes/roster.php)');
-            $this->line('   - Views (resources/views/vendor/roster)');
+        if (!$this->shouldSkipConfirmation()) {
+            $this->displayPublishingDetails();
 
             if (!$this->confirm('Continue?', true)) {
                 $this->info('Installation cancelled.');
@@ -48,18 +47,74 @@ class InstallRosterCommand extends Command
             }
         }
 
+        $this->publishResources();
+        $this->runMigrations();
+        $this->displaySuccessMessage();
+    }
+
+    /**
+     * Determine if confirmation should be skipped.
+     *
+     * @return bool
+     */
+    private function shouldSkipConfirmation(): bool
+    {
+        return (bool) $this->option('force');
+    }
+
+    /**
+     * Display what will be published during installation.
+     *
+     * @return void
+     */
+    private function displayPublishingDetails(): void
+    {
+        $this->warn('📦 This will publish:');
+        $this->line('   - Configuration (config/roster.php)');
+        $this->line('   - Database migrations (roster_* tables)');
+        $this->line('   - Routes (routes/roster.php)');
+        $this->line('   - Views (resources/views/vendor/roster)');
+    }
+
+    /**
+     * Publish package resources using vendor:publish command.
+     *
+     * @return void
+     */
+    private function publishResources(): void
+    {
         $this->info('📤 Publishing resources...');
 
-        // Publier tout avec le tag roster
         $this->call('vendor:publish', [
-            '--provider' => 'Roster\RosterServiceProvider',
-            '--tag' => ['roster-config', 'roster-migrations', 'roster-routes', 'roster-views'],
+            '--provider' => RosterServiceProvider::class,
+            '--tag' => [
+                'roster-config',
+                'roster-migrations',
+                'roster-routes',
+                'roster-views'
+            ],
             '--force' => $this->option('force'),
         ]);
+    }
 
+    /**
+     * Run database migrations.
+     *
+     * @return void
+     */
+    private function runMigrations(): void
+    {
         $this->info('📊 Running migrations...');
         $this->call('migrate');
+    }
 
+    /**
+     * Display installation success message and next steps.
+     *
+     * @return void
+     */
+    private function displaySuccessMessage(): void
+    {
         $this->newLine();
         $this->info('✅ Roster package installed successfully!');
         $this->line('');

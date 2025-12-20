@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Schema;
 use Roster\Enums\ScheduleStatus;
 
 /**
- * Creates the `roster_schedules` table for storing concrete scheduled events.
+ * Creates the roster_schedules table for storing concrete scheduled events.
  *
  * This table stores actual bookings (appointments, meetings, etc.) linked
  * to availability rules, including their statuses and metadata.
@@ -22,7 +22,6 @@ return new class extends Migration
     {
         Schema::create('roster_schedules', function (Blueprint $table): void {
             $table->id();
-
             $table->foreignId('availability_id')
                 ->constrained('roster_availabilities')
                 ->onDelete('cascade');
@@ -39,7 +38,6 @@ return new class extends Migration
 
             $table->timestamps();
 
-            // Indexes
             $table->index('availability_id');
             $table->index(['start_datetime', 'end_datetime']);
             $table->index('status');

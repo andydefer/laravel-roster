@@ -102,6 +102,29 @@ test:
 	@vendor/bin/phpunit
 
 # ---------------------------------------------------
+# Génère un fichier Markdown listant tous les fichiers
+# avec checkbox
+# ---------------------------------------------------
+# Génère un fichier Markdown listant tous les fichiers avec checkbox
+for-clean:
+	@echo "📄 Generating FILES_CHECKLIST.md..."
+	@echo "# 📂 Project File Checklist\n" > FILES_CHECKLIST.md
+	@find config src database routes tests -type f | sort | \
+	awk '{ printf "%d. %s [ ]\n", NR, $$0 }' >> FILES_CHECKLIST.md
+	@echo "✅ FILES_CHECKLIST.md generated successfully"
+
+# ---------------------------------------------------
+# Liste des fichiers modifiés depuis le dernier commit
+# ---------------------------------------------------
+# Liste des fichiers modifiés depuis le dernier commit
+changed-files:
+	@echo "📝 Generating list of changed files since last commit..."
+	@git diff --name-only HEAD | sort | \
+	awk '{ printf "%d. - [ ] %s\n", NR, $$0 }' \
+	> CHANGED_FILES.md
+	@echo "✅ CHANGED_FILES.md generated"
+
+# ---------------------------------------------------
 # Concatène tout le code PHP de src dans all.txt
 # ---------------------------------------------------
 # Parcourt src/, tests/ et database/ et écrit tout le contenu PHP dans all.txt

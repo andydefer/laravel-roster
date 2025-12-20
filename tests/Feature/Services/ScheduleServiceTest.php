@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Services;
 
+use BadMethodCallException;
+use InvalidArgumentException;
+use Exception;
 use Illuminate\Support\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -20,8 +23,6 @@ final class ScheduleServiceTest extends TestCase
 
     private ScheduleService $scheduleService;
 
-    private Model $model;
-
     private Availability $availability;
 
     private Availability $trainingAvailability;
@@ -30,18 +31,18 @@ final class ScheduleServiceTest extends TestCase
     {
         parent::setUp();
 
-        $this->model = new class extends Model {
+        $model = new class extends Model {
             protected $table = 'test_schedulables';
 
             public $timestamps = false;
         };
-        $this->model->id = 1;
-        $this->model->save();
+        $model->id = 1;
+        $model->save();
 
         // Create availabilities
         $this->availability = Availability::create([
-            'schedulable_id' => $this->model->id,
-            'schedulable_type' => get_class($this->model),
+            'schedulable_id' => $model->id,
+            'schedulable_type' => get_class($model),
             'type' => 'consultation',
             'start_time' => '09:00:00',
             'end_time' => '17:00:00',
@@ -49,8 +50,8 @@ final class ScheduleServiceTest extends TestCase
         ]);
 
         $this->trainingAvailability = Availability::create([
-            'schedulable_id' => $this->model->id,
-            'schedulable_type' => get_class($this->model),
+            'schedulable_id' => $model->id,
+            'schedulable_type' => get_class($model),
             'type' => 'training',
             'start_time' => '09:00:00',
             'end_time' => '17:00:00',
@@ -58,7 +59,7 @@ final class ScheduleServiceTest extends TestCase
         ]);
 
         $this->scheduleService = app(ScheduleService::class);
-        $this->scheduleService->for($this->model);
+        $this->scheduleService->for($model);
     }
 
     public function test_create_schedule_successfully(): void
@@ -103,7 +104,7 @@ final class ScheduleServiceTest extends TestCase
         $this->assertSame($availability->id, $scheduleWithAvailability->availability_id);
 
         // 2. Tenter de créer un schedule sans Availability => Échec
-        $this->expectException(\BadMethodCallException::class);
+        $this->expectException(BadMethodCallException::class);
 
         $this->scheduleService->create([
             'title' => 'Schedule sans Availability',
@@ -111,6 +112,7 @@ final class ScheduleServiceTest extends TestCase
             'end_datetime' => '2038-06-07 15:00:00',
         ]);
     }
+
     public function test_create_schedule_with_type_filters_availability(): void
     {
         $data = [
@@ -130,6 +132,7 @@ final class ScheduleServiceTest extends TestCase
     {
         $otherModel = new class extends Model {
             protected $table = 'test_schedulables';
+
             public $timestamps = false;
         };
         $otherModel->id = 2;
@@ -160,7 +163,7 @@ final class ScheduleServiceTest extends TestCase
 
         // Tenter de créer un schedule sans passer d'Availability en paramètre
         // Cela déclenchera l'exception BadMethodCallException car on utilise l'ancienne signature
-        $this->expectException(\BadMethodCallException::class);
+        $this->expectException(BadMethodCallException::class);
         $this->expectExceptionMessage('Method create(array $data) is deprecated. Use create(Availability $availability, array $data) instead.');
 
         $this->scheduleService->create($data);
@@ -175,7 +178,7 @@ final class ScheduleServiceTest extends TestCase
         ];
 
         // Tenter de créer un schedule en passant null comme Availability
-        $this->expectException(\InvalidArgumentException::class);
+        $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('Invalid arguments for create method');
 
         $this->scheduleService->create(null, $data);
@@ -184,13 +187,13 @@ final class ScheduleServiceTest extends TestCase
     public function test_cannot_create_schedule_with_invalid_availability_type(): void
     {
         $data = [
-            'title' => 'Schedule avec mauvais type d\'Availability',
+            'title' => "Schedule avec mauvais type d'Availability",
             'start_datetime' => '2038-06-07 10:00:00',
             'end_datetime' => '2038-06-07 11:00:00',
         ];
 
         // Tenter de créer un schedule en passant un tableau au lieu d'un objet Availability
-        $this->expectException(\InvalidArgumentException::class);
+        $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('Invalid arguments for create method');
 
         $this->scheduleService->create(['type' => 'consultation'], $data);
@@ -215,8 +218,8 @@ final class ScheduleServiceTest extends TestCase
                 $schedule = Schedule::create($scheduleData);
                 // Si on arrive ici, la base de données n'a pas de contrainte NOT NULL
                 // On vérifie quand même que le schedule créé est invalide
-                $this->assertNull($schedule->availability_id, 'Le schedule ne devrait pas avoir d\'availability_id');
-            } catch (\Exception $e) {
+                $this->assertNull($schedule->availability_id, "Le schedule ne devrait pas avoir d'availability_id");
+            } catch (Exception $e) {
                 // Si une exception est levée, c'est que la base de données impose la contrainte
                 $this->assertStringContainsString('availability_id', $e->getMessage());
             }
@@ -438,7 +441,7 @@ final class ScheduleServiceTest extends TestCase
             'end_datetime' => '2038-06-07 11:00:00',
         ];
 
-        $this->expectException(\BadMethodCallException::class);
+        $this->expectException(BadMethodCallException::class);
         $this->expectExceptionMessage('Method create(array $data) is deprecated. Use create(Availability $availability, array $data) instead.');
 
         // Tenter d'utiliser l'ancienne API

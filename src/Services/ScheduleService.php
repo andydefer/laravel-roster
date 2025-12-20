@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Roster\Services;
 
+use BadMethodCallException;
+use InvalidArgumentException;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
@@ -27,10 +29,15 @@ class ScheduleService extends AbstractSchedulableService
     use FilterableTrait;
 
     protected ValidationServiceInterface $validationService;
+
     protected AvailabilityRepositoryInterface $availabilityRepository;
+
     protected ImpedimentRepositoryInterface $impedimentRepository;
+
     protected ScheduleRepositoryInterface $scheduleRepository;
+
     protected SlotFinderInterface $slotFinder;
+
     protected ?Schedule $currentSchedule = null;
 
     public function __construct(
@@ -194,14 +201,16 @@ class ScheduleService extends AbstractSchedulableService
         if ($availabilityOrData instanceof Availability && $data !== null) {
             // Nouvelle signature: create(Availability $availability, array $data)
             return $this->createWithAvailability($availabilityOrData, $data);
-        } elseif (is_array($availabilityOrData) && $data === null) {
+        }
+
+        if (is_array($availabilityOrData) && $data === null) {
             // Ancienne signature: create(array $data) - maintenue pour compatibilité mais dépréciée
-            throw new \BadMethodCallException(
+            throw new BadMethodCallException(
                 'Method create(array $data) is deprecated. Use create(Availability $availability, array $data) instead.'
             );
-        } else {
-            throw new \InvalidArgumentException('Invalid arguments for create method');
         }
+
+        throw new InvalidArgumentException('Invalid arguments for create method');
     }
 
     /**
@@ -236,12 +245,12 @@ class ScheduleService extends AbstractSchedulableService
         $this->processBeforeCreate();
 
         // 5. Execute creation (abstract method)
-        $result = $this->executeCreate();
+        $schedule = $this->executeCreate();
 
         // 6. Post-creation hooks
-        $this->afterCreate($result);
+        $this->afterCreate($schedule);
 
-        return $result;
+        return $schedule;
     }
 
     /**

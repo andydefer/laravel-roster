@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Facades;
 
+use BadMethodCallException;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -98,7 +99,7 @@ final class ImpedimentFacadeTest extends TestCase
             'end_datetime' => '2038-06-07 11:00:00',
         ];
 
-        $this->expectException(\BadMethodCallException::class);
+        $this->expectException(BadMethodCallException::class);
         $this->expectExceptionMessage('Method create(array $data) is deprecated. Use create(Availability $availability, array $data) instead.');
 
         // Tenter d'utiliser l'ancienne API
@@ -230,7 +231,7 @@ final class ImpedimentFacadeTest extends TestCase
 
         // Vérifier qu'il existe
         $found = ImpedimentFacade::for($this->model)->find($impediment->id);
-        $this->assertNotNull($found);
+        $this->assertInstanceOf(\Roster\Models\Impediment::class, $found);
 
         // Le supprimer
         $deleted = ImpedimentFacade::for($this->model)->delete($impediment->id);
@@ -238,7 +239,7 @@ final class ImpedimentFacadeTest extends TestCase
 
         // Vérifier qu'il n'existe plus
         $foundAfterDelete = ImpedimentFacade::for($this->model)->find($impediment->id);
-        $this->assertNull($foundAfterDelete);
+        $this->assertNotInstanceOf(\Roster\Models\Impediment::class, $foundAfterDelete);
     }
 
     public function test_facade_can_update_impediment(): void
