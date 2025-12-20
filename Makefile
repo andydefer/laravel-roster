@@ -118,8 +118,9 @@ for-clean:
 # ---------------------------------------------------
 # Liste des fichiers modifiés depuis le dernier commit
 changed-files:
-	@echo "📝 Generating list of changed files since last commit..."
-	@git diff --name-only HEAD | sort | \
+	@echo "📝 Generating list of changed and untracked files..."
+	@(git diff --name-only HEAD; git ls-files --others --exclude-standard) | \
+	sort | uniq | \
 	awk '{ printf "%d. - [ ] %s\n", NR, $$0 }' \
 	> CHANGED_FILES.md
 	@echo "✅ CHANGED_FILES.md generated"
@@ -168,3 +169,12 @@ help:
 	@echo "📖 Makefile commands:"; \
 	awk '/^#/{desc=$$0}/^[a-zA-Z0-9_-]+:/{gsub(":", "", $$1); gsub(/^# /, "", desc); printf "%-20s -> %s\n", $$1, desc}' $(MAKEFILE_LIST) | sort
 
+# ---------------------------------------------------
+# Static Analysis: Psalm & PHPStan
+# ---------------------------------------------------
+
+# Lancer Psalm pour analyser tout le code
+lint-psalm:
+	@echo "🔹 Exécution de Psalm sur tout le code..."
+	@vendor/bin/psalm --show-info=true
+	@echo "✅ Analyse Psalm terminée."

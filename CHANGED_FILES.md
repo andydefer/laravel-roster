@@ -1,15 +1,1 @@
-1. - [ ] config/roster.php
-2. - [ ] database/migrations/2024_01_01_000000_create_roster_availabilities_table.php
-3. - [ ] database/migrations/2024_01_01_000001_create_roster_schedules_table.php
-4. - [ ] database/migrations/2024_01_01_000002_create_roster_impediments_table.php
-5. - [ ] Makefile
-6. - [ ] src/Commands/InstallRosterCommand.php
-7. - [ ] src/Services/AvailabilityService.php
-8. - [ ] src/Services/Core/AbstractSchedulableService.php
-9. - [ ] src/Services/ImpedimentService.php
-10. - [ ] src/Services/ScheduleService.php
-11. - [ ] tests/Feature/Facades/ImpedimentFacadeTest.php
-12. - [ ] tests/Feature/Facades/ScheduleFacadeTest.php
-13. - [ ] tests/Feature/Services/ImpedimentServiceTest.php
-14. - [ ] tests/Feature/Services/ScheduleServiceTest.php
-15. - [ ] tests/Integration/ServiceIntegrationTest.php
+1. - [ ] CHANGED_FILES.md
