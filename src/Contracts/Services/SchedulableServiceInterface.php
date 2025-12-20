@@ -46,4 +46,13 @@ interface SchedulableServiceInterface
      * @return Collection Filtered results
      */
     public function get(): Collection;
+
+    /**
+     * Update an existing entity.
+     *
+     * @param int $id Entity ID
+     * @param array<string, mixed> $data Update data
+     * @return bool True if update successful
+     */
+    public function update(int $id, array $data): bool;
 }

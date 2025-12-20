@@ -148,7 +148,42 @@ class AvailabilityService extends AbstractSchedulableService
         return $this->availabilityRepository->update($id, $this->data);
     }
 
-    // ========== ORIGINAL METHODS ==========
+    // ========== CREATE METHOD IMPLEMENTATION ==========
+
+    /**
+     * Create a new availability.
+     *
+     * @param array<string, mixed> $data Availability data
+     * @return Availability Created availability
+     * @throws ValidationException When validation fails
+     */
+    public function create(array $data): Availability
+    {
+        $this->validateSchedulable();
+        $this->data = $data;
+
+        // 1. Apply configuration rules to data
+        $this->data = $this->applyConfigurationRules($this->data, 'create');
+
+        // 2. Validate configuration rules
+        $this->validateConfigurationRules('create');
+
+        // 3. Validate business rules (hook for children)
+        $this->validateBeforeCreate();
+
+        // 4. Process data (hook for children)
+        $this->processBeforeCreate();
+
+        // 5. Execute creation (abstract method)
+        $result = $this->executeCreate();
+
+        // 6. Post-creation hooks
+        $this->afterCreate($result);
+
+        return $result;
+    }
+
+    // ========== OTHER METHODS ==========
 
     public function find(int $id): ?Availability
     {

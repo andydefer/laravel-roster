@@ -24,6 +24,8 @@ final class ScheduleServiceTest extends TestCase
 
     private Availability $availability;
 
+    private Availability $trainingAvailability;
+
     protected function setUp(): void
     {
         parent::setUp();
@@ -36,11 +38,20 @@ final class ScheduleServiceTest extends TestCase
         $this->model->id = 1;
         $this->model->save();
 
-        // Create an availability
+        // Create availabilities
         $this->availability = Availability::create([
             'schedulable_id' => $this->model->id,
             'schedulable_type' => get_class($this->model),
             'type' => 'consultation',
+            'start_time' => '09:00:00',
+            'end_time' => '17:00:00',
+            'days' => ['monday'],
+        ]);
+
+        $this->trainingAvailability = Availability::create([
+            'schedulable_id' => $this->model->id,
+            'schedulable_type' => get_class($this->model),
+            'type' => 'training',
             'start_time' => '09:00:00',
             'end_time' => '17:00:00',
             'days' => ['monday'],
@@ -62,7 +73,8 @@ final class ScheduleServiceTest extends TestCase
             'metadata' => ['notes' => 'Test notes'],
         ];
 
-        $schedule = $this->scheduleService->create($data);
+        // Utiliser la nouvelle API avec Availability explicite
+        $schedule = $this->scheduleService->create($this->availability, $data);
 
         $this->assertInstanceOf(Schedule::class, $schedule);
         $this->assertSame('Test Consultation', $schedule->title);
@@ -75,42 +87,42 @@ final class ScheduleServiceTest extends TestCase
 
     public function test_create_schedule_with_type_filters_availability(): void
     {
-        // Create another availability with different type
-        $trainingAvailability = Availability::create([
-            'schedulable_id' => $this->model->id,
-            'schedulable_type' => get_class($this->model),
-            'type' => 'training',
-            'start_time' => '09:00:00',
-            'end_time' => '17:00:00',
-            'days' => ['monday'],
-        ]);
-
         $data = [
             'title' => 'Training Session',
             'start_datetime' => '2038-06-07 14:00:00', // Lundi
             'end_datetime' => '2038-06-07 15:00:00',
-            'type' => 'training',
         ];
 
-        $schedule = $this->scheduleService->create($data);
+        // Utiliser la nouvelle API avec Availability explicite de type training
+        $schedule = $this->scheduleService->create($this->trainingAvailability, $data);
 
-        $this->assertSame($trainingAvailability->id, $schedule->availability_id);
+        $this->assertSame($this->trainingAvailability->id, $schedule->availability_id);
         $this->assertSame('training', $schedule->type);
     }
 
-    public function test_create_schedule_with_no_matching_availability_throws_exception(): void
+    public function test_create_schedule_with_invalid_availability_throws_exception(): void
     {
+        $otherModel = new class extends Model {
+            protected $table = 'test_schedulables';
+            public $timestamps = false;
+        };
+        $otherModel->id = 2;
+        $otherModel->save();
+
         $data = [
             'title' => 'Test Schedule',
-            'start_datetime' => '2038-06-08 10:00:00', // Mardi (8 juin 2038), mais availability est seulement lundi
-            'end_datetime' => '2038-06-08 11:00:00',
+            'start_datetime' => '2038-06-07 10:00:00',
+            'end_datetime' => '2038-06-07 11:00:00',
         ];
 
         $this->expectException(ValidationException::class);
-        $this->expectExceptionMessage('No matching availability found');
+        $this->expectExceptionMessage('The provided availability does not belong to this schedulable');
 
-        $this->scheduleService->create($data);
+
+        $this->scheduleService->for($otherModel);
+        $this->scheduleService->create($this->availability, $data);
     }
+
 
     public function test_update_schedule_successfully(): void
     {
@@ -182,17 +194,17 @@ final class ScheduleServiceTest extends TestCase
         // Test available slot (before blocked time)
         $availableStart = Carbon::parse('2038-06-07 09:00:00');
         $availableEnd = Carbon::parse('2038-06-07 09:30:00');
-        $this->assertTrue($this->scheduleService->isTimeSlotAvailable($availableStart, $availableEnd));
+        $this->assertTrue($this->scheduleService->isTimeSlotAvailable($availableStart, $availableEnd, 'consultation'));
 
         // Test blocked slot
         $blockedStart = Carbon::parse('2038-06-07 10:00:00');
         $blockedEnd = Carbon::parse('2038-06-07 10:30:00');
-        $this->assertFalse($this->scheduleService->isTimeSlotAvailable($blockedStart, $blockedEnd));
+        $this->assertFalse($this->scheduleService->isTimeSlotAvailable($blockedStart, $blockedEnd, 'consultation'));
 
         // Test overlapping slot
         $overlapStart = Carbon::parse('2038-06-07 10:30:00');
         $overlapEnd = Carbon::parse('2038-06-07 11:30:00');
-        $this->assertFalse($this->scheduleService->isTimeSlotAvailable($overlapStart, $overlapEnd));
+        $this->assertFalse($this->scheduleService->isTimeSlotAvailable($overlapStart, $overlapEnd, 'consultation'));
     }
 
     public function test_find_next_available_slot(): void
@@ -253,5 +265,20 @@ final class ScheduleServiceTest extends TestCase
         $this->assertCount(2, $schedules);
         $this->assertSame('Schedule 1', $schedules[0]->title);
         $this->assertSame('Schedule 2', $schedules[1]->title);
+    }
+
+    public function test_old_create_method_is_deprecated(): void
+    {
+        $data = [
+            'title' => 'Test Consultation',
+            'start_datetime' => '2038-06-07 10:00:00',
+            'end_datetime' => '2038-06-07 11:00:00',
+        ];
+
+        $this->expectException(\BadMethodCallException::class);
+        $this->expectExceptionMessage('Method create(array $data) is deprecated. Use create(Availability $availability, array $data) instead.');
+
+        // Tenter d'utiliser l'ancienne API
+        $this->scheduleService->create($data);
     }
 }

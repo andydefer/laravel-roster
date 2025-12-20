@@ -2,19 +2,18 @@
 
 declare(strict_types=1);
 
-// ==== src/Facades/Impediment.php ====
-
 namespace Roster\Facades;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Facade;
+use Roster\Models\Availability;
 use Roster\Services\ImpedimentService;
 
 /**
  * @method static ImpedimentService for(Model $schedulable)
- * @method static \Roster\Models\Impediment create(array $data)
+ * @method static \Roster\Models\Impediment create(Availability $availability, array $data) Create a new impediment with explicit availability
  * @method static bool update(int $id, array $data)
  * @method static bool delete(int $id)
  * @method static \Roster\Models\Impediment|null find(int $id)

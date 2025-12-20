@@ -111,37 +111,6 @@ abstract class AbstractSchedulableService implements SchedulableServiceInterface
     }
 
     /**
-     * TEMPLATE METHOD: Create with configuration validation
-     *
-     * @param array<string, mixed> $data
-     */
-    final public function create(array $data): mixed
-    {
-        $this->validateSchedulable();
-        $this->data = $data;
-
-        // 1. Apply configuration rules to data
-        $this->data = $this->applyConfigurationRules($this->data, 'create');
-
-        // 2. Validate configuration rules
-        $this->validateConfigurationRules('create');
-
-        // 3. Validate business rules (hook for children)
-        $this->validateBeforeCreate();
-
-        // 4. Process data (hook for children)
-        $this->processBeforeCreate();
-
-        // 5. Execute creation (abstract method)
-        $result = $this->executeCreate();
-
-        // 6. Post-creation hooks
-        $this->afterCreate($result);
-
-        return $result;
-    }
-
-    /**
      * TEMPLATE METHOD: Update with configuration validation
      *
      * @param array<string, mixed> $data
@@ -447,7 +416,6 @@ abstract class AbstractSchedulableService implements SchedulableServiceInterface
         }
     }
 
-    // ========== ABSTRACT METHODS ==========
 
     /**
      * Validate duration hook

@@ -78,38 +78,31 @@ class ScheduleService extends AbstractSchedulableService
     protected function validateBeforeCreate(): void
     {
         $this->validateScheduleData();
-        $availability = $this->findMatchingAvailability();
-
-        if (!$availability instanceof Availability) {
-            throw new ValidationException(ValidationType::NO_MATCHING_AVAILABILITY);
-        }
 
         ['start' => $start, 'end' => $end] = $this->validationService
             ->parseAndValidateDateTimeRange($this->data);
 
-        if ($this->scheduleRepository->hasOverlappingSchedule($availability->id, $start, $end)) {
+        if ($this->scheduleRepository->hasOverlappingSchedule($this->data['availability_id'], $start, $end)) {
             throw new OverlappingScheduleException(
                 TimeSlotOverlapType::SCHEDULE_OVERLAP,
                 [
-                    'availability_id' => $availability->id,
+                    'availability_id' => $this->data['availability_id'],
                     'start' => $start->format('Y-m-d H:i:s'),
                     'end' => $end->format('Y-m-d H:i:s'),
                 ]
             );
         }
 
-        if ($this->impedimentRepository->hasOverlappingImpediments($availability->id, $start, $end)) {
+        if ($this->impedimentRepository->hasOverlappingImpediments($this->data['availability_id'], $start, $end)) {
             throw new ScheduleImpedimentOverlapException(
                 TimeSlotOverlapType::SCHEDULE_IMPEDIMENT_CONFLICT,
                 [
-                    'availability_id' => $availability->id,
+                    'availability_id' => $this->data['availability_id'],
                     'start' => $start->format('Y-m-d H:i:s'),
                     'end' => $end->format('Y-m-d H:i:s'),
                 ]
             );
         }
-
-        $this->data['availability_id'] = $availability->id;
     }
 
     protected function processBeforeCreate(): void
@@ -150,6 +143,7 @@ class ScheduleService extends AbstractSchedulableService
 
         // If dates change, check new availability
         if (isset($this->data['start_datetime'])) {
+            // Pour l'update, on garde la logique de recherche automatique pour la rétrocompatibilité
             $newAvailability = $this->findMatchingAvailability();
             if (!$newAvailability instanceof Availability) {
                 throw new ValidationException(ValidationType::NO_MATCHING_AVAILABILITY);
@@ -185,7 +179,88 @@ class ScheduleService extends AbstractSchedulableService
         return $this->scheduleRepository->update($id, $this->data);
     }
 
-    // ========== ORIGINAL METHODS ==========
+    // ========== CREATE METHOD IMPLEMENTATION ==========
+
+    /**
+     * Create a new schedule with explicit availability.
+     *
+     * @param Availability|array<string, mixed> $availabilityOrData Availability instance or data array
+     * @param array<string, mixed>|null $data Data array if first param is Availability
+     * @return Schedule Created schedule
+     * @throws ValidationException When validation fails
+     */
+    public function create($availabilityOrData, ?array $data = null): Schedule
+    {
+        if ($availabilityOrData instanceof Availability && $data !== null) {
+            // Nouvelle signature: create(Availability $availability, array $data)
+            return $this->createWithAvailability($availabilityOrData, $data);
+        } elseif (is_array($availabilityOrData) && $data === null) {
+            // Ancienne signature: create(array $data) - maintenue pour compatibilité mais dépréciée
+            throw new \BadMethodCallException(
+                'Method create(array $data) is deprecated. Use create(Availability $availability, array $data) instead.'
+            );
+        } else {
+            throw new \InvalidArgumentException('Invalid arguments for create method');
+        }
+    }
+
+    /**
+     * Create a new schedule with explicit availability.
+     *
+     * @param Availability $availability The availability to link to
+     * @param array<string, mixed> $data Schedule data
+     * @return Schedule Created schedule
+     * @throws ValidationException When validation fails
+     */
+    private function createWithAvailability(Availability $availability, array $data): Schedule
+    {
+        $this->validateSchedulable();
+        $this->data = $data;
+
+        // Validate that the availability belongs to this schedulable
+        $this->validateAvailabilityOwnership($availability);
+
+        // Set the availability_id in data
+        $this->data['availability_id'] = $availability->id;
+
+        // 1. Apply configuration rules to data
+        $this->data = $this->applyConfigurationRules($this->data, 'create');
+
+        // 2. Validate configuration rules
+        $this->validateConfigurationRules('create');
+
+        // 3. Validate business rules (hook for children)
+        $this->validateBeforeCreate();
+
+        // 4. Process data (hook for children)
+        $this->processBeforeCreate();
+
+        // 5. Execute creation (abstract method)
+        $result = $this->executeCreate();
+
+        // 6. Post-creation hooks
+        $this->afterCreate($result);
+
+        return $result;
+    }
+
+    /**
+     * Validate that the availability belongs to the current schedulable.
+     *
+     * @param Availability $availability The availability to validate
+     * @throws ValidationException When availability doesn't belong to schedulable
+     */
+    private function validateAvailabilityOwnership(Availability $availability): void
+    {
+        if (
+            $availability->schedulable_id !== $this->schedulable->id ||
+            $availability->schedulable_type !== get_class($this->schedulable)
+        ) {
+            throw new ValidationException(ValidationType::INVALID_AVAILABILITY);
+        }
+    }
+
+    // ========== OTHER METHODS ==========
 
     public function find(int $id): ?Schedule
     {
