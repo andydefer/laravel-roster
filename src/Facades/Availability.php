@@ -25,7 +25,7 @@ use Roster\Services\AvailabilityService;
  * @method static Collection<int, AvailabilityModel> all() Get all availabilities for current schedulable
  * @method static Collection<int, AvailabilityModel> get() Get filtered availabilities for current schedulable
  * @method static AvailabilityService whereType(string $type) Filter by availability type
- * @method static AvailabilityService whereDay(string $day) Filter by day of week
+ * @method static AvailabilityService filterByDay(string $day) Filter by day of week
  * @method static bool isAvailableAt(Carbon $datetime) Check availability at a specific datetime
  * @method static bool isAvailableForPeriod(Carbon $start, Carbon $end, ?string $type = null) Check availability for a time period
  * @method static bool hasOverlapping(array $data, ?int $exceptId = null) Check if availability overlaps with existing ones

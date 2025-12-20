@@ -140,6 +140,9 @@ public function mergeWithAdjacent(array $data, Model $schedulable): array; //OK 
 public function mergeWithAdjacent(array $data, object $schedulable): array; //NO  c'est le mauvais format
 ```
 
+
+NE MODIFIE PAS DES NOMS DES METHODES OU VARIABLE PUBLIC !!! PROPOSE SIMPLEMENT!!!
+
 ### ▶️ DÉMARRAGE
 
 Voici le code à analyser et améliorer :

@@ -179,7 +179,7 @@ final class AvailabilityFacadeTest extends TestCase
         ]);
 
         $availabilities = AvailabilityFacade::for($this->schedulableModel)
-            ->whereDay('monday')
+            ->filterByDay('monday')
             ->get();
 
         $this->assertCount(1, $availabilities);

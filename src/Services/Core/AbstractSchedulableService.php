@@ -38,12 +38,10 @@ abstract class AbstractSchedulableService implements SchedulableServiceInterface
     protected array $data = [];
 
     /**
-     * @var array<string, mixed>
-     */
-    protected array $originalData = [];
-
-    /**
      * Scope the service to a specific parent model.
+     *
+     * @param Model $model The schedulable model to scope to
+     * @return static
      */
     final public function for(Model $model): static
     {
@@ -54,6 +52,8 @@ abstract class AbstractSchedulableService implements SchedulableServiceInterface
 
     /**
      * Get the current schedulable model.
+     *
+     * @return Model|null
      */
     final public function getSchedulable(): ?Model
     {
@@ -62,12 +62,76 @@ abstract class AbstractSchedulableService implements SchedulableServiceInterface
 
     /**
      * Clear all applied filters.
+     *
+     * @return static
      */
     final public function resetFilters(): static
     {
         $this->filters = [];
 
         return $this;
+    }
+
+    /**
+     * Filter results by type.
+     *
+     * @param string $type The type to filter by
+     * @return static
+     */
+    final public function whereType(string $type): static
+    {
+        $this->filters['type'] = $type;
+
+        return $this;
+    }
+
+    /**
+     * Return all matching results.
+     *
+     * @return Collection
+     */
+    final public function all(): Collection
+    {
+        return $this->get();
+    }
+
+    /**
+     * Execute the query with the current filters.
+     *
+     * @return Collection
+     * @throws MissingSchedulableException
+     */
+    final public function get(): Collection
+    {
+        $this->validateSchedulable();
+
+        return $this->buildQueryWithFilters()->get();
+    }
+
+    /**
+     * Update an entity with configuration validation.
+     *
+     * @param int $id The entity ID to update
+     * @param array<string, mixed> $data The data to update
+     * @return bool True if update was successful
+     * @throws MissingSchedulableException
+     * @throws ValidationException
+     */
+    final public function update(int $id, array $data): bool
+    {
+        $this->validateSchedulable();
+        $this->data = $data;
+
+        $this->data = $this->applyConfigurationRules(data: $this->data, operation: 'update');
+        $this->validateConfigurationRules(operation: 'update');
+        $this->validateBeforeUpdate(id: $id);
+        $this->processBeforeUpdate(id: $id);
+
+        $result = $this->executeUpdate(id: $id);
+
+        $this->afterUpdate(id: $id, result: $result);
+
+        return $result;
     }
 
     /**
@@ -83,176 +147,114 @@ abstract class AbstractSchedulableService implements SchedulableServiceInterface
     }
 
     /**
-     * Return all matching results.
-     */
-    final public function all(): Collection
-    {
-        return $this->get();
-    }
-
-    /**
-     * Execute the query with the current filters.
-     */
-    final public function get(): Collection
-    {
-        $this->validateSchedulable();
-
-        return $this->buildQueryWithFilters()->get();
-    }
-
-    /**
-     * Filter results by type.
-     */
-    final public function whereType(string $type): static
-    {
-        $this->filters['type'] = $type;
-
-        return $this;
-    }
-
-    /**
-     * TEMPLATE METHOD: Update with configuration validation
+     * Apply configuration rules from config file.
      *
-     * @param  array<string, mixed>  $data
-     */
-    final public function update(int $id, array $data): bool
-    {
-        $this->validateSchedulable();
-        $this->data = $data;
-
-        // 1. Apply configuration rules to data
-        $this->data = $this->applyConfigurationRules($this->data, 'update');
-
-        // 2. Validate configuration rules
-        $this->validateConfigurationRules('update');
-
-        // 3. Validate business rules (hook for children)
-        $this->validateBeforeUpdate($id);
-
-        // 4. Process data (hook for children)
-        $this->processBeforeUpdate($id);
-
-        // 5. Execute update (abstract method)
-        $result = $this->executeUpdate($id);
-
-        // 6. Post-update hooks
-        $this->afterUpdate($id, $result);
-
-        return $result;
-    }
-
-    /**
-     * Apply configuration rules from config file
-     *
-     * @param  array<string, mixed>  $data
-     * @param  string  $operation  'create' or 'update'
-     * @return array<string, mixed>
+     * @param array<string, mixed> $data The input data
+     * @param string $operation Either 'create' or 'update'
+     * @return array<string, mixed> The processed data
      */
     final protected function applyConfigurationRules(array $data, string $operation): array
     {
-        // Set timezone if not provided
         if (! isset($data['timezone'])) {
-            $data['timezone'] = Config::get('roster.timezone', 'UTC');
+            $data['timezone'] = Config::get(key: 'roster.timezone', default: 'UTC');
         }
 
-        // Apply operation-specific rules
-        if ($operation === 'create') {
-            return $this->applyCreateConfigurationRules($data);
-        }
-
-        return $this->applyUpdateConfigurationRules($data);
+        return match ($operation) {
+            'create' => $this->applyCreateConfigurationRules(data: $data),
+            default => $this->applyUpdateConfigurationRules(data: $data),
+        };
     }
 
     /**
-     * Apply configuration rules specific to create operation
+     * Apply configuration rules specific to create operation.
+     *
+     * @param array<string, mixed> $data The input data
+     * @return array<string, mixed> The processed data
      */
     final protected function applyCreateConfigurationRules(array $data): array
     {
-        // Apply entity-specific default values
-        $data = $this->applyEntitySpecificDefaults($data);
-
-        return $data;
+        return $this->applyEntitySpecificDefaults(data: $data);
     }
 
     /**
-     * Apply configuration rules specific to update operation
+     * Apply configuration rules specific to update operation.
+     *
+     * @param array<string, mixed> $data The input data
+     * @return array<string, mixed> The processed data
      */
     final protected function applyUpdateConfigurationRules(array $data): array
     {
-        // Add update-specific rules here if needed
         return $data;
     }
 
     /**
-     * Apply entity-specific default values
+     * Apply entity-specific default values.
      *
-     * @param  array<string, mixed>  $data
+     * @param array<string, mixed> $data The input data
+     * @return array<string, mixed> The processed data
      */
     final protected function applyEntitySpecificDefaults(array $data): array
     {
         $entityType = $this->getEntityType();
 
-        // Set default status for schedules if not provided
         if ($entityType === 'schedule' && ! isset($data['status'])) {
-            $data['status'] = Config::get('roster.schedule.default_status', 'available');
+            $data['status'] = Config::get(
+                key: 'roster.schedule.default_status',
+                default: 'available'
+            );
         }
 
         return $data;
     }
 
     /**
-     * Validate configuration rules
+     * Validate configuration rules.
      *
-     * @param  string  $operation  'create' or 'update'
-     *
+     * @param string $operation Either 'create' or 'update'
      * @throws ValidationException
      */
     final protected function validateConfigurationRules(string $operation): void
     {
-        // 1. Get entity configuration
         $entityType = $this->getEntityType();
-        $entityConfig = Config::get('roster.validate_future_dates.' . $entityType, []);
-        $globalEnabled = Config::get('roster.validate_future_dates.enabled', true);
-
-        // Check if validation is enabled for this entity
+        $entityConfig = Config::get(key: "roster.validate_future_dates.{$entityType}", default: []);
+        $globalEnabled = Config::get(key: 'roster.validate_future_dates.enabled', default: true);
         $entityEnabled = $entityConfig['enabled'] ?? $globalEnabled;
 
-        // 2. Validate future dates if enabled
         if ($entityEnabled) {
-            $this->validateFutureDates($operation, $entityType, $entityConfig);
+            $this->validateFutureDates(
+                operation: $operation,
+                entityType: $entityType,
+                entityConfig: $entityConfig
+            );
         }
 
-        // 3. Validate durations based on service type
-        $this->validateDurations($operation);
-
-        // 4. Validate other global configuration rules
-        $this->validateGlobalConfigurationRules($operation);
+        $this->validateDurations(operation: $operation);
+        $this->validateGlobalConfigurationRules(operation: $operation);
     }
 
     /**
-     * Validate future dates based on configuration
+     * Validate future dates based on configuration.
      *
-     * @param  array<string, mixed>  $entityConfig
+     * @param string $operation The operation being performed
+     * @param string $entityType The type of entity
+     * @param array<string, mixed> $entityConfig The entity-specific configuration
+     * @throws ValidationException
      */
     final protected function validateFutureDates(string $operation, string $entityType, array $entityConfig): void
     {
-        $fieldName = $entityConfig['validation_field'] ?? $this->getDefaultDateField($entityType);
+        $fieldName = $entityConfig['validation_field'] ?? $this->getDefaultDateField(entityType: $entityType);
 
         if (! isset($this->data[$fieldName])) {
             return;
         }
 
         try {
-            $date = Carbon::parse($this->data[$fieldName]);
+            $date = Carbon::parse(time: $this->data[$fieldName]);
 
-            if ($date->isPast()) {
-                $allowPast = $entityConfig['allow_past'] ?? false;
-
-                if (! $allowPast) {
-                    throw ValidationException::withMessage(
-                        ErrorMessageFactory::pastDate($entityType, $fieldName)
-                    );
-                }
+            if ($date->isPast() && ! ($entityConfig['allow_past'] ?? false)) {
+                throw ValidationException::withMessage(
+                    message: ErrorMessageFactory::pastDate(entity: $entityType, field: $fieldName)
+                );
             }
         } catch (Exception $exception) {
             // Not a valid date, validation will be handled elsewhere
@@ -260,174 +262,248 @@ abstract class AbstractSchedulableService implements SchedulableServiceInterface
     }
 
     /**
-     * Validate durations based on configuration
+     * Validate durations based on configuration.
+     *
+     * @param string $operation The operation being performed
      */
     final protected function validateDurations(string $operation): void
     {
-        $minImpediment = Config::get('roster.durations.minimum_impediment_minutes', 5);
-        $minSchedule = Config::get('roster.durations.minimum_schedule_minutes', 15);
-        $defaultDuration = Config::get('roster.durations.default_slot_duration_minutes', 60);
+        $minImpediment = Config::get(
+            key: 'roster.durations.minimum_impediment_minutes',
+            default: 5
+        );
+        $minSchedule = Config::get(
+            key: 'roster.durations.minimum_schedule_minutes',
+            default: 15
+        );
+        $defaultDuration = Config::get(
+            key: 'roster.durations.default_slot_duration_minutes',
+            default: 60
+        );
 
-        $this->validateDurationHook($operation, $minImpediment, $minSchedule, $defaultDuration);
+        $this->validateDurationHook(
+            operation: $operation,
+            minImpedimentMinutes: $minImpediment,
+            minScheduleMinutes: $minSchedule,
+            defaultDurationMinutes: $defaultDuration
+        );
     }
 
     /**
-     * Validate other global configuration rules
+     * Validate other global configuration rules.
+     *
+     * @param string $operation The operation being performed
      */
     final protected function validateGlobalConfigurationRules(string $operation): void
     {
-        // Check max days to check for date ranges
-        $maxDays = Config::get('roster.durations.max_search_period_days', 365);
-        $this->validateMaxDaysHook($operation, $maxDays);
+        $maxDays = Config::get(
+            key: 'roster.durations.max_search_period_days',
+            default: 365
+        );
+        $this->validateMaxDaysHook(operation: $operation, maxDays: $maxDays);
 
-        // Validate timezone
-        $timezone = $this->data['timezone'] ?? Config::get('roster.timezone', 'UTC');
-        $this->validateTimezoneHook($timezone);
+        $timezone = $this->data['timezone'] ?? Config::get(key: 'roster.timezone', default: 'UTC');
+        $this->validateTimezoneHook(timezone: $timezone);
     }
 
     /**
-     * Get entity type from class name
+     * Get entity type from class name.
+     *
+     * @return string The entity type in lowercase
      */
     final protected function getEntityType(): string
     {
-        $className = class_basename(static::class);
+        $className = class_basename(class: static::class);
 
-        return strtolower(str_replace('Service', '', $className));
+        return strtolower(string: str_replace(
+            search: 'Service',
+            replace: '',
+            subject: $className
+        ));
     }
 
     /**
-     * Get entity display name
+     * Get entity display name.
+     *
+     * @return string The entity display name in title case
      */
     final protected function getEntityDisplayName(): string
     {
-        return ucfirst($this->getEntityType());
+        return ucfirst(string: $this->getEntityType());
     }
 
     /**
-     * Get default date field name based on entity type
+     * Get default date field name based on entity type.
+     *
+     * @param string $entityType The entity type
+     * @return string The default date field name
      */
     protected function getDefaultDateField(string $entityType): string
     {
         return match ($entityType) {
             'availability' => 'start_date',
-            default => 'start_datetime'
+            default => 'start_datetime',
         };
     }
 
     /**
-     * Get date/time fields for the entity
+     * Get date/time fields for the entity.
+     *
+     * @param string $entityType The entity type
+     * @return array<string> The date/time field names
      */
     protected function getDateTimeFields(string $entityType): array
     {
         return match ($entityType) {
             'availability' => ['start_date', 'end_date', 'start_time', 'end_time'],
             'schedule', 'impediment' => ['start_datetime', 'end_datetime'],
-            default => []
+            default => [],
         };
     }
 
     /**
-     * Validate timezone for the entity
+     * Validate timezone for the entity.
+     *
+     * @param string $timezone The timezone to validate
+     * @throws ValidationException
      */
     protected function validateTimezoneHook(string $timezone): void
     {
         $entityType = $this->getEntityType();
-        $dateFields = $this->getDateTimeFields($entityType);
+        $dateFields = $this->getDateTimeFields(entityType: $entityType);
 
-        // Check if any date/time field is being set
-        $hasDateFields = false;
         foreach ($dateFields as $dateField) {
             if (isset($this->data[$dateField])) {
-                $hasDateFields = true;
+                $validationService = $this->getValidationService();
+                if (! $validationService->validateTimezone(timezone: $timezone)) {
+                    throw ValidationException::withMessage(
+                        message: "Invalid timezone: {$timezone}"
+                    );
+                }
                 break;
             }
         }
-
-        if ($hasDateFields) {
-            $validationService = $this->getValidationService();
-            if (! $validationService->validateTimezone($timezone)) {
-                throw ValidationException::withMessage(
-                    'Invalid timezone: ' . $timezone
-                );
-            }
-        }
     }
 
     /**
-     * Clear entity cache
+     * Clear entity cache.
+     *
+     * @param int $entityId The entity ID to clear cache for
      */
     protected function clearEntityCache(int $entityId): void
     {
-        if (! Config::get('roster.cache.enabled', true)) {
+        if (! Config::get(key: 'roster.cache.enabled', default: true)) {
             return;
         }
 
-        $prefix = Config::get('roster.cache.prefix', 'roster_');
+        $prefix = Config::get(key: 'roster.cache.prefix', default: 'roster_');
         $entityType = $this->getEntityType();
-        $cacheKey = $prefix . $entityType . '_' . $entityId;
+        $cacheKey = "{$prefix}{$entityType}_{$entityId}";
 
-        Cache::forget($cacheKey);
+        Cache::forget(key: $cacheKey);
 
-        // Clear tags if enabled
-        if (Config::get('roster.cache.use_tags', true)) {
-            Cache::tags([$entityType . '_' . $entityId])->flush();
+        if (Config::get(key: 'roster.cache.use_tags', default: true)) {
+            Cache::tags(names: ["{$entityType}_{$entityId}"])->flush();
         }
     }
 
     /**
-     * Throw not found exception
-     */
-    protected function throwNotFoundException(): void
-    {
-        throw ValidationException::withMessage(
-            ErrorMessageFactory::notFound($this->getEntityType())
-        );
-    }
-
-    /**
-     * Throw overlap exception
-     */
-    protected function throwOverlapException(): void
-    {
-        throw ValidationException::withMessage(
-            ErrorMessageFactory::overlap($this->getEntityType())
-        );
-    }
-
-    /**
-     * Throw minimum duration exception
-     */
-    protected function throwMinimumDurationException(int $minutes): void
-    {
-        throw ValidationException::withMessage(
-            ErrorMessageFactory::minimumDuration($this->getEntityType(), $minutes)
-        );
-    }
-
-    /**
-     * Validate common required fields
+     * Validate common required fields.
+     *
+     * @param array<string> $requiredFields Additional required fields
+     * @throws ValidationException
      */
     protected function validateRequiredFields(array $requiredFields = []): void
     {
         $entityType = $this->getEntityType();
-        $configFields = Config::get('roster.validation.required_fields.' . $entityType, []);
-        $allRequired = array_unique(array_merge($configFields, $requiredFields));
+        $configFields = Config::get(
+            key: "roster.validation.required_fields.{$entityType}",
+            default: []
+        );
+        $allRequired = array_unique(array: array_merge($configFields, $requiredFields));
 
         foreach ($allRequired as $field) {
-            if (! isset($this->data[$field]) || empty($this->data[$field])) {
+            if (empty($this->data[$field] ?? null)) {
                 throw ValidationException::withMessage(
-                    sprintf("Field '%s' is required", $field)
+                    message: "Field '{$field}' is required"
                 );
             }
         }
     }
 
     /**
-     * Validate duration hook
+     * Throw a not found exception.
      *
-     * @param  int  $minImpedimentMinutes  Minimum duration for impediments
-     * @param  int  $minScheduleMinutes  Minimum duration for schedules
-     * @param  int  $defaultDurationMinutes  Default slot duration
+     * @throws ValidationException
+     */
+    protected function throwNotFoundException(): void
+    {
+        throw ValidationException::withMessage(
+            message: ErrorMessageFactory::notFound(entity: $this->getEntityType())
+        );
+    }
+
+    /**
+     * Throw an overlap exception.
+     *
+     * @throws ValidationException
+     */
+    protected function throwOverlapException(): void
+    {
+        throw ValidationException::withMessage(
+            message: ErrorMessageFactory::overlap(entity: $this->getEntityType())
+        );
+    }
+
+    /**
+     * Throw a minimum duration exception.
+     *
+     * @param int $minutes The minimum required minutes
+     * @throws ValidationException
+     */
+    protected function throwMinimumDurationException(int $minutes): void
+    {
+        throw ValidationException::withMessage(
+            message: ErrorMessageFactory::minimumDuration(
+                entity: $this->getEntityType(),
+                minutes: $minutes
+            )
+        );
+    }
+
+    /**
+     * After create hook.
+     *
+     * @param mixed $result The created entity
+     */
+    protected function afterCreate(mixed $result): void
+    {
+        if (method_exists(object_or_class: $result, method: 'getId') || property_exists(object_or_class: $result, property: 'id')) {
+            $id = $result->id ?? $result->getId();
+            $this->clearEntityCache(entityId: (int) $id);
+        }
+    }
+
+    /**
+     * After update hook.
+     *
+     * @param int $id The updated entity ID
+     * @param bool $result Whether the update was successful
+     */
+    protected function afterUpdate(int $id, bool $result): void
+    {
+        if ($result) {
+            $this->clearEntityCache(entityId: $id);
+        }
+    }
+
+    /**
+     * Validate duration hook.
+     *
+     * @param string $operation The operation being performed
+     * @param int $minImpedimentMinutes Minimum duration for impediments
+     * @param int $minScheduleMinutes Minimum duration for schedules
+     * @param int $defaultDurationMinutes Default slot duration
      */
     abstract protected function validateDurationHook(
         string $operation,
@@ -437,72 +513,63 @@ abstract class AbstractSchedulableService implements SchedulableServiceInterface
     ): void;
 
     /**
-     * Validate max days hook
+     * Validate max days hook.
+     *
+     * @param string $operation The operation being performed
+     * @param int $maxDays Maximum allowed search period in days
      */
     abstract protected function validateMaxDaysHook(string $operation, int $maxDays): void;
 
     /**
-     * Get validation service instance
+     * Get validation service instance.
+     *
+     * @return ValidationServiceInterface
      */
     abstract protected function getValidationService(): ValidationServiceInterface;
 
     /**
-     * Validate before create hook
+     * Validate before create hook.
      */
     abstract protected function validateBeforeCreate(): void;
 
     /**
-     * Process before create hook
+     * Process before create hook.
      */
     abstract protected function processBeforeCreate(): void;
 
     /**
-     * Execute create (to be implemented by children)
+     * Execute create operation.
+     *
+     * @return mixed The created entity
      */
     abstract protected function executeCreate(): mixed;
 
     /**
-     * After create hook
-     */
-    protected function afterCreate(mixed $result): void
-    {
-        // Default implementation: clear cache
-        if (method_exists($result, 'getId') || property_exists($result, 'id')) {
-            $id = $result->id ?? $result->getId();
-            $this->clearEntityCache((int) $id);
-        }
-    }
-
-    /**
-     * Validate before update hook
+     * Validate before update hook.
+     *
+     * @param int $id The entity ID to update
      */
     abstract protected function validateBeforeUpdate(int $id): void;
 
     /**
-     * Process before update hook
+     * Process before update hook.
+     *
+     * @param int $id The entity ID to update
      */
     abstract protected function processBeforeUpdate(int $id): void;
 
     /**
-     * Execute update (to be implemented by children)
+     * Execute update operation.
+     *
+     * @param int $id The entity ID to update
+     * @return bool True if update was successful
      */
     abstract protected function executeUpdate(int $id): bool;
-
-    /**
-     * After update hook
-     */
-    protected function afterUpdate(int $id, bool $result): void
-    {
-        // Default implementation: clear cache if update was successful
-        if ($result) {
-            $this->clearEntityCache($id);
-        }
-    }
 
     /**
      * Apply filters to the query.
      *
      * @return Builder
      */
-    abstract protected function buildQueryWithFilters();
+    abstract protected function buildQueryWithFilters(): Builder;
 }

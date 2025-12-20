@@ -18,7 +18,7 @@ PSALM = ./vendor/bin/psalm
 # ---------------------------------------------------
 # Source Configuration
 # ---------------------------------------------------
-SOURCE_DIRS = src #config database routes tests
+SOURCE_DIRS = src config database routes tests
 IGNORED_FILES = CHANGED_FILES.md FILES_CHECKLIST.md psalm.md phpstan.md pint-test.md Makefile pint.md
 
 
