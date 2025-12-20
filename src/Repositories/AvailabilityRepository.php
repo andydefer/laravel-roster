@@ -8,9 +8,9 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
-use Roster\Models\Availability;
 use Roster\Contracts\Repository\AvailabilityRepositoryInterface;
 use Roster\Contracts\Services\ValidationServiceInterface;
+use Roster\Models\Availability;
 use Roster\Traits\DateRangeOverlapTrait;
 
 class AvailabilityRepository extends AbstractRepository implements AvailabilityRepositoryInterface
@@ -39,7 +39,7 @@ class AvailabilityRepository extends AbstractRepository implements AvailabilityR
     {
         $availability = $this->findById($id);
 
-        if (!$availability instanceof Availability) {
+        if (! $availability instanceof Availability) {
             return false;
         }
 
@@ -112,7 +112,7 @@ class AvailabilityRepository extends AbstractRepository implements AvailabilityR
     {
         $availability = $this->findById($id);
 
-        if (!$availability instanceof Availability) {
+        if (! $availability instanceof Availability) {
             return false;
         }
 
@@ -134,8 +134,6 @@ class AvailabilityRepository extends AbstractRepository implements AvailabilityR
     {
         return Availability::find($id);
     }
-
-
 
     /**
      * Find availability for a time slot.
@@ -199,8 +197,6 @@ class AvailabilityRepository extends AbstractRepository implements AvailabilityR
             ->get();
     }
 
-
-
     /**
      * Get all availabilities for a schedulable.
      *
@@ -212,7 +208,7 @@ class AvailabilityRepository extends AbstractRepository implements AvailabilityR
         ?string $day = null
     ): Collection {
         $builder = $this->buildBaseQuery($model)
-            ->with(['schedules', 'impediments']);; // précharge la relation principale pour éviter N+1
+            ->with(['schedules', 'impediments']); // précharge la relation principale pour éviter N+1
 
         if ($type) {
             $builder->where('type', $type);
@@ -248,7 +244,7 @@ class AvailabilityRepository extends AbstractRepository implements AvailabilityR
     /**
      * Find overlapping availabilities.
      *
-     * @param array<string, mixed> $data
+     * @param  array<string, mixed>  $data
      * @return Collection<int, Availability>
      */
     public function findOverlapping(
@@ -270,7 +266,7 @@ class AvailabilityRepository extends AbstractRepository implements AvailabilityR
         }
 
         // Appliquer les filtres directement dans la requête SQL
-        if (!empty($days)) {
+        if (! empty($days)) {
             $builder->where(function ($query) use ($days): void {
                 foreach ($days as $day) {
                     $query->orWhereJsonContains('days', $day);
@@ -341,13 +337,13 @@ class AvailabilityRepository extends AbstractRepository implements AvailabilityR
                 }
 
                 $query->orderBy('start_datetime');
-            }
+            },
         ]);
 
         // OPTIMISATION: Ajouter des sous-requêtes pour les informations fréquemment utilisées
         $builder->withExists([
             'schedules as has_schedules',
-            'impediments as has_impediments'
+            'impediments as has_impediments',
         ]);
 
         /** @var Collection<int, Availability> $overlappingAvailabilities */
@@ -355,7 +351,6 @@ class AvailabilityRepository extends AbstractRepository implements AvailabilityR
 
         return $overlappingAvailabilities;
     }
-
 
     /**
      * Check if time ranges overlap.
@@ -372,7 +367,7 @@ class AvailabilityRepository extends AbstractRepository implements AvailabilityR
     /**
      * Find adjacent availabilities.
      *
-     * @param array<string, mixed> $data
+     * @param  array<string, mixed>  $data
      * @return Collection<int, Availability>
      */
     public function findAdjacentAvailabilities(
@@ -459,16 +454,14 @@ class AvailabilityRepository extends AbstractRepository implements AvailabilityR
     /**
      * Check if an availability applies to a specific date.
      *
-     * @param Availability $availability The availability to check
-     * @param Carbon $date The date to check
+     * @param  Availability  $availability  The availability to check
+     * @param  Carbon  $date  The date to check
      * @return bool True if the availability applies to the date
      */
-
-
     public function isAvailabilityValidForDate(Availability $availability, Carbon $date): bool
     {
         $dayOfWeek = strtolower($date->englishDayOfWeek);
-        if (!in_array($dayOfWeek, $availability->days)) {
+        if (! in_array($dayOfWeek, $availability->days)) {
             return false;
         }
 
@@ -476,16 +469,16 @@ class AvailabilityRepository extends AbstractRepository implements AvailabilityR
             return false;
         }
 
-        return !($availability->end_date !== null && $date->gt($availability->end_date));
+        return ! ($availability->end_date !== null && $date->gt($availability->end_date));
     }
 
     /**
      * Load availabilities with pre-loaded schedule and impediment conflicts.
      *
-     * @param object $schedulable The schedulable entity
-     * @param Carbon $start Start of the date range
-     * @param Carbon $end End of the date range
-     * @param string|null $type Optional availability type filter
+     * @param  object  $schedulable  The schedulable entity
+     * @param  Carbon  $start  Start of the date range
+     * @param  Carbon  $end  End of the date range
+     * @param  string|null  $type  Optional availability type filter
      * @return Collection<Availability> Availabilities with conflicts loaded
      */
     public function getAvailabilitiesWithConflictInfo(
@@ -495,20 +488,21 @@ class AvailabilityRepository extends AbstractRepository implements AvailabilityR
         ?string $type = null
     ): Collection {
         $availabilities = $this->getForDateRange($schedulable, $start, $end, $type);
+
         return $availabilities->load(['schedules', 'impediments']);
     }
 
     /**
      * Filter availabilities for a specific date.
      *
-     * @param Collection<Availability> $availabilities Collection of availabilities
-     * @param Carbon $date Date to filter for
+     * @param  Collection<Availability>  $availabilities  Collection of availabilities
+     * @param  Carbon  $date  Date to filter for
      * @return Collection<Availability> Filtered availabilities
      */
     public function filterAvailabilitiesForDate(Collection $availabilities, Carbon $date): Collection
     {
         return $availabilities->filter(
-            fn(Availability $availability): bool => $this->isAvailabilityValidForDate($availability, $date)
+            fn (Availability $availability): bool => $this->isAvailabilityValidForDate($availability, $date)
         );
     }
 }

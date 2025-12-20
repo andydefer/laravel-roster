@@ -18,11 +18,11 @@ class ValidationException extends RosterException
     /**
      * Create a new ValidationException instance.
      *
-     * @param ValidationType $type Type of validation failure
-     * @param array $context Additional context about the validation failure
-     * @param string $message Custom error message
-     * @param int $code Error code
-     * @param Throwable|null $previous Previous exception
+     * @param  ValidationType  $type  Type of validation failure
+     * @param  array  $context  Additional context about the validation failure
+     * @param  string  $message  Custom error message
+     * @param  int  $code  Error code
+     * @param  Throwable|null  $previous  Previous exception
      */
     public function __construct(
         ValidationType $type,
@@ -47,7 +47,7 @@ class ValidationException extends RosterException
      * This factory method is useful when you need to provide a specific
      * error message that doesn't fit the predefined validation types.
      *
-     * @param string $message Custom validation error message
+     * @param  string  $message  Custom validation error message
      */
     public static function withMessage(string $message): self
     {

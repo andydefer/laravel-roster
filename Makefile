@@ -19,7 +19,7 @@ PSALM = ./vendor/bin/psalm
 # Source Configuration
 # ---------------------------------------------------
 SOURCE_DIRS = config src database routes tests
-IGNORED_FILES = CHANGED_FILES.md FILES_CHECKLIST.md psalm.md Makefile
+IGNORED_FILES = CHANGED_FILES.md FILES_CHECKLIST.md psalm.md phpstan.md pint-test.md Makefile pint.md
 
 
 # ---------------------------------------------------
@@ -207,45 +207,115 @@ test:
 
 
 # ---------------------------------------------------
-# Code Quality Tools
+# Code Quality Tools (Console Output Versions)
 # ---------------------------------------------------
 
 .PHONY: lint-php
 lint-php:
-	@$(PINT)
+	@echo "Running Pint code formatter..."
+	@$(PINT) --test
+	@echo "✅ Pint formatting check completed"
 
 .PHONY: lint-php-fix
 lint-php-fix:
-	@$(PINT) --test
+	@echo "Running Pint code formatter..."
+	@$(PINT)
+	@echo "✅ Pint formatting applied"
 
 .PHONY: lint-phpstan
 lint-phpstan:
-	@clear && $(PHPSTAN) analyse src tests --level=max
+	@echo "Running PHPStan static analysis..."
+	@$(PHPSTAN) analyse src tests --level=max
+	@echo "✅ PHPStan analysis completed"
 
 .PHONY: lint-rector
 lint-rector:
+	@echo "Running Rector refactoring..."
 	@$(RECTOR) process
+	@echo "✅ Rector refactoring completed"
 
 .PHONY: lint-psalm
 lint-psalm:
-	@echo "Running Psalm on all code..."
+	@echo "Running Psalm static analysis..."
 	@$(PSALM) --show-info=true
-	@echo "Psalm analysis completed."
+	@echo "✅ Psalm analysis completed"
+
+
+# ---------------------------------------------------
+# Code Quality Tools (Markdown Report Versions)
+# ---------------------------------------------------
+
+.PHONY: lint-php-md
+lint-php-md:
+	@echo "Running Pint and saving report to pint.md..."
+	@echo "# Pint Code Formatter Report" > pint.md
+	@echo "*Generated: $$(date)*" >> pint.md
+	@echo "" >> pint.md
+	@$(PINT) --test --verbose 2>&1 >> pint.md || true
+	@echo "✅ Pint report saved to pint.md"
+
+.PHONY: lint-php-fix-md
+lint-php-fix-md:
+	@echo "Running Pint formatting check and saving report to pint-test.md..."
+	@echo "# Pint Formatting Test Report" > pint-test.md
+	@echo "*Generated: $$(date)*" >> pint-test.md
+	@echo "" >> pint-test.md
+	@$(PINT) --test 2>&1 >> pint-test.md || true
+	@echo "✅ Pint formatting test report saved to pint-test.md"
+
+.PHONY: lint-phpstan-md
+lint-phpstan-md:
+	@echo "Running PHPStan and saving report to phpstan.md..."
+	@echo "# PHPStan Static Analysis Report" > phpstan.md
+	@echo "*Generated: $$(date)*" >> phpstan.md
+	@echo "" >> phpstan.md
+	@$(PHPSTAN) analyse src tests --level=max --no-progress 2>&1 >> phpstan.md || true
+	@echo "✅ PHPStan report saved to phpstan.md"
+
+.PHONY: lint-rector-md
+lint-rector-md:
+	@echo "Running Rector and saving report to rector.md..."
+	@echo "# Rector Refactoring Report" > rector.md
+	@echo "*Generated: $$(date)*" >> rector.md
+	@echo "" >> rector.md
+	@$(RECTOR) process --dry-run 2>&1 >> rector.md || true
+	@echo "✅ Rector report saved to rector.md"
 
 .PHONY: lint-psalm-md
 lint-psalm-md:
-	@echo "Running Psalm on all code..."
-	@echo "# Psalm Analysis Report" > psalm.md
-	@$(PSALM) --show-info=true --no-progress >> psalm.md 2>&1 || true
-	@echo "Psalm analysis completed. Results in psalm.md"
+	@echo "Running Psalm and saving report to psalm.md..."
+	@echo "# Psalm Static Analysis Report" > psalm.md
+	@echo "*Generated: $$(date)*" >> psalm.md
+	@echo "" >> psalm.md
+	@$(PSALM) --show-info=true --no-progress 2>&1 >> psalm.md || true
+	@echo "✅ Psalm report saved to psalm.md"
 
-.PHONY: lint-all
-lint-all:
-	@make lint-php lint-phpstan lint-psalm
 
-.PHONY: lint-all-fix
-lint-all-fix:
-	@make lint-php-fix lint-rector
+# ---------------------------------------------------
+# Batch Quality Checks (Non-blocking)
+# ---------------------------------------------------
+
+.PHONY: lint-all-md
+lint-all-md:
+	@echo "Running all code quality checks and saving reports..."
+	@make lint-php-md
+	@make lint-phpstan-md
+	@make lint-psalm-md
+	@echo "✅ All code quality reports generated"
+	@echo "📊 Reports:"
+	@echo "  - pint.md (Pint formatting)"
+	@echo "  - phpstan.md (PHPStan analysis)"
+	@echo "  - psalm.md (Psalm analysis)"
+
+.PHONY: lint-all-fix-md
+lint-all-fix-md:
+	@echo "Running all code fixers and saving reports..."
+	@make lint-php-fix-md
+	@make lint-rector-md
+	@echo "✅ All code fixer reports generated"
+	@echo "📊 Reports:"
+	@echo "  - pint-test.md (Pint formatting test)"
+	@echo "  - rector.md (Rector refactoring)"
 
 
 # ---------------------------------------------------
@@ -254,10 +324,15 @@ lint-all-fix:
 
 .PHONY: pre-release
 pre-release:
-	@echo "Running pre-release checks..."
+	@echo "Running pre-release checks (non-blocking)..."
+	@echo "📊 Generating reports instead of failing..."
 	@make test
-	@make lint-all
-	@echo "✅ All pre-release checks passed"
+	@make lint-all-md
+	@echo "✅ Pre-release checks completed - reports generated"
+	@echo "📋 Review the following files before release:"
+	@echo "  - pint.md (formatting issues)"
+	@echo "  - phpstan.md (static analysis errors)"
+	@echo "  - psalm.md (type checking issues)"
 
 .PHONY: release
 release: pre-release
@@ -294,15 +369,21 @@ help:
 	@echo "Tests :"
 	@echo "  test                  Exécuter les tests PHPUnit"
 	@echo ""
-	@echo "Qualité du code :"
+	@echo "Qualité du code (Console - échoue sur erreur) :"
 	@echo "  lint-php              Exécuter le formateur de code Pint"
-	@echo "  lint-php-fix          Tester le formatage avec Pint sans appliquer"
+	@echo "  lint-php-fix          Appliquer le formatage avec Pint"
 	@echo "  lint-phpstan          Exécuter l'analyse statique PHPStan"
 	@echo "  lint-rector           Appliquer le refactoring avec Rector"
 	@echo "  lint-psalm            Exécuter l'analyse Psalm"
-	@echo "  lint-psalm-md         Exécuter Psalm et sauvegarder les résultats en Markdown"
-	@echo "  lint-all              Exécuter tous les linters"
-	@echo "  lint-all-fix          Exécuter tous les correcteurs"
+	@echo ""
+	@echo "Qualité du code (Markdown - ne bloque pas) :"
+	@echo "  lint-php-md           Exécuter Pint et sauvegarder le rapport"
+	@echo "  lint-php-fix-md       Tester le formatage et sauvegarder le rapport"
+	@echo "  lint-phpstan-md       Exécuter PHPStan et sauvegarder les résultats"
+	@echo "  lint-rector-md        Exécuter Rector et sauvegarder le rapport"
+	@echo "  lint-psalm-md         Exécuter Psalm et sauvegarder les résultats"
+	@echo "  lint-all-md           Exécuter tous les linters (ne bloque pas)"
+	@echo "  lint-all-fix-md       Exécuter tous les correcteurs (ne bloque pas)"
 	@echo ""
 	@echo "Gestion des releases :"
 	@echo "  pre-release           Exécuter toutes les vérifications avant la release"

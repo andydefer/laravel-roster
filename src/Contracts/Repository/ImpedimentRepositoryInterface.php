@@ -17,9 +17,9 @@ interface ImpedimentRepositoryInterface
     /**
      * Find impediments for a specific time slot within an availability.
      *
-     * @param int $availabilityId Parent availability ID
-     * @param Carbon $start Start time of the slot
-     * @param Carbon $end End time of the slot
+     * @param  int  $availabilityId  Parent availability ID
+     * @param  Carbon  $start  Start time of the slot
+     * @param  Carbon  $end  End time of the slot
      * @return Collection<int, object> Collection of impediments in the time slot
      */
     public function findForTimeSlot(
@@ -31,10 +31,10 @@ interface ImpedimentRepositoryInterface
     /**
      * Check if a time slot has overlapping impediments.
      *
-     * @param int $availabilityId Parent availability ID
-     * @param Carbon $start Start time of the slot
-     * @param Carbon $end End time of the slot
-     * @param int|null $excludeId Optional impediment ID to exclude from check
+     * @param  int  $availabilityId  Parent availability ID
+     * @param  Carbon  $start  Start time of the slot
+     * @param  Carbon  $end  End time of the slot
+     * @param  int|null  $excludeId  Optional impediment ID to exclude from check
      * @return bool True if overlapping impediments exist
      */
     public function hasOverlappingImpediments(

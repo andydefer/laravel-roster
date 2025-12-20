@@ -4,12 +4,15 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Commands;
 
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\Artisan;
-use Roster\Commands\InstallRosterCommand;
-use Symfony\Component\Console\Output\Output;
-use Symfony\Component\Console\Input\ArrayInput;
+use ReflectionMethod;
+use Symfony\Component\Console\Input\InputDefinition;
+use Symfony\Component\Console\Input\InputOption;
+use ReflectionClass;
 use Illuminate\Console\OutputStyle;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Roster\Commands\InstallRosterCommand;
+use Symfony\Component\Console\Input\ArrayInput;
+use Symfony\Component\Console\Output\Output;
 use Tests\TestCase;
 
 /**
@@ -44,35 +47,36 @@ trait CapturesOutput
 /**
  * Unit tests for the InstallRosterCommand.
  */
-class InstallRosterCommandTest extends TestCase
+final class InstallRosterCommandTest extends TestCase
 {
     use RefreshDatabase;
 
     public function test_command_can_be_instantiated(): void
     {
-        $command = new InstallRosterCommand();
+        $installRosterCommand = new InstallRosterCommand;
 
-        $this->assertSame('roster:install', $command->getName());
-        $this->assertSame('Install the Roster package', $command->getDescription());
-        $this->assertStringContainsString('force', $command->getDefinition()->getOption('force')->getName());
+        $this->assertSame('roster:install', $installRosterCommand->getName());
+        $this->assertSame('Install the Roster package', $installRosterCommand->getDescription());
+        $this->assertStringContainsString('force', $installRosterCommand->getDefinition()->getOption('force')->getName());
     }
 
     public function test_displays_correct_publishing_details(): void
     {
-        $command = new InstallRosterCommand();
-        $command->setLaravel($this->app);
+        $installRosterCommand = new InstallRosterCommand;
+        $installRosterCommand->setLaravel($this->app);
 
-        $method = new \ReflectionMethod($command, 'displayPublishingDetails');
-        $method->setAccessible(true);
+        $reflectionMethod = new ReflectionMethod($installRosterCommand, 'displayPublishingDetails');
+        $reflectionMethod->setAccessible(true);
 
         /** @var Output&OutputWithBuffer $output */
-        $output = new class extends Output implements OutputWithBuffer {
+        $output = new class extends Output implements OutputWithBuffer
+        {
             use CapturesOutput;
         };
 
-        $command->setOutput(new OutputStyle(new ArrayInput([]), $output));
+        $installRosterCommand->setOutput(new OutputStyle(new ArrayInput([]), $output));
 
-        $method->invoke($command);
+        $reflectionMethod->invoke($installRosterCommand);
 
         $this->assertStringContainsString('Configuration (config/roster.php)', $output->getOutput());
         $this->assertStringContainsString('Database migrations (roster_* tables)', $output->getOutput());
@@ -82,20 +86,21 @@ class InstallRosterCommandTest extends TestCase
 
     public function test_displays_success_message_with_next_steps(): void
     {
-        $command = new InstallRosterCommand();
-        $command->setLaravel($this->app);
+        $installRosterCommand = new InstallRosterCommand;
+        $installRosterCommand->setLaravel($this->app);
 
-        $method = new \ReflectionMethod($command, 'displaySuccessMessage');
-        $method->setAccessible(true);
+        $reflectionMethod = new ReflectionMethod($installRosterCommand, 'displaySuccessMessage');
+        $reflectionMethod->setAccessible(true);
 
         /** @var Output&OutputWithBuffer $output */
-        $output = new class extends Output implements OutputWithBuffer {
+        $output = new class extends Output implements OutputWithBuffer
+        {
             use CapturesOutput;
         };
 
-        $command->setOutput(new OutputStyle(new ArrayInput([]), $output));
+        $installRosterCommand->setOutput(new OutputStyle(new ArrayInput([]), $output));
 
-        $method->invoke($command);
+        $reflectionMethod->invoke($installRosterCommand);
 
         $this->assertStringContainsString('Roster package installed successfully!', $output->getOutput());
         $this->assertStringContainsString('Review config/roster.php', $output->getOutput());
@@ -106,29 +111,29 @@ class InstallRosterCommandTest extends TestCase
 
     public function test_private_methods_return_correct_values(): void
     {
-        $command = new InstallRosterCommand();
-        $command->setLaravel($this->app);
+        $installRosterCommand = new InstallRosterCommand;
+        $installRosterCommand->setLaravel($this->app);
 
-        $method = new \ReflectionMethod($command, 'shouldSkipConfirmation');
-        $method->setAccessible(true);
+        $reflectionMethod = new ReflectionMethod($installRosterCommand, 'shouldSkipConfirmation');
+        $reflectionMethod->setAccessible(true);
 
-        $inputDefinition = new \Symfony\Component\Console\Input\InputDefinition([
-            new \Symfony\Component\Console\Input\InputOption('force'),
+        $inputDefinition = new InputDefinition([
+            new InputOption('force'),
         ]);
 
         $inputWithForce = new ArrayInput(['--force' => true], $inputDefinition);
 
-        $reflection = new \ReflectionClass($command);
-        $inputProperty = $reflection->getProperty('input');
-        $inputProperty->setAccessible(true);
-        $inputProperty->setValue($command, $inputWithForce);
+        $reflectionClass = new ReflectionClass($installRosterCommand);
+        $reflectionProperty = $reflectionClass->getProperty('input');
+        $reflectionProperty->setAccessible(true);
+        $reflectionProperty->setValue($installRosterCommand, $inputWithForce);
 
-        $this->assertTrue($method->invoke($command));
+        $this->assertTrue($reflectionMethod->invoke($installRosterCommand));
 
         $inputWithoutForce = new ArrayInput([], $inputDefinition);
-        $inputProperty->setValue($command, $inputWithoutForce);
+        $reflectionProperty->setValue($installRosterCommand, $inputWithoutForce);
 
-        $this->assertFalse($method->invoke($command));
+        $this->assertFalse($reflectionMethod->invoke($installRosterCommand));
     }
 
     public function test_handles_cancellation_gracefully(): void
@@ -145,17 +150,18 @@ class InstallRosterCommandTest extends TestCase
         $command->setLaravel($this->app);
 
         /** @var Output&OutputWithBuffer $output */
-        $output = new class extends Output implements OutputWithBuffer {
+        $output = new class extends Output implements OutputWithBuffer
+        {
             use CapturesOutput;
         };
 
         $command->setOutput(new OutputStyle(new ArrayInput([], $command->getDefinition()), $output));
 
-        $input = new ArrayInput([], $command->getDefinition());
-        $reflection = new \ReflectionClass($command);
-        $inputProperty = $reflection->getProperty('input');
-        $inputProperty->setAccessible(true);
-        $inputProperty->setValue($command, $input);
+        $arrayInput = new ArrayInput([], $command->getDefinition());
+        $reflectionClass = new ReflectionClass($command);
+        $reflectionProperty = $reflectionClass->getProperty('input');
+        $reflectionProperty->setAccessible(true);
+        $reflectionProperty->setValue($command, $arrayInput);
 
         $command->handle();
 
@@ -188,18 +194,19 @@ class InstallRosterCommandTest extends TestCase
 
         $command->setLaravel($this->app);
 
-        $input = new ArrayInput([], $command->getDefinition());
-        $reflection = new \ReflectionClass($command);
-        $inputProperty = $reflection->getProperty('input');
-        $inputProperty->setAccessible(true);
-        $inputProperty->setValue($command, $input);
+        $arrayInput = new ArrayInput([], $command->getDefinition());
+        $reflectionClass = new ReflectionClass($command);
+        $reflectionProperty = $reflectionClass->getProperty('input');
+        $reflectionProperty->setAccessible(true);
+        $reflectionProperty->setValue($command, $arrayInput);
 
         /** @var Output&OutputWithBuffer $output */
-        $output = new class extends Output implements OutputWithBuffer {
+        $output = new class extends Output implements OutputWithBuffer
+        {
             use CapturesOutput;
         };
 
-        $command->setOutput(new OutputStyle($input, $output));
+        $command->setOutput(new OutputStyle($arrayInput, $output));
 
         $command->handle();
 

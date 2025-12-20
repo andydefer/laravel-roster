@@ -15,12 +15,9 @@ class ResourcePublisherService
 {
     /**
      * Create a new ResourcePublisherService instance.
-     *
-     * @param Application $app
-     * @param Filesystem $filesystem
      */
     public function __construct(
-        private readonly Application $app,
+        private readonly Application $application,
         private readonly Filesystem $filesystem
     ) {}
 
@@ -33,35 +30,30 @@ class ResourcePublisherService
     {
         return [
             'config' => [
-                'source' => $this->app->basePath('vendor/roster/config/roster.php'),
-                'destination' => $this->app->configPath('roster.php'),
-                'tag' => 'roster-config'
+                'source' => $this->application->basePath('vendor/roster/config/roster.php'),
+                'destination' => $this->application->configPath('roster.php'),
+                'tag' => 'roster-config',
             ],
             'migrations' => [
-                'source' => $this->app->basePath('vendor/roster/database/migrations'),
-                'destination' => $this->app->databasePath('migrations'),
-                'tag' => 'roster-migrations'
+                'source' => $this->application->basePath('vendor/roster/database/migrations'),
+                'destination' => $this->application->databasePath('migrations'),
+                'tag' => 'roster-migrations',
             ],
             'views' => [
-                'source' => $this->app->basePath('vendor/roster/resources/views'),
-                'destination' => $this->app->resourcePath('views/vendor/roster'),
-                'tag' => 'roster-views'
+                'source' => $this->application->basePath('vendor/roster/resources/views'),
+                'destination' => $this->application->resourcePath('views/vendor/roster'),
+                'tag' => 'roster-views',
             ],
             'routes' => [
-                'source' => $this->app->basePath('vendor/roster/routes/web.php'),
-                'destination' => $this->app->basePath('routes/roster.php'),
-                'tag' => 'roster-routes'
-            ]
+                'source' => $this->application->basePath('vendor/roster/routes/web.php'),
+                'destination' => $this->application->basePath('routes/roster.php'),
+                'tag' => 'roster-routes',
+            ],
         ];
     }
 
     /**
      * Publish a specific resource.
-     *
-     * @param string $resourceType
-     * @param bool $force
-     * @param OutputInterface|null $output
-     * @return bool
      */
     public function publishResource(
         string $resourceType,
@@ -70,7 +62,7 @@ class ResourcePublisherService
     ): bool {
         $resources = $this->getPublishableResources();
 
-        if (!isset($resources[$resourceType])) {
+        if (! isset($resources[$resourceType])) {
             return false;
         }
 
@@ -85,9 +77,6 @@ class ResourcePublisherService
 
     /**
      * Check if a source should be treated as a directory.
-     *
-     * @param string $source
-     * @return bool
      */
     private function shouldPublishDirectory(string $source): bool
     {
@@ -96,12 +85,6 @@ class ResourcePublisherService
 
     /**
      * Publish a directory of resources.
-     *
-     * @param string $source
-     * @param string $destination
-     * @param bool $force
-     * @param OutputInterface|null $output
-     * @return bool
      */
     private function publishDirectory(
         string $source,
@@ -109,7 +92,7 @@ class ResourcePublisherService
         bool $force,
         ?OutputInterface $output
     ): bool {
-        if (!$this->filesystem->exists($source)) {
+        if (! $this->filesystem->exists($source)) {
             return false;
         }
 
@@ -118,15 +101,15 @@ class ResourcePublisherService
 
         foreach ($files as $file) {
             $relativePath = $file->getRelativePathname();
-            $targetPath = $destination . '/' . $relativePath;
+            $targetPath = $destination.'/'.$relativePath;
 
-            if ($this->shouldCopyFile($file->getPathname(), $targetPath, $force)) {
+            if ($this->shouldCopyFile($targetPath, $force)) {
                 $this->filesystem->ensureDirectoryExists(dirname($targetPath));
                 $this->filesystem->copy($file->getPathname(), $targetPath);
-                $publishedCount++;
+                ++$publishedCount;
 
-                if ($output) {
-                    $output->writeln("<info>Published:</info> {$relativePath}");
+                if ($output instanceof OutputInterface) {
+                    $output->writeln('<info>Published:</info> ' . $relativePath);
                 }
             }
         }
@@ -136,12 +119,6 @@ class ResourcePublisherService
 
     /**
      * Publish a single file.
-     *
-     * @param string $source
-     * @param string $destination
-     * @param bool $force
-     * @param OutputInterface|null $output
-     * @return bool
      */
     private function publishFile(
         string $source,
@@ -149,16 +126,16 @@ class ResourcePublisherService
         bool $force,
         ?OutputInterface $output
     ): bool {
-        if (!$this->filesystem->exists($source)) {
+        if (! $this->filesystem->exists($source)) {
             return false;
         }
 
-        if ($this->shouldCopyFile($source, $destination, $force)) {
+        if ($this->shouldCopyFile($destination, $force)) {
             $this->filesystem->ensureDirectoryExists(dirname($destination));
             $this->filesystem->copy($source, $destination);
 
-            if ($output) {
-                $output->writeln("<info>Published:</info> " . basename($destination));
+            if ($output instanceof OutputInterface) {
+                $output->writeln('<info>Published:</info> '.basename($destination));
             }
 
             return true;
@@ -169,32 +146,24 @@ class ResourcePublisherService
 
     /**
      * Determine if a file should be copied.
-     *
-     * @param string $source
-     * @param string $destination
-     * @param bool $force
-     * @return bool
      */
-    private function shouldCopyFile(string $source, string $destination, bool $force): bool
+    private function shouldCopyFile(string $destination, bool $force): bool
     {
         if ($force) {
             return true;
         }
 
-        return !$this->filesystem->exists($destination);
+        return ! $this->filesystem->exists($destination);
     }
 
     /**
      * Check if a resource has already been published.
-     *
-     * @param string $resourceType
-     * @return bool
      */
     public function isPublished(string $resourceType): bool
     {
         $resources = $this->getPublishableResources();
 
-        if (!isset($resources[$resourceType])) {
+        if (! isset($resources[$resourceType])) {
             return false;
         }
 

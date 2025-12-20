@@ -6,9 +6,9 @@ namespace Tests\Feature\Facades;
 
 use BadMethodCallException;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Collection;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Collection;
 use Roster\Facades\Impediment as ImpedimentFacade;
 use Roster\Models\Availability;
 use Roster\Models\Impediment;
@@ -28,7 +28,8 @@ final class ImpedimentFacadeTest extends TestCase
     {
         parent::setUp();
 
-        $this->model = new class extends Model {
+        $this->model = new class extends Model
+        {
             protected $table = 'test_schedulables';
 
             public $timestamps = false;

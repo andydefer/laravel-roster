@@ -12,14 +12,14 @@ abstract class AbstractRepository
     /**
      * Crée un nouvel enregistrement.
      *
-     * @param array<string, mixed> $data
+     * @param  array<string, mixed>  $data
      */
     abstract public function create(array $data): Model;
 
     /**
      * Met à jour un enregistrement existant.
      *
-     * @param array<string, mixed> $data
+     * @param  array<string, mixed>  $data
      */
     abstract public function update(int $id, array $data): bool;
 

@@ -20,7 +20,7 @@ interface ScheduleRepositoryInterface
     /**
      * Create a new schedule record.
      *
-     * @param array<string, mixed> $data Schedule data
+     * @param  array<string, mixed>  $data  Schedule data
      * @return Schedule Created schedule instance
      */
     public function create(array $data): Schedule;
@@ -28,8 +28,8 @@ interface ScheduleRepositoryInterface
     /**
      * Update an existing schedule record.
      *
-     * @param int $id Schedule ID
-     * @param array<string, mixed> $data Updated schedule data
+     * @param  int  $id  Schedule ID
+     * @param  array<string, mixed>  $data  Updated schedule data
      * @return bool True if update successful, false otherwise
      */
     public function update(int $id, array $data): bool;
@@ -37,7 +37,7 @@ interface ScheduleRepositoryInterface
     /**
      * Delete a schedule record.
      *
-     * @param int $id Schedule ID
+     * @param  int  $id  Schedule ID
      * @return bool True if deletion successful, false otherwise
      */
     public function delete(int $id): bool;
@@ -45,7 +45,7 @@ interface ScheduleRepositoryInterface
     /**
      * Find a schedule record by its ID.
      *
-     * @param int $id Schedule ID
+     * @param  int  $id  Schedule ID
      * @return Schedule|null Schedule instance or null if not found
      */
     public function findById(int $id): ?Schedule;
@@ -53,9 +53,9 @@ interface ScheduleRepositoryInterface
     /**
      * Find schedules for a specific time slot within an availability.
      *
-     * @param int $availabilityId Parent availability ID
-     * @param Carbon $start Start time of the slot
-     * @param Carbon $end End time of the slot
+     * @param  int  $availabilityId  Parent availability ID
+     * @param  Carbon  $start  Start time of the slot
+     * @param  Carbon  $end  End time of the slot
      * @return Collection<int, Schedule> Collection of schedules in the time slot
      */
     public function findForTimeSlot(
@@ -67,10 +67,10 @@ interface ScheduleRepositoryInterface
     /**
      * Check if a time slot has overlapping schedules.
      *
-     * @param int $availabilityId Parent availability ID
-     * @param Carbon $start Start time of the slot
-     * @param Carbon $end End time of the slot
-     * @param int|null $excludeId Optional schedule ID to exclude from check
+     * @param  int  $availabilityId  Parent availability ID
+     * @param  Carbon  $start  Start time of the slot
+     * @param  Carbon  $end  End time of the slot
+     * @param  int|null  $excludeId  Optional schedule ID to exclude from check
      * @return bool True if overlapping schedules exist
      */
     public function hasOverlappingSchedule(
@@ -83,10 +83,10 @@ interface ScheduleRepositoryInterface
     /**
      * Find schedules that overlap with the given time range.
      *
-     * @param int $availabilityId Parent availability ID
-     * @param Carbon $start Start time of the range
-     * @param Carbon $end End time of the range
-     * @param int|null $excludeId Optional schedule ID to exclude from search
+     * @param  int  $availabilityId  Parent availability ID
+     * @param  Carbon  $start  Start time of the range
+     * @param  Carbon  $end  End time of the range
+     * @param  int|null  $excludeId  Optional schedule ID to exclude from search
      * @return Collection<int, Schedule> Collection of overlapping schedules
      */
     public function findOverlappingSchedules(
@@ -99,9 +99,9 @@ interface ScheduleRepositoryInterface
     /**
      * Get all schedules for a schedulable resource.
      *
-     * @param int $schedulableId ID of the schedulable resource
-     * @param string $schedulableType Type/class of the schedulable resource
-     * @param array<string, mixed> $filters Optional query filters
+     * @param  int  $schedulableId  ID of the schedulable resource
+     * @param  string  $schedulableType  Type/class of the schedulable resource
+     * @param  array<string, mixed>  $filters  Optional query filters
      * @return Collection<int, Schedule> Collection of all schedules
      */
     public function getAllForSchedulable(
@@ -113,11 +113,11 @@ interface ScheduleRepositoryInterface
     /**
      * Get schedules between specific dates for a schedulable resource.
      *
-     * @param int $schedulableId ID of the schedulable resource
-     * @param string $schedulableType Type/class of the schedulable resource
-     * @param Carbon $start Start date of the range
-     * @param Carbon $end End date of the range
-     * @param array<string, mixed> $filters Optional query filters
+     * @param  int  $schedulableId  ID of the schedulable resource
+     * @param  string  $schedulableType  Type/class of the schedulable resource
+     * @param  Carbon  $start  Start date of the range
+     * @param  Carbon  $end  End date of the range
+     * @param  array<string, mixed>  $filters  Optional query filters
      * @return Collection<int, Schedule> Collection of schedules in the date range
      */
     public function getForDateRange(
@@ -131,9 +131,9 @@ interface ScheduleRepositoryInterface
     /**
      * Apply filters to schedule query builder.
      *
-     * @param int $schedulableId ID of the schedulable resource
-     * @param string $schedulableType Type/class of the schedulable resource
-     * @param array<string, mixed> $filters Query filters
+     * @param  int  $schedulableId  ID of the schedulable resource
+     * @param  string  $schedulableType  Type/class of the schedulable resource
+     * @param  array<string, mixed>  $filters  Query filters
      * @return Builder Eloquent query builder with filters applied
      */
     public function applyFilters(

@@ -18,15 +18,15 @@ use Roster\Contracts\Services\ValidationServiceInterface;
 use Roster\Repositories\AvailabilityRepository;
 use Roster\Repositories\ImpedimentRepository;
 use Roster\Repositories\ScheduleRepository;
+use Roster\Services\AvailabilityService;
 use Roster\Services\Core\AvailabilityChecker;
 use Roster\Services\Core\AvailabilityMerger;
-use Roster\Services\AvailabilityService;
 use Roster\Services\Core\AvailabilityValidator;
+use Roster\Services\Core\ResourcePublisherService;
 use Roster\Services\Core\SlotFinderService;
 use Roster\Services\Core\ValidationService;
 use Roster\Services\ImpedimentService;
 use Roster\Services\ScheduleService;
-use Roster\Services\Core\ResourcePublisherService;
 
 /**
  * Service provider for the Roster package.
@@ -41,8 +41,6 @@ class RosterServiceProvider extends ServiceProvider
      *
      * Publishes configuration, migrations, and views when running in console mode.
      * Does NOT load migrations automatically - user must publish them.
-     *
-     * @return void
      */
     public function boot(): void
     {
@@ -59,8 +57,6 @@ class RosterServiceProvider extends ServiceProvider
      * Register the service provider.
      *
      * Merges package configuration and registers all service bindings.
-     *
-     * @return void
      */
     public function register(): void
     {
@@ -75,8 +71,6 @@ class RosterServiceProvider extends ServiceProvider
      * Register reusable core services.
      *
      * Binds interfaces to their concrete implementations for core service components.
-     *
-     * @return void
      */
     protected function registerCoreServices(): void
     {
@@ -91,8 +85,6 @@ class RosterServiceProvider extends ServiceProvider
      * Register repository implementations.
      *
      * Binds repository interfaces to their concrete implementations.
-     *
-     * @return void
      */
     protected function registerRepositories(): void
     {
@@ -105,8 +97,6 @@ class RosterServiceProvider extends ServiceProvider
      * Register main domain services with their dependencies.
      *
      * Creates singleton instances of the main business services and aliases them.
-     *
-     * @return void
      */
     protected function registerDomainServices(): void
     {
@@ -146,15 +136,13 @@ class RosterServiceProvider extends ServiceProvider
 
     /**
      * Register the resource publisher service.
-     *
-     * @return void
      */
     private function registerResourcePublisher(): void
     {
-        $this->app->singleton(ResourcePublisherService::class, function ($app) {
+        $this->app->singleton(ResourcePublisherService::class, function ($app): ResourcePublisherService {
             return new ResourcePublisherService(
-                app: $app,
-                filesystem: new Filesystem()
+                application: $app,
+                filesystem: new Filesystem
             );
         });
     }
@@ -164,8 +152,6 @@ class RosterServiceProvider extends ServiceProvider
      *
      * Publishes configuration files, migrations, and views to the application.
      * User MUST publish these resources to use the package.
-     *
-     * @return void
      */
     private function publishResources(): void
     {
@@ -192,8 +178,6 @@ class RosterServiceProvider extends ServiceProvider
 
     /**
      * Load published resources if they exist.
-     *
-     * @return void
      */
     private function loadPublishedResources(): void
     {

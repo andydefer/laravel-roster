@@ -18,23 +18,18 @@ interface InstallationStepInterface
 
     /**
      * Get the step name for display purposes.
-     *
-     * @return string
      */
     public function getName(): string;
 
     /**
      * Get the step description for user information.
-     *
-     * @return string
      */
     public function getDescription(): string;
 
     /**
      * Check if this step should be executed.
      *
-     * @param array $context Installation context
-     * @return bool
+     * @param  array  $context  Installation context
      */
     public function shouldExecute(array $context = []): bool;
 }

@@ -64,7 +64,7 @@ class AvailabilityValidator implements AvailabilityValidatorInterface
             ->where('schedulable_type', get_class($model))
             ->where(function ($q) use ($data): void {
                 // Appliquer les filtres directement en SQL
-                if (!empty($data['days'])) {
+                if (! empty($data['days'])) {
                     $q->where(function ($query) use ($data): void {
                         foreach ($data['days'] as $day) {
                             $query->orWhereJsonContains('days', $day);

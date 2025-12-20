@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Roster\Traits;
 
-use Illuminate\Support\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Carbon;
 
 trait FilterableTrait
 {
@@ -39,7 +39,7 @@ trait FilterableTrait
      */
     protected function applyTypeFilter(Builder $builder, string $relation = ''): Builder
     {
-        if (!isset($this->filters['type'])) {
+        if (! isset($this->filters['type'])) {
             return $builder;
         }
 
@@ -84,7 +84,7 @@ trait FilterableTrait
     protected function applyReasonFilter(Builder $builder): Builder
     {
         if (isset($this->filters['reason'])) {
-            $builder->where('reason', 'like', '%' . $this->filters['reason'] . '%');
+            $builder->where('reason', 'like', '%'.$this->filters['reason'].'%');
         }
 
         return $builder;
@@ -121,6 +121,7 @@ trait FilterableTrait
     public function whereStartDate(Carbon $date): self
     {
         $this->filters['start_date'] = $date;
+
         return $this;
     }
 
@@ -130,6 +131,7 @@ trait FilterableTrait
     public function whereEndDate(Carbon $date): self
     {
         $this->filters['end_date'] = $date;
+
         return $this;
     }
 
@@ -139,6 +141,7 @@ trait FilterableTrait
     public function whereStatus(string $status): self
     {
         $this->filters['status'] = $status;
+
         return $this;
     }
 
@@ -148,6 +151,7 @@ trait FilterableTrait
     public function whereReason(string $reason): self
     {
         $this->filters['reason'] = $reason;
+
         return $this;
     }
 
@@ -157,6 +161,7 @@ trait FilterableTrait
     public function whereAvailabilityId(int $availabilityId): self
     {
         $this->filters['availability_id'] = $availabilityId;
+
         return $this;
     }
 
@@ -166,6 +171,7 @@ trait FilterableTrait
     public function clearFilters(): self
     {
         $this->filters = [];
+
         return $this;
     }
 

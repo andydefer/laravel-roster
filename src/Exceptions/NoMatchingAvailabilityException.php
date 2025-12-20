@@ -15,10 +15,10 @@ class NoMatchingAvailabilityException extends RosterException
     /**
      * Create a new NoMatchingAvailabilityException instance.
      *
-     * @param array $context Additional context about the failed availability lookup
-     * @param string $message Custom error message
-     * @param int $code Error code
-     * @param Throwable|null $previous Previous exception
+     * @param  array  $context  Additional context about the failed availability lookup
+     * @param  string  $message  Custom error message
+     * @param  int  $code  Error code
+     * @param  Throwable|null  $previous  Previous exception
      */
     public function __construct(
         array $context = [],

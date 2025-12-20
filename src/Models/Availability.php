@@ -63,7 +63,7 @@ class Availability extends Model
     {
         // Check day
         $dayOfWeek = strtolower($start->englishDayOfWeek);
-        if (!in_array($dayOfWeek, $this->days)) {
+        if (! in_array($dayOfWeek, $this->days)) {
             return false;
         }
 
@@ -83,6 +83,6 @@ class Availability extends Model
             return false;
         }
 
-        return !($this->end_date && $end->gt($this->end_date));
+        return ! ($this->end_date && $end->gt($this->end_date));
     }
 }

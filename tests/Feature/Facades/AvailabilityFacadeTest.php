@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Facades;
 
-use Roster\Services\AvailabilityService;
-use Illuminate\Support\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Collection;
 use Roster\Facades\Availability as AvailabilityFacade;
 use Roster\Models\Availability;
+use Roster\Services\AvailabilityService;
 use Tests\TestCase;
 
 final class AvailabilityFacadeTest extends TestCase
@@ -20,7 +20,8 @@ final class AvailabilityFacadeTest extends TestCase
     {
         parent::setUp();
 
-        $this->model = new class extends Model {
+        $this->model = new class extends Model
+        {
             protected $table = 'test_schedulables';
 
             public $timestamps = false;

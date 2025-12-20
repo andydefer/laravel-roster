@@ -12,18 +12,15 @@ interface InstallationExecutorInterface
     /**
      * Execute all installation steps.
      *
-     * @param array $context Installation context
+     * @param  array  $context  Installation context
      * @return array Results from each step
      */
     public function executeSteps(array $context = []): array;
 
     /**
      * Add an installation step.
-     *
-     * @param InstallationStepInterface $step
-     * @return self
      */
-    public function addStep(InstallationStepInterface $step): self;
+    public function addStep(InstallationStepInterface $installationStep): self;
 
     /**
      * Get all registered steps.

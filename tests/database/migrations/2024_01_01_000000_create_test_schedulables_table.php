@@ -10,7 +10,7 @@ return new class extends Migration
 {
     public function up(): void
     {
-        if (!Schema::hasTable('test_schedulables')) {
+        if (! Schema::hasTable('test_schedulables')) {
             Schema::create('test_schedulables', function (Blueprint $blueprint): void {
                 $blueprint->id();
                 $blueprint->timestamps();

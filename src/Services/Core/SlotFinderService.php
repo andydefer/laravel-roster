@@ -10,8 +10,8 @@ use Illuminate\Support\Collection;
 use Roster\Contracts\Repository\AvailabilityRepositoryInterface;
 use Roster\Contracts\Services\SlotFinderInterface;
 use Roster\Contracts\Services\ValidationServiceInterface;
-use Roster\Exceptions\ValidationException;
 use Roster\Exceptions\Enums\ValidationType;
+use Roster\Exceptions\ValidationException;
 use Roster\Models\Availability;
 use Roster\Models\Impediment;
 
@@ -20,7 +20,6 @@ use Roster\Models\Impediment;
  */
 class SlotFinderService implements SlotFinderInterface
 {
-
     private const DEFAULT_INTERVAL_MINUTES = 15;
 
     public function __construct(
@@ -31,10 +30,10 @@ class SlotFinderService implements SlotFinderInterface
     /**
      * Find the next available slot for a schedulable entity.
      *
-     * @param Model $model Schedulable model instance
-     * @param int $durationMinutes Required slot duration in minutes
-     * @param string|null $type Optional availability type filter
-     * @param bool $returnStartOnly Return only the start time if true
+     * @param  Model  $model  Schedulable model instance
+     * @param  int  $durationMinutes  Required slot duration in minutes
+     * @param  string|null  $type  Optional availability type filter
+     * @param  bool  $returnStartOnly  Return only the start time if true
      * @return array|Carbon|null Slot details array, start time, or null if none found
      */
     public function findNextSlot(
@@ -60,7 +59,7 @@ class SlotFinderService implements SlotFinderInterface
 
             /** @var Collection<int, Availability> $dailyAvailabilities */
             $dailyAvailabilities = $availabilities->filter(
-                fn(Availability $availability): bool => $this->availabilityRepository->isAvailabilityValidForDate($availability, $currentDate)
+                fn (Availability $availability): bool => $this->availabilityRepository->isAvailabilityValidForDate($availability, $currentDate)
             );
 
             foreach ($dailyAvailabilities as $dailyAvailability) {
@@ -83,13 +82,14 @@ class SlotFinderService implements SlotFinderInterface
     /**
      * Find available slots in a given period.
      *
-     * @param Model $model Schedulable model instance
-     * @param Carbon $startDate Period start date
-     * @param Carbon $endDate Period end date
-     * @param int $durationMinutes Slot duration in minutes
-     * @param int $intervalMinutes Interval between slot starts in minutes
-     * @param string|null $type Optional availability type filter
+     * @param  Model  $model  Schedulable model instance
+     * @param  Carbon  $startDate  Period start date
+     * @param  Carbon  $endDate  Period end date
+     * @param  int  $durationMinutes  Slot duration in minutes
+     * @param  int  $intervalMinutes  Interval between slot starts in minutes
+     * @param  string|null  $type  Optional availability type filter
      * @return array<array<string, mixed>> Array of available slots
+     *
      * @throws ValidationException If validation fails
      */
     public function findSlotsInPeriod(
@@ -116,7 +116,7 @@ class SlotFinderService implements SlotFinderInterface
         while ($currentDate->lte($endDate)) {
             /** @var Collection<int, Availability> $dailyAvailabilities */
             $dailyAvailabilities = $availabilities->filter(
-                fn(Availability $availability): bool => $this->availabilityRepository->isAvailabilityValidForDate($availability, $currentDate)
+                fn (Availability $availability): bool => $this->availabilityRepository->isAvailabilityValidForDate($availability, $currentDate)
             );
 
             foreach ($dailyAvailabilities as $dailyAvailability) {
@@ -154,11 +154,11 @@ class SlotFinderService implements SlotFinderInterface
     /**
      * Find the first available continuous period of specified duration.
      *
-     * @param Model $model Schedulable model instance
-     * @param Carbon $startDate Search start date
-     * @param Carbon $endDate Search end date
-     * @param int $durationMinutes Required period duration in minutes
-     * @param string|null $type Optional availability type filter
+     * @param  Model  $model  Schedulable model instance
+     * @param  Carbon  $startDate  Search start date
+     * @param  Carbon  $endDate  Search end date
+     * @param  int  $durationMinutes  Required period duration in minutes
+     * @param  string|null  $type  Optional availability type filter
      * @return array|null Period details or null if none found
      */
     public function findFirstAvailablePeriod(
@@ -182,7 +182,7 @@ class SlotFinderService implements SlotFinderInterface
         while ($currentDate->lte($endDate)) {
             /** @var Collection<int, Availability> $dailyAvailabilities */
             $dailyAvailabilities = $availabilities->filter(
-                fn(Availability $availability): bool => $this->availabilityRepository->isAvailabilityValidForDate($availability, $currentDate)
+                fn (Availability $availability): bool => $this->availabilityRepository->isAvailabilityValidForDate($availability, $currentDate)
             );
 
             foreach ($dailyAvailabilities as $dailyAvailability) {
@@ -209,10 +209,10 @@ class SlotFinderService implements SlotFinderInterface
     /**
      * Check if an entire time period is available without interruptions.
      *
-     * @param Model $model Schedulable model instance
-     * @param Carbon $start Period start datetime
-     * @param Carbon $end Period end datetime
-     * @param string|null $type Optional availability type filter
+     * @param  Model  $model  Schedulable model instance
+     * @param  Carbon  $start  Period start datetime
+     * @param  Carbon  $end  Period end datetime
+     * @param  string|null  $type  Optional availability type filter
      * @return bool True if the entire period is available
      */
     public function isPeriodAvailable(
@@ -249,7 +249,7 @@ class SlotFinderService implements SlotFinderInterface
                 }
             );
 
-            if ($availability === null || !$this->isTimeSlotConflictFree($availability, $current, $slotEnd)) {
+            if ($availability === null || ! $this->isTimeSlotConflictFree($availability, $current, $slotEnd)) {
                 return false;
             }
 
@@ -262,11 +262,12 @@ class SlotFinderService implements SlotFinderInterface
     /**
      * Check if any availability exists within a time period.
      *
-     * @param Model $model Schedulable model instance
-     * @param Carbon $start Period start datetime
-     * @param Carbon $end Period end datetime
-     * @param string|null $type Optional availability type filter
+     * @param  Model  $model  Schedulable model instance
+     * @param  Carbon  $start  Period start datetime
+     * @param  Carbon  $end  Period end datetime
+     * @param  string|null  $type  Optional availability type filter
      * @return bool True if any availability exists in the period
+     *
      * @throws ValidationException If time range validation fails
      */
     public function hasAnyAvailabilityInPeriod(
@@ -290,7 +291,7 @@ class SlotFinderService implements SlotFinderInterface
         while ($currentDate->lte($endDate)) {
             /** @var Collection<int, Availability> $dailyAvailabilities */
             $dailyAvailabilities = $availabilities->filter(
-                fn(Availability $availability): bool => $this->availabilityRepository->isAvailabilityValidForDate($availability, $currentDate)
+                fn (Availability $availability): bool => $this->availabilityRepository->isAvailabilityValidForDate($availability, $currentDate)
             );
 
             if ($dailyAvailabilities->isNotEmpty()) {
@@ -310,9 +311,9 @@ class SlotFinderService implements SlotFinderInterface
     /**
      * Calculate available time slots by removing impediments from a time range.
      *
-     * @param Carbon $start Start of the time range
-     * @param Carbon $end End of the time range
-     * @param Collection $impediments Collection of impediments
+     * @param  Carbon  $start  Start of the time range
+     * @param  Carbon  $end  End of the time range
+     * @param  Collection  $impediments  Collection of impediments
      * @return Collection<int, array<string, mixed>> Available time slots
      */
     public function getAvailableSlotsFromImpediments(
@@ -355,7 +356,8 @@ class SlotFinderService implements SlotFinderInterface
     /**
      * Validate that duration is positive.
      *
-     * @param int $durationMinutes Duration to validate
+     * @param  int  $durationMinutes  Duration to validate
+     *
      * @throws ValidationException If duration is not positive
      */
     private function validateDuration(int $durationMinutes): void
@@ -371,10 +373,10 @@ class SlotFinderService implements SlotFinderInterface
     /**
      * Find a slot within a specific availability for a given date.
      *
-     * @param Availability $availability The availability to search within
-     * @param Carbon $date The date to search on
-     * @param int $durationMinutes Required slot duration in minutes
-     * @param bool $isToday Whether this is the current day
+     * @param  Availability  $availability  The availability to search within
+     * @param  Carbon  $date  The date to search on
+     * @param  int  $durationMinutes  Required slot duration in minutes
+     * @param  bool  $isToday  Whether this is the current day
      * @return array|null Slot details or null if no slot found
      */
     private function findSlotInAvailability(
@@ -398,6 +400,7 @@ class SlotFinderService implements SlotFinderInterface
 
             if ($proposedEnd->lte($slotStart)) {
                 $slotStart->addMinutes(self::DEFAULT_INTERVAL_MINUTES);
+
                 continue;
             }
 
@@ -420,9 +423,9 @@ class SlotFinderService implements SlotFinderInterface
     /**
      * Check if a time slot has no conflicts with schedules or impediments.
      *
-     * @param Availability $availability The availability containing conflict data
-     * @param Carbon $start Start of the time slot
-     * @param Carbon $end End of the time slot
+     * @param  Availability  $availability  The availability containing conflict data
+     * @param  Carbon  $start  Start of the time slot
+     * @param  Carbon  $end  End of the time slot
      * @return bool True if the slot has no conflicts
      */
     private function isTimeSlotConflictFree(
@@ -431,25 +434,25 @@ class SlotFinderService implements SlotFinderInterface
         Carbon $end
     ): bool {
         $hasOverlappingSchedule = $availability->schedules->contains(
-            fn($schedule): bool => $schedule->overlapsWith($start, $end)
+            fn ($schedule): bool => $schedule->overlapsWith($start, $end)
         );
 
         $hasOverlappingImpediments = $availability->impediments->contains(
-            fn($impediment): bool => $impediment->overlapsWith($start, $end)
+            fn ($impediment): bool => $impediment->overlapsWith($start, $end)
         );
 
-        return !$hasOverlappingSchedule && !$hasOverlappingImpediments;
+        return ! $hasOverlappingSchedule && ! $hasOverlappingImpediments;
     }
 
     /**
      * Find the first available slot in a daily availability.
      *
-     * @param Availability $availability The daily availability
-     * @param Carbon $currentDate Current date being checked
-     * @param Carbon $searchStartDate Start date of the search
-     * @param int $durationMinutes Required duration in minutes
-     * @param int $intervalMinutes Check interval in minutes
-     * @param Carbon $searchEndDate End date of the search
+     * @param  Availability  $availability  The daily availability
+     * @param  Carbon  $currentDate  Current date being checked
+     * @param  Carbon  $searchStartDate  Start date of the search
+     * @param  int  $durationMinutes  Required duration in minutes
+     * @param  int  $intervalMinutes  Check interval in minutes
+     * @param  Carbon  $searchEndDate  End date of the search
      * @return array|null First available slot or null
      */
     private function findFirstSlotInDailyAvailability(
@@ -472,6 +475,7 @@ class SlotFinderService implements SlotFinderInterface
 
             if ($proposedEnd->lte($currentDate) || $proposedEnd->gt($searchEndDate)) {
                 $slotStart->addMinutes($intervalMinutes);
+
                 continue;
             }
 
@@ -493,10 +497,10 @@ class SlotFinderService implements SlotFinderInterface
     /**
      * Check if there is available time within a daily availability.
      *
-     * @param Availability $availability The daily availability
-     * @param Carbon $currentDate Current date being checked
-     * @param Carbon $searchStart Start of search period
-     * @param Carbon $searchEnd End of search period
+     * @param  Availability  $availability  The daily availability
+     * @param  Carbon  $currentDate  Current date being checked
+     * @param  Carbon  $searchStart  Start of search period
+     * @param  Carbon  $searchEnd  End of search period
      * @return bool True if there is available time
      */
     private function hasAvailableTimeInDailyAvailability(

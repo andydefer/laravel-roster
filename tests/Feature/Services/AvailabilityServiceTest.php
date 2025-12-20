@@ -21,7 +21,8 @@ final class AvailabilityServiceTest extends TestCase
     {
         parent::setUp();
 
-        $this->model = new class extends Model {
+        $this->model = new class extends Model
+        {
             protected $table = 'test_schedulables';
         };
 

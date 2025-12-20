@@ -7,8 +7,8 @@ namespace Roster\Repositories;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
-use Roster\Models\Schedule;
 use Roster\Contracts\Repository\ScheduleRepositoryInterface;
+use Roster\Models\Schedule;
 
 class ScheduleRepository extends AbstractRepository implements ScheduleRepositoryInterface
 {
@@ -27,7 +27,7 @@ class ScheduleRepository extends AbstractRepository implements ScheduleRepositor
     {
         $schedule = $this->findById($id);
 
-        if (!$schedule instanceof Schedule) {
+        if (! $schedule instanceof Schedule) {
             return false;
         }
 
@@ -41,7 +41,7 @@ class ScheduleRepository extends AbstractRepository implements ScheduleRepositor
     {
         $schedule = $this->findById($id);
 
-        if (!$schedule instanceof Schedule) {
+        if (! $schedule instanceof Schedule) {
             return false;
         }
 
@@ -60,7 +60,7 @@ class ScheduleRepository extends AbstractRepository implements ScheduleRepositor
             },
             'availability.impediments' => function ($query): void {
                 $query->orderBy('start_datetime');
-            }
+            },
         ])->find($id);
     }
 
@@ -195,7 +195,8 @@ class ScheduleRepository extends AbstractRepository implements ScheduleRepositor
 
     /**
      * Apply common filters to query.
-     * @param array<string, mixed> $filters
+     *
+     * @param  array<string, mixed>  $filters
      */
     private function applyCommonFilters(Builder $builder, array $filters): void
     {

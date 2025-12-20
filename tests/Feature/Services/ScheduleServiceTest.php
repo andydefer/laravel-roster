@@ -5,12 +5,12 @@ declare(strict_types=1);
 namespace Tests\Feature\Services;
 
 use BadMethodCallException;
-use InvalidArgumentException;
 use Exception;
-use Illuminate\Support\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Collection;
+use InvalidArgumentException;
 use Roster\Exceptions\ValidationException;
 use Roster\Models\Availability;
 use Roster\Models\Schedule;
@@ -31,7 +31,8 @@ final class ScheduleServiceTest extends TestCase
     {
         parent::setUp();
 
-        $model = new class extends Model {
+        $model = new class extends Model
+        {
             protected $table = 'test_schedulables';
 
             public $timestamps = false;
@@ -130,7 +131,8 @@ final class ScheduleServiceTest extends TestCase
 
     public function test_create_schedule_with_invalid_availability_throws_exception(): void
     {
-        $otherModel = new class extends Model {
+        $otherModel = new class extends Model
+        {
             protected $table = 'test_schedulables';
 
             public $timestamps = false;
@@ -146,7 +148,6 @@ final class ScheduleServiceTest extends TestCase
 
         $this->expectException(ValidationException::class);
         $this->expectExceptionMessage('The provided availability does not belong to this schedulable');
-
 
         $this->scheduleService->for($otherModel);
         $this->scheduleService->create($this->availability, $data);
@@ -240,7 +241,7 @@ final class ScheduleServiceTest extends TestCase
             'status' => 'booked',
             'metadata' => [
                 'project' => 'Système de réservation',
-                'attendees' => ['Alice', 'Bob', 'Charlie']
+                'attendees' => ['Alice', 'Bob', 'Charlie'],
             ],
         ];
 
@@ -255,7 +256,6 @@ final class ScheduleServiceTest extends TestCase
 
         // Mais le type du schedule correspond bien au type de l'availability
         $this->assertSame('consultation', $schedule->type);
-
 
         // Test avec une autre availability (type 'training') et un titre différent
         $data2 = [

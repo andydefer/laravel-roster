@@ -116,7 +116,7 @@ class AvailabilityService extends AbstractSchedulableService
     {
         $this->currentAvailability = $this->find($id);
 
-        if (!$this->currentAvailability instanceof Availability) {
+        if (! $this->currentAvailability instanceof Availability) {
             $this->throwNotFoundException();
         }
 
@@ -159,8 +159,9 @@ class AvailabilityService extends AbstractSchedulableService
     /**
      * Create a new availability.
      *
-     * @param array<string, mixed> $data Availability data
+     * @param  array<string, mixed>  $data  Availability data
      * @return Availability Created availability
+     *
      * @throws ValidationException When validation fails
      */
     public function create(array $data): Availability
@@ -194,6 +195,7 @@ class AvailabilityService extends AbstractSchedulableService
     public function find(int $id): ?Availability
     {
         $this->validateSchedulable();
+
         return $this->availabilityRepository->findById($id);
     }
 
@@ -202,7 +204,7 @@ class AvailabilityService extends AbstractSchedulableService
         $this->validateSchedulable();
         $availability = $this->find($id);
 
-        if (!$availability instanceof Availability) {
+        if (! $availability instanceof Availability) {
             return false;
         }
 
@@ -212,6 +214,7 @@ class AvailabilityService extends AbstractSchedulableService
     public function hasOverlapping(array $data, ?int $exceptId = null): bool
     {
         $this->validateSchedulable();
+
         return $this->availabilityChecker->hasOverlapping($this->schedulable, $data, $exceptId);
     }
 
@@ -219,30 +222,35 @@ class AvailabilityService extends AbstractSchedulableService
     {
         $this->validateSchedulable();
         $this->validationService->parseAndValidateTimeRange($data);
+
         return $this->availabilityRepository->findOverlapping($this->schedulable, $data, $exceptId);
     }
 
     public function findAdjacentAvailabilities(array $data): Collection
     {
         $this->validateSchedulable();
+
         return $this->availabilityMerger->findAdjacentAvailabilities($data, $this->schedulable);
     }
 
     public function whereDay(string $day): self
     {
         $this->filters['day'] = strtolower($day);
+
         return $this;
     }
 
     public function isAvailableAt(Carbon $datetime): bool
     {
         $this->validateSchedulable();
+
         return $this->availabilityChecker->isAvailableAt($this->schedulable, $datetime);
     }
 
     public function isAvailableForPeriod(Carbon $start, Carbon $end, ?string $type = null): bool
     {
         $this->validateSchedulable();
+
         return $this->availabilityChecker->isAvailableForPeriod($this->schedulable, $start, $end, $type);
     }
 
@@ -254,6 +262,7 @@ class AvailabilityService extends AbstractSchedulableService
         ?string $type = null
     ): array {
         $this->validateSchedulable();
+
         return $this->slotFinder->findSlotsInPeriod(
             $this->schedulable,
             $startDate,
@@ -273,11 +282,11 @@ class AvailabilityService extends AbstractSchedulableService
             'end_date' => $availability->end_date?->format('Y-m-d'),
         ], $data);
 
-        if (!isset($checkData['start_time']) && $availability->start_time) {
+        if (! isset($checkData['start_time']) && $availability->start_time) {
             $checkData['start_time'] = $availability->start_time->format('H:i:s');
         }
 
-        if (!isset($checkData['end_time']) && $availability->end_time) {
+        if (! isset($checkData['end_time']) && $availability->end_time) {
             $checkData['end_time'] = $availability->end_time->format('H:i:s');
         }
 

@@ -17,11 +17,11 @@ trait DateRangeOverlapTrait
         ?Carbon $newStartDate,
         ?Carbon $newEndDate
     ): bool {
-        if (!$existingStartDate && !$existingEndDate) {
+        if (! $existingStartDate && ! $existingEndDate) {
             return true;
         }
 
-        if (!$newStartDate && !$newEndDate) {
+        if (! $newStartDate && ! $newEndDate) {
             return true;
         }
 

@@ -5,11 +5,11 @@ declare(strict_types=1);
 namespace Tests\Feature\Services;
 
 use BadMethodCallException;
-use Illuminate\Support\Collection;
 use Illuminate\Database\Eloquent\Model;
-use Roster\Exceptions\OverlappingImpedimentException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Collection;
+use Roster\Exceptions\OverlappingImpedimentException;
 use Roster\Exceptions\ValidationException;
 use Roster\Models\Availability;
 use Roster\Models\Impediment;
@@ -32,7 +32,8 @@ final class ImpedimentServiceTest extends TestCase
     {
         parent::setUp();
 
-        $this->model = new class extends Model {
+        $this->model = new class extends Model
+        {
             protected $table = 'test_schedulables';
 
             public $timestamps = false;
@@ -94,7 +95,8 @@ final class ImpedimentServiceTest extends TestCase
     public function test_create_impediment_with_wrong_availability_throws_exception(): void
     {
         // Créer un autre modèle avec sa propre availability
-        $otherModel = new class extends Model {
+        $otherModel = new class extends Model
+        {
             protected $table = 'test_schedulables';
 
             public $timestamps = false;

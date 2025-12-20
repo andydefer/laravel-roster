@@ -6,9 +6,9 @@ namespace Roster\Services\Core;
 
 use Illuminate\Support\Carbon;
 use Roster\Contracts\Services\ValidationServiceInterface;
+use Roster\Exceptions\Enums\ValidationType;
 use Roster\Exceptions\TimeRangeValidationException;
 use Roster\Exceptions\ValidationException;
-use Roster\Exceptions\Enums\ValidationType;
 
 class ValidationService implements ValidationServiceInterface
 {
@@ -22,8 +22,8 @@ class ValidationService implements ValidationServiceInterface
     ): void {
         if ($end->lte($start)) {
             throw new TimeRangeValidationException([
-                'start_' . $context => $start->format('Y-m-d H:i:s'),
-                'end_' . $context => $end->format('Y-m-d H:i:s'),
+                'start_'.$context => $start->format('Y-m-d H:i:s'),
+                'end_'.$context => $end->format('Y-m-d H:i:s'),
             ]);
         }
     }
@@ -35,12 +35,11 @@ class ValidationService implements ValidationServiceInterface
                 ValidationType::MINIMUM_DURATION_NOT_MET,
                 [
                     'minimum_minutes' => 1,
-                    'provided_minutes' => min($durationMinutes, $intervalMinutes)
+                    'provided_minutes' => min($durationMinutes, $intervalMinutes),
                 ]
             );
         }
     }
-
 
     /**
      * Validate that a date is in the future.
@@ -61,10 +60,8 @@ class ValidationService implements ValidationServiceInterface
         ?int $minimumMinutes = null
     ): void {
         $defaultMinutes = match (true) {
-            str_contains(debug_backtrace()[1]['function'] ?? '', 'Impediment') =>
-            config('roster.durations.minimum_impediment_minutes', 5),
-            str_contains(debug_backtrace()[1]['function'] ?? '', 'Schedule') =>
-            config('roster.durations.minimum_schedule_minutes', 15),
+            str_contains(debug_backtrace()[1]['function'] ?? '', 'Impediment') => config('roster.durations.minimum_impediment_minutes', 5),
+            str_contains(debug_backtrace()[1]['function'] ?? '', 'Schedule') => config('roster.durations.minimum_schedule_minutes', 15),
             default => 1
         };
 
@@ -75,7 +72,7 @@ class ValidationService implements ValidationServiceInterface
                 ValidationType::MINIMUM_DURATION_NOT_MET,
                 [
                     'minimum_minutes' => $minimumMinutes,
-                    'provided_minutes' => $start->diffInMinutes($end)
+                    'provided_minutes' => $start->diffInMinutes($end),
                 ]
             );
         }
@@ -84,13 +81,13 @@ class ValidationService implements ValidationServiceInterface
     /**
      * Validate that required fields exist.
      *
-     * @param array<string, mixed> $data
-     * @param array<string> $requiredFields
+     * @param  array<string, mixed>  $data
+     * @param  array<string>  $requiredFields
      */
     public function validateRequiredFields(array $data, array $requiredFields): void
     {
         foreach ($requiredFields as $requiredField) {
-            if (!isset($data[$requiredField])) {
+            if (! isset($data[$requiredField])) {
                 throw new ValidationException(
                     ValidationType::INVALID_TIME_RANGE,
                     ['missing_field' => $requiredField]
@@ -102,7 +99,7 @@ class ValidationService implements ValidationServiceInterface
     /**
      * Parse and validate datetime from array.
      *
-     * @param array<string, mixed> $data
+     * @param  array<string, mixed>  $data
      * @return array{start: Carbon, end: Carbon}
      */
     public function parseAndValidateDateTimeRange(
@@ -123,7 +120,7 @@ class ValidationService implements ValidationServiceInterface
     /**
      * Parse and validate time from array.
      *
-     * @param array<string, mixed> $data
+     * @param  array<string, mixed>  $data
      * @return array{start: Carbon, end: Carbon}
      */
     public function parseAndValidateTimeRange(

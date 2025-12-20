@@ -1,4 +1,6 @@
-# 📝 Psalm Analysis Report
+# Psalm Static Analysis Report
+*Generated: sam. 20 déc. 2025 08:17:30 WAT*
+
 
 INFO: PropertyNotSetInConstructor - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Commands/InstallRosterCommand.php#L16\src/Commands/[1;31mInstallRosterCommand.php:16:7[0m]8;;\ - Property Roster\Commands\InstallRosterCommand::$laravel is not defined in constructor of Roster\Commands\InstallRosterCommand or in any methods called in the constructor (see https://psalm.dev/074)
 class [30;47mInstallRosterCommand[0m extends Command
@@ -24,7 +26,7 @@ INFO: ClassMustBeFinal - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-
 class [30;47mInstallRosterCommand[0m extends Command
 
 
-[0;31mERROR[0m: PossiblyUnusedMethod - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Commands/InstallRosterCommand.php#L37\src/Commands/[1;31mInstallRosterCommand.php:37:21[0m]8;;\ - Cannot find any calls to method Roster\Commands\InstallRosterCommand::handle (see https://psalm.dev/087)
+[0;31mERROR[0m: PossiblyUnusedMethod - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Commands/InstallRosterCommand.php#L35\src/Commands/[1;31mInstallRosterCommand.php:35:21[0m]8;;\ - Cannot find any calls to method Roster\Commands\InstallRosterCommand::handle (see https://psalm.dev/087)
     public function [97;41mhandle[0m(): void
 
 
@@ -32,11 +34,11 @@ class [30;47mInstallRosterCommand[0m extends Command
     public function [97;41mexecuteSteps[0m(array $context = []): array;
 
 
-[0;31mERROR[0m: PossiblyUnusedMethod - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Contracts/Installation/InstallationExecutorInterface.php#L26\src/Contracts/Installation/[1;31mInstallationExecutorInterface.php:26:21[0m]8;;\ - Cannot find any calls to method Roster\Contracts\Installation\InstallationExecutorInterface::addStep (see https://psalm.dev/087)
+[0;31mERROR[0m: PossiblyUnusedMethod - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Contracts/Installation/InstallationExecutorInterface.php#L23\src/Contracts/Installation/[1;31mInstallationExecutorInterface.php:23:21[0m]8;;\ - Cannot find any calls to method Roster\Contracts\Installation\InstallationExecutorInterface::addStep (see https://psalm.dev/087)
     public function [97;41maddStep[0m(InstallationStepInterface $step): self;
 
 
-[0;31mERROR[0m: PossiblyUnusedMethod - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Contracts/Installation/InstallationExecutorInterface.php#L33\src/Contracts/Installation/[1;31mInstallationExecutorInterface.php:33:21[0m]8;;\ - Cannot find any calls to method Roster\Contracts\Installation\InstallationExecutorInterface::getSteps (see https://psalm.dev/087)
+[0;31mERROR[0m: PossiblyUnusedMethod - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Contracts/Installation/InstallationExecutorInterface.php#L30\src/Contracts/Installation/[1;31mInstallationExecutorInterface.php:30:21[0m]8;;\ - Cannot find any calls to method Roster\Contracts\Installation\InstallationExecutorInterface::getSteps (see https://psalm.dev/087)
     public function [97;41mgetSteps[0m(): array;
 
 
@@ -44,15 +46,15 @@ class [30;47mInstallRosterCommand[0m extends Command
     public function [97;41mexecute[0m(): bool;
 
 
-[0;31mERROR[0m: PossiblyUnusedMethod - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Contracts/Installation/InstallationStepInterface.php#L24\src/Contracts/Installation/[1;31mInstallationStepInterface.php:24:21[0m]8;;\ - Cannot find any calls to method Roster\Contracts\Installation\InstallationStepInterface::getName (see https://psalm.dev/087)
+[0;31mERROR[0m: PossiblyUnusedMethod - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Contracts/Installation/InstallationStepInterface.php#L22\src/Contracts/Installation/[1;31mInstallationStepInterface.php:22:21[0m]8;;\ - Cannot find any calls to method Roster\Contracts\Installation\InstallationStepInterface::getName (see https://psalm.dev/087)
     public function [97;41mgetName[0m(): string;
 
 
-[0;31mERROR[0m: PossiblyUnusedMethod - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Contracts/Installation/InstallationStepInterface.php#L31\src/Contracts/Installation/[1;31mInstallationStepInterface.php:31:21[0m]8;;\ - Cannot find any calls to method Roster\Contracts\Installation\InstallationStepInterface::getDescription (see https://psalm.dev/087)
+[0;31mERROR[0m: PossiblyUnusedMethod - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Contracts/Installation/InstallationStepInterface.php#L27\src/Contracts/Installation/[1;31mInstallationStepInterface.php:27:21[0m]8;;\ - Cannot find any calls to method Roster\Contracts\Installation\InstallationStepInterface::getDescription (see https://psalm.dev/087)
     public function [97;41mgetDescription[0m(): string;
 
 
-[0;31mERROR[0m: PossiblyUnusedMethod - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Contracts/Installation/InstallationStepInterface.php#L39\src/Contracts/Installation/[1;31mInstallationStepInterface.php:39:21[0m]8;;\ - Cannot find any calls to method Roster\Contracts\Installation\InstallationStepInterface::shouldExecute (see https://psalm.dev/087)
+[0;31mERROR[0m: PossiblyUnusedMethod - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Contracts/Installation/InstallationStepInterface.php#L34\src/Contracts/Installation/[1;31mInstallationStepInterface.php:34:21[0m]8;;\ - Cannot find any calls to method Roster\Contracts\Installation\InstallationStepInterface::shouldExecute (see https://psalm.dev/087)
     public function [97;41mshouldExecute[0m(array $context = []): bool;
 
 
@@ -96,11 +98,11 @@ class [30;47mInstallRosterCommand[0m extends Command
 interface [97;41mAvailabilityDependentServiceInterface[0m
 
 
-[0;31mERROR[0m: PossiblyUnusedMethod - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Contracts/Services/AvailabilityValidatorInterface.php#L30\src/Contracts/Services/[1;31mAvailabilityValidatorInterface.php:30:21[0m]8;;\ - Cannot find any calls to method Roster\Contracts\Services\AvailabilityValidatorInterface::hasOverlapping (see https://psalm.dev/087)
+[0;31mERROR[0m: PossiblyUnusedMethod - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Contracts/Services/AvailabilityValidatorInterface.php#L31\src/Contracts/Services/[1;31mAvailabilityValidatorInterface.php:31:21[0m]8;;\ - Cannot find any calls to method Roster\Contracts\Services\AvailabilityValidatorInterface::hasOverlapping (see https://psalm.dev/087)
     public function [97;41mhasOverlapping[0m(Model $model, array $data, ?int $exceptId = null): bool;
 
 
-[0;31mERROR[0m: PossiblyUnusedMethod - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Contracts/Services/AvailabilityValidatorInterface.php#L42\src/Contracts/Services/[1;31mAvailabilityValidatorInterface.php:42:21[0m]8;;\ - Cannot find any calls to method Roster\Contracts\Services\AvailabilityValidatorInterface::overlaps (see https://psalm.dev/087)
+[0;31mERROR[0m: PossiblyUnusedMethod - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Contracts/Services/AvailabilityValidatorInterface.php#L43\src/Contracts/Services/[1;31mAvailabilityValidatorInterface.php:43:21[0m]8;;\ - Cannot find any calls to method Roster\Contracts\Services\AvailabilityValidatorInterface::overlaps (see https://psalm.dev/087)
     public function [97;41moverlaps[0m(
 
 
@@ -288,8 +290,8 @@ class [30;47mAvailability[0m extends Model
     public function [97;41misAvailableForSchedule[0m(Carbon $start, Carbon $end): bool
 
 
-INFO: UndefinedThisPropertyFetch - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Models/Availability.php#L66\src/Models/[1;31mAvailability.php:66:35[0m]8;;\ - Instance property Roster\Models\Availability::$days is not defined (see https://psalm.dev/041)
-        if (!in_array($dayOfWeek, [30;47m$this->days[0m)) {
+INFO: UndefinedThisPropertyFetch - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Models/Availability.php#L66\src/Models/[1;31mAvailability.php:66:36[0m]8;;\ - Instance property Roster\Models\Availability::$days is not defined (see https://psalm.dev/041)
+        if (! in_array($dayOfWeek, [30;47m$this->days[0m)) {
 
 
 INFO: UndefinedThisPropertyFetch - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Models/Availability.php#L75\src/Models/[1;31mAvailability.php:75:26[0m]8;;\ - Instance property Roster\Models\Availability::$start_time is not defined (see https://psalm.dev/041)
@@ -304,8 +306,8 @@ INFO: UndefinedThisPropertyFetch - ]8;;file:///home/andy-kani/pro/sites/package
         if ([30;47m$this->start_date[0m && $start->lt($this->start_date)) {
 
 
-INFO: UndefinedThisPropertyFetch - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Models/Availability.php#L86\src/Models/[1;31mAvailability.php:86:18[0m]8;;\ - Instance property Roster\Models\Availability::$end_date is not defined (see https://psalm.dev/041)
-        return !([30;47m$this->end_date[0m && $end->gt($this->end_date));
+INFO: UndefinedThisPropertyFetch - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Models/Availability.php#L86\src/Models/[1;31mAvailability.php:86:19[0m]8;;\ - Instance property Roster\Models\Availability::$end_date is not defined (see https://psalm.dev/041)
+        return ! ([30;47m$this->end_date[0m && $end->gt($this->end_date));
 
 
 INFO: ClassMustBeFinal - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Models/Impediment.php#L11\src/Models/[1;31mImpediment.php:11:7[0m]8;;\ - Class Roster\Models\Impediment is never extended and is not part of the public API, and thus must be made final. (see https://psalm.dev/361)
@@ -352,27 +354,27 @@ INFO: UndefinedThisPropertyFetch - ]8;;file:///home/andy-kani/pro/sites/package
     public function [97;41misActive[0m(): bool
 
 
-INFO: UndefinedThisPropertyFetch - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Models/Impediment.php#L69\src/Models/[1;31mImpediment.php:69:16[0m]8;;\ - Instance property Roster\Models\Impediment::$start_datetime is not defined (see https://psalm.dev/041)
+INFO: UndefinedThisPropertyFetch - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Models/Impediment.php#L70\src/Models/[1;31mImpediment.php:70:16[0m]8;;\ - Instance property Roster\Models\Impediment::$start_datetime is not defined (see https://psalm.dev/041)
         return [30;47m$this->start_datetime[0m->lte($now) && $this->end_datetime->gte($now);
 
 
-INFO: UndefinedThisPropertyFetch - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Models/Impediment.php#L69\src/Models/[1;31mImpediment.php:69:52[0m]8;;\ - Instance property Roster\Models\Impediment::$end_datetime is not defined (see https://psalm.dev/041)
+INFO: UndefinedThisPropertyFetch - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Models/Impediment.php#L70\src/Models/[1;31mImpediment.php:70:52[0m]8;;\ - Instance property Roster\Models\Impediment::$end_datetime is not defined (see https://psalm.dev/041)
         return $this->start_datetime->lte($now) && [30;47m$this->end_datetime[0m->gte($now);
 
 
-[0;31mERROR[0m: PossiblyUnusedMethod - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Models/Impediment.php#L75\src/Models/[1;31mImpediment.php:75:21[0m]8;;\ - Cannot find any calls to method Roster\Models\Impediment::isUpcoming (see https://psalm.dev/087)
+[0;31mERROR[0m: PossiblyUnusedMethod - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Models/Impediment.php#L76\src/Models/[1;31mImpediment.php:76:21[0m]8;;\ - Cannot find any calls to method Roster\Models\Impediment::isUpcoming (see https://psalm.dev/087)
     public function [97;41misUpcoming[0m(): bool
 
 
-INFO: UndefinedThisPropertyFetch - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Models/Impediment.php#L77\src/Models/[1;31mImpediment.php:77:16[0m]8;;\ - Instance property Roster\Models\Impediment::$start_datetime is not defined (see https://psalm.dev/041)
+INFO: UndefinedThisPropertyFetch - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Models/Impediment.php#L78\src/Models/[1;31mImpediment.php:78:16[0m]8;;\ - Instance property Roster\Models\Impediment::$start_datetime is not defined (see https://psalm.dev/041)
         return [30;47m$this->start_datetime[0m->gt(Carbon::now());
 
 
-[0;31mERROR[0m: PossiblyUnusedMethod - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Models/Impediment.php#L83\src/Models/[1;31mImpediment.php:83:21[0m]8;;\ - Cannot find any calls to method Roster\Models\Impediment::isPast (see https://psalm.dev/087)
+[0;31mERROR[0m: PossiblyUnusedMethod - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Models/Impediment.php#L84\src/Models/[1;31mImpediment.php:84:21[0m]8;;\ - Cannot find any calls to method Roster\Models\Impediment::isPast (see https://psalm.dev/087)
     public function [97;41misPast[0m(): bool
 
 
-INFO: UndefinedThisPropertyFetch - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Models/Impediment.php#L85\src/Models/[1;31mImpediment.php:85:16[0m]8;;\ - Instance property Roster\Models\Impediment::$end_datetime is not defined (see https://psalm.dev/041)
+INFO: UndefinedThisPropertyFetch - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Models/Impediment.php#L86\src/Models/[1;31mImpediment.php:86:16[0m]8;;\ - Instance property Roster\Models\Impediment::$end_datetime is not defined (see https://psalm.dev/041)
         return [30;47m$this->end_datetime[0m->lt(Carbon::now());
 
 
@@ -432,27 +434,27 @@ INFO: UndefinedThisPropertyFetch - ]8;;file:///home/andy-kani/pro/sites/package
     public function [97;41misActive[0m(): bool
 
 
-INFO: UndefinedThisPropertyFetch - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Models/Schedule.php#L79\src/Models/[1;31mSchedule.php:79:16[0m]8;;\ - Instance property Roster\Models\Schedule::$start_datetime is not defined (see https://psalm.dev/041)
+INFO: UndefinedThisPropertyFetch - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Models/Schedule.php#L80\src/Models/[1;31mSchedule.php:80:16[0m]8;;\ - Instance property Roster\Models\Schedule::$start_datetime is not defined (see https://psalm.dev/041)
         return [30;47m$this->start_datetime[0m->lte($now) && $this->end_datetime->gte($now);
 
 
-INFO: UndefinedThisPropertyFetch - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Models/Schedule.php#L79\src/Models/[1;31mSchedule.php:79:52[0m]8;;\ - Instance property Roster\Models\Schedule::$end_datetime is not defined (see https://psalm.dev/041)
+INFO: UndefinedThisPropertyFetch - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Models/Schedule.php#L80\src/Models/[1;31mSchedule.php:80:52[0m]8;;\ - Instance property Roster\Models\Schedule::$end_datetime is not defined (see https://psalm.dev/041)
         return $this->start_datetime->lte($now) && [30;47m$this->end_datetime[0m->gte($now);
 
 
-[0;31mERROR[0m: PossiblyUnusedMethod - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Models/Schedule.php#L85\src/Models/[1;31mSchedule.php:85:21[0m]8;;\ - Cannot find any calls to method Roster\Models\Schedule::isUpcoming (see https://psalm.dev/087)
+[0;31mERROR[0m: PossiblyUnusedMethod - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Models/Schedule.php#L86\src/Models/[1;31mSchedule.php:86:21[0m]8;;\ - Cannot find any calls to method Roster\Models\Schedule::isUpcoming (see https://psalm.dev/087)
     public function [97;41misUpcoming[0m(): bool
 
 
-INFO: UndefinedThisPropertyFetch - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Models/Schedule.php#L87\src/Models/[1;31mSchedule.php:87:16[0m]8;;\ - Instance property Roster\Models\Schedule::$start_datetime is not defined (see https://psalm.dev/041)
+INFO: UndefinedThisPropertyFetch - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Models/Schedule.php#L88\src/Models/[1;31mSchedule.php:88:16[0m]8;;\ - Instance property Roster\Models\Schedule::$start_datetime is not defined (see https://psalm.dev/041)
         return [30;47m$this->start_datetime[0m->gt(Carbon::now());
 
 
-[0;31mERROR[0m: PossiblyUnusedMethod - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Models/Schedule.php#L93\src/Models/[1;31mSchedule.php:93:21[0m]8;;\ - Cannot find any calls to method Roster\Models\Schedule::isPast (see https://psalm.dev/087)
+[0;31mERROR[0m: PossiblyUnusedMethod - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Models/Schedule.php#L94\src/Models/[1;31mSchedule.php:94:21[0m]8;;\ - Cannot find any calls to method Roster\Models\Schedule::isPast (see https://psalm.dev/087)
     public function [97;41misPast[0m(): bool
 
 
-INFO: UndefinedThisPropertyFetch - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Models/Schedule.php#L95\src/Models/[1;31mSchedule.php:95:16[0m]8;;\ - Instance property Roster\Models\Schedule::$end_datetime is not defined (see https://psalm.dev/041)
+INFO: UndefinedThisPropertyFetch - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Models/Schedule.php#L96\src/Models/[1;31mSchedule.php:96:16[0m]8;;\ - Instance property Roster\Models\Schedule::$end_datetime is not defined (see https://psalm.dev/041)
         return [30;47m$this->end_datetime[0m->lt(Carbon::now());
 
 
@@ -605,18 +607,18 @@ INFO: UndefinedMagicMethod - ]8;;file:///home/andy-kani/pro/sites/packages/lara
         return [30;47mAvailability::find($id)[0m;
 
 
-[0;31mERROR[0m: MissingOverrideAttribute - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Repositories/AvailabilityRepository.php#L143\src/Repositories/[1;31mAvailabilityRepository.php:143:5[0m]8;;\ - Method Roster\Repositories\AvailabilityRepository::findfortimeslot should have the "Override" attribute (see https://psalm.dev/358)
+[0;31mERROR[0m: MissingOverrideAttribute - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Repositories/AvailabilityRepository.php#L141\src/Repositories/[1;31mAvailabilityRepository.php:141:5[0m]8;;\ - Method Roster\Repositories\AvailabilityRepository::findfortimeslot should have the "Override" attribute (see https://psalm.dev/358)
     /**
      * Find availability for a time slot.
      */
     [97;41mpublic function findForTimeSlot([0m
 
 
-INFO: RiskyTruthyFalsyComparison - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Repositories/AvailabilityRepository.php#L153\src/Repositories/[1;31mAvailabilityRepository.php:153:13[0m]8;;\ - Operand of type null|string contains type string, which can be falsy and truthy. This can cause possibly unexpected behavior. Use strict comparison instead. (see https://psalm.dev/356)
+INFO: RiskyTruthyFalsyComparison - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Repositories/AvailabilityRepository.php#L151\src/Repositories/[1;31mAvailabilityRepository.php:151:13[0m]8;;\ - Operand of type null|string contains type string, which can be falsy and truthy. This can cause possibly unexpected behavior. Use strict comparison instead. (see https://psalm.dev/356)
         if ([30;47m$type[0m) {
 
 
-[0;31mERROR[0m: MissingOverrideAttribute - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Repositories/AvailabilityRepository.php#L170\src/Repositories/[1;31mAvailabilityRepository.php:170:5[0m]8;;\ - Method Roster\Repositories\AvailabilityRepository::getfordate should have the "Override" attribute (see https://psalm.dev/358)
+[0;31mERROR[0m: MissingOverrideAttribute - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Repositories/AvailabilityRepository.php#L168\src/Repositories/[1;31mAvailabilityRepository.php:168:5[0m]8;;\ - Method Roster\Repositories\AvailabilityRepository::getfordate should have the "Override" attribute (see https://psalm.dev/358)
     /**
      * Get availabilities for a specific date.
      *
@@ -625,11 +627,11 @@ INFO: RiskyTruthyFalsyComparison - ]8;;file:///home/andy-kani/pro/sites/package
     [97;41mpublic function getForDate([0m
 
 
-INFO: RiskyTruthyFalsyComparison - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Repositories/AvailabilityRepository.php#L178\src/Repositories/[1;31mAvailabilityRepository.php:178:13[0m]8;;\ - Operand of type null|string contains type string, which can be falsy and truthy. This can cause possibly unexpected behavior. Use strict comparison instead. (see https://psalm.dev/356)
+INFO: RiskyTruthyFalsyComparison - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Repositories/AvailabilityRepository.php#L176\src/Repositories/[1;31mAvailabilityRepository.php:176:13[0m]8;;\ - Operand of type null|string contains type string, which can be falsy and truthy. This can cause possibly unexpected behavior. Use strict comparison instead. (see https://psalm.dev/356)
         if ([30;47m$type[0m) {
 
 
-[0;31mERROR[0m: MissingOverrideAttribute - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Repositories/AvailabilityRepository.php#L195\src/Repositories/[1;31mAvailabilityRepository.php:195:5[0m]8;;\ - Method Roster\Repositories\AvailabilityRepository::getall should have the "Override" attribute (see https://psalm.dev/358)
+[0;31mERROR[0m: MissingOverrideAttribute - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Repositories/AvailabilityRepository.php#L193\src/Repositories/[1;31mAvailabilityRepository.php:193:5[0m]8;;\ - Method Roster\Repositories\AvailabilityRepository::getall should have the "Override" attribute (see https://psalm.dev/358)
     /**
      * Get all availabilities.
      *
@@ -638,15 +640,15 @@ INFO: RiskyTruthyFalsyComparison - ]8;;file:///home/andy-kani/pro/sites/package
     [97;41mpublic function getAll(): Collection[0m
 
 
-[0;31mERROR[0m: PossiblyUnusedMethod - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Repositories/AvailabilityRepository.php#L195\src/Repositories/[1;31mAvailabilityRepository.php:195:21[0m]8;;\ - Cannot find any calls to method Roster\Repositories\AvailabilityRepository::getAll (see https://psalm.dev/087)
+[0;31mERROR[0m: PossiblyUnusedMethod - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Repositories/AvailabilityRepository.php#L193\src/Repositories/[1;31mAvailabilityRepository.php:193:21[0m]8;;\ - Cannot find any calls to method Roster\Repositories\AvailabilityRepository::getAll (see https://psalm.dev/087)
     public function [97;41mgetAll[0m(): Collection
 
 
-INFO: MoreSpecificReturnType - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Repositories/AvailabilityRepository.php#L207\src/Repositories/[1;31mAvailabilityRepository.php:207:16[0m]8;;\ - The declared return type 'Illuminate\Support\Collection<int, Roster\Models\Availability>' for Roster\Repositories\AvailabilityRepository::getAllForSchedulable is more specific than the inferred return type 'Illuminate\Database\Eloquent\Collection<int, Illuminate\Database\Eloquent\Model>' (see https://psalm.dev/070)
+INFO: MoreSpecificReturnType - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Repositories/AvailabilityRepository.php#L203\src/Repositories/[1;31mAvailabilityRepository.php:203:16[0m]8;;\ - The declared return type 'Illuminate\Support\Collection<int, Roster\Models\Availability>' for Roster\Repositories\AvailabilityRepository::getAllForSchedulable is more specific than the inferred return type 'Illuminate\Database\Eloquent\Collection<int, Illuminate\Database\Eloquent\Model>' (see https://psalm.dev/070)
      * @return [30;47mCollection<int, Availability>[0m
 
 
-[0;31mERROR[0m: MissingOverrideAttribute - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Repositories/AvailabilityRepository.php#L209\src/Repositories/[1;31mAvailabilityRepository.php:209:5[0m]8;;\ - Method Roster\Repositories\AvailabilityRepository::getallforschedulable should have the "Override" attribute (see https://psalm.dev/358)
+[0;31mERROR[0m: MissingOverrideAttribute - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Repositories/AvailabilityRepository.php#L205\src/Repositories/[1;31mAvailabilityRepository.php:205:5[0m]8;;\ - Method Roster\Repositories\AvailabilityRepository::getallforschedulable should have the "Override" attribute (see https://psalm.dev/358)
     /**
      * Get all availabilities for a schedulable.
      *
@@ -655,44 +657,44 @@ INFO: MoreSpecificReturnType - ]8;;file:///home/andy-kani/pro/sites/packages/la
     [97;41mpublic function getAllForSchedulable([0m
 
 
-INFO: RiskyTruthyFalsyComparison - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Repositories/AvailabilityRepository.php#L217\src/Repositories/[1;31mAvailabilityRepository.php:217:13[0m]8;;\ - Operand of type null|string contains type string, which can be falsy and truthy. This can cause possibly unexpected behavior. Use strict comparison instead. (see https://psalm.dev/356)
+INFO: RiskyTruthyFalsyComparison - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Repositories/AvailabilityRepository.php#L213\src/Repositories/[1;31mAvailabilityRepository.php:213:13[0m]8;;\ - Operand of type null|string contains type string, which can be falsy and truthy. This can cause possibly unexpected behavior. Use strict comparison instead. (see https://psalm.dev/356)
         if ([30;47m$type[0m) {
 
 
-INFO: RiskyTruthyFalsyComparison - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Repositories/AvailabilityRepository.php#L221\src/Repositories/[1;31mAvailabilityRepository.php:221:13[0m]8;;\ - Operand of type null|string contains type string, which can be falsy and truthy. This can cause possibly unexpected behavior. Use strict comparison instead. (see https://psalm.dev/356)
+INFO: RiskyTruthyFalsyComparison - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Repositories/AvailabilityRepository.php#L217\src/Repositories/[1;31mAvailabilityRepository.php:217:13[0m]8;;\ - Operand of type null|string contains type string, which can be falsy and truthy. This can cause possibly unexpected behavior. Use strict comparison instead. (see https://psalm.dev/356)
         if ([30;47m$day[0m) {
 
 
-INFO: LessSpecificReturnStatement - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Repositories/AvailabilityRepository.php#L225\src/Repositories/[1;31mAvailabilityRepository.php:225:16[0m]8;;\ - The type 'Illuminate\Database\Eloquent\Collection<int, Illuminate\Database\Eloquent\Model>' is more general than the declared return type 'Illuminate\Support\Collection<int, Roster\Models\Availability>' for Roster\Repositories\AvailabilityRepository::getAllForSchedulable (see https://psalm.dev/129)
+INFO: LessSpecificReturnStatement - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Repositories/AvailabilityRepository.php#L221\src/Repositories/[1;31mAvailabilityRepository.php:221:16[0m]8;;\ - The type 'Illuminate\Database\Eloquent\Collection<int, Illuminate\Database\Eloquent\Model>' is more general than the declared return type 'Illuminate\Support\Collection<int, Roster\Models\Availability>' for Roster\Repositories\AvailabilityRepository::getAllForSchedulable (see https://psalm.dev/129)
         return [30;47m$builder->orderBy('start_time')->get()[0m;
 
 
-[0;31mERROR[0m: MissingOverrideAttribute - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Repositories/AvailabilityRepository.php#L231\src/Repositories/[1;31mAvailabilityRepository.php:231:5[0m]8;;\ - Method Roster\Repositories\AvailabilityRepository::isavailableat should have the "Override" attribute (see https://psalm.dev/358)
+[0;31mERROR[0m: MissingOverrideAttribute - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Repositories/AvailabilityRepository.php#L227\src/Repositories/[1;31mAvailabilityRepository.php:227:5[0m]8;;\ - Method Roster\Repositories\AvailabilityRepository::isavailableat should have the "Override" attribute (see https://psalm.dev/358)
     /**
      * Check if schedulable is available at specific datetime.
      */
     [97;41mpublic function isAvailableAt([0m
 
 
-[0;31mERROR[0m: MissingOverrideAttribute - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Repositories/AvailabilityRepository.php#L254\src/Repositories/[1;31mAvailabilityRepository.php:254:5[0m]8;;\ - Method Roster\Repositories\AvailabilityRepository::findoverlapping should have the "Override" attribute (see https://psalm.dev/358)
+[0;31mERROR[0m: MissingOverrideAttribute - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Repositories/AvailabilityRepository.php#L250\src/Repositories/[1;31mAvailabilityRepository.php:250:5[0m]8;;\ - Method Roster\Repositories\AvailabilityRepository::findoverlapping should have the "Override" attribute (see https://psalm.dev/358)
     /**
      * Find overlapping availabilities.
      *
-     * @param array<string, mixed> $data
+     * @param  array<string, mixed>  $data
      * @return Collection<int, Availability>
      */
     [97;41mpublic function findOverlapping([0m
 
 
-[0;31mERROR[0m: ParamNameMismatch - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Repositories/AvailabilityRepository.php#L256\src/Repositories/[1;31mAvailabilityRepository.php:256:15[0m]8;;\ - Argument 2 of Roster\Repositories\AvailabilityRepository::findOverlapping has wrong name $data, expecting $availabilityData as defined by Roster\Contracts\Repository\AvailabilityRepositoryInterface::findOverlapping (see https://psalm.dev/230)
+[0;31mERROR[0m: ParamNameMismatch - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Repositories/AvailabilityRepository.php#L252\src/Repositories/[1;31mAvailabilityRepository.php:252:15[0m]8;;\ - Argument 2 of Roster\Repositories\AvailabilityRepository::findOverlapping has wrong name $data, expecting $availabilityData as defined by Roster\Contracts\Repository\AvailabilityRepositoryInterface::findOverlapping (see https://psalm.dev/230)
         array [97;41m$data[0m,
 
 
-INFO: RiskyTruthyFalsyComparison - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Repositories/AvailabilityRepository.php#L273\src/Repositories/[1;31mAvailabilityRepository.php:273:14[0m]8;;\ - Operand of type array<never, never>|mixed contains type mixed, which can be falsy and truthy. This can cause possibly unexpected behavior. Use strict comparison instead. (see https://psalm.dev/356)
-        if (![30;47mempty($days)[0m) {
+INFO: RiskyTruthyFalsyComparison - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Repositories/AvailabilityRepository.php#L269\src/Repositories/[1;31mAvailabilityRepository.php:269:15[0m]8;;\ - Operand of type array<never, never>|mixed contains type mixed, which can be falsy and truthy. This can cause possibly unexpected behavior. Use strict comparison instead. (see https://psalm.dev/356)
+        if (! [30;47mempty($days)[0m) {
 
 
-INFO: InvalidArgument - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Repositories/AvailabilityRepository.php#L274\src/Repositories/[1;31mAvailabilityRepository.php:274:29[0m]8;;\ - Argument 1 of Illuminate\Database\Eloquent\Builder::where expects Closure(Illuminate\Database\Eloquent\Builder<Illuminate\Database\Eloquent\Model>):mixed|Illuminate\Contracts\Database\Query\Expression|array<array-key, mixed>|string, but impure-Closure(static):void provided (see https://psalm.dev/004)
+INFO: InvalidArgument - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Repositories/AvailabilityRepository.php#L270\src/Repositories/[1;31mAvailabilityRepository.php:270:29[0m]8;;\ - Argument 1 of Illuminate\Database\Eloquent\Builder::where expects Closure(Illuminate\Database\Eloquent\Builder<Illuminate\Database\Eloquent\Model>):mixed|Illuminate\Contracts\Database\Query\Expression|array<array-key, mixed>|string, but impure-Closure(static):void provided (see https://psalm.dev/004)
             $builder->where([30;47mfunction ($query) use ($days): void {
                 foreach ($days as $day) {
                     $query->orWhereJsonContains('days', $day);
@@ -700,11 +702,11 @@ INFO: InvalidArgument - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-r
             }[0m);
 
 
-INFO: UndefinedMethod - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Repositories/AvailabilityRepository.php#L276\src/Repositories/[1;31mAvailabilityRepository.php:276:29[0m]8;;\ - Method Roster\Repositories\AvailabilityRepository::orWhereJsonContains does not exist (see https://psalm.dev/022)
+INFO: UndefinedMethod - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Repositories/AvailabilityRepository.php#L272\src/Repositories/[1;31mAvailabilityRepository.php:272:29[0m]8;;\ - Method Roster\Repositories\AvailabilityRepository::orWhereJsonContains does not exist (see https://psalm.dev/022)
                     $query->[30;47morWhereJsonContains[0m('days', $day);
 
 
-INFO: InvalidArgument - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Repositories/AvailabilityRepository.php#L282\src/Repositories/[1;31mAvailabilityRepository.php:282:25[0m]8;;\ - Argument 1 of Illuminate\Database\Eloquent\Builder::where expects Closure(Illuminate\Database\Eloquent\Builder<Illuminate\Database\Eloquent\Model>):mixed|Illuminate\Contracts\Database\Query\Expression|array<array-key, mixed>|string, but impure-Closure(static):void provided (see https://psalm.dev/004)
+INFO: InvalidArgument - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Repositories/AvailabilityRepository.php#L278\src/Repositories/[1;31mAvailabilityRepository.php:278:25[0m]8;;\ - Argument 1 of Illuminate\Database\Eloquent\Builder::where expects Closure(Illuminate\Database\Eloquent\Builder<Illuminate\Database\Eloquent\Model>):mixed|Illuminate\Contracts\Database\Query\Expression|array<array-key, mixed>|string, but impure-Closure(static):void provided (see https://psalm.dev/004)
         $builder->where([30;47mfunction ($query) use ($startTime, $endTime): void {
             $query->where(function ($q) use ($startTime, $endTime): void {
                 $q->where('start_time', '<', $endTime->format('H:i:s'))
@@ -713,15 +715,15 @@ INFO: InvalidArgument - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-r
         }[0m);
 
 
-INFO: UndefinedMethod - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Repositories/AvailabilityRepository.php#L283\src/Repositories/[1;31mAvailabilityRepository.php:283:21[0m]8;;\ - Method Roster\Repositories\AvailabilityRepository::where does not exist (see https://psalm.dev/022)
+INFO: UndefinedMethod - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Repositories/AvailabilityRepository.php#L279\src/Repositories/[1;31mAvailabilityRepository.php:279:21[0m]8;;\ - Method Roster\Repositories\AvailabilityRepository::where does not exist (see https://psalm.dev/022)
             $query->[30;47mwhere[0m(function ($q) use ($startTime, $endTime): void {
 
 
-INFO: MissingClosureParamType - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Repositories/AvailabilityRepository.php#L283\src/Repositories/[1;31mAvailabilityRepository.php:283:37[0m]8;;\ - Parameter $q has no provided type (see https://psalm.dev/153)
+INFO: MissingClosureParamType - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Repositories/AvailabilityRepository.php#L279\src/Repositories/[1;31mAvailabilityRepository.php:279:37[0m]8;;\ - Parameter $q has no provided type (see https://psalm.dev/153)
             $query->where(function ([30;47m$q[0m) use ($startTime, $endTime): void {
 
 
-INFO: InvalidArgument - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Repositories/AvailabilityRepository.php#L290\src/Repositories/[1;31mAvailabilityRepository.php:290:25[0m]8;;\ - Argument 1 of Illuminate\Database\Eloquent\Builder::where expects Closure(Illuminate\Database\Eloquent\Builder<Illuminate\Database\Eloquent\Model>):mixed|Illuminate\Contracts\Database\Query\Expression|array<array-key, mixed>|string, but pure-Closure(static):void provided (see https://psalm.dev/004)
+INFO: InvalidArgument - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Repositories/AvailabilityRepository.php#L286\src/Repositories/[1;31mAvailabilityRepository.php:286:25[0m]8;;\ - Argument 1 of Illuminate\Database\Eloquent\Builder::where expects Closure(Illuminate\Database\Eloquent\Builder<Illuminate\Database\Eloquent\Model>):mixed|Illuminate\Contracts\Database\Query\Expression|array<array-key, mixed>|string, but pure-Closure(static):void provided (see https://psalm.dev/004)
         $builder->where([30;47mfunction ($query) use ($startDate, $endDate): void {
             $query->where(function ($q) use ($startDate, $endDate): void {
                 // Aucune date de fin pour l'existant ou la nouvelle
@@ -746,194 +748,192 @@ INFO: InvalidArgument - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-r
         }[0m);
 
 
-INFO: UndefinedMethod - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Repositories/AvailabilityRepository.php#L291\src/Repositories/[1;31mAvailabilityRepository.php:291:21[0m]8;;\ - Method Roster\Repositories\AvailabilityRepository::where does not exist (see https://psalm.dev/022)
+INFO: UndefinedMethod - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Repositories/AvailabilityRepository.php#L287\src/Repositories/[1;31mAvailabilityRepository.php:287:21[0m]8;;\ - Method Roster\Repositories\AvailabilityRepository::where does not exist (see https://psalm.dev/022)
             $query->[30;47mwhere[0m(function ($q) use ($startDate, $endDate): void {
 
 
-INFO: MissingClosureParamType - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Repositories/AvailabilityRepository.php#L291\src/Repositories/[1;31mAvailabilityRepository.php:291:37[0m]8;;\ - Parameter $q has no provided type (see https://psalm.dev/153)
+INFO: MissingClosureParamType - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Repositories/AvailabilityRepository.php#L287\src/Repositories/[1;31mAvailabilityRepository.php:287:37[0m]8;;\ - Parameter $q has no provided type (see https://psalm.dev/153)
             $query->where(function ([30;47m$q[0m) use ($startDate, $endDate): void {
 
 
-INFO: MissingClosureParamType - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Repositories/AvailabilityRepository.php#L295\src/Repositories/[1;31mAvailabilityRepository.php:295:41[0m]8;;\ - Parameter $subQuery has no provided type (see https://psalm.dev/153)
+INFO: MissingClosureParamType - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Repositories/AvailabilityRepository.php#L291\src/Repositories/[1;31mAvailabilityRepository.php:291:41[0m]8;;\ - Parameter $subQuery has no provided type (see https://psalm.dev/153)
                     ->orWhere(function ([30;47m$subQuery[0m) use ($startDate, $endDate): void {
 
 
-INFO: MissingClosureParamType - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Repositories/AvailabilityRepository.php#L315\src/Repositories/[1;31mAvailabilityRepository.php:315:38[0m]8;;\ - Parameter $query has no provided type (see https://psalm.dev/153)
+INFO: MissingClosureParamType - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Repositories/AvailabilityRepository.php#L311\src/Repositories/[1;31mAvailabilityRepository.php:311:38[0m]8;;\ - Parameter $query has no provided type (see https://psalm.dev/153)
             'schedules' => function ([30;47m$query[0m) use ($startDate, $endDate): void {
 
 
-INFO: MissingClosureParamType - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Repositories/AvailabilityRepository.php#L318\src/Repositories/[1;31mAvailabilityRepository.php:318:45[0m]8;;\ - Parameter $q has no provided type (see https://psalm.dev/153)
+INFO: MissingClosureParamType - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Repositories/AvailabilityRepository.php#L314\src/Repositories/[1;31mAvailabilityRepository.php:314:45[0m]8;;\ - Parameter $q has no provided type (see https://psalm.dev/153)
                     $query->where(function ([30;47m$q[0m) use ($startDate, $endDate): void {
 
 
-INFO: MissingClosureParamType - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Repositories/AvailabilityRepository.php#L321\src/Repositories/[1;31mAvailabilityRepository.php:321:49[0m]8;;\ - Parameter $subQ has no provided type (see https://psalm.dev/153)
+INFO: MissingClosureParamType - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Repositories/AvailabilityRepository.php#L317\src/Repositories/[1;31mAvailabilityRepository.php:317:49[0m]8;;\ - Parameter $subQ has no provided type (see https://psalm.dev/153)
                             ->orWhere(function ([30;47m$subQ[0m) use ($startDate, $endDate): void {
 
 
-INFO: MissingClosureParamType - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Repositories/AvailabilityRepository.php#L330\src/Repositories/[1;31mAvailabilityRepository.php:330:40[0m]8;;\ - Parameter $query has no provided type (see https://psalm.dev/153)
+INFO: MissingClosureParamType - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Repositories/AvailabilityRepository.php#L326\src/Repositories/[1;31mAvailabilityRepository.php:326:40[0m]8;;\ - Parameter $query has no provided type (see https://psalm.dev/153)
             'impediments' => function ([30;47m$query[0m) use ($startDate, $endDate): void {
 
 
-INFO: MissingClosureParamType - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Repositories/AvailabilityRepository.php#L333\src/Repositories/[1;31mAvailabilityRepository.php:333:45[0m]8;;\ - Parameter $q has no provided type (see https://psalm.dev/153)
+INFO: MissingClosureParamType - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Repositories/AvailabilityRepository.php#L329\src/Repositories/[1;31mAvailabilityRepository.php:329:45[0m]8;;\ - Parameter $q has no provided type (see https://psalm.dev/153)
                     $query->where(function ([30;47m$q[0m) use ($startDate, $endDate): void {
 
 
-INFO: MissingClosureParamType - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Repositories/AvailabilityRepository.php#L336\src/Repositories/[1;31mAvailabilityRepository.php:336:49[0m]8;;\ - Parameter $subQ has no provided type (see https://psalm.dev/153)
+INFO: MissingClosureParamType - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Repositories/AvailabilityRepository.php#L332\src/Repositories/[1;31mAvailabilityRepository.php:332:49[0m]8;;\ - Parameter $subQ has no provided type (see https://psalm.dev/153)
                             ->orWhere(function ([30;47m$subQ[0m) use ($startDate, $endDate): void {
 
 
-[0;31mERROR[0m: MissingOverrideAttribute - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Repositories/AvailabilityRepository.php#L363\src/Repositories/[1;31mAvailabilityRepository.php:363:5[0m]8;;\ - Method Roster\Repositories\AvailabilityRepository::timerangesoverlap should have the "Override" attribute (see https://psalm.dev/358)
+[0;31mERROR[0m: MissingOverrideAttribute - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Repositories/AvailabilityRepository.php#L358\src/Repositories/[1;31mAvailabilityRepository.php:358:5[0m]8;;\ - Method Roster\Repositories\AvailabilityRepository::timerangesoverlap should have the "Override" attribute (see https://psalm.dev/358)
     /**
      * Check if time ranges overlap.
      */
     [97;41mpublic function timeRangesOverlap([0m
 
 
-[0;31mERROR[0m: MissingOverrideAttribute - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Repositories/AvailabilityRepository.php#L378\src/Repositories/[1;31mAvailabilityRepository.php:378:5[0m]8;;\ - Method Roster\Repositories\AvailabilityRepository::findadjacentavailabilities should have the "Override" attribute (see https://psalm.dev/358)
+[0;31mERROR[0m: MissingOverrideAttribute - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Repositories/AvailabilityRepository.php#L373\src/Repositories/[1;31mAvailabilityRepository.php:373:5[0m]8;;\ - Method Roster\Repositories\AvailabilityRepository::findadjacentavailabilities should have the "Override" attribute (see https://psalm.dev/358)
     /**
      * Find adjacent availabilities.
      *
-     * @param array<string, mixed> $data
+     * @param  array<string, mixed>  $data
      * @return Collection<int, Availability>
      */
     [97;41mpublic function findAdjacentAvailabilities([0m
 
 
-[0;31mERROR[0m: ParamNameMismatch - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Repositories/AvailabilityRepository.php#L380\src/Repositories/[1;31mAvailabilityRepository.php:380:15[0m]8;;\ - Argument 2 of Roster\Repositories\AvailabilityRepository::findAdjacentAvailabilities has wrong name $data, expecting $availabilityData as defined by Roster\Contracts\Repository\AvailabilityRepositoryInterface::findAdjacentAvailabilities (see https://psalm.dev/230)
+[0;31mERROR[0m: ParamNameMismatch - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Repositories/AvailabilityRepository.php#L375\src/Repositories/[1;31mAvailabilityRepository.php:375:15[0m]8;;\ - Argument 2 of Roster\Repositories\AvailabilityRepository::findAdjacentAvailabilities has wrong name $data, expecting $availabilityData as defined by Roster\Contracts\Repository\AvailabilityRepositoryInterface::findAdjacentAvailabilities (see https://psalm.dev/230)
         array [97;41m$data[0m
 
 
-[0;31mERROR[0m: MissingOverrideAttribute - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Repositories/AvailabilityRepository.php#L399\src/Repositories/[1;31mAvailabilityRepository.php:399:5[0m]8;;\ - Method Roster\Repositories\AvailabilityRepository::applyfilters should have the "Override" attribute (see https://psalm.dev/358)
+[0;31mERROR[0m: MissingOverrideAttribute - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Repositories/AvailabilityRepository.php#L394\src/Repositories/[1;31mAvailabilityRepository.php:394:5[0m]8;;\ - Method Roster\Repositories\AvailabilityRepository::applyfilters should have the "Override" attribute (see https://psalm.dev/358)
     /**
      * Apply filters to query.
      */
     [97;41mpublic function applyFilters([0m
 
 
-INFO: UndefinedMagicMethod - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Repositories/AvailabilityRepository.php#L421\src/Repositories/[1;31mAvailabilityRepository.php:421:16[0m]8;;\ - Magic method Roster\Models\Availability::where does not exist (see https://psalm.dev/219)
+INFO: UndefinedMagicMethod - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Repositories/AvailabilityRepository.php#L416\src/Repositories/[1;31mAvailabilityRepository.php:416:16[0m]8;;\ - Magic method Roster\Models\Availability::where does not exist (see https://psalm.dev/219)
         return [30;47mAvailability::where('schedulable_id', $model->id)[0m
 
 
-INFO: UndefinedMagicPropertyFetch - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Repositories/AvailabilityRepository.php#L421\src/Repositories/[1;31mAvailabilityRepository.php:421:54[0m]8;;\ - Magic instance property Illuminate\Database\Eloquent\Model::$id is not defined (see https://psalm.dev/218)
+INFO: UndefinedMagicPropertyFetch - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Repositories/AvailabilityRepository.php#L416\src/Repositories/[1;31mAvailabilityRepository.php:416:54[0m]8;;\ - Magic instance property Illuminate\Database\Eloquent\Model::$id is not defined (see https://psalm.dev/218)
         return Availability::where('schedulable_id', [30;47m$model->id[0m)
 
 
-INFO: InvalidArgument - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Repositories/AvailabilityRepository.php#L450\src/Repositories/[1;31mAvailabilityRepository.php:450:25[0m]8;;\ - Argument 1 of Illuminate\Database\Eloquent\Builder::where expects Closure(Illuminate\Database\Eloquent\Builder<Illuminate\Database\Eloquent\Model>):mixed|Illuminate\Contracts\Database\Query\Expression|array<array-key, mixed>|string, but impure-Closure(static):void provided (see https://psalm.dev/004)
+INFO: InvalidArgument - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Repositories/AvailabilityRepository.php#L445\src/Repositories/[1;31mAvailabilityRepository.php:445:25[0m]8;;\ - Argument 1 of Illuminate\Database\Eloquent\Builder::where expects Closure(Illuminate\Database\Eloquent\Builder<Illuminate\Database\Eloquent\Model>):mixed|Illuminate\Contracts\Database\Query\Expression|array<array-key, mixed>|string, but impure-Closure(static):void provided (see https://psalm.dev/004)
         $builder->where([30;47mfunction ($q) use ($startDate): void {
             $q->whereNull('start_date')
                 ->orWhere('start_date', '<=', $startDate->toDateString());
         }[0m)->where(function ($q) use ($endDate): void {
 
 
-INFO: UndefinedMethod - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Repositories/AvailabilityRepository.php#L451\src/Repositories/[1;31mAvailabilityRepository.php:451:17[0m]8;;\ - Method Roster\Repositories\AvailabilityRepository::whereNull does not exist (see https://psalm.dev/022)
+INFO: UndefinedMethod - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Repositories/AvailabilityRepository.php#L446\src/Repositories/[1;31mAvailabilityRepository.php:446:17[0m]8;;\ - Method Roster\Repositories\AvailabilityRepository::whereNull does not exist (see https://psalm.dev/022)
             $q->[30;47mwhereNull[0m('start_date')
 
 
-INFO: InvalidArgument - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Repositories/AvailabilityRepository.php#L453\src/Repositories/[1;31mAvailabilityRepository.php:453:19[0m]8;;\ - Argument 1 of Illuminate\Database\Eloquent\Builder::where expects Closure(Illuminate\Database\Eloquent\Builder<Illuminate\Database\Eloquent\Model>):mixed|Illuminate\Contracts\Database\Query\Expression|array<array-key, mixed>|string, but impure-Closure(static):void provided (see https://psalm.dev/004)
+INFO: InvalidArgument - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Repositories/AvailabilityRepository.php#L448\src/Repositories/[1;31mAvailabilityRepository.php:448:19[0m]8;;\ - Argument 1 of Illuminate\Database\Eloquent\Builder::where expects Closure(Illuminate\Database\Eloquent\Builder<Illuminate\Database\Eloquent\Model>):mixed|Illuminate\Contracts\Database\Query\Expression|array<array-key, mixed>|string, but impure-Closure(static):void provided (see https://psalm.dev/004)
         })->where([30;47mfunction ($q) use ($endDate): void {
             $q->whereNull('end_date')
                 ->orWhere('end_date', '>=', $endDate->toDateString());
         }[0m);
 
 
-INFO: UndefinedMethod - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Repositories/AvailabilityRepository.php#L454\src/Repositories/[1;31mAvailabilityRepository.php:454:17[0m]8;;\ - Method Roster\Repositories\AvailabilityRepository::whereNull does not exist (see https://psalm.dev/022)
+INFO: UndefinedMethod - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Repositories/AvailabilityRepository.php#L449\src/Repositories/[1;31mAvailabilityRepository.php:449:17[0m]8;;\ - Method Roster\Repositories\AvailabilityRepository::whereNull does not exist (see https://psalm.dev/022)
             $q->[30;47mwhereNull[0m('end_date')
 
 
-[0;31mERROR[0m: MissingOverrideAttribute - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Repositories/AvailabilityRepository.php#L468\src/Repositories/[1;31mAvailabilityRepository.php:468:5[0m]8;;\ - Method Roster\Repositories\AvailabilityRepository::isavailabilityvalidfordate should have the "Override" attribute (see https://psalm.dev/358)
+[0;31mERROR[0m: MissingOverrideAttribute - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Repositories/AvailabilityRepository.php#L461\src/Repositories/[1;31mAvailabilityRepository.php:461:5[0m]8;;\ - Method Roster\Repositories\AvailabilityRepository::isavailabilityvalidfordate should have the "Override" attribute (see https://psalm.dev/358)
     /**
      * Check if an availability applies to a specific date.
      *
-     * @param Availability $availability The availability to check
-     * @param Carbon $date The date to check
+     * @param  Availability  $availability  The availability to check
+     * @param  Carbon  $date  The date to check
      * @return bool True if the availability applies to the date
      */
-
-
     [97;41mpublic function isAvailabilityValidForDate(Availability $availability, Carbon $date): bool[0m
 
 
-INFO: UndefinedMagicPropertyFetch - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Repositories/AvailabilityRepository.php#L471\src/Repositories/[1;31mAvailabilityRepository.php:471:35[0m]8;;\ - Magic instance property Roster\Models\Availability::$days is not defined (see https://psalm.dev/218)
-        if (!in_array($dayOfWeek, [30;47m$availability->days[0m)) {
+INFO: UndefinedMagicPropertyFetch - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Repositories/AvailabilityRepository.php#L464\src/Repositories/[1;31mAvailabilityRepository.php:464:36[0m]8;;\ - Magic instance property Roster\Models\Availability::$days is not defined (see https://psalm.dev/218)
+        if (! in_array($dayOfWeek, [30;47m$availability->days[0m)) {
 
 
-INFO: UndefinedMagicPropertyFetch - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Repositories/AvailabilityRepository.php#L475\src/Repositories/[1;31mAvailabilityRepository.php:475:13[0m]8;;\ - Magic instance property Roster\Models\Availability::$start_date is not defined (see https://psalm.dev/218)
+INFO: UndefinedMagicPropertyFetch - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Repositories/AvailabilityRepository.php#L468\src/Repositories/[1;31mAvailabilityRepository.php:468:13[0m]8;;\ - Magic instance property Roster\Models\Availability::$start_date is not defined (see https://psalm.dev/218)
         if ([30;47m$availability->start_date[0m !== null && $date->lt($availability->start_date)) {
 
 
-INFO: UndefinedMagicPropertyFetch - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Repositories/AvailabilityRepository.php#L479\src/Repositories/[1;31mAvailabilityRepository.php:479:18[0m]8;;\ - Magic instance property Roster\Models\Availability::$end_date is not defined (see https://psalm.dev/218)
-        return !([30;47m$availability->end_date[0m !== null && $date->gt($availability->end_date));
+INFO: UndefinedMagicPropertyFetch - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Repositories/AvailabilityRepository.php#L472\src/Repositories/[1;31mAvailabilityRepository.php:472:19[0m]8;;\ - Magic instance property Roster\Models\Availability::$end_date is not defined (see https://psalm.dev/218)
+        return ! ([30;47m$availability->end_date[0m !== null && $date->gt($availability->end_date));
 
 
-INFO: ImplementedReturnTypeMismatch - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Repositories/AvailabilityRepository.php#L489\src/Repositories/[1;31mAvailabilityRepository.php:489:16[0m]8;;\ - The inherited return type 'Illuminate\Support\Collection<int, Roster\Models\Availability>' for Roster\Contracts\Repository\AvailabilityRepositoryInterface::getAvailabilitiesWithConflictInfo is different to the implemented return type for Roster\Repositories\AvailabilityRepository::getavailabilitieswithconflictinfo 'Illuminate\Support\Collection<Roster\Models\Availability>' (see https://psalm.dev/123)
+INFO: ImplementedReturnTypeMismatch - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Repositories/AvailabilityRepository.php#L482\src/Repositories/[1;31mAvailabilityRepository.php:482:16[0m]8;;\ - The inherited return type 'Illuminate\Support\Collection<int, Roster\Models\Availability>' for Roster\Contracts\Repository\AvailabilityRepositoryInterface::getAvailabilitiesWithConflictInfo is different to the implemented return type for Roster\Repositories\AvailabilityRepository::getavailabilitieswithconflictinfo 'Illuminate\Support\Collection<Roster\Models\Availability>' (see https://psalm.dev/123)
      * @return [30;47mCollection<Availability>[0m Availabilities with conflicts loaded
 
 
-[0;31mERROR[0m: MissingTemplateParam - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Repositories/AvailabilityRepository.php#L489\src/Repositories/[1;31mAvailabilityRepository.php:489:16[0m]8;;\ - Illuminate\Support\Collection has missing template params, expecting 2 (see https://psalm.dev/182)
+[0;31mERROR[0m: MissingTemplateParam - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Repositories/AvailabilityRepository.php#L482\src/Repositories/[1;31mAvailabilityRepository.php:482:16[0m]8;;\ - Illuminate\Support\Collection has missing template params, expecting 2 (see https://psalm.dev/182)
      * @return [97;41mCollection<Availability>[0m Availabilities with conflicts loaded
 
 
-INFO: InvalidTemplateParam - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Repositories/AvailabilityRepository.php#L489\src/Repositories/[1;31mAvailabilityRepository.php:489:16[0m]8;;\ - Extended template param TKey of Illuminate\Support\Collection<Roster\Models\Availability> expects type array-key, type Roster\Models\Availability given (see https://psalm.dev/183)
+INFO: InvalidTemplateParam - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Repositories/AvailabilityRepository.php#L482\src/Repositories/[1;31mAvailabilityRepository.php:482:16[0m]8;;\ - Extended template param TKey of Illuminate\Support\Collection<Roster\Models\Availability> expects type array-key, type Roster\Models\Availability given (see https://psalm.dev/183)
      * @return [30;47mCollection<Availability>[0m Availabilities with conflicts loaded
 
 
-[0;31mERROR[0m: MissingOverrideAttribute - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Repositories/AvailabilityRepository.php#L491\src/Repositories/[1;31mAvailabilityRepository.php:491:5[0m]8;;\ - Method Roster\Repositories\AvailabilityRepository::getavailabilitieswithconflictinfo should have the "Override" attribute (see https://psalm.dev/358)
+[0;31mERROR[0m: MissingOverrideAttribute - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Repositories/AvailabilityRepository.php#L484\src/Repositories/[1;31mAvailabilityRepository.php:484:5[0m]8;;\ - Method Roster\Repositories\AvailabilityRepository::getavailabilitieswithconflictinfo should have the "Override" attribute (see https://psalm.dev/358)
     /**
      * Load availabilities with pre-loaded schedule and impediment conflicts.
      *
-     * @param object $schedulable The schedulable entity
-     * @param Carbon $start Start of the date range
-     * @param Carbon $end End of the date range
-     * @param string|null $type Optional availability type filter
+     * @param  object  $schedulable  The schedulable entity
+     * @param  Carbon  $start  Start of the date range
+     * @param  Carbon  $end  End of the date range
+     * @param  string|null  $type  Optional availability type filter
      * @return Collection<Availability> Availabilities with conflicts loaded
      */
     [97;41mpublic function getAvailabilitiesWithConflictInfo([0m
 
 
-[0;31mERROR[0m: ParamNameMismatch - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Repositories/AvailabilityRepository.php#L492\src/Repositories/[1;31mAvailabilityRepository.php:492:16[0m]8;;\ - Argument 1 of Roster\Repositories\AvailabilityRepository::getAvailabilitiesWithConflictInfo has wrong name $schedulable, expecting $model as defined by Roster\Contracts\Repository\AvailabilityRepositoryInterface::getAvailabilitiesWithConflictInfo (see https://psalm.dev/230)
+[0;31mERROR[0m: ParamNameMismatch - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Repositories/AvailabilityRepository.php#L485\src/Repositories/[1;31mAvailabilityRepository.php:485:16[0m]8;;\ - Argument 1 of Roster\Repositories\AvailabilityRepository::getAvailabilitiesWithConflictInfo has wrong name $schedulable, expecting $model as defined by Roster\Contracts\Repository\AvailabilityRepositoryInterface::getAvailabilitiesWithConflictInfo (see https://psalm.dev/230)
         object [97;41m$schedulable[0m,
 
 
-INFO: ArgumentTypeCoercion - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Repositories/AvailabilityRepository.php#L497\src/Repositories/[1;31mAvailabilityRepository.php:497:50[0m]8;;\ - Argument 1 of Roster\Repositories\AvailabilityRepository::getForDateRange expects Illuminate\Database\Eloquent\Model, but parent type object provided (see https://psalm.dev/193)
+INFO: ArgumentTypeCoercion - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Repositories/AvailabilityRepository.php#L490\src/Repositories/[1;31mAvailabilityRepository.php:490:50[0m]8;;\ - Argument 1 of Roster\Repositories\AvailabilityRepository::getForDateRange expects Illuminate\Database\Eloquent\Model, but parent type object provided (see https://psalm.dev/193)
         $availabilities = $this->getForDateRange([30;47m$schedulable[0m, $start, $end, $type);
 
 
-INFO: UndefinedMagicMethod - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Repositories/AvailabilityRepository.php#L498\src/Repositories/[1;31mAvailabilityRepository.php:498:33[0m]8;;\ - Magic method Illuminate\Support\Collection::load does not exist (see https://psalm.dev/219)
+INFO: UndefinedMagicMethod - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Repositories/AvailabilityRepository.php#L492\src/Repositories/[1;31mAvailabilityRepository.php:492:33[0m]8;;\ - Magic method Illuminate\Support\Collection::load does not exist (see https://psalm.dev/219)
         return $availabilities->[30;47mload[0m(['schedules', 'impediments']);
 
 
-[0;31mERROR[0m: MissingTemplateParam - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Repositories/AvailabilityRepository.php#L504\src/Repositories/[1;31mAvailabilityRepository.php:504:15[0m]8;;\ - Illuminate\Support\Collection has missing template params, expecting 2 (see https://psalm.dev/182)
-     * @param [97;41mCollection<Availability>[0m $availabilities Collection of availabilities
+[0;31mERROR[0m: MissingTemplateParam - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Repositories/AvailabilityRepository.php#L498\src/Repositories/[1;31mAvailabilityRepository.php:498:16[0m]8;;\ - Illuminate\Support\Collection has missing template params, expecting 2 (see https://psalm.dev/182)
+     * @param  [97;41mCollection<Availability>[0m  $availabilities  Collection of availabilities
 
 
-INFO: InvalidTemplateParam - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Repositories/AvailabilityRepository.php#L504\src/Repositories/[1;31mAvailabilityRepository.php:504:15[0m]8;;\ - Extended template param TKey of Illuminate\Support\Collection<Roster\Models\Availability> expects type array-key, type Roster\Models\Availability given (see https://psalm.dev/183)
-     * @param [30;47mCollection<Availability>[0m $availabilities Collection of availabilities
+INFO: InvalidTemplateParam - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Repositories/AvailabilityRepository.php#L498\src/Repositories/[1;31mAvailabilityRepository.php:498:16[0m]8;;\ - Extended template param TKey of Illuminate\Support\Collection<Roster\Models\Availability> expects type array-key, type Roster\Models\Availability given (see https://psalm.dev/183)
+     * @param  [30;47mCollection<Availability>[0m  $availabilities  Collection of availabilities
 
 
-INFO: ImplementedReturnTypeMismatch - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Repositories/AvailabilityRepository.php#L506\src/Repositories/[1;31mAvailabilityRepository.php:506:16[0m]8;;\ - The inherited return type 'Illuminate\Support\Collection<int, Roster\Models\Availability>' for Roster\Contracts\Repository\AvailabilityRepositoryInterface::filterAvailabilitiesForDate is different to the implemented return type for Roster\Repositories\AvailabilityRepository::filteravailabilitiesfordate 'Illuminate\Support\Collection<Roster\Models\Availability>' (see https://psalm.dev/123)
+INFO: ImplementedReturnTypeMismatch - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Repositories/AvailabilityRepository.php#L500\src/Repositories/[1;31mAvailabilityRepository.php:500:16[0m]8;;\ - The inherited return type 'Illuminate\Support\Collection<int, Roster\Models\Availability>' for Roster\Contracts\Repository\AvailabilityRepositoryInterface::filterAvailabilitiesForDate is different to the implemented return type for Roster\Repositories\AvailabilityRepository::filteravailabilitiesfordate 'Illuminate\Support\Collection<Roster\Models\Availability>' (see https://psalm.dev/123)
      * @return [30;47mCollection<Availability>[0m Filtered availabilities
 
 
-[0;31mERROR[0m: MissingTemplateParam - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Repositories/AvailabilityRepository.php#L506\src/Repositories/[1;31mAvailabilityRepository.php:506:16[0m]8;;\ - Illuminate\Support\Collection has missing template params, expecting 2 (see https://psalm.dev/182)
+[0;31mERROR[0m: MissingTemplateParam - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Repositories/AvailabilityRepository.php#L500\src/Repositories/[1;31mAvailabilityRepository.php:500:16[0m]8;;\ - Illuminate\Support\Collection has missing template params, expecting 2 (see https://psalm.dev/182)
      * @return [97;41mCollection<Availability>[0m Filtered availabilities
 
 
-INFO: InvalidTemplateParam - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Repositories/AvailabilityRepository.php#L506\src/Repositories/[1;31mAvailabilityRepository.php:506:16[0m]8;;\ - Extended template param TKey of Illuminate\Support\Collection<Roster\Models\Availability> expects type array-key, type Roster\Models\Availability given (see https://psalm.dev/183)
+INFO: InvalidTemplateParam - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Repositories/AvailabilityRepository.php#L500\src/Repositories/[1;31mAvailabilityRepository.php:500:16[0m]8;;\ - Extended template param TKey of Illuminate\Support\Collection<Roster\Models\Availability> expects type array-key, type Roster\Models\Availability given (see https://psalm.dev/183)
      * @return [30;47mCollection<Availability>[0m Filtered availabilities
 
 
-[0;31mERROR[0m: MissingOverrideAttribute - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Repositories/AvailabilityRepository.php#L508\src/Repositories/[1;31mAvailabilityRepository.php:508:5[0m]8;;\ - Method Roster\Repositories\AvailabilityRepository::filteravailabilitiesfordate should have the "Override" attribute (see https://psalm.dev/358)
+[0;31mERROR[0m: MissingOverrideAttribute - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Repositories/AvailabilityRepository.php#L502\src/Repositories/[1;31mAvailabilityRepository.php:502:5[0m]8;;\ - Method Roster\Repositories\AvailabilityRepository::filteravailabilitiesfordate should have the "Override" attribute (see https://psalm.dev/358)
     /**
      * Filter availabilities for a specific date.
      *
-     * @param Collection<Availability> $availabilities Collection of availabilities
-     * @param Carbon $date Date to filter for
+     * @param  Collection<Availability>  $availabilities  Collection of availabilities
+     * @param  Carbon  $date  Date to filter for
      * @return Collection<Availability> Filtered availabilities
      */
     [97;41mpublic function filterAvailabilitiesForDate(Collection $availabilities, Carbon $date): Collection[0m
 
 
-INFO: ImplementedParamTypeMismatch - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Repositories/AvailabilityRepository.php#L508\src/Repositories/[1;31mAvailabilityRepository.php:508:60[0m]8;;\ - Argument 1 of Roster\Repositories\AvailabilityRepository::filterAvailabilitiesForDate has wrong type 'Illuminate\Support\Collection<Roster\Models\Availability>', expecting 'Illuminate\Support\Collection<int, Roster\Models\Availability>' as defined by Roster\Contracts\Repository\AvailabilityRepositoryInterface::filterAvailabilitiesForDate (see https://psalm.dev/199)
+INFO: ImplementedParamTypeMismatch - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Repositories/AvailabilityRepository.php#L502\src/Repositories/[1;31mAvailabilityRepository.php:502:60[0m]8;;\ - Argument 1 of Roster\Repositories\AvailabilityRepository::filterAvailabilitiesForDate has wrong type 'Illuminate\Support\Collection<Roster\Models\Availability>', expecting 'Illuminate\Support\Collection<int, Roster\Models\Availability>' as defined by Roster\Contracts\Repository\AvailabilityRepositoryInterface::filterAvailabilitiesForDate (see https://psalm.dev/199)
     public function filterAvailabilitiesForDate(Collection [30;47m$availabilities[0m, Carbon $date): Collection
 
 
@@ -941,104 +941,104 @@ INFO: ClassMustBeFinal - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-
 class [30;47mImpedimentRepository[0m extends AbstractRepository implements ImpedimentRepositoryInterface
 
 
-[0;31mERROR[0m: MissingOverrideAttribute - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Repositories/ImpedimentRepository.php#L19\src/Repositories/[1;31mImpedimentRepository.php:19:5[0m]8;;\ - Method Roster\Repositories\ImpedimentRepository::create should have the "Override" attribute (see https://psalm.dev/358)
+[0;31mERROR[0m: MissingOverrideAttribute - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Repositories/ImpedimentRepository.php#L18\src/Repositories/[1;31mImpedimentRepository.php:18:5[0m]8;;\ - Method Roster\Repositories\ImpedimentRepository::create should have the "Override" attribute (see https://psalm.dev/358)
     /**
      * Create a new impediment.
      */
     [97;41mpublic function create(array $data): Impediment[0m
 
 
-[0;31mERROR[0m: PossiblyUnusedMethod - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Repositories/ImpedimentRepository.php#L19\src/Repositories/[1;31mImpedimentRepository.php:19:21[0m]8;;\ - Cannot find any calls to method Roster\Repositories\ImpedimentRepository::create (see https://psalm.dev/087)
+[0;31mERROR[0m: PossiblyUnusedMethod - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Repositories/ImpedimentRepository.php#L18\src/Repositories/[1;31mImpedimentRepository.php:18:21[0m]8;;\ - Cannot find any calls to method Roster\Repositories\ImpedimentRepository::create (see https://psalm.dev/087)
     public function [97;41mcreate[0m(array $data): Impediment
 
 
-INFO: UndefinedMagicMethod - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Repositories/ImpedimentRepository.php#L21\src/Repositories/[1;31mImpedimentRepository.php:21:16[0m]8;;\ - Magic method Roster\Models\Impediment::create does not exist (see https://psalm.dev/219)
+INFO: UndefinedMagicMethod - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Repositories/ImpedimentRepository.php#L20\src/Repositories/[1;31mImpedimentRepository.php:20:16[0m]8;;\ - Magic method Roster\Models\Impediment::create does not exist (see https://psalm.dev/219)
         return [30;47mImpediment::create($data)[0m;
 
 
-[0;31mERROR[0m: MissingOverrideAttribute - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Repositories/ImpedimentRepository.php#L27\src/Repositories/[1;31mImpedimentRepository.php:27:5[0m]8;;\ - Method Roster\Repositories\ImpedimentRepository::update should have the "Override" attribute (see https://psalm.dev/358)
+[0;31mERROR[0m: MissingOverrideAttribute - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Repositories/ImpedimentRepository.php#L26\src/Repositories/[1;31mImpedimentRepository.php:26:5[0m]8;;\ - Method Roster\Repositories\ImpedimentRepository::update should have the "Override" attribute (see https://psalm.dev/358)
     /**
      * Update an existing impediment.
      */
     [97;41mpublic function update(int $id, array $data): bool[0m
 
 
-[0;31mERROR[0m: PossiblyUnusedMethod - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Repositories/ImpedimentRepository.php#L27\src/Repositories/[1;31mImpedimentRepository.php:27:21[0m]8;;\ - Cannot find any calls to method Roster\Repositories\ImpedimentRepository::update (see https://psalm.dev/087)
+[0;31mERROR[0m: PossiblyUnusedMethod - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Repositories/ImpedimentRepository.php#L26\src/Repositories/[1;31mImpedimentRepository.php:26:21[0m]8;;\ - Cannot find any calls to method Roster\Repositories\ImpedimentRepository::update (see https://psalm.dev/087)
     public function [97;41mupdate[0m(int $id, array $data): bool
 
 
-[0;31mERROR[0m: MissingOverrideAttribute - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Repositories/ImpedimentRepository.php#L41\src/Repositories/[1;31mImpedimentRepository.php:41:5[0m]8;;\ - Method Roster\Repositories\ImpedimentRepository::delete should have the "Override" attribute (see https://psalm.dev/358)
+[0;31mERROR[0m: MissingOverrideAttribute - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Repositories/ImpedimentRepository.php#L40\src/Repositories/[1;31mImpedimentRepository.php:40:5[0m]8;;\ - Method Roster\Repositories\ImpedimentRepository::delete should have the "Override" attribute (see https://psalm.dev/358)
     /**
      * Delete an impediment.
      */
     [97;41mpublic function delete(int $id): bool[0m
 
 
-[0;31mERROR[0m: PossiblyUnusedMethod - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Repositories/ImpedimentRepository.php#L41\src/Repositories/[1;31mImpedimentRepository.php:41:21[0m]8;;\ - Cannot find explicit calls to method Roster\Repositories\ImpedimentRepository::delete (but did find some potential callers) (see https://psalm.dev/087)
+[0;31mERROR[0m: PossiblyUnusedMethod - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Repositories/ImpedimentRepository.php#L40\src/Repositories/[1;31mImpedimentRepository.php:40:21[0m]8;;\ - Cannot find explicit calls to method Roster\Repositories\ImpedimentRepository::delete (but did find some potential callers) (see https://psalm.dev/087)
     public function [97;41mdelete[0m(int $id): bool
 
 
-INFO: InvalidNullableReturnType - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Repositories/ImpedimentRepository.php#L41\src/Repositories/[1;31mImpedimentRepository.php:41:38[0m]8;;\ - The declared return type 'bool' for Roster\Repositories\ImpedimentRepository::delete is not nullable, but 'bool|null' contains null (see https://psalm.dev/144)
+INFO: InvalidNullableReturnType - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Repositories/ImpedimentRepository.php#L40\src/Repositories/[1;31mImpedimentRepository.php:40:38[0m]8;;\ - The declared return type 'bool' for Roster\Repositories\ImpedimentRepository::delete is not nullable, but 'bool|null' contains null (see https://psalm.dev/144)
     public function delete(int $id): [30;47mbool[0m
 
 
-INFO: NullableReturnStatement - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Repositories/ImpedimentRepository.php#L49\src/Repositories/[1;31mImpedimentRepository.php:49:16[0m]8;;\ - The declared return type 'bool' for Roster\Repositories\ImpedimentRepository::delete is not nullable, but the function returns 'bool|null' (see https://psalm.dev/139)
+INFO: NullableReturnStatement - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Repositories/ImpedimentRepository.php#L48\src/Repositories/[1;31mImpedimentRepository.php:48:16[0m]8;;\ - The declared return type 'bool' for Roster\Repositories\ImpedimentRepository::delete is not nullable, but the function returns 'bool|null' (see https://psalm.dev/139)
         return [30;47m$impediment->delete()[0m;
 
 
-[0;31mERROR[0m: MissingOverrideAttribute - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Repositories/ImpedimentRepository.php#L55\src/Repositories/[1;31mImpedimentRepository.php:55:5[0m]8;;\ - Method Roster\Repositories\ImpedimentRepository::findbyid should have the "Override" attribute (see https://psalm.dev/358)
+[0;31mERROR[0m: MissingOverrideAttribute - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Repositories/ImpedimentRepository.php#L54\src/Repositories/[1;31mImpedimentRepository.php:54:5[0m]8;;\ - Method Roster\Repositories\ImpedimentRepository::findbyid should have the "Override" attribute (see https://psalm.dev/358)
     /**
      * Find impediment by ID.
      */
     [97;41mpublic function findById(int $id): ?Impediment[0m
 
 
-INFO: UndefinedMagicMethod - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Repositories/ImpedimentRepository.php#L57\src/Repositories/[1;31mImpedimentRepository.php:57:16[0m]8;;\ - Magic method Roster\Models\Impediment::find does not exist (see https://psalm.dev/219)
+INFO: UndefinedMagicMethod - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Repositories/ImpedimentRepository.php#L56\src/Repositories/[1;31mImpedimentRepository.php:56:16[0m]8;;\ - Magic method Roster\Models\Impediment::find does not exist (see https://psalm.dev/219)
         return [30;47mImpediment::find($id)[0m;
 
 
-[0;31mERROR[0m: MissingOverrideAttribute - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Repositories/ImpedimentRepository.php#L63\src/Repositories/[1;31mImpedimentRepository.php:63:5[0m]8;;\ - Method Roster\Repositories\ImpedimentRepository::getall should have the "Override" attribute (see https://psalm.dev/358)
+[0;31mERROR[0m: MissingOverrideAttribute - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Repositories/ImpedimentRepository.php#L62\src/Repositories/[1;31mImpedimentRepository.php:62:5[0m]8;;\ - Method Roster\Repositories\ImpedimentRepository::getall should have the "Override" attribute (see https://psalm.dev/358)
     /**
      * Get all impediments.
      */
     [97;41mpublic function getAll(): Collection[0m
 
 
-[0;31mERROR[0m: PossiblyUnusedMethod - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Repositories/ImpedimentRepository.php#L63\src/Repositories/[1;31mImpedimentRepository.php:63:21[0m]8;;\ - Cannot find any calls to method Roster\Repositories\ImpedimentRepository::getAll (see https://psalm.dev/087)
+[0;31mERROR[0m: PossiblyUnusedMethod - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Repositories/ImpedimentRepository.php#L62\src/Repositories/[1;31mImpedimentRepository.php:62:21[0m]8;;\ - Cannot find any calls to method Roster\Repositories\ImpedimentRepository::getAll (see https://psalm.dev/087)
     public function [97;41mgetAll[0m(): Collection
 
 
-[0;31mERROR[0m: MissingOverrideAttribute - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Repositories/ImpedimentRepository.php#L74\src/Repositories/[1;31mImpedimentRepository.php:74:5[0m]8;;\ - Method Roster\Repositories\ImpedimentRepository::findfortimeslot should have the "Override" attribute (see https://psalm.dev/358)
+[0;31mERROR[0m: MissingOverrideAttribute - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Repositories/ImpedimentRepository.php#L72\src/Repositories/[1;31mImpedimentRepository.php:72:5[0m]8;;\ - Method Roster\Repositories\ImpedimentRepository::findfortimeslot should have the "Override" attribute (see https://psalm.dev/358)
     /**
      * Find impediments for a time slot.
      */
     [97;41mpublic function findForTimeSlot([0m
 
 
-INFO: UndefinedMagicMethod - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Repositories/ImpedimentRepository.php#L79\src/Repositories/[1;31mImpedimentRepository.php:79:16[0m]8;;\ - Magic method Roster\Models\Impediment::where does not exist (see https://psalm.dev/219)
+INFO: UndefinedMagicMethod - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Repositories/ImpedimentRepository.php#L77\src/Repositories/[1;31mImpedimentRepository.php:77:16[0m]8;;\ - Magic method Roster\Models\Impediment::where does not exist (see https://psalm.dev/219)
         return [30;47mImpediment::where('availability_id', $availabilityId)[0m
 
 
-[0;31mERROR[0m: MissingOverrideAttribute - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Repositories/ImpedimentRepository.php#L89\src/Repositories/[1;31mImpedimentRepository.php:89:5[0m]8;;\ - Method Roster\Repositories\ImpedimentRepository::hasoverlappingimpediments should have the "Override" attribute (see https://psalm.dev/358)
+[0;31mERROR[0m: MissingOverrideAttribute - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Repositories/ImpedimentRepository.php#L87\src/Repositories/[1;31mImpedimentRepository.php:87:5[0m]8;;\ - Method Roster\Repositories\ImpedimentRepository::hasoverlappingimpediments should have the "Override" attribute (see https://psalm.dev/358)
     /**
      * Check if a time slot has overlapping impediments.
      */
     [97;41mpublic function hasOverlappingImpediments([0m
 
 
-INFO: UndefinedMagicMethod - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Repositories/ImpedimentRepository.php#L95\src/Repositories/[1;31mImpedimentRepository.php:95:18[0m]8;;\ - Magic method Roster\Models\Impediment::where does not exist (see https://psalm.dev/219)
+INFO: UndefinedMagicMethod - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Repositories/ImpedimentRepository.php#L93\src/Repositories/[1;31mImpedimentRepository.php:93:18[0m]8;;\ - Magic method Roster\Models\Impediment::where does not exist (see https://psalm.dev/219)
         $query = [30;47mImpediment::where('availability_id', $availabilityId)[0m
 
 
-INFO: RiskyTruthyFalsyComparison - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Repositories/ImpedimentRepository.php#L99\src/Repositories/[1;31mImpedimentRepository.php:99:13[0m]8;;\ - Operand of type int|null contains type int, which can be falsy and truthy. This can cause possibly unexpected behavior. Use strict comparison instead. (see https://psalm.dev/356)
+INFO: RiskyTruthyFalsyComparison - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Repositories/ImpedimentRepository.php#L97\src/Repositories/[1;31mImpedimentRepository.php:97:13[0m]8;;\ - Operand of type int|null contains type int, which can be falsy and truthy. This can cause possibly unexpected behavior. Use strict comparison instead. (see https://psalm.dev/356)
         if ([30;47m$excludeId[0m) {
 
 
-[0;31mERROR[0m: PossiblyUnusedMethod - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Repositories/ImpedimentRepository.php#L109\src/Repositories/[1;31mImpedimentRepository.php:109:21[0m]8;;\ - Cannot find any calls to method Roster\Repositories\ImpedimentRepository::findOverlappingImpediments (see https://psalm.dev/087)
+[0;31mERROR[0m: PossiblyUnusedMethod - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Repositories/ImpedimentRepository.php#L107\src/Repositories/[1;31mImpedimentRepository.php:107:21[0m]8;;\ - Cannot find any calls to method Roster\Repositories\ImpedimentRepository::findOverlappingImpediments (see https://psalm.dev/087)
     public function [97;41mfindOverlappingImpediments[0m(
 
 
-INFO: UndefinedMagicMethod - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Repositories/ImpedimentRepository.php#L115\src/Repositories/[1;31mImpedimentRepository.php:115:18[0m]8;;\ - Magic method Roster\Models\Impediment::where does not exist (see https://psalm.dev/219)
+INFO: UndefinedMagicMethod - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Repositories/ImpedimentRepository.php#L113\src/Repositories/[1;31mImpedimentRepository.php:113:18[0m]8;;\ - Magic method Roster\Models\Impediment::where does not exist (see https://psalm.dev/219)
         $query = [30;47mImpediment::where('availability_id', $availabilityId)[0m
 
 
@@ -1192,15 +1192,15 @@ INFO: MissingClosureParamType - ]8;;file:///home/andy-kani/pro/sites/packages/l
         return Schedule::whereHas('availability', function ([30;47m$query[0m) use ($schedulableId, $schedulableType): void {
 
 
-INFO: ClassMustBeFinal - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/RosterServiceProvider.php#L35\src/[1;31mRosterServiceProvider.php:35:7[0m]8;;\ - Class Roster\RosterServiceProvider is never extended and is not part of the public API, and thus must be made final. (see https://psalm.dev/361)
+INFO: ClassMustBeFinal - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/RosterServiceProvider.php#L37\src/[1;31mRosterServiceProvider.php:37:7[0m]8;;\ - Class Roster\RosterServiceProvider is never extended and is not part of the public API, and thus must be made final. (see https://psalm.dev/361)
 class [30;47mRosterServiceProvider[0m extends ServiceProvider
 
 
-[0;31mERROR[0m: PossiblyUnusedMethod - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/RosterServiceProvider.php#L43\src/[1;31mRosterServiceProvider.php:43:21[0m]8;;\ - Cannot find any calls to method Roster\RosterServiceProvider::boot (see https://psalm.dev/087)
+[0;31mERROR[0m: PossiblyUnusedMethod - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/RosterServiceProvider.php#L45\src/[1;31mRosterServiceProvider.php:45:21[0m]8;;\ - Cannot find any calls to method Roster\RosterServiceProvider::boot (see https://psalm.dev/087)
     public function [97;41mboot[0m(): void
 
 
-[0;31mERROR[0m: MissingOverrideAttribute - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/RosterServiceProvider.php#L65\src/[1;31mRosterServiceProvider.php:65:5[0m]8;;\ - Method Roster\RosterServiceProvider::register should have the "Override" attribute (see https://psalm.dev/358)
+[0;31mERROR[0m: MissingOverrideAttribute - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/RosterServiceProvider.php#L61\src/[1;31mRosterServiceProvider.php:61:5[0m]8;;\ - Method Roster\RosterServiceProvider::register should have the "Override" attribute (see https://psalm.dev/358)
     /**
      * Register the service provider.
      *
@@ -1209,16 +1209,20 @@ class [30;47mRosterServiceProvider[0m extends ServiceProvider
     [97;41mpublic function register(): void[0m
 
 
-INFO: MissingClosureParamType - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/RosterServiceProvider.php#L107\src/[1;31mRosterServiceProvider.php:107:60[0m]8;;\ - Parameter $app has no provided type (see https://psalm.dev/153)
+INFO: MissingClosureParamType - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/RosterServiceProvider.php#L103\src/[1;31mRosterServiceProvider.php:103:60[0m]8;;\ - Parameter $app has no provided type (see https://psalm.dev/153)
         $this->app->singleton('roster.schedule', function ([30;47m$app[0m): ScheduleService {
 
 
-INFO: MissingClosureParamType - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/RosterServiceProvider.php#L117\src/[1;31mRosterServiceProvider.php:117:64[0m]8;;\ - Parameter $app has no provided type (see https://psalm.dev/153)
+INFO: MissingClosureParamType - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/RosterServiceProvider.php#L113\src/[1;31mRosterServiceProvider.php:113:64[0m]8;;\ - Parameter $app has no provided type (see https://psalm.dev/153)
         $this->app->singleton('roster.availability', function ([30;47m$app[0m): AvailabilityService {
 
 
-INFO: MissingClosureParamType - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/RosterServiceProvider.php#L128\src/[1;31mRosterServiceProvider.php:128:62[0m]8;;\ - Parameter $app has no provided type (see https://psalm.dev/153)
+INFO: MissingClosureParamType - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/RosterServiceProvider.php#L124\src/[1;31mRosterServiceProvider.php:124:62[0m]8;;\ - Parameter $app has no provided type (see https://psalm.dev/153)
         $this->app->singleton('roster.impediment', function ([30;47m$app[0m): ImpedimentService {
+
+
+INFO: MissingClosureParamType - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/RosterServiceProvider.php#L142\src/[1;31mRosterServiceProvider.php:142:74[0m]8;;\ - Parameter $app has no provided type (see https://psalm.dev/153)
+        $this->app->singleton(ResourcePublisherService::class, function ([30;47m$app[0m) {
 
 
 INFO: ClassMustBeFinal - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/AvailabilityService.php#L21\src/Services/[1;31mAvailabilityService.php:21:7[0m]8;;\ - Class Roster\Services\AvailabilityService is never extended and is not part of the public API, and thus must be made final. (see https://psalm.dev/361)
@@ -1297,95 +1301,95 @@ INFO: PossiblyNullArgument - ]8;;file:///home/andy-kani/pro/sites/packages/lara
     [97;41mprotected function executeUpdate(int $id): bool[0m
 
 
-[0;31mERROR[0m: PossiblyUnusedMethod - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/AvailabilityService.php#L166\src/Services/[1;31mAvailabilityService.php:166:21[0m]8;;\ - Cannot find any calls to method Roster\Services\AvailabilityService::create (see https://psalm.dev/087)
+[0;31mERROR[0m: PossiblyUnusedMethod - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/AvailabilityService.php#L167\src/Services/[1;31mAvailabilityService.php:167:21[0m]8;;\ - Cannot find any calls to method Roster\Services\AvailabilityService::create (see https://psalm.dev/087)
     public function [97;41mcreate[0m(array $data): Availability
 
 
-[0;31mERROR[0m: PossiblyUnusedMethod - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/AvailabilityService.php#L200\src/Services/[1;31mAvailabilityService.php:200:21[0m]8;;\ - Cannot find explicit calls to method Roster\Services\AvailabilityService::delete (but did find some potential callers) (see https://psalm.dev/087)
+[0;31mERROR[0m: PossiblyUnusedMethod - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/AvailabilityService.php#L202\src/Services/[1;31mAvailabilityService.php:202:21[0m]8;;\ - Cannot find explicit calls to method Roster\Services\AvailabilityService::delete (but did find some potential callers) (see https://psalm.dev/087)
     public function [97;41mdelete[0m(int $id): bool
 
 
-[0;31mERROR[0m: PossiblyUnusedMethod - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/AvailabilityService.php#L212\src/Services/[1;31mAvailabilityService.php:212:21[0m]8;;\ - Cannot find any calls to method Roster\Services\AvailabilityService::hasOverlapping (see https://psalm.dev/087)
+[0;31mERROR[0m: PossiblyUnusedMethod - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/AvailabilityService.php#L214\src/Services/[1;31mAvailabilityService.php:214:21[0m]8;;\ - Cannot find any calls to method Roster\Services\AvailabilityService::hasOverlapping (see https://psalm.dev/087)
     public function [97;41mhasOverlapping[0m(array $data, ?int $exceptId = null): bool
 
 
-INFO: PossiblyNullArgument - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/AvailabilityService.php#L215\src/Services/[1;31mAvailabilityService.php:215:59[0m]8;;\ - Argument 1 of Roster\Contracts\Services\AvailabilityCheckerInterface::hasOverlapping cannot be null, possibly null value provided (see https://psalm.dev/078)
+INFO: PossiblyNullArgument - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/AvailabilityService.php#L218\src/Services/[1;31mAvailabilityService.php:218:59[0m]8;;\ - Argument 1 of Roster\Contracts\Services\AvailabilityCheckerInterface::hasOverlapping cannot be null, possibly null value provided (see https://psalm.dev/078)
         return $this->availabilityChecker->hasOverlapping([30;47m$this->schedulable[0m, $data, $exceptId);
 
 
-[0;31mERROR[0m: PossiblyUnusedMethod - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/AvailabilityService.php#L218\src/Services/[1;31mAvailabilityService.php:218:21[0m]8;;\ - Cannot find any calls to method Roster\Services\AvailabilityService::findOverlapping (see https://psalm.dev/087)
+[0;31mERROR[0m: PossiblyUnusedMethod - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/AvailabilityService.php#L221\src/Services/[1;31mAvailabilityService.php:221:21[0m]8;;\ - Cannot find any calls to method Roster\Services\AvailabilityService::findOverlapping (see https://psalm.dev/087)
     public function [97;41mfindOverlapping[0m(array $data, ?int $exceptId = null): Collection
 
 
-INFO: PossiblyNullArgument - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/AvailabilityService.php#L222\src/Services/[1;31mAvailabilityService.php:222:63[0m]8;;\ - Argument 1 of Roster\Contracts\Repository\AvailabilityRepositoryInterface::findOverlapping cannot be null, possibly null value provided (see https://psalm.dev/078)
+INFO: PossiblyNullArgument - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/AvailabilityService.php#L226\src/Services/[1;31mAvailabilityService.php:226:63[0m]8;;\ - Argument 1 of Roster\Contracts\Repository\AvailabilityRepositoryInterface::findOverlapping cannot be null, possibly null value provided (see https://psalm.dev/078)
         return $this->availabilityRepository->findOverlapping([30;47m$this->schedulable[0m, $data, $exceptId);
 
 
-[0;31mERROR[0m: PossiblyUnusedMethod - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/AvailabilityService.php#L225\src/Services/[1;31mAvailabilityService.php:225:21[0m]8;;\ - Cannot find any calls to method Roster\Services\AvailabilityService::findAdjacentAvailabilities (see https://psalm.dev/087)
+[0;31mERROR[0m: PossiblyUnusedMethod - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/AvailabilityService.php#L229\src/Services/[1;31mAvailabilityService.php:229:21[0m]8;;\ - Cannot find any calls to method Roster\Services\AvailabilityService::findAdjacentAvailabilities (see https://psalm.dev/087)
     public function [97;41mfindAdjacentAvailabilities[0m(array $data): Collection
 
 
-INFO: PossiblyNullArgument - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/AvailabilityService.php#L228\src/Services/[1;31mAvailabilityService.php:228:77[0m]8;;\ - Argument 2 of Roster\Contracts\Services\AvailabilityMergerInterface::findAdjacentAvailabilities cannot be null, possibly null value provided (see https://psalm.dev/078)
+INFO: PossiblyNullArgument - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/AvailabilityService.php#L233\src/Services/[1;31mAvailabilityService.php:233:77[0m]8;;\ - Argument 2 of Roster\Contracts\Services\AvailabilityMergerInterface::findAdjacentAvailabilities cannot be null, possibly null value provided (see https://psalm.dev/078)
         return $this->availabilityMerger->findAdjacentAvailabilities($data, [30;47m$this->schedulable[0m);
 
 
-[0;31mERROR[0m: PossiblyUnusedMethod - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/AvailabilityService.php#L231\src/Services/[1;31mAvailabilityService.php:231:21[0m]8;;\ - Cannot find any calls to method Roster\Services\AvailabilityService::whereDay (see https://psalm.dev/087)
+[0;31mERROR[0m: PossiblyUnusedMethod - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/AvailabilityService.php#L236\src/Services/[1;31mAvailabilityService.php:236:21[0m]8;;\ - Cannot find any calls to method Roster\Services\AvailabilityService::whereDay (see https://psalm.dev/087)
     public function [97;41mwhereDay[0m(string $day): self
 
 
-[0;31mERROR[0m: PossiblyUnusedMethod - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/AvailabilityService.php#L237\src/Services/[1;31mAvailabilityService.php:237:21[0m]8;;\ - Cannot find any calls to method Roster\Services\AvailabilityService::isAvailableAt (see https://psalm.dev/087)
+[0;31mERROR[0m: PossiblyUnusedMethod - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/AvailabilityService.php#L243\src/Services/[1;31mAvailabilityService.php:243:21[0m]8;;\ - Cannot find any calls to method Roster\Services\AvailabilityService::isAvailableAt (see https://psalm.dev/087)
     public function [97;41misAvailableAt[0m(Carbon $datetime): bool
 
 
-INFO: PossiblyNullArgument - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/AvailabilityService.php#L240\src/Services/[1;31mAvailabilityService.php:240:58[0m]8;;\ - Argument 1 of Roster\Contracts\Services\AvailabilityCheckerInterface::isAvailableAt cannot be null, possibly null value provided (see https://psalm.dev/078)
+INFO: PossiblyNullArgument - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/AvailabilityService.php#L247\src/Services/[1;31mAvailabilityService.php:247:58[0m]8;;\ - Argument 1 of Roster\Contracts\Services\AvailabilityCheckerInterface::isAvailableAt cannot be null, possibly null value provided (see https://psalm.dev/078)
         return $this->availabilityChecker->isAvailableAt([30;47m$this->schedulable[0m, $datetime);
 
 
-[0;31mERROR[0m: PossiblyUnusedMethod - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/AvailabilityService.php#L243\src/Services/[1;31mAvailabilityService.php:243:21[0m]8;;\ - Cannot find any calls to method Roster\Services\AvailabilityService::isAvailableForPeriod (see https://psalm.dev/087)
+[0;31mERROR[0m: PossiblyUnusedMethod - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/AvailabilityService.php#L250\src/Services/[1;31mAvailabilityService.php:250:21[0m]8;;\ - Cannot find any calls to method Roster\Services\AvailabilityService::isAvailableForPeriod (see https://psalm.dev/087)
     public function [97;41misAvailableForPeriod[0m(Carbon $start, Carbon $end, ?string $type = null): bool
 
 
-INFO: PossiblyNullArgument - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/AvailabilityService.php#L246\src/Services/[1;31mAvailabilityService.php:246:65[0m]8;;\ - Argument 1 of Roster\Contracts\Services\AvailabilityCheckerInterface::isAvailableForPeriod cannot be null, possibly null value provided (see https://psalm.dev/078)
+INFO: PossiblyNullArgument - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/AvailabilityService.php#L254\src/Services/[1;31mAvailabilityService.php:254:65[0m]8;;\ - Argument 1 of Roster\Contracts\Services\AvailabilityCheckerInterface::isAvailableForPeriod cannot be null, possibly null value provided (see https://psalm.dev/078)
         return $this->availabilityChecker->isAvailableForPeriod([30;47m$this->schedulable[0m, $start, $end, $type);
 
 
-[0;31mERROR[0m: PossiblyUnusedMethod - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/AvailabilityService.php#L249\src/Services/[1;31mAvailabilityService.php:249:21[0m]8;;\ - Cannot find any calls to method Roster\Services\AvailabilityService::findSlotsInPeriod (see https://psalm.dev/087)
+[0;31mERROR[0m: PossiblyUnusedMethod - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/AvailabilityService.php#L257\src/Services/[1;31mAvailabilityService.php:257:21[0m]8;;\ - Cannot find any calls to method Roster\Services\AvailabilityService::findSlotsInPeriod (see https://psalm.dev/087)
     public function [97;41mfindSlotsInPeriod[0m(
 
 
-INFO: PossiblyNullArgument - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/AvailabilityService.php#L258\src/Services/[1;31mAvailabilityService.php:258:13[0m]8;;\ - Argument 1 of Roster\Contracts\Services\SlotFinderInterface::findSlotsInPeriod cannot be null, possibly null value provided (see https://psalm.dev/078)
+INFO: PossiblyNullArgument - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/AvailabilityService.php#L267\src/Services/[1;31mAvailabilityService.php:267:13[0m]8;;\ - Argument 1 of Roster\Contracts\Services\SlotFinderInterface::findSlotsInPeriod cannot be null, possibly null value provided (see https://psalm.dev/078)
             [30;47m$this->schedulable[0m,
 
 
-INFO: UndefinedMagicPropertyFetch - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/AvailabilityService.php#L270\src/Services/[1;31mAvailabilityService.php:270:23[0m]8;;\ - Magic instance property Roster\Models\Availability::$type is not defined (see https://psalm.dev/218)
+INFO: UndefinedMagicPropertyFetch - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/AvailabilityService.php#L279\src/Services/[1;31mAvailabilityService.php:279:23[0m]8;;\ - Magic instance property Roster\Models\Availability::$type is not defined (see https://psalm.dev/218)
             'type' => [30;47m$availability->type[0m,
 
 
-INFO: UndefinedMagicPropertyFetch - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/AvailabilityService.php#L271\src/Services/[1;31mAvailabilityService.php:271:23[0m]8;;\ - Magic instance property Roster\Models\Availability::$days is not defined (see https://psalm.dev/218)
+INFO: UndefinedMagicPropertyFetch - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/AvailabilityService.php#L280\src/Services/[1;31mAvailabilityService.php:280:23[0m]8;;\ - Magic instance property Roster\Models\Availability::$days is not defined (see https://psalm.dev/218)
             'days' => [30;47m$availability->days[0m,
 
 
-INFO: UndefinedMagicPropertyFetch - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/AvailabilityService.php#L272\src/Services/[1;31mAvailabilityService.php:272:29[0m]8;;\ - Magic instance property Roster\Models\Availability::$start_date is not defined (see https://psalm.dev/218)
+INFO: UndefinedMagicPropertyFetch - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/AvailabilityService.php#L281\src/Services/[1;31mAvailabilityService.php:281:29[0m]8;;\ - Magic instance property Roster\Models\Availability::$start_date is not defined (see https://psalm.dev/218)
             'start_date' => [30;47m$availability->start_date[0m?->format('Y-m-d'),
 
 
-INFO: UndefinedMagicPropertyFetch - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/AvailabilityService.php#L273\src/Services/[1;31mAvailabilityService.php:273:27[0m]8;;\ - Magic instance property Roster\Models\Availability::$end_date is not defined (see https://psalm.dev/218)
+INFO: UndefinedMagicPropertyFetch - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/AvailabilityService.php#L282\src/Services/[1;31mAvailabilityService.php:282:27[0m]8;;\ - Magic instance property Roster\Models\Availability::$end_date is not defined (see https://psalm.dev/218)
             'end_date' => [30;47m$availability->end_date[0m?->format('Y-m-d'),
 
 
-INFO: UndefinedMagicPropertyFetch - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/AvailabilityService.php#L276\src/Services/[1;31mAvailabilityService.php:276:49[0m]8;;\ - Magic instance property Roster\Models\Availability::$start_time is not defined (see https://psalm.dev/218)
-        if (!isset($checkData['start_time']) && [30;47m$availability->start_time[0m) {
+INFO: UndefinedMagicPropertyFetch - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/AvailabilityService.php#L285\src/Services/[1;31mAvailabilityService.php:285:50[0m]8;;\ - Magic instance property Roster\Models\Availability::$start_time is not defined (see https://psalm.dev/218)
+        if (! isset($checkData['start_time']) && [30;47m$availability->start_time[0m) {
 
 
-INFO: UndefinedMagicPropertyFetch - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/AvailabilityService.php#L280\src/Services/[1;31mAvailabilityService.php:280:47[0m]8;;\ - Magic instance property Roster\Models\Availability::$end_time is not defined (see https://psalm.dev/218)
-        if (!isset($checkData['end_time']) && [30;47m$availability->end_time[0m) {
+INFO: UndefinedMagicPropertyFetch - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/AvailabilityService.php#L289\src/Services/[1;31mAvailabilityService.php:289:48[0m]8;;\ - Magic instance property Roster\Models\Availability::$end_time is not defined (see https://psalm.dev/218)
+        if (! isset($checkData['end_time']) && [30;47m$availability->end_time[0m) {
 
 
-[0;31mERROR[0m: MissingOverrideAttribute - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/AvailabilityService.php#L289\src/Services/[1;31mAvailabilityService.php:289:5[0m]8;;\ - Method Roster\Services\AvailabilityService::applyfilters should have the "Override" attribute (see https://psalm.dev/358)
+[0;31mERROR[0m: MissingOverrideAttribute - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/AvailabilityService.php#L298\src/Services/[1;31mAvailabilityService.php:298:5[0m]8;;\ - Method Roster\Services\AvailabilityService::applyfilters should have the "Override" attribute (see https://psalm.dev/358)
     [97;41mprotected function applyFilters(): Builder[0m
 
 
-INFO: PossiblyNullArgument - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/AvailabilityService.php#L291\src/Services/[1;31mAvailabilityService.php:291:60[0m]8;;\ - Argument 1 of Roster\Contracts\Repository\AvailabilityRepositoryInterface::applyFilters cannot be null, possibly null value provided (see https://psalm.dev/078)
+INFO: PossiblyNullArgument - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/AvailabilityService.php#L300\src/Services/[1;31mAvailabilityService.php:300:60[0m]8;;\ - Argument 1 of Roster\Contracts\Repository\AvailabilityRepositoryInterface::applyFilters cannot be null, possibly null value provided (see https://psalm.dev/078)
         return $this->availabilityRepository->applyFilters([30;47m$this->schedulable[0m, $this->filters);
 
 
@@ -1436,24 +1440,24 @@ INFO: PossiblyNullArgument - ]8;;file:///home/andy-kani/pro/sites/packages/lara
     /**
      * TEMPLATE METHOD: Update with configuration validation
      *
-     * @param array<string, mixed> $data
+     * @param  array<string, mixed>  $data
      */
     [97;41mfinal public function update(int $id, array $data): bool[0m
 
 
-[0;31mERROR[0m: UnusedParam - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/Core/AbstractSchedulableService.php#L234\src/Services/Core/[1;31mAbstractSchedulableService.php:234:57[0m]8;;\ - Param #1 is never referenced in this method (see https://psalm.dev/135)
+[0;31mERROR[0m: UnusedParam - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/Core/AbstractSchedulableService.php#L237\src/Services/Core/[1;31mAbstractSchedulableService.php:237:57[0m]8;;\ - Param #1 is never referenced in this method (see https://psalm.dev/135)
     final protected function validateFutureDates(string [97;41m$operation[0m, string $entityType, array $entityConfig): void
 
 
-INFO: RiskyTruthyFalsyComparison - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/Core/AbstractSchedulableService.php#L249\src/Services/Core/[1;31mAbstractSchedulableService.php:249:21[0m]8;;\ - Operand of type false|mixed contains type mixed, which can be falsy and truthy. This can cause possibly unexpected behavior. Use strict comparison instead. (see https://psalm.dev/356)
-                if ([30;47m!$allowPast[0m) {
+INFO: RiskyTruthyFalsyComparison - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/Core/AbstractSchedulableService.php#L251\src/Services/Core/[1;31mAbstractSchedulableService.php:251:21[0m]8;;\ - Operand of type false|mixed contains type mixed, which can be falsy and truthy. This can cause possibly unexpected behavior. Use strict comparison instead. (see https://psalm.dev/356)
+                if ([30;47m! $allowPast[0m) {
 
 
-[0;31mERROR[0m: PossiblyUnusedMethod - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/Core/AbstractSchedulableService.php#L298\src/Services/Core/[1;31mAbstractSchedulableService.php:298:30[0m]8;;\ - Cannot find any calls to method Roster\Services\Core\AbstractSchedulableService::getEntityDisplayName (see https://psalm.dev/087)
+[0;31mERROR[0m: PossiblyUnusedMethod - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/Core/AbstractSchedulableService.php#L301\src/Services/Core/[1;31mAbstractSchedulableService.php:301:30[0m]8;;\ - Cannot find any calls to method Roster\Services\Core\AbstractSchedulableService::getEntityDisplayName (see https://psalm.dev/087)
     final protected function [97;41mgetEntityDisplayName[0m(): string
 
 
-[0;31mERROR[0m: PossiblyUnusedMethod - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/Core/AbstractSchedulableService.php#L407\src/Services/Core/[1;31mAbstractSchedulableService.php:407:24[0m]8;;\ - Cannot find any calls to method Roster\Services\Core\AbstractSchedulableService::validateRequiredFields (see https://psalm.dev/087)
+[0;31mERROR[0m: PossiblyUnusedMethod - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/Core/AbstractSchedulableService.php#L410\src/Services/Core/[1;31mAbstractSchedulableService.php:410:24[0m]8;;\ - Cannot find any calls to method Roster\Services\Core\AbstractSchedulableService::validateRequiredFields (see https://psalm.dev/087)
     protected function [97;41mvalidateRequiredFields[0m(array $requiredFields = []): void
 
 
@@ -1487,20 +1491,20 @@ class [30;47mAvailabilityChecker[0m implements AvailabilityCheckerInterface
         object [97;41m$schedulable[0m,
 
 
-[0;31mERROR[0m: MissingOverrideAttribute - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/Core/AvailabilityChecker.php#L48\src/Services/Core/[1;31mAvailabilityChecker.php:48:5[0m]8;;\ - Method Roster\Services\Core\AvailabilityChecker::hasoverlapping should have the "Override" attribute (see https://psalm.dev/358)
+[0;31mERROR[0m: MissingOverrideAttribute - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/Core/AvailabilityChecker.php#L49\src/Services/Core/[1;31mAvailabilityChecker.php:49:5[0m]8;;\ - Method Roster\Services\Core\AvailabilityChecker::hasoverlapping should have the "Override" attribute (see https://psalm.dev/358)
     /**
      * Check if there are overlaps.
      *
-     * @param array<string, mixed> $data
+     * @param  array<string, mixed>  $data
      */
     [97;41mpublic function hasOverlapping([0m
 
 
-[0;31mERROR[0m: ParamNameMismatch - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/Core/AvailabilityChecker.php#L49\src/Services/Core/[1;31mAvailabilityChecker.php:49:16[0m]8;;\ - Argument 1 of Roster\Services\Core\AvailabilityChecker::hasOverlapping has wrong name $schedulable, expecting $model as defined by Roster\Contracts\Services\AvailabilityCheckerInterface::hasOverlapping (see https://psalm.dev/230)
+[0;31mERROR[0m: ParamNameMismatch - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/Core/AvailabilityChecker.php#L50\src/Services/Core/[1;31mAvailabilityChecker.php:50:16[0m]8;;\ - Argument 1 of Roster\Services\Core\AvailabilityChecker::hasOverlapping has wrong name $schedulable, expecting $model as defined by Roster\Contracts\Services\AvailabilityCheckerInterface::hasOverlapping (see https://psalm.dev/230)
         object [97;41m$schedulable[0m,
 
 
-INFO: ArgumentTypeCoercion - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/Core/AvailabilityChecker.php#L57\src/Services/Core/[1;31mAvailabilityChecker.php:57:63[0m]8;;\ - Argument 1 of Roster\Contracts\Repository\AvailabilityRepositoryInterface::findOverlapping expects Illuminate\Database\Eloquent\Model, but parent type object provided (see https://psalm.dev/193)
+INFO: ArgumentTypeCoercion - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/Core/AvailabilityChecker.php#L58\src/Services/Core/[1;31mAvailabilityChecker.php:58:63[0m]8;;\ - Argument 1 of Roster\Contracts\Repository\AvailabilityRepositoryInterface::findOverlapping expects Illuminate\Database\Eloquent\Model, but parent type object provided (see https://psalm.dev/193)
         return $this->availabilityRepository->findOverlapping([30;47m$schedulable[0m, $data, $exceptId)->isNotEmpty();
 
 
@@ -1516,7 +1520,7 @@ class [30;47mAvailabilityMerger[0m implements AvailabilityMergerInterface
     /**
      * Merge new availability data with adjacent existing ones.
      *
-     * @param array<string, mixed> $data
+     * @param  array<string, mixed>  $data
      * @return array<string, mixed>
      */
     [97;41mpublic function mergeWithAdjacent(array $data, object $schedulable): array[0m
@@ -1534,7 +1538,7 @@ INFO: UndefinedMagicPropertyFetch - ]8;;file:///home/andy-kani/pro/sites/packag
     /**
      * Find adjacent availabilities.
      *
-     * @param array<string, mixed> $data
+     * @param  array<string, mixed>  $data
      * @return Collection<int, Availability>
      */
     [97;41mpublic function findAdjacentAvailabilities(array $data, object $schedulable): Collection[0m
@@ -1800,30 +1804,34 @@ INFO: UndefinedMagicPropertyFetch - ]8;;file:///home/andy-kani/pro/sites/packag
             'days' => array_values(array_unique(array_merge($first->days, [30;47m$second->days[0m))),
 
 
-[0;31mERROR[0m: UnusedClass - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/Core/ResourcePublisherService.php#L14\src/Services/Core/[1;31mResourcePublisherService.php:14:7[0m]8;;\ - Class Roster\Services\Core\ResourcePublisherService is never used (see https://psalm.dev/075)
-class [97;41mResourcePublisherService[0m
-
-
 INFO: ClassMustBeFinal - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/Core/ResourcePublisherService.php#L14\src/Services/Core/[1;31mResourcePublisherService.php:14:7[0m]8;;\ - Class Roster\Services\Core\ResourcePublisherService is never extended and is not part of the public API, and thus must be made final. (see https://psalm.dev/361)
 class [30;47mResourcePublisherService[0m
+
+
+[0;31mERROR[0m: PossiblyUnusedMethod - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/Core/ResourcePublisherService.php#L58\src/Services/Core/[1;31mResourcePublisherService.php:58:21[0m]8;;\ - Cannot find any calls to method Roster\Services\Core\ResourcePublisherService::publishResource (see https://psalm.dev/087)
+    public function [97;41mpublishResource[0m(
+
+
+[0;31mERROR[0m: PossiblyUnusedMethod - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/Core/ResourcePublisherService.php#L162\src/Services/Core/[1;31mResourcePublisherService.php:162:21[0m]8;;\ - Cannot find any calls to method Roster\Services\Core\ResourcePublisherService::isPublished (see https://psalm.dev/087)
+    public function [97;41misPublished[0m(string $resourceType): bool
 
 
 INFO: ClassMustBeFinal - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/Core/SlotFinderService.php#L21\src/Services/Core/[1;31mSlotFinderService.php:21:7[0m]8;;\ - Class Roster\Services\Core\SlotFinderService is never extended and is not part of the public API, and thus must be made final. (see https://psalm.dev/361)
 class [30;47mSlotFinderService[0m implements SlotFinderInterface
 
 
-[0;31mERROR[0m: PossiblyUnusedMethod - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/Core/SlotFinderService.php#L26\src/Services/Core/[1;31mSlotFinderService.php:26:21[0m]8;;\ - Cannot find any calls to method Roster\Services\Core\SlotFinderService::__construct (see https://psalm.dev/087)
+[0;31mERROR[0m: PossiblyUnusedMethod - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/Core/SlotFinderService.php#L25\src/Services/Core/[1;31mSlotFinderService.php:25:21[0m]8;;\ - Cannot find any calls to method Roster\Services\Core\SlotFinderService::__construct (see https://psalm.dev/087)
     public function [97;41m__construct[0m(
 
 
-[0;31mERROR[0m: MissingOverrideAttribute - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/Core/SlotFinderService.php#L40\src/Services/Core/[1;31mSlotFinderService.php:40:5[0m]8;;\ - Method Roster\Services\Core\SlotFinderService::findnextslot should have the "Override" attribute (see https://psalm.dev/358)
+[0;31mERROR[0m: MissingOverrideAttribute - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/Core/SlotFinderService.php#L39\src/Services/Core/[1;31mSlotFinderService.php:39:5[0m]8;;\ - Method Roster\Services\Core\SlotFinderService::findnextslot should have the "Override" attribute (see https://psalm.dev/358)
     /**
      * Find the next available slot for a schedulable entity.
      *
-     * @param Model $model Schedulable model instance
-     * @param int $durationMinutes Required slot duration in minutes
-     * @param string|null $type Optional availability type filter
-     * @param bool $returnStartOnly Return only the start time if true
+     * @param  Model  $model  Schedulable model instance
+     * @param  int  $durationMinutes  Required slot duration in minutes
+     * @param  string|null  $type  Optional availability type filter
+     * @param  bool  $returnStartOnly  Return only the start time if true
      * @return array|Carbon|null Slot details array, start time, or null if none found
      */
     [97;41mpublic function findNextSlot([0m
@@ -1833,13 +1841,14 @@ class [30;47mSlotFinderService[0m implements SlotFinderInterface
     /**
      * Find available slots in a given period.
      *
-     * @param Model $model Schedulable model instance
-     * @param Carbon $startDate Period start date
-     * @param Carbon $endDate Period end date
-     * @param int $durationMinutes Slot duration in minutes
-     * @param int $intervalMinutes Interval between slot starts in minutes
-     * @param string|null $type Optional availability type filter
+     * @param  Model  $model  Schedulable model instance
+     * @param  Carbon  $startDate  Period start date
+     * @param  Carbon  $endDate  Period end date
+     * @param  int  $durationMinutes  Slot duration in minutes
+     * @param  int  $intervalMinutes  Interval between slot starts in minutes
+     * @param  string|null  $type  Optional availability type filter
      * @return array<array<string, mixed>> Array of available slots
+     *
      * @throws ValidationException If validation fails
      */
     [97;41mpublic function findSlotsInPeriod([0m
@@ -1865,11 +1874,11 @@ INFO: UndefinedMagicPropertyFetch - ]8;;file:///home/andy-kani/pro/sites/packag
     /**
      * Find the first available continuous period of specified duration.
      *
-     * @param Model $model Schedulable model instance
-     * @param Carbon $startDate Search start date
-     * @param Carbon $endDate Search end date
-     * @param int $durationMinutes Required period duration in minutes
-     * @param string|null $type Optional availability type filter
+     * @param  Model  $model  Schedulable model instance
+     * @param  Carbon  $startDate  Search start date
+     * @param  Carbon  $endDate  Search end date
+     * @param  int  $durationMinutes  Required period duration in minutes
+     * @param  string|null  $type  Optional availability type filter
      * @return array|null Period details or null if none found
      */
     [97;41mpublic function findFirstAvailablePeriod([0m
@@ -1879,10 +1888,10 @@ INFO: UndefinedMagicPropertyFetch - ]8;;file:///home/andy-kani/pro/sites/packag
     /**
      * Check if an entire time period is available without interruptions.
      *
-     * @param Model $model Schedulable model instance
-     * @param Carbon $start Period start datetime
-     * @param Carbon $end Period end datetime
-     * @param string|null $type Optional availability type filter
+     * @param  Model  $model  Schedulable model instance
+     * @param  Carbon  $start  Period start datetime
+     * @param  Carbon  $end  Period end datetime
+     * @param  string|null  $type  Optional availability type filter
      * @return bool True if the entire period is available
      */
     [97;41mpublic function isPeriodAvailable([0m
@@ -1900,139 +1909,140 @@ INFO: UndefinedMagicPropertyFetch - ]8;;file:///home/andy-kani/pro/sites/packag
                         [30;47m$availability->end_time[0m->format('H:i') >= $slotEnd->format('H:i');
 
 
-[0;31mERROR[0m: MissingOverrideAttribute - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/Core/SlotFinderService.php#L272\src/Services/Core/[1;31mSlotFinderService.php:272:5[0m]8;;\ - Method Roster\Services\Core\SlotFinderService::hasanyavailabilityinperiod should have the "Override" attribute (see https://psalm.dev/358)
+[0;31mERROR[0m: MissingOverrideAttribute - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/Core/SlotFinderService.php#L273\src/Services/Core/[1;31mSlotFinderService.php:273:5[0m]8;;\ - Method Roster\Services\Core\SlotFinderService::hasanyavailabilityinperiod should have the "Override" attribute (see https://psalm.dev/358)
     /**
      * Check if any availability exists within a time period.
      *
-     * @param Model $model Schedulable model instance
-     * @param Carbon $start Period start datetime
-     * @param Carbon $end Period end datetime
-     * @param string|null $type Optional availability type filter
+     * @param  Model  $model  Schedulable model instance
+     * @param  Carbon  $start  Period start datetime
+     * @param  Carbon  $end  Period end datetime
+     * @param  string|null  $type  Optional availability type filter
      * @return bool True if any availability exists in the period
+     *
      * @throws ValidationException If time range validation fails
      */
     [97;41mpublic function hasAnyAvailabilityInPeriod([0m
 
 
-[0;31mERROR[0m: MissingOverrideAttribute - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/Core/SlotFinderService.php#L318\src/Services/Core/[1;31mSlotFinderService.php:318:5[0m]8;;\ - Method Roster\Services\Core\SlotFinderService::getavailableslotsfromimpediments should have the "Override" attribute (see https://psalm.dev/358)
+[0;31mERROR[0m: MissingOverrideAttribute - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/Core/SlotFinderService.php#L319\src/Services/Core/[1;31mSlotFinderService.php:319:5[0m]8;;\ - Method Roster\Services\Core\SlotFinderService::getavailableslotsfromimpediments should have the "Override" attribute (see https://psalm.dev/358)
     /**
      * Calculate available time slots by removing impediments from a time range.
      *
-     * @param Carbon $start Start of the time range
-     * @param Carbon $end End of the time range
-     * @param Collection $impediments Collection of impediments
+     * @param  Carbon  $start  Start of the time range
+     * @param  Carbon  $end  End of the time range
+     * @param  Collection  $impediments  Collection of impediments
      * @return Collection<int, array<string, mixed>> Available time slots
      */
     [97;41mpublic function getAvailableSlotsFromImpediments([0m
 
 
-INFO: UndefinedMagicPropertyFetch - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/Core/SlotFinderService.php#L332\src/Services/Core/[1;31mSlotFinderService.php:332:25[0m]8;;\ - Magic instance property Roster\Models\Impediment::$start_datetime is not defined (see https://psalm.dev/218)
+INFO: UndefinedMagicPropertyFetch - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/Core/SlotFinderService.php#L333\src/Services/Core/[1;31mSlotFinderService.php:333:25[0m]8;;\ - Magic instance property Roster\Models\Impediment::$start_datetime is not defined (see https://psalm.dev/218)
             $impStart = [30;47m$impediment->start_datetime[0m;
 
 
-INFO: UndefinedMagicPropertyFetch - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/Core/SlotFinderService.php#L333\src/Services/Core/[1;31mSlotFinderService.php:333:23[0m]8;;\ - Magic instance property Roster\Models\Impediment::$end_datetime is not defined (see https://psalm.dev/218)
+INFO: UndefinedMagicPropertyFetch - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/Core/SlotFinderService.php#L334\src/Services/Core/[1;31mSlotFinderService.php:334:23[0m]8;;\ - Magic instance property Roster\Models\Impediment::$end_datetime is not defined (see https://psalm.dev/218)
             $impEnd = [30;47m$impediment->end_datetime[0m;
 
 
-INFO: InvalidArgument - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/Core/SlotFinderService.php#L336\src/Services/Core/[1;31mSlotFinderService.php:336:42[0m]8;;\ - Argument 1 of Illuminate\Support\Collection::push expects never, but array{end: mixed, start: mixed} provided (see https://psalm.dev/004)
+INFO: InvalidArgument - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/Core/SlotFinderService.php#L337\src/Services/Core/[1;31mSlotFinderService.php:337:42[0m]8;;\ - Argument 1 of Illuminate\Support\Collection::push expects never, but array{end: mixed, start: mixed} provided (see https://psalm.dev/004)
                 $findSlotsInPeriod->push([30;47m[
                     'start' => $currentTime->copy(),
                     'end' => $impStart->copy(),
                 ][0m);
 
 
-INFO: PossiblyInvalidMethodCall - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/Core/SlotFinderService.php#L337\src/Services/Core/[1;31mSlotFinderService.php:337:46[0m]8;;\ - Cannot call method on possible string variable $currentTime (see https://psalm.dev/113)
+INFO: PossiblyInvalidMethodCall - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/Core/SlotFinderService.php#L338\src/Services/Core/[1;31mSlotFinderService.php:338:46[0m]8;;\ - Cannot call method on possible string variable $currentTime (see https://psalm.dev/113)
                     'start' => $currentTime->[30;47mcopy[0m(),
 
 
-INFO: PossiblyUndefinedMethod - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/Core/SlotFinderService.php#L337\src/Services/Core/[1;31mSlotFinderService.php:337:46[0m]8;;\ - Method DateTimeInterface::copy does not exist (see https://psalm.dev/108)
+INFO: PossiblyUndefinedMethod - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/Core/SlotFinderService.php#L338\src/Services/Core/[1;31mSlotFinderService.php:338:46[0m]8;;\ - Method DateTimeInterface::copy does not exist (see https://psalm.dev/108)
                     'start' => $currentTime->[30;47mcopy[0m(),
 
 
-INFO: PossiblyInvalidMethodCall - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/Core/SlotFinderService.php#L342\src/Services/Core/[1;31mSlotFinderService.php:342:42[0m]8;;\ - Cannot call method on possible string variable $currentTime (see https://psalm.dev/113)
+INFO: PossiblyInvalidMethodCall - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/Core/SlotFinderService.php#L343\src/Services/Core/[1;31mSlotFinderService.php:343:42[0m]8;;\ - Cannot call method on possible string variable $currentTime (see https://psalm.dev/113)
             $currentTime = $currentTime->[30;47mgt[0m($impEnd) ? $currentTime : $impEnd;
 
 
-INFO: PossiblyUndefinedMethod - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/Core/SlotFinderService.php#L342\src/Services/Core/[1;31mSlotFinderService.php:342:42[0m]8;;\ - Method DateTimeInterface::gt does not exist (see https://psalm.dev/108)
+INFO: PossiblyUndefinedMethod - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/Core/SlotFinderService.php#L343\src/Services/Core/[1;31mSlotFinderService.php:343:42[0m]8;;\ - Method DateTimeInterface::gt does not exist (see https://psalm.dev/108)
             $currentTime = $currentTime->[30;47mgt[0m($impEnd) ? $currentTime : $impEnd;
 
 
-INFO: PossiblyInvalidMethodCall - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/Core/SlotFinderService.php#L345\src/Services/Core/[1;31mSlotFinderService.php:345:27[0m]8;;\ - Cannot call method on possible string variable $currentTime (see https://psalm.dev/113)
+INFO: PossiblyInvalidMethodCall - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/Core/SlotFinderService.php#L346\src/Services/Core/[1;31mSlotFinderService.php:346:27[0m]8;;\ - Cannot call method on possible string variable $currentTime (see https://psalm.dev/113)
         if ($currentTime->[30;47mlt[0m($end)) {
 
 
-INFO: PossiblyUndefinedMethod - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/Core/SlotFinderService.php#L345\src/Services/Core/[1;31mSlotFinderService.php:345:27[0m]8;;\ - Method DateTimeInterface::lt does not exist (see https://psalm.dev/108)
+INFO: PossiblyUndefinedMethod - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/Core/SlotFinderService.php#L346\src/Services/Core/[1;31mSlotFinderService.php:346:27[0m]8;;\ - Method DateTimeInterface::lt does not exist (see https://psalm.dev/108)
         if ($currentTime->[30;47mlt[0m($end)) {
 
 
-INFO: InvalidArgument - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/Core/SlotFinderService.php#L346\src/Services/Core/[1;31mSlotFinderService.php:346:38[0m]8;;\ - Argument 1 of Illuminate\Support\Collection::push expects never, but array{end: Illuminate\Support\Carbon&static, start: mixed} provided (see https://psalm.dev/004)
+INFO: InvalidArgument - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/Core/SlotFinderService.php#L347\src/Services/Core/[1;31mSlotFinderService.php:347:38[0m]8;;\ - Argument 1 of Illuminate\Support\Collection::push expects never, but array{end: Illuminate\Support\Carbon&static, start: mixed} provided (see https://psalm.dev/004)
             $findSlotsInPeriod->push([30;47m[
                 'start' => $currentTime->copy(),
                 'end' => $end->copy(),
             ][0m);
 
 
-INFO: PossiblyInvalidMethodCall - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/Core/SlotFinderService.php#L347\src/Services/Core/[1;31mSlotFinderService.php:347:42[0m]8;;\ - Cannot call method on possible string variable $currentTime (see https://psalm.dev/113)
+INFO: PossiblyInvalidMethodCall - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/Core/SlotFinderService.php#L348\src/Services/Core/[1;31mSlotFinderService.php:348:42[0m]8;;\ - Cannot call method on possible string variable $currentTime (see https://psalm.dev/113)
                 'start' => $currentTime->[30;47mcopy[0m(),
 
 
-INFO: PossiblyUndefinedMethod - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/Core/SlotFinderService.php#L347\src/Services/Core/[1;31mSlotFinderService.php:347:42[0m]8;;\ - Method DateTimeInterface::copy does not exist (see https://psalm.dev/108)
+INFO: PossiblyUndefinedMethod - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/Core/SlotFinderService.php#L348\src/Services/Core/[1;31mSlotFinderService.php:348:42[0m]8;;\ - Method DateTimeInterface::copy does not exist (see https://psalm.dev/108)
                 'start' => $currentTime->[30;47mcopy[0m(),
 
 
-INFO: UndefinedMagicPropertyFetch - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/Core/SlotFinderService.php#L386\src/Services/Core/[1;31mSlotFinderService.php:386:49[0m]8;;\ - Magic instance property Roster\Models\Availability::$start_time is not defined (see https://psalm.dev/218)
+INFO: UndefinedMagicPropertyFetch - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/Core/SlotFinderService.php#L388\src/Services/Core/[1;31mSlotFinderService.php:388:49[0m]8;;\ - Magic instance property Roster\Models\Availability::$start_time is not defined (see https://psalm.dev/218)
         $slotStart = $date->copy()->setTimeFrom([30;47m$availability->start_time[0m);
 
 
-INFO: UndefinedMagicPropertyFetch - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/Core/SlotFinderService.php#L387\src/Services/Core/[1;31mSlotFinderService.php:387:47[0m]8;;\ - Magic instance property Roster\Models\Availability::$end_time is not defined (see https://psalm.dev/218)
+INFO: UndefinedMagicPropertyFetch - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/Core/SlotFinderService.php#L389\src/Services/Core/[1;31mSlotFinderService.php:389:47[0m]8;;\ - Magic instance property Roster\Models\Availability::$end_time is not defined (see https://psalm.dev/218)
         $slotEnd = $date->copy()->setTimeFrom([30;47m$availability->end_time[0m);
 
 
-INFO: UndefinedMagicPropertyFetch - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/Core/SlotFinderService.php#L408\src/Services/Core/[1;31mSlotFinderService.php:408:42[0m]8;;\ - Magic instance property Roster\Models\Availability::$id is not defined (see https://psalm.dev/218)
+INFO: UndefinedMagicPropertyFetch - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/Core/SlotFinderService.php#L411\src/Services/Core/[1;31mSlotFinderService.php:411:42[0m]8;;\ - Magic instance property Roster\Models\Availability::$id is not defined (see https://psalm.dev/218)
                     'availability_id' => [30;47m$availability->id[0m,
 
 
-INFO: UndefinedMagicPropertyFetch - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/Core/SlotFinderService.php#L409\src/Services/Core/[1;31mSlotFinderService.php:409:31[0m]8;;\ - Magic instance property Roster\Models\Availability::$type is not defined (see https://psalm.dev/218)
+INFO: UndefinedMagicPropertyFetch - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/Core/SlotFinderService.php#L412\src/Services/Core/[1;31mSlotFinderService.php:412:31[0m]8;;\ - Magic instance property Roster\Models\Availability::$type is not defined (see https://psalm.dev/218)
                     'type' => [30;47m$availability->type[0m,
 
 
-INFO: UndefinedMagicPropertyFetch - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/Core/SlotFinderService.php#L433\src/Services/Core/[1;31mSlotFinderService.php:433:35[0m]8;;\ - Magic instance property Roster\Models\Availability::$schedules is not defined (see https://psalm.dev/218)
+INFO: UndefinedMagicPropertyFetch - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/Core/SlotFinderService.php#L436\src/Services/Core/[1;31mSlotFinderService.php:436:35[0m]8;;\ - Magic instance property Roster\Models\Availability::$schedules is not defined (see https://psalm.dev/218)
         $hasOverlappingSchedule = [30;47m$availability->schedules[0m->contains(
 
 
-INFO: MissingClosureParamType - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/Core/SlotFinderService.php#L434\src/Services/Core/[1;31mSlotFinderService.php:434:16[0m]8;;\ - Parameter $schedule has no provided type (see https://psalm.dev/153)
-            fn([30;47m$schedule[0m): bool => $schedule->overlapsWith($start, $end)
+INFO: MissingClosureParamType - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/Core/SlotFinderService.php#L437\src/Services/Core/[1;31mSlotFinderService.php:437:17[0m]8;;\ - Parameter $schedule has no provided type (see https://psalm.dev/153)
+            fn ([30;47m$schedule[0m): bool => $schedule->overlapsWith($start, $end)
 
 
-INFO: UndefinedMagicPropertyFetch - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/Core/SlotFinderService.php#L437\src/Services/Core/[1;31mSlotFinderService.php:437:38[0m]8;;\ - Magic instance property Roster\Models\Availability::$impediments is not defined (see https://psalm.dev/218)
+INFO: UndefinedMagicPropertyFetch - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/Core/SlotFinderService.php#L440\src/Services/Core/[1;31mSlotFinderService.php:440:38[0m]8;;\ - Magic instance property Roster\Models\Availability::$impediments is not defined (see https://psalm.dev/218)
         $hasOverlappingImpediments = [30;47m$availability->impediments[0m->contains(
 
 
-INFO: MissingClosureParamType - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/Core/SlotFinderService.php#L438\src/Services/Core/[1;31mSlotFinderService.php:438:16[0m]8;;\ - Parameter $impediment has no provided type (see https://psalm.dev/153)
-            fn([30;47m$impediment[0m): bool => $impediment->overlapsWith($start, $end)
+INFO: MissingClosureParamType - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/Core/SlotFinderService.php#L441\src/Services/Core/[1;31mSlotFinderService.php:441:17[0m]8;;\ - Parameter $impediment has no provided type (see https://psalm.dev/153)
+            fn ([30;47m$impediment[0m): bool => $impediment->overlapsWith($start, $end)
 
 
-INFO: UndefinedMagicPropertyFetch - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/Core/SlotFinderService.php#L463\src/Services/Core/[1;31mSlotFinderService.php:463:56[0m]8;;\ - Magic instance property Roster\Models\Availability::$start_time is not defined (see https://psalm.dev/218)
+INFO: UndefinedMagicPropertyFetch - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/Core/SlotFinderService.php#L466\src/Services/Core/[1;31mSlotFinderService.php:466:56[0m]8;;\ - Magic instance property Roster\Models\Availability::$start_time is not defined (see https://psalm.dev/218)
         $slotStart = $currentDate->copy()->setTimeFrom([30;47m$availability->start_time[0m);
 
 
-INFO: UndefinedMagicPropertyFetch - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/Core/SlotFinderService.php#L464\src/Services/Core/[1;31mSlotFinderService.php:464:54[0m]8;;\ - Magic instance property Roster\Models\Availability::$end_time is not defined (see https://psalm.dev/218)
+INFO: UndefinedMagicPropertyFetch - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/Core/SlotFinderService.php#L467\src/Services/Core/[1;31mSlotFinderService.php:467:54[0m]8;;\ - Magic instance property Roster\Models\Availability::$end_time is not defined (see https://psalm.dev/218)
         $slotEnd = $currentDate->copy()->setTimeFrom([30;47m$availability->end_time[0m);
 
 
-INFO: UndefinedMagicPropertyFetch - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/Core/SlotFinderService.php#L482\src/Services/Core/[1;31mSlotFinderService.php:482:42[0m]8;;\ - Magic instance property Roster\Models\Availability::$id is not defined (see https://psalm.dev/218)
+INFO: UndefinedMagicPropertyFetch - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/Core/SlotFinderService.php#L486\src/Services/Core/[1;31mSlotFinderService.php:486:42[0m]8;;\ - Magic instance property Roster\Models\Availability::$id is not defined (see https://psalm.dev/218)
                     'availability_id' => [30;47m$availability->id[0m,
 
 
-INFO: UndefinedMagicPropertyFetch - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/Core/SlotFinderService.php#L483\src/Services/Core/[1;31mSlotFinderService.php:483:31[0m]8;;\ - Magic instance property Roster\Models\Availability::$type is not defined (see https://psalm.dev/218)
+INFO: UndefinedMagicPropertyFetch - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/Core/SlotFinderService.php#L487\src/Services/Core/[1;31mSlotFinderService.php:487:31[0m]8;;\ - Magic instance property Roster\Models\Availability::$type is not defined (see https://psalm.dev/218)
                     'type' => [30;47m$availability->type[0m,
 
 
-INFO: UndefinedMagicPropertyFetch - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/Core/SlotFinderService.php#L508\src/Services/Core/[1;31mSlotFinderService.php:508:56[0m]8;;\ - Magic instance property Roster\Models\Availability::$start_time is not defined (see https://psalm.dev/218)
+INFO: UndefinedMagicPropertyFetch - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/Core/SlotFinderService.php#L512\src/Services/Core/[1;31mSlotFinderService.php:512:56[0m]8;;\ - Magic instance property Roster\Models\Availability::$start_time is not defined (see https://psalm.dev/218)
         $slotStart = $currentDate->copy()->setTimeFrom([30;47m$availability->start_time[0m);
 
 
-INFO: UndefinedMagicPropertyFetch - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/Core/SlotFinderService.php#L509\src/Services/Core/[1;31mSlotFinderService.php:509:54[0m]8;;\ - Magic instance property Roster\Models\Availability::$end_time is not defined (see https://psalm.dev/218)
+INFO: UndefinedMagicPropertyFetch - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/Core/SlotFinderService.php#L513\src/Services/Core/[1;31mSlotFinderService.php:513:54[0m]8;;\ - Magic instance property Roster\Models\Availability::$end_time is not defined (see https://psalm.dev/218)
         $slotEnd = $currentDate->copy()->setTimeFrom([30;47m$availability->end_time[0m);
 
 
@@ -2051,51 +2061,51 @@ class [30;47mValidationService[0m implements ValidationServiceInterface
     [97;41mpublic function validateDurationAndInterval(int $durationMinutes, int $intervalMinutes): void[0m
 
 
-[0;31mERROR[0m: MissingOverrideAttribute - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/Core/ValidationService.php#L48\src/Services/Core/[1;31mValidationService.php:48:5[0m]8;;\ - Method Roster\Services\Core\ValidationService::validatefuturedate should have the "Override" attribute (see https://psalm.dev/358)
+[0;31mERROR[0m: MissingOverrideAttribute - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/Core/ValidationService.php#L47\src/Services/Core/[1;31mValidationService.php:47:5[0m]8;;\ - Method Roster\Services\Core\ValidationService::validatefuturedate should have the "Override" attribute (see https://psalm.dev/358)
     /**
      * Validate that a date is in the future.
      */
     [97;41mpublic function validateFutureDate(Carbon $date): void[0m
 
 
-[0;31mERROR[0m: MissingOverrideAttribute - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/Core/ValidationService.php#L58\src/Services/Core/[1;31mValidationService.php:58:5[0m]8;;\ - Method Roster\Services\Core\ValidationService::validateminimumduration should have the "Override" attribute (see https://psalm.dev/358)
+[0;31mERROR[0m: MissingOverrideAttribute - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/Core/ValidationService.php#L57\src/Services/Core/[1;31mValidationService.php:57:5[0m]8;;\ - Method Roster\Services\Core\ValidationService::validateminimumduration should have the "Override" attribute (see https://psalm.dev/358)
     /**
      * Validate minimum duration.
      */
     [97;41mpublic function validateMinimumDuration([0m
 
 
-[0;31mERROR[0m: MissingOverrideAttribute - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/Core/ValidationService.php#L90\src/Services/Core/[1;31mValidationService.php:90:5[0m]8;;\ - Method Roster\Services\Core\ValidationService::validaterequiredfields should have the "Override" attribute (see https://psalm.dev/358)
+[0;31mERROR[0m: MissingOverrideAttribute - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/Core/ValidationService.php#L87\src/Services/Core/[1;31mValidationService.php:87:5[0m]8;;\ - Method Roster\Services\Core\ValidationService::validaterequiredfields should have the "Override" attribute (see https://psalm.dev/358)
     /**
      * Validate that required fields exist.
      *
-     * @param array<string, mixed> $data
-     * @param array<string> $requiredFields
+     * @param  array<string, mixed>  $data
+     * @param  array<string>  $requiredFields
      */
     [97;41mpublic function validateRequiredFields(array $data, array $requiredFields): void[0m
 
 
-[0;31mERROR[0m: MissingOverrideAttribute - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/Core/ValidationService.php#L108\src/Services/Core/[1;31mValidationService.php:108:5[0m]8;;\ - Method Roster\Services\Core\ValidationService::parseandvalidatedatetimerange should have the "Override" attribute (see https://psalm.dev/358)
+[0;31mERROR[0m: MissingOverrideAttribute - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/Core/ValidationService.php#L105\src/Services/Core/[1;31mValidationService.php:105:5[0m]8;;\ - Method Roster\Services\Core\ValidationService::parseandvalidatedatetimerange should have the "Override" attribute (see https://psalm.dev/358)
     /**
      * Parse and validate datetime from array.
      *
-     * @param array<string, mixed> $data
+     * @param  array<string, mixed>  $data
      * @return array{start: Carbon, end: Carbon}
      */
     [97;41mpublic function parseAndValidateDateTimeRange([0m
 
 
-[0;31mERROR[0m: MissingOverrideAttribute - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/Core/ValidationService.php#L129\src/Services/Core/[1;31mValidationService.php:129:5[0m]8;;\ - Method Roster\Services\Core\ValidationService::parseandvalidatetimerange should have the "Override" attribute (see https://psalm.dev/358)
+[0;31mERROR[0m: MissingOverrideAttribute - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/Core/ValidationService.php#L126\src/Services/Core/[1;31mValidationService.php:126:5[0m]8;;\ - Method Roster\Services\Core\ValidationService::parseandvalidatetimerange should have the "Override" attribute (see https://psalm.dev/358)
     /**
      * Parse and validate time from array.
      *
-     * @param array<string, mixed> $data
+     * @param  array<string, mixed>  $data
      * @return array{start: Carbon, end: Carbon}
      */
     [97;41mpublic function parseAndValidateTimeRange([0m
 
 
-[0;31mERROR[0m: MissingOverrideAttribute - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/Core/ValidationService.php#L147\src/Services/Core/[1;31mValidationService.php:147:5[0m]8;;\ - Method Roster\Services\Core\ValidationService::validatetimezone should have the "Override" attribute (see https://psalm.dev/358)
+[0;31mERROR[0m: MissingOverrideAttribute - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/Core/ValidationService.php#L144\src/Services/Core/[1;31mValidationService.php:144:5[0m]8;;\ - Method Roster\Services\Core\ValidationService::validatetimezone should have the "Override" attribute (see https://psalm.dev/358)
     /**
      * Validate timezone.
      */
@@ -2226,115 +2236,115 @@ INFO: PossiblyNullReference - ]8;;file:///home/andy-kani/pro/sites/packages/lar
         return $this->currentImpediment->[30;47mupdate[0m($this->data);
 
 
-[0;31mERROR[0m: PossiblyUnusedMethod - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/ImpedimentService.php#L206\src/Services/[1;31mImpedimentService.php:206:21[0m]8;;\ - Cannot find any calls to method Roster\Services\ImpedimentService::create (see https://psalm.dev/087)
+[0;31mERROR[0m: PossiblyUnusedMethod - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/ImpedimentService.php#L207\src/Services/[1;31mImpedimentService.php:207:21[0m]8;;\ - Cannot find any calls to method Roster\Services\ImpedimentService::create (see https://psalm.dev/087)
     public function [97;41mcreate[0m($availabilityOrData, ?array $data = null): Impediment
 
 
-INFO: UndefinedMagicPropertyFetch - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/ImpedimentService.php#L240\src/Services/[1;31mImpedimentService.php:240:42[0m]8;;\ - Magic instance property Roster\Models\Availability::$id is not defined (see https://psalm.dev/218)
+INFO: UndefinedMagicPropertyFetch - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/ImpedimentService.php#L242\src/Services/[1;31mImpedimentService.php:242:42[0m]8;;\ - Magic instance property Roster\Models\Availability::$id is not defined (see https://psalm.dev/218)
         $this->data['availability_id'] = [30;47m$availability->id[0m;
 
 
-INFO: UndefinedMagicPropertyFetch - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/ImpedimentService.php#L272\src/Services/[1;31mImpedimentService.php:272:13[0m]8;;\ - Magic instance property Roster\Models\Availability::$schedulable_id is not defined (see https://psalm.dev/218)
+INFO: UndefinedMagicPropertyFetch - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/ImpedimentService.php#L275\src/Services/[1;31mImpedimentService.php:275:13[0m]8;;\ - Magic instance property Roster\Models\Availability::$schedulable_id is not defined (see https://psalm.dev/218)
             [30;47m$availability->schedulable_id[0m !== $this->schedulable->id ||
 
 
-INFO: PossiblyNullPropertyFetch - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/ImpedimentService.php#L272\src/Services/[1;31mImpedimentService.php:272:47[0m]8;;\ - Cannot get property on possibly null variable $this->schedulable of type Illuminate\Database\Eloquent\Model|null (see https://psalm.dev/082)
+INFO: PossiblyNullPropertyFetch - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/ImpedimentService.php#L275\src/Services/[1;31mImpedimentService.php:275:47[0m]8;;\ - Cannot get property on possibly null variable $this->schedulable of type Illuminate\Database\Eloquent\Model|null (see https://psalm.dev/082)
             $availability->schedulable_id !== [30;47m$this->schedulable->id[0m ||
 
 
-INFO: UndefinedMagicPropertyFetch - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/ImpedimentService.php#L272\src/Services/[1;31mImpedimentService.php:272:47[0m]8;;\ - Magic instance property Illuminate\Database\Eloquent\Model::$id is not defined (see https://psalm.dev/218)
+INFO: UndefinedMagicPropertyFetch - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/ImpedimentService.php#L275\src/Services/[1;31mImpedimentService.php:275:47[0m]8;;\ - Magic instance property Illuminate\Database\Eloquent\Model::$id is not defined (see https://psalm.dev/218)
             $availability->schedulable_id !== [30;47m$this->schedulable->id[0m ||
 
 
-INFO: UndefinedMagicPropertyFetch - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/ImpedimentService.php#L273\src/Services/[1;31mImpedimentService.php:273:13[0m]8;;\ - Magic instance property Roster\Models\Availability::$schedulable_type is not defined (see https://psalm.dev/218)
+INFO: UndefinedMagicPropertyFetch - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/ImpedimentService.php#L276\src/Services/[1;31mImpedimentService.php:276:13[0m]8;;\ - Magic instance property Roster\Models\Availability::$schedulable_type is not defined (see https://psalm.dev/218)
             [30;47m$availability->schedulable_type[0m !== get_class($this->schedulable)
 
 
-INFO: PossiblyNullArgument - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/ImpedimentService.php#L273\src/Services/[1;31mImpedimentService.php:273:59[0m]8;;\ - Argument 1 of get_class cannot be null, possibly null value provided (see https://psalm.dev/078)
+INFO: PossiblyNullArgument - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/ImpedimentService.php#L276\src/Services/[1;31mImpedimentService.php:276:59[0m]8;;\ - Argument 1 of get_class cannot be null, possibly null value provided (see https://psalm.dev/078)
             $availability->schedulable_type !== get_class([30;47m$this->schedulable[0m)
 
 
-INFO: UndefinedMagicMethod - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/ImpedimentService.php#L285\src/Services/[1;31mImpedimentService.php:285:16[0m]8;;\ - Magic method Roster\Models\Impediment::where does not exist (see https://psalm.dev/219)
+INFO: UndefinedMagicMethod - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/ImpedimentService.php#L288\src/Services/[1;31mImpedimentService.php:288:16[0m]8;;\ - Magic method Roster\Models\Impediment::where does not exist (see https://psalm.dev/219)
         return [30;47mImpediment::where('schedulable_id', $this->schedulable->id)[0m
 
 
-INFO: PossiblyNullPropertyFetch - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/ImpedimentService.php#L285\src/Services/[1;31mImpedimentService.php:285:52[0m]8;;\ - Cannot get property on possibly null variable $this->schedulable of type Illuminate\Database\Eloquent\Model|null (see https://psalm.dev/082)
+INFO: PossiblyNullPropertyFetch - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/ImpedimentService.php#L288\src/Services/[1;31mImpedimentService.php:288:52[0m]8;;\ - Cannot get property on possibly null variable $this->schedulable of type Illuminate\Database\Eloquent\Model|null (see https://psalm.dev/082)
         return Impediment::where('schedulable_id', [30;47m$this->schedulable->id[0m)
 
 
-INFO: UndefinedMagicPropertyFetch - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/ImpedimentService.php#L285\src/Services/[1;31mImpedimentService.php:285:52[0m]8;;\ - Magic instance property Illuminate\Database\Eloquent\Model::$id is not defined (see https://psalm.dev/218)
+INFO: UndefinedMagicPropertyFetch - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/ImpedimentService.php#L288\src/Services/[1;31mImpedimentService.php:288:52[0m]8;;\ - Magic instance property Illuminate\Database\Eloquent\Model::$id is not defined (see https://psalm.dev/218)
         return Impediment::where('schedulable_id', [30;47m$this->schedulable->id[0m)
 
 
-INFO: PossiblyNullArgument - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/ImpedimentService.php#L286\src/Services/[1;31mImpedimentService.php:286:51[0m]8;;\ - Argument 1 of get_class cannot be null, possibly null value provided (see https://psalm.dev/078)
+INFO: PossiblyNullArgument - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/ImpedimentService.php#L289\src/Services/[1;31mImpedimentService.php:289:51[0m]8;;\ - Argument 1 of get_class cannot be null, possibly null value provided (see https://psalm.dev/078)
             ->where('schedulable_type', get_class([30;47m$this->schedulable[0m))
 
 
-[0;31mERROR[0m: PossiblyUnusedMethod - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/ImpedimentService.php#L290\src/Services/[1;31mImpedimentService.php:290:21[0m]8;;\ - Cannot find explicit calls to method Roster\Services\ImpedimentService::delete (but did find some potential callers) (see https://psalm.dev/087)
+[0;31mERROR[0m: PossiblyUnusedMethod - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/ImpedimentService.php#L293\src/Services/[1;31mImpedimentService.php:293:21[0m]8;;\ - Cannot find explicit calls to method Roster\Services\ImpedimentService::delete (but did find some potential callers) (see https://psalm.dev/087)
     public function [97;41mdelete[0m(int $id): bool
 
 
-INFO: InvalidNullableReturnType - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/ImpedimentService.php#L290\src/Services/[1;31mImpedimentService.php:290:38[0m]8;;\ - The declared return type 'bool' for Roster\Services\ImpedimentService::delete is not nullable, but 'bool|null' contains null (see https://psalm.dev/144)
+INFO: InvalidNullableReturnType - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/ImpedimentService.php#L293\src/Services/[1;31mImpedimentService.php:293:38[0m]8;;\ - The declared return type 'bool' for Roster\Services\ImpedimentService::delete is not nullable, but 'bool|null' contains null (see https://psalm.dev/144)
     public function delete(int $id): [30;47mbool[0m
 
 
-INFO: NullableReturnStatement - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/ImpedimentService.php#L299\src/Services/[1;31mImpedimentService.php:299:16[0m]8;;\ - The declared return type 'bool' for Roster\Services\ImpedimentService::delete is not nullable, but the function returns 'bool|null' (see https://psalm.dev/139)
+INFO: NullableReturnStatement - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/ImpedimentService.php#L302\src/Services/[1;31mImpedimentService.php:302:16[0m]8;;\ - The declared return type 'bool' for Roster\Services\ImpedimentService::delete is not nullable, but the function returns 'bool|null' (see https://psalm.dev/139)
         return [30;47m$impediment->delete()[0m;
 
 
-[0;31mERROR[0m: PossiblyUnusedMethod - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/ImpedimentService.php#L302\src/Services/[1;31mImpedimentService.php:302:21[0m]8;;\ - Cannot find any calls to method Roster\Services\ImpedimentService::between (see https://psalm.dev/087)
+[0;31mERROR[0m: PossiblyUnusedMethod - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/ImpedimentService.php#L305\src/Services/[1;31mImpedimentService.php:305:21[0m]8;;\ - Cannot find any calls to method Roster\Services\ImpedimentService::between (see https://psalm.dev/087)
     public function [97;41mbetween[0m(Carbon $start, Carbon $end): Collection
 
 
-[0;31mERROR[0m: PossiblyUnusedMethod - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/ImpedimentService.php#L314\src/Services/[1;31mImpedimentService.php:314:21[0m]8;;\ - Cannot find any calls to method Roster\Services\ImpedimentService::isTimeSlotBlocked (see https://psalm.dev/087)
+[0;31mERROR[0m: PossiblyUnusedMethod - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/ImpedimentService.php#L317\src/Services/[1;31mImpedimentService.php:317:21[0m]8;;\ - Cannot find any calls to method Roster\Services\ImpedimentService::isTimeSlotBlocked (see https://psalm.dev/087)
     public function [97;41misTimeSlotBlocked[0m(Carbon $start, Carbon $end, ?string $type = null): bool
 
 
-INFO: PossiblyNullArgument - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/ImpedimentService.php#L319\src/Services/[1;31mImpedimentService.php:319:72[0m]8;;\ - Argument 1 of Roster\Contracts\Repository\AvailabilityRepositoryInterface::findForTimeSlot cannot be null, possibly null value provided (see https://psalm.dev/078)
+INFO: PossiblyNullArgument - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/ImpedimentService.php#L322\src/Services/[1;31mImpedimentService.php:322:72[0m]8;;\ - Argument 1 of Roster\Contracts\Repository\AvailabilityRepositoryInterface::findForTimeSlot cannot be null, possibly null value provided (see https://psalm.dev/078)
         $availability = $this->availabilityRepository->findForTimeSlot([30;47m$this->schedulable[0m, $start, $end, $type);
 
 
-INFO: UndefinedMagicPropertyFetch - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/ImpedimentService.php#L325\src/Services/[1;31mImpedimentService.php:325:71[0m]8;;\ - Magic instance property Roster\Models\Availability::$id is not defined (see https://psalm.dev/218)
+INFO: UndefinedMagicPropertyFetch - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/ImpedimentService.php#L328\src/Services/[1;31mImpedimentService.php:328:71[0m]8;;\ - Magic instance property Roster\Models\Availability::$id is not defined (see https://psalm.dev/218)
         return $this->impedimentRepository->hasOverlappingImpediments([30;47m$availability->id[0m, $start, $end);
 
 
-[0;31mERROR[0m: PossiblyUnusedMethod - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/ImpedimentService.php#L328\src/Services/[1;31mImpedimentService.php:328:21[0m]8;;\ - Cannot find any calls to method Roster\Services\ImpedimentService::getAvailableTimeSlots (see https://psalm.dev/087)
+[0;31mERROR[0m: PossiblyUnusedMethod - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/ImpedimentService.php#L331\src/Services/[1;31mImpedimentService.php:331:21[0m]8;;\ - Cannot find any calls to method Roster\Services\ImpedimentService::getAvailableTimeSlots (see https://psalm.dev/087)
     public function [97;41mgetAvailableTimeSlots[0m(Carbon $start, Carbon $end, ?string $type = null): Collection
 
 
-INFO: PossiblyNullArgument - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/ImpedimentService.php#L333\src/Services/[1;31mImpedimentService.php:333:72[0m]8;;\ - Argument 1 of Roster\Contracts\Repository\AvailabilityRepositoryInterface::findForTimeSlot cannot be null, possibly null value provided (see https://psalm.dev/078)
+INFO: PossiblyNullArgument - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/ImpedimentService.php#L336\src/Services/[1;31mImpedimentService.php:336:72[0m]8;;\ - Argument 1 of Roster\Contracts\Repository\AvailabilityRepositoryInterface::findForTimeSlot cannot be null, possibly null value provided (see https://psalm.dev/078)
         $availability = $this->availabilityRepository->findForTimeSlot([30;47m$this->schedulable[0m, $start, $end, $type);
 
 
-INFO: UndefinedMagicPropertyFetch - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/ImpedimentService.php#L339\src/Services/[1;31mImpedimentService.php:339:69[0m]8;;\ - Magic instance property Roster\Models\Availability::$id is not defined (see https://psalm.dev/218)
+INFO: UndefinedMagicPropertyFetch - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/ImpedimentService.php#L342\src/Services/[1;31mImpedimentService.php:342:69[0m]8;;\ - Magic instance property Roster\Models\Availability::$id is not defined (see https://psalm.dev/218)
         $impediments = $this->impedimentRepository->findForTimeSlot([30;47m$availability->id[0m, $start, $end);
 
 
-INFO: InvalidArgument - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/ImpedimentService.php#L342\src/Services/[1;31mImpedimentService.php:342:83[0m]8;;\ - Argument 3 of Roster\Contracts\Services\SlotFinderInterface::getAvailableSlotsFromImpediments expects Illuminate\Support\Collection<array-key, mixed>, but Illuminate\Support\Collection<int, object> provided (see https://psalm.dev/004)
+INFO: InvalidArgument - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/ImpedimentService.php#L345\src/Services/[1;31mImpedimentService.php:345:83[0m]8;;\ - Argument 3 of Roster\Contracts\Services\SlotFinderInterface::getAvailableSlotsFromImpediments expects Illuminate\Support\Collection<array-key, mixed>, but Illuminate\Support\Collection<int, object> provided (see https://psalm.dev/004)
         return $slotFinderService->getAvailableSlotsFromImpediments($start, $end, [30;47m$impediments[0m);
 
 
-INFO: PossiblyNullArgument - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/ImpedimentService.php#L359\src/Services/[1;31mImpedimentService.php:359:63[0m]8;;\ - Argument 1 of Roster\Contracts\Repository\AvailabilityRepositoryInterface::findForTimeSlot cannot be null, possibly null value provided (see https://psalm.dev/078)
+INFO: PossiblyNullArgument - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/ImpedimentService.php#L362\src/Services/[1;31mImpedimentService.php:362:63[0m]8;;\ - Argument 1 of Roster\Contracts\Repository\AvailabilityRepositoryInterface::findForTimeSlot cannot be null, possibly null value provided (see https://psalm.dev/078)
         return $this->availabilityRepository->findForTimeSlot([30;47m$this->schedulable[0m, $start, $end);
 
 
-[0;31mERROR[0m: MissingOverrideAttribute - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/ImpedimentService.php#L362\src/Services/[1;31mImpedimentService.php:362:5[0m]8;;\ - Method Roster\Services\ImpedimentService::applyfilters should have the "Override" attribute (see https://psalm.dev/358)
+[0;31mERROR[0m: MissingOverrideAttribute - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/ImpedimentService.php#L365\src/Services/[1;31mImpedimentService.php:365:5[0m]8;;\ - Method Roster\Services\ImpedimentService::applyfilters should have the "Override" attribute (see https://psalm.dev/358)
     [97;41mprotected function applyFilters(): Builder[0m
 
 
-INFO: UndefinedMagicMethod - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/ImpedimentService.php#L364\src/Services/[1;31mImpedimentService.php:364:18[0m]8;;\ - Magic method Roster\Models\Impediment::where does not exist (see https://psalm.dev/219)
+INFO: UndefinedMagicMethod - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/ImpedimentService.php#L367\src/Services/[1;31mImpedimentService.php:367:18[0m]8;;\ - Magic method Roster\Models\Impediment::where does not exist (see https://psalm.dev/219)
         $query = [30;47mImpediment::where('schedulable_id', $this->schedulable->id)[0m
 
 
-INFO: PossiblyNullPropertyFetch - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/ImpedimentService.php#L364\src/Services/[1;31mImpedimentService.php:364:54[0m]8;;\ - Cannot get property on possibly null variable $this->schedulable of type Illuminate\Database\Eloquent\Model|null (see https://psalm.dev/082)
+INFO: PossiblyNullPropertyFetch - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/ImpedimentService.php#L367\src/Services/[1;31mImpedimentService.php:367:54[0m]8;;\ - Cannot get property on possibly null variable $this->schedulable of type Illuminate\Database\Eloquent\Model|null (see https://psalm.dev/082)
         $query = Impediment::where('schedulable_id', [30;47m$this->schedulable->id[0m)
 
 
-INFO: UndefinedMagicPropertyFetch - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/ImpedimentService.php#L364\src/Services/[1;31mImpedimentService.php:364:54[0m]8;;\ - Magic instance property Illuminate\Database\Eloquent\Model::$id is not defined (see https://psalm.dev/218)
+INFO: UndefinedMagicPropertyFetch - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/ImpedimentService.php#L367\src/Services/[1;31mImpedimentService.php:367:54[0m]8;;\ - Magic instance property Illuminate\Database\Eloquent\Model::$id is not defined (see https://psalm.dev/218)
         $query = Impediment::where('schedulable_id', [30;47m$this->schedulable->id[0m)
 
 
-INFO: PossiblyNullArgument - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/ImpedimentService.php#L365\src/Services/[1;31mImpedimentService.php:365:51[0m]8;;\ - Argument 1 of get_class cannot be null, possibly null value provided (see https://psalm.dev/078)
+INFO: PossiblyNullArgument - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/ImpedimentService.php#L368\src/Services/[1;31mImpedimentService.php:368:51[0m]8;;\ - Argument 1 of get_class cannot be null, possibly null value provided (see https://psalm.dev/078)
             ->where('schedulable_type', get_class([30;47m$this->schedulable[0m));
 
 
@@ -2422,123 +2432,123 @@ INFO: UndefinedMagicPropertyFetch - ]8;;file:///home/andy-kani/pro/sites/packag
     [97;41mprotected function executeUpdate(int $id): bool[0m
 
 
-[0;31mERROR[0m: PossiblyUnusedMethod - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/ScheduleService.php#L199\src/Services/[1;31mScheduleService.php:199:21[0m]8;;\ - Cannot find any calls to method Roster\Services\ScheduleService::create (see https://psalm.dev/087)
+[0;31mERROR[0m: PossiblyUnusedMethod - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/ScheduleService.php#L200\src/Services/[1;31mScheduleService.php:200:21[0m]8;;\ - Cannot find any calls to method Roster\Services\ScheduleService::create (see https://psalm.dev/087)
     public function [97;41mcreate[0m($availabilityOrData, ?array $data = null): Schedule
 
 
-INFO: UndefinedMagicPropertyFetch - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/ScheduleService.php#L233\src/Services/[1;31mScheduleService.php:233:42[0m]8;;\ - Magic instance property Roster\Models\Availability::$id is not defined (see https://psalm.dev/218)
+INFO: UndefinedMagicPropertyFetch - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/ScheduleService.php#L235\src/Services/[1;31mScheduleService.php:235:42[0m]8;;\ - Magic instance property Roster\Models\Availability::$id is not defined (see https://psalm.dev/218)
         $this->data['availability_id'] = [30;47m$availability->id[0m;
 
 
-INFO: UndefinedMagicPropertyFetch - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/ScheduleService.php#L265\src/Services/[1;31mScheduleService.php:265:13[0m]8;;\ - Magic instance property Roster\Models\Availability::$schedulable_id is not defined (see https://psalm.dev/218)
+INFO: UndefinedMagicPropertyFetch - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/ScheduleService.php#L268\src/Services/[1;31mScheduleService.php:268:13[0m]8;;\ - Magic instance property Roster\Models\Availability::$schedulable_id is not defined (see https://psalm.dev/218)
             [30;47m$availability->schedulable_id[0m !== $this->schedulable->id ||
 
 
-INFO: PossiblyNullPropertyFetch - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/ScheduleService.php#L265\src/Services/[1;31mScheduleService.php:265:47[0m]8;;\ - Cannot get property on possibly null variable $this->schedulable of type Illuminate\Database\Eloquent\Model|null (see https://psalm.dev/082)
+INFO: PossiblyNullPropertyFetch - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/ScheduleService.php#L268\src/Services/[1;31mScheduleService.php:268:47[0m]8;;\ - Cannot get property on possibly null variable $this->schedulable of type Illuminate\Database\Eloquent\Model|null (see https://psalm.dev/082)
             $availability->schedulable_id !== [30;47m$this->schedulable->id[0m ||
 
 
-INFO: UndefinedMagicPropertyFetch - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/ScheduleService.php#L265\src/Services/[1;31mScheduleService.php:265:47[0m]8;;\ - Magic instance property Illuminate\Database\Eloquent\Model::$id is not defined (see https://psalm.dev/218)
+INFO: UndefinedMagicPropertyFetch - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/ScheduleService.php#L268\src/Services/[1;31mScheduleService.php:268:47[0m]8;;\ - Magic instance property Illuminate\Database\Eloquent\Model::$id is not defined (see https://psalm.dev/218)
             $availability->schedulable_id !== [30;47m$this->schedulable->id[0m ||
 
 
-INFO: UndefinedMagicPropertyFetch - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/ScheduleService.php#L266\src/Services/[1;31mScheduleService.php:266:13[0m]8;;\ - Magic instance property Roster\Models\Availability::$schedulable_type is not defined (see https://psalm.dev/218)
+INFO: UndefinedMagicPropertyFetch - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/ScheduleService.php#L269\src/Services/[1;31mScheduleService.php:269:13[0m]8;;\ - Magic instance property Roster\Models\Availability::$schedulable_type is not defined (see https://psalm.dev/218)
             [30;47m$availability->schedulable_type[0m !== get_class($this->schedulable)
 
 
-INFO: PossiblyNullArgument - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/ScheduleService.php#L266\src/Services/[1;31mScheduleService.php:266:59[0m]8;;\ - Argument 1 of get_class cannot be null, possibly null value provided (see https://psalm.dev/078)
+INFO: PossiblyNullArgument - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/ScheduleService.php#L269\src/Services/[1;31mScheduleService.php:269:59[0m]8;;\ - Argument 1 of get_class cannot be null, possibly null value provided (see https://psalm.dev/078)
             $availability->schedulable_type !== get_class([30;47m$this->schedulable[0m)
 
 
-[0;31mERROR[0m: PossiblyUnusedMethod - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/ScheduleService.php#L280\src/Services/[1;31mScheduleService.php:280:21[0m]8;;\ - Cannot find explicit calls to method Roster\Services\ScheduleService::delete (but did find some potential callers) (see https://psalm.dev/087)
+[0;31mERROR[0m: PossiblyUnusedMethod - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/ScheduleService.php#L284\src/Services/[1;31mScheduleService.php:284:21[0m]8;;\ - Cannot find explicit calls to method Roster\Services\ScheduleService::delete (but did find some potential callers) (see https://psalm.dev/087)
     public function [97;41mdelete[0m(int $id): bool
 
 
-[0;31mERROR[0m: PossiblyUnusedMethod - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/ScheduleService.php#L292\src/Services/[1;31mScheduleService.php:292:21[0m]8;;\ - Cannot find any calls to method Roster\Services\ScheduleService::between (see https://psalm.dev/087)
+[0;31mERROR[0m: PossiblyUnusedMethod - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/ScheduleService.php#L296\src/Services/[1;31mScheduleService.php:296:21[0m]8;;\ - Cannot find any calls to method Roster\Services\ScheduleService::between (see https://psalm.dev/087)
     public function [97;41mbetween[0m(Carbon $start, Carbon $end): Collection
 
 
-INFO: PossiblyNullPropertyFetch - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/ScheduleService.php#L298\src/Services/[1;31mScheduleService.php:298:13[0m]8;;\ - Cannot get property on possibly null variable $this->schedulable of type Illuminate\Database\Eloquent\Model|null (see https://psalm.dev/082)
+INFO: PossiblyNullPropertyFetch - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/ScheduleService.php#L302\src/Services/[1;31mScheduleService.php:302:13[0m]8;;\ - Cannot get property on possibly null variable $this->schedulable of type Illuminate\Database\Eloquent\Model|null (see https://psalm.dev/082)
             [30;47m$this->schedulable->id[0m,
 
 
-INFO: UndefinedMagicPropertyFetch - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/ScheduleService.php#L298\src/Services/[1;31mScheduleService.php:298:13[0m]8;;\ - Magic instance property Illuminate\Database\Eloquent\Model::$id is not defined (see https://psalm.dev/218)
+INFO: UndefinedMagicPropertyFetch - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/ScheduleService.php#L302\src/Services/[1;31mScheduleService.php:302:13[0m]8;;\ - Magic instance property Illuminate\Database\Eloquent\Model::$id is not defined (see https://psalm.dev/218)
             [30;47m$this->schedulable->id[0m,
 
 
-INFO: PossiblyNullArgument - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/ScheduleService.php#L298\src/Services/[1;31mScheduleService.php:298:13[0m]8;;\ - Argument 1 of Roster\Contracts\Repository\ScheduleRepositoryInterface::getForDateRange cannot be null, possibly null value provided (see https://psalm.dev/078)
+INFO: PossiblyNullArgument - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/ScheduleService.php#L302\src/Services/[1;31mScheduleService.php:302:13[0m]8;;\ - Argument 1 of Roster\Contracts\Repository\ScheduleRepositoryInterface::getForDateRange cannot be null, possibly null value provided (see https://psalm.dev/078)
             [30;47m$this->schedulable->id[0m,
 
 
-INFO: PossiblyNullArgument - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/ScheduleService.php#L299\src/Services/[1;31mScheduleService.php:299:23[0m]8;;\ - Argument 1 of get_class cannot be null, possibly null value provided (see https://psalm.dev/078)
+INFO: PossiblyNullArgument - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/ScheduleService.php#L303\src/Services/[1;31mScheduleService.php:303:23[0m]8;;\ - Argument 1 of get_class cannot be null, possibly null value provided (see https://psalm.dev/078)
             get_class([30;47m$this->schedulable[0m),
 
 
-[0;31mERROR[0m: PossiblyUnusedMethod - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/ScheduleService.php#L306\src/Services/[1;31mScheduleService.php:306:21[0m]8;;\ - Cannot find any calls to method Roster\Services\ScheduleService::isTimeSlotAvailable (see https://psalm.dev/087)
+[0;31mERROR[0m: PossiblyUnusedMethod - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/ScheduleService.php#L310\src/Services/[1;31mScheduleService.php:310:21[0m]8;;\ - Cannot find any calls to method Roster\Services\ScheduleService::isTimeSlotAvailable (see https://psalm.dev/087)
     public function [97;41misTimeSlotAvailable[0m(Carbon $start, Carbon $end, ?string $type = null): bool
 
 
-INFO: PossiblyNullArgument - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/ScheduleService.php#L312\src/Services/[1;31mScheduleService.php:312:13[0m]8;;\ - Argument 1 of Roster\Contracts\Repository\AvailabilityRepositoryInterface::findForTimeSlotWithPartialOverlaps cannot be null, possibly null value provided (see https://psalm.dev/078)
+INFO: PossiblyNullArgument - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/ScheduleService.php#L316\src/Services/[1;31mScheduleService.php:316:13[0m]8;;\ - Argument 1 of Roster\Contracts\Repository\AvailabilityRepositoryInterface::findForTimeSlotWithPartialOverlaps cannot be null, possibly null value provided (see https://psalm.dev/078)
             [30;47m$this->schedulable[0m,
 
 
-INFO: UndefinedMagicPropertyFetch - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/ScheduleService.php#L319\src/Services/[1;31mScheduleService.php:319:17[0m]8;;\ - Magic instance property Roster\Models\Availability::$has_overlapping_schedules is not defined (see https://psalm.dev/218)
-            && ![30;47m$availability->has_overlapping_schedules[0m
+INFO: UndefinedMagicPropertyFetch - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/ScheduleService.php#L323\src/Services/[1;31mScheduleService.php:323:18[0m]8;;\ - Magic instance property Roster\Models\Availability::$has_overlapping_schedules is not defined (see https://psalm.dev/218)
+            && ! [30;47m$availability->has_overlapping_schedules[0m
 
 
-INFO: UndefinedMagicPropertyFetch - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/ScheduleService.php#L320\src/Services/[1;31mScheduleService.php:320:17[0m]8;;\ - Magic instance property Roster\Models\Availability::$has_overlapping_impediments is not defined (see https://psalm.dev/218)
-            && ![30;47m$availability->has_overlapping_impediments[0m;
+INFO: UndefinedMagicPropertyFetch - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/ScheduleService.php#L324\src/Services/[1;31mScheduleService.php:324:18[0m]8;;\ - Magic instance property Roster\Models\Availability::$has_overlapping_impediments is not defined (see https://psalm.dev/218)
+            && ! [30;47m$availability->has_overlapping_impediments[0m;
 
 
-[0;31mERROR[0m: PossiblyUnusedMethod - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/ScheduleService.php#L323\src/Services/[1;31mScheduleService.php:323:21[0m]8;;\ - Cannot find any calls to method Roster\Services\ScheduleService::isPeriodAvailable (see https://psalm.dev/087)
+[0;31mERROR[0m: PossiblyUnusedMethod - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/ScheduleService.php#L327\src/Services/[1;31mScheduleService.php:327:21[0m]8;;\ - Cannot find any calls to method Roster\Services\ScheduleService::isPeriodAvailable (see https://psalm.dev/087)
     public function [97;41misPeriodAvailable[0m(Carbon $start, Carbon $end, ?string $type = null): bool
 
 
-INFO: PossiblyNullArgument - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/ScheduleService.php#L328\src/Services/[1;31mScheduleService.php:328:53[0m]8;;\ - Argument 1 of Roster\Contracts\Services\SlotFinderInterface::isPeriodAvailable cannot be null, possibly null value provided (see https://psalm.dev/078)
+INFO: PossiblyNullArgument - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/ScheduleService.php#L332\src/Services/[1;31mScheduleService.php:332:53[0m]8;;\ - Argument 1 of Roster\Contracts\Services\SlotFinderInterface::isPeriodAvailable cannot be null, possibly null value provided (see https://psalm.dev/078)
         return $this->slotFinder->isPeriodAvailable([30;47m$this->schedulable[0m, $start, $end, $type);
 
 
-[0;31mERROR[0m: PossiblyUnusedMethod - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/ScheduleService.php#L331\src/Services/[1;31mScheduleService.php:331:21[0m]8;;\ - Cannot find any calls to method Roster\Services\ScheduleService::findFirstAvailablePeriod (see https://psalm.dev/087)
+[0;31mERROR[0m: PossiblyUnusedMethod - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/ScheduleService.php#L335\src/Services/[1;31mScheduleService.php:335:21[0m]8;;\ - Cannot find any calls to method Roster\Services\ScheduleService::findFirstAvailablePeriod (see https://psalm.dev/087)
     public function [97;41mfindFirstAvailablePeriod[0m(
 
 
-INFO: PossiblyNullArgument - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/ScheduleService.php#L348\src/Services/[1;31mScheduleService.php:348:13[0m]8;;\ - Argument 1 of Roster\Contracts\Services\SlotFinderInterface::findFirstAvailablePeriod cannot be null, possibly null value provided (see https://psalm.dev/078)
+INFO: PossiblyNullArgument - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/ScheduleService.php#L352\src/Services/[1;31mScheduleService.php:352:13[0m]8;;\ - Argument 1 of Roster\Contracts\Services\SlotFinderInterface::findFirstAvailablePeriod cannot be null, possibly null value provided (see https://psalm.dev/078)
             [30;47m$this->schedulable[0m,
 
 
-[0;31mERROR[0m: PossiblyUnusedMethod - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/ScheduleService.php#L356\src/Services/[1;31mScheduleService.php:356:21[0m]8;;\ - Cannot find any calls to method Roster\Services\ScheduleService::findNextAvailableSlot (see https://psalm.dev/087)
+[0;31mERROR[0m: PossiblyUnusedMethod - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/ScheduleService.php#L360\src/Services/[1;31mScheduleService.php:360:21[0m]8;;\ - Cannot find any calls to method Roster\Services\ScheduleService::findNextAvailableSlot (see https://psalm.dev/087)
     public function [97;41mfindNextAvailableSlot[0m(int $durationMinutes, ?string $type = null): ?array
 
 
-INFO: InvalidReturnStatement - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/ScheduleService.php#L367\src/Services/[1;31mScheduleService.php:367:16[0m]8;;\ - The inferred type 'Illuminate\Support\Carbon|array<array-key, mixed>|null' does not match the declared return type 'array<array-key, mixed>|null' for Roster\Services\ScheduleService::findNextAvailableSlot (see https://psalm.dev/128)
+INFO: InvalidReturnStatement - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/ScheduleService.php#L371\src/Services/[1;31mScheduleService.php:371:16[0m]8;;\ - The inferred type 'Illuminate\Support\Carbon|array<array-key, mixed>|null' does not match the declared return type 'array<array-key, mixed>|null' for Roster\Services\ScheduleService::findNextAvailableSlot (see https://psalm.dev/128)
         return [30;47m$this->slotFinder->findNextSlot($this->schedulable, $durationMinutes, $type)[0m;
 
 
-INFO: PossiblyNullArgument - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/ScheduleService.php#L367\src/Services/[1;31mScheduleService.php:367:48[0m]8;;\ - Argument 1 of Roster\Contracts\Services\SlotFinderInterface::findNextSlot cannot be null, possibly null value provided (see https://psalm.dev/078)
+INFO: PossiblyNullArgument - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/ScheduleService.php#L371\src/Services/[1;31mScheduleService.php:371:48[0m]8;;\ - Argument 1 of Roster\Contracts\Services\SlotFinderInterface::findNextSlot cannot be null, possibly null value provided (see https://psalm.dev/078)
         return $this->slotFinder->findNextSlot([30;47m$this->schedulable[0m, $durationMinutes, $type);
 
 
-INFO: PossiblyNullArgument - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/ScheduleService.php#L382\src/Services/[1;31mScheduleService.php:382:63[0m]8;;\ - Argument 1 of Roster\Contracts\Repository\AvailabilityRepositoryInterface::findForTimeSlot cannot be null, possibly null value provided (see https://psalm.dev/078)
+INFO: PossiblyNullArgument - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/ScheduleService.php#L387\src/Services/[1;31mScheduleService.php:387:63[0m]8;;\ - Argument 1 of Roster\Contracts\Repository\AvailabilityRepositoryInterface::findForTimeSlot cannot be null, possibly null value provided (see https://psalm.dev/078)
         return $this->availabilityRepository->findForTimeSlot([30;47m$this->schedulable[0m, $start, $end, $type);
 
 
-[0;31mERROR[0m: MissingOverrideAttribute - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/ScheduleService.php#L385\src/Services/[1;31mScheduleService.php:385:5[0m]8;;\ - Method Roster\Services\ScheduleService::applyfilters should have the "Override" attribute (see https://psalm.dev/358)
+[0;31mERROR[0m: MissingOverrideAttribute - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/ScheduleService.php#L390\src/Services/[1;31mScheduleService.php:390:5[0m]8;;\ - Method Roster\Services\ScheduleService::applyfilters should have the "Override" attribute (see https://psalm.dev/358)
     [97;41mprotected function applyFilters(): Builder[0m
 
 
-INFO: PossiblyNullPropertyFetch - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/ScheduleService.php#L388\src/Services/[1;31mScheduleService.php:388:13[0m]8;;\ - Cannot get property on possibly null variable $this->schedulable of type Illuminate\Database\Eloquent\Model|null (see https://psalm.dev/082)
+INFO: PossiblyNullPropertyFetch - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/ScheduleService.php#L393\src/Services/[1;31mScheduleService.php:393:13[0m]8;;\ - Cannot get property on possibly null variable $this->schedulable of type Illuminate\Database\Eloquent\Model|null (see https://psalm.dev/082)
             [30;47m$this->schedulable->id[0m,
 
 
-INFO: UndefinedMagicPropertyFetch - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/ScheduleService.php#L388\src/Services/[1;31mScheduleService.php:388:13[0m]8;;\ - Magic instance property Illuminate\Database\Eloquent\Model::$id is not defined (see https://psalm.dev/218)
+INFO: UndefinedMagicPropertyFetch - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/ScheduleService.php#L393\src/Services/[1;31mScheduleService.php:393:13[0m]8;;\ - Magic instance property Illuminate\Database\Eloquent\Model::$id is not defined (see https://psalm.dev/218)
             [30;47m$this->schedulable->id[0m,
 
 
-INFO: PossiblyNullArgument - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/ScheduleService.php#L388\src/Services/[1;31mScheduleService.php:388:13[0m]8;;\ - Argument 1 of Roster\Contracts\Repository\ScheduleRepositoryInterface::applyFilters cannot be null, possibly null value provided (see https://psalm.dev/078)
+INFO: PossiblyNullArgument - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/ScheduleService.php#L393\src/Services/[1;31mScheduleService.php:393:13[0m]8;;\ - Argument 1 of Roster\Contracts\Repository\ScheduleRepositoryInterface::applyFilters cannot be null, possibly null value provided (see https://psalm.dev/078)
             [30;47m$this->schedulable->id[0m,
 
 
-INFO: PossiblyNullArgument - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/ScheduleService.php#L389\src/Services/[1;31mScheduleService.php:389:23[0m]8;;\ - Argument 1 of get_class cannot be null, possibly null value provided (see https://psalm.dev/078)
+INFO: PossiblyNullArgument - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/ScheduleService.php#L394\src/Services/[1;31mScheduleService.php:394:23[0m]8;;\ - Argument 1 of get_class cannot be null, possibly null value provided (see https://psalm.dev/078)
             get_class([30;47m$this->schedulable[0m),
 
 
@@ -2654,116 +2664,156 @@ INFO: UndefinedMagicPropertyFetch - ]8;;file:///home/andy-kani/pro/sites/packag
     public function [97;41mwhereStartDate[0m(Carbon $date): self
 
 
-[0;31mERROR[0m: PossiblyUnusedMethod - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Traits/FilterableTrait.php#L130\src/Traits/[1;31mFilterableTrait.php:130:21[0m]8;;\ - Cannot find any calls to method Roster\Services\ImpedimentService::whereEndDate (see https://psalm.dev/087)
+[0;31mERROR[0m: PossiblyUnusedMethod - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Traits/FilterableTrait.php#L131\src/Traits/[1;31mFilterableTrait.php:131:21[0m]8;;\ - Cannot find any calls to method Roster\Services\ImpedimentService::whereEndDate (see https://psalm.dev/087)
     public function [97;41mwhereEndDate[0m(Carbon $date): self
 
 
-[0;31mERROR[0m: PossiblyUnusedMethod - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Traits/FilterableTrait.php#L130\src/Traits/[1;31mFilterableTrait.php:130:21[0m]8;;\ - Cannot find any calls to method Roster\Services\AvailabilityService::whereEndDate (see https://psalm.dev/087)
+[0;31mERROR[0m: PossiblyUnusedMethod - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Traits/FilterableTrait.php#L131\src/Traits/[1;31mFilterableTrait.php:131:21[0m]8;;\ - Cannot find any calls to method Roster\Services\AvailabilityService::whereEndDate (see https://psalm.dev/087)
     public function [97;41mwhereEndDate[0m(Carbon $date): self
 
 
-[0;31mERROR[0m: PossiblyUnusedMethod - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Traits/FilterableTrait.php#L130\src/Traits/[1;31mFilterableTrait.php:130:21[0m]8;;\ - Cannot find any calls to method Roster\Services\ScheduleService::whereEndDate (see https://psalm.dev/087)
+[0;31mERROR[0m: PossiblyUnusedMethod - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Traits/FilterableTrait.php#L131\src/Traits/[1;31mFilterableTrait.php:131:21[0m]8;;\ - Cannot find any calls to method Roster\Services\ScheduleService::whereEndDate (see https://psalm.dev/087)
     public function [97;41mwhereEndDate[0m(Carbon $date): self
 
 
-[0;31mERROR[0m: PossiblyUnusedMethod - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Traits/FilterableTrait.php#L139\src/Traits/[1;31mFilterableTrait.php:139:21[0m]8;;\ - Cannot find any calls to method Roster\Services\ImpedimentService::whereStatus (see https://psalm.dev/087)
+[0;31mERROR[0m: PossiblyUnusedMethod - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Traits/FilterableTrait.php#L141\src/Traits/[1;31mFilterableTrait.php:141:21[0m]8;;\ - Cannot find any calls to method Roster\Services\ImpedimentService::whereStatus (see https://psalm.dev/087)
     public function [97;41mwhereStatus[0m(string $status): self
 
 
-[0;31mERROR[0m: PossiblyUnusedMethod - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Traits/FilterableTrait.php#L139\src/Traits/[1;31mFilterableTrait.php:139:21[0m]8;;\ - Cannot find any calls to method Roster\Services\AvailabilityService::whereStatus (see https://psalm.dev/087)
+[0;31mERROR[0m: PossiblyUnusedMethod - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Traits/FilterableTrait.php#L141\src/Traits/[1;31mFilterableTrait.php:141:21[0m]8;;\ - Cannot find any calls to method Roster\Services\AvailabilityService::whereStatus (see https://psalm.dev/087)
     public function [97;41mwhereStatus[0m(string $status): self
 
 
-[0;31mERROR[0m: PossiblyUnusedMethod - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Traits/FilterableTrait.php#L139\src/Traits/[1;31mFilterableTrait.php:139:21[0m]8;;\ - Cannot find any calls to method Roster\Services\ScheduleService::whereStatus (see https://psalm.dev/087)
+[0;31mERROR[0m: PossiblyUnusedMethod - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Traits/FilterableTrait.php#L141\src/Traits/[1;31mFilterableTrait.php:141:21[0m]8;;\ - Cannot find any calls to method Roster\Services\ScheduleService::whereStatus (see https://psalm.dev/087)
     public function [97;41mwhereStatus[0m(string $status): self
 
 
-[0;31mERROR[0m: PossiblyUnusedMethod - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Traits/FilterableTrait.php#L148\src/Traits/[1;31mFilterableTrait.php:148:21[0m]8;;\ - Cannot find any calls to method Roster\Services\ImpedimentService::whereReason (see https://psalm.dev/087)
+[0;31mERROR[0m: PossiblyUnusedMethod - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Traits/FilterableTrait.php#L151\src/Traits/[1;31mFilterableTrait.php:151:21[0m]8;;\ - Cannot find any calls to method Roster\Services\ImpedimentService::whereReason (see https://psalm.dev/087)
     public function [97;41mwhereReason[0m(string $reason): self
 
 
-[0;31mERROR[0m: PossiblyUnusedMethod - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Traits/FilterableTrait.php#L148\src/Traits/[1;31mFilterableTrait.php:148:21[0m]8;;\ - Cannot find any calls to method Roster\Services\AvailabilityService::whereReason (see https://psalm.dev/087)
+[0;31mERROR[0m: PossiblyUnusedMethod - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Traits/FilterableTrait.php#L151\src/Traits/[1;31mFilterableTrait.php:151:21[0m]8;;\ - Cannot find any calls to method Roster\Services\AvailabilityService::whereReason (see https://psalm.dev/087)
     public function [97;41mwhereReason[0m(string $reason): self
 
 
-[0;31mERROR[0m: PossiblyUnusedMethod - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Traits/FilterableTrait.php#L148\src/Traits/[1;31mFilterableTrait.php:148:21[0m]8;;\ - Cannot find any calls to method Roster\Services\ScheduleService::whereReason (see https://psalm.dev/087)
+[0;31mERROR[0m: PossiblyUnusedMethod - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Traits/FilterableTrait.php#L151\src/Traits/[1;31mFilterableTrait.php:151:21[0m]8;;\ - Cannot find any calls to method Roster\Services\ScheduleService::whereReason (see https://psalm.dev/087)
     public function [97;41mwhereReason[0m(string $reason): self
 
 
-[0;31mERROR[0m: PossiblyUnusedMethod - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Traits/FilterableTrait.php#L157\src/Traits/[1;31mFilterableTrait.php:157:21[0m]8;;\ - Cannot find any calls to method Roster\Services\ImpedimentService::whereAvailabilityId (see https://psalm.dev/087)
+[0;31mERROR[0m: PossiblyUnusedMethod - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Traits/FilterableTrait.php#L161\src/Traits/[1;31mFilterableTrait.php:161:21[0m]8;;\ - Cannot find any calls to method Roster\Services\ImpedimentService::whereAvailabilityId (see https://psalm.dev/087)
     public function [97;41mwhereAvailabilityId[0m(int $availabilityId): self
 
 
-[0;31mERROR[0m: PossiblyUnusedMethod - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Traits/FilterableTrait.php#L157\src/Traits/[1;31mFilterableTrait.php:157:21[0m]8;;\ - Cannot find any calls to method Roster\Services\AvailabilityService::whereAvailabilityId (see https://psalm.dev/087)
+[0;31mERROR[0m: PossiblyUnusedMethod - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Traits/FilterableTrait.php#L161\src/Traits/[1;31mFilterableTrait.php:161:21[0m]8;;\ - Cannot find any calls to method Roster\Services\AvailabilityService::whereAvailabilityId (see https://psalm.dev/087)
     public function [97;41mwhereAvailabilityId[0m(int $availabilityId): self
 
 
-[0;31mERROR[0m: PossiblyUnusedMethod - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Traits/FilterableTrait.php#L157\src/Traits/[1;31mFilterableTrait.php:157:21[0m]8;;\ - Cannot find any calls to method Roster\Services\ScheduleService::whereAvailabilityId (see https://psalm.dev/087)
+[0;31mERROR[0m: PossiblyUnusedMethod - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Traits/FilterableTrait.php#L161\src/Traits/[1;31mFilterableTrait.php:161:21[0m]8;;\ - Cannot find any calls to method Roster\Services\ScheduleService::whereAvailabilityId (see https://psalm.dev/087)
     public function [97;41mwhereAvailabilityId[0m(int $availabilityId): self
 
 
-[0;31mERROR[0m: PossiblyUnusedMethod - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Traits/FilterableTrait.php#L166\src/Traits/[1;31mFilterableTrait.php:166:21[0m]8;;\ - Cannot find any calls to method Roster\Services\ImpedimentService::clearFilters (see https://psalm.dev/087)
+[0;31mERROR[0m: PossiblyUnusedMethod - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Traits/FilterableTrait.php#L171\src/Traits/[1;31mFilterableTrait.php:171:21[0m]8;;\ - Cannot find any calls to method Roster\Services\ImpedimentService::clearFilters (see https://psalm.dev/087)
     public function [97;41mclearFilters[0m(): self
 
 
-[0;31mERROR[0m: PossiblyUnusedMethod - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Traits/FilterableTrait.php#L166\src/Traits/[1;31mFilterableTrait.php:166:21[0m]8;;\ - Cannot find any calls to method Roster\Services\AvailabilityService::clearFilters (see https://psalm.dev/087)
+[0;31mERROR[0m: PossiblyUnusedMethod - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Traits/FilterableTrait.php#L171\src/Traits/[1;31mFilterableTrait.php:171:21[0m]8;;\ - Cannot find any calls to method Roster\Services\AvailabilityService::clearFilters (see https://psalm.dev/087)
     public function [97;41mclearFilters[0m(): self
 
 
-[0;31mERROR[0m: PossiblyUnusedMethod - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Traits/FilterableTrait.php#L166\src/Traits/[1;31mFilterableTrait.php:166:21[0m]8;;\ - Cannot find any calls to method Roster\Services\ScheduleService::clearFilters (see https://psalm.dev/087)
+[0;31mERROR[0m: PossiblyUnusedMethod - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Traits/FilterableTrait.php#L171\src/Traits/[1;31mFilterableTrait.php:171:21[0m]8;;\ - Cannot find any calls to method Roster\Services\ScheduleService::clearFilters (see https://psalm.dev/087)
     public function [97;41mclearFilters[0m(): self
 
 
-[0;31mERROR[0m: PossiblyUnusedMethod - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Traits/FilterableTrait.php#L177\src/Traits/[1;31mFilterableTrait.php:177:21[0m]8;;\ - Cannot find any calls to method Roster\Services\ImpedimentService::getFilters (see https://psalm.dev/087)
+[0;31mERROR[0m: PossiblyUnusedMethod - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Traits/FilterableTrait.php#L183\src/Traits/[1;31mFilterableTrait.php:183:21[0m]8;;\ - Cannot find any calls to method Roster\Services\ImpedimentService::getFilters (see https://psalm.dev/087)
     public function [97;41mgetFilters[0m(): array
 
 
-[0;31mERROR[0m: PossiblyUnusedMethod - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Traits/FilterableTrait.php#L177\src/Traits/[1;31mFilterableTrait.php:177:21[0m]8;;\ - Cannot find any calls to method Roster\Services\AvailabilityService::getFilters (see https://psalm.dev/087)
+[0;31mERROR[0m: PossiblyUnusedMethod - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Traits/FilterableTrait.php#L183\src/Traits/[1;31mFilterableTrait.php:183:21[0m]8;;\ - Cannot find any calls to method Roster\Services\AvailabilityService::getFilters (see https://psalm.dev/087)
     public function [97;41mgetFilters[0m(): array
 
 
-[0;31mERROR[0m: PossiblyUnusedMethod - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Traits/FilterableTrait.php#L177\src/Traits/[1;31mFilterableTrait.php:177:21[0m]8;;\ - Cannot find any calls to method Roster\Services\ScheduleService::getFilters (see https://psalm.dev/087)
+[0;31mERROR[0m: PossiblyUnusedMethod - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Traits/FilterableTrait.php#L183\src/Traits/[1;31mFilterableTrait.php:183:21[0m]8;;\ - Cannot find any calls to method Roster\Services\ScheduleService::getFilters (see https://psalm.dev/087)
     public function [97;41mgetFilters[0m(): array
 
 
-[0;31mERROR[0m: PossiblyUnusedMethod - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Traits/FilterableTrait.php#L185\src/Traits/[1;31mFilterableTrait.php:185:21[0m]8;;\ - Cannot find any calls to method Roster\Services\ImpedimentService::hasFilter (see https://psalm.dev/087)
+[0;31mERROR[0m: PossiblyUnusedMethod - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Traits/FilterableTrait.php#L191\src/Traits/[1;31mFilterableTrait.php:191:21[0m]8;;\ - Cannot find any calls to method Roster\Services\ImpedimentService::hasFilter (see https://psalm.dev/087)
     public function [97;41mhasFilter[0m(string $key): bool
 
 
-[0;31mERROR[0m: PossiblyUnusedMethod - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Traits/FilterableTrait.php#L185\src/Traits/[1;31mFilterableTrait.php:185:21[0m]8;;\ - Cannot find any calls to method Roster\Services\AvailabilityService::hasFilter (see https://psalm.dev/087)
+[0;31mERROR[0m: PossiblyUnusedMethod - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Traits/FilterableTrait.php#L191\src/Traits/[1;31mFilterableTrait.php:191:21[0m]8;;\ - Cannot find any calls to method Roster\Services\AvailabilityService::hasFilter (see https://psalm.dev/087)
     public function [97;41mhasFilter[0m(string $key): bool
 
 
-[0;31mERROR[0m: PossiblyUnusedMethod - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Traits/FilterableTrait.php#L185\src/Traits/[1;31mFilterableTrait.php:185:21[0m]8;;\ - Cannot find any calls to method Roster\Services\ScheduleService::hasFilter (see https://psalm.dev/087)
+[0;31mERROR[0m: PossiblyUnusedMethod - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Traits/FilterableTrait.php#L191\src/Traits/[1;31mFilterableTrait.php:191:21[0m]8;;\ - Cannot find any calls to method Roster\Services\ScheduleService::hasFilter (see https://psalm.dev/087)
     public function [97;41mhasFilter[0m(string $key): bool
+
+
+[0;31mERROR[0m: DuplicateFunction - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/helpers.php#L10\src/[1;31mhelpers.php:10:5[0m]8;;\ - Method config_path has already been defined as a core function (see https://psalm.dev/180)
+    /**
+     * Get the path to the config directory.
+     *
+     * @param  string|null  $path  Optional subpath
+     * @return string Full path to config directory or file
+     */
+    [97;41mfunction config_path(?string $path = ''): string[0m
 
 
 INFO: RiskyTruthyFalsyComparison - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/helpers.php#L12\src/[1;31mhelpers.php:12:16[0m]8;;\ - Operand of type null|string contains type string, which can be falsy and truthy. This can cause possibly unexpected behavior. Use strict comparison instead. (see https://psalm.dev/356)
-        return [30;47m$path[0m ? 'config/' . $path : 'config';
+        return [30;47m$path[0m ? 'config/'.$path : 'config';
+
+
+[0;31mERROR[0m: DuplicateFunction - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/helpers.php#L23\src/[1;31mhelpers.php:23:5[0m]8;;\ - Method database_path has already been defined as a core function (see https://psalm.dev/180)
+    /**
+     * Get the path to the database directory.
+     *
+     * @param  string|null  $path  Optional subpath
+     * @return string Full path to database directory or file
+     */
+    [97;41mfunction database_path(?string $path = ''): string[0m
 
 
 INFO: RiskyTruthyFalsyComparison - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/helpers.php#L25\src/[1;31mhelpers.php:25:16[0m]8;;\ - Operand of type null|string contains type string, which can be falsy and truthy. This can cause possibly unexpected behavior. Use strict comparison instead. (see https://psalm.dev/356)
-        return [30;47m$path[0m ? 'database/' . $path : 'database';
+        return [30;47m$path[0m ? 'database/'.$path : 'database';
 
 
-INFO: RiskyTruthyFalsyComparison - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/helpers.php#L39\src/[1;31mhelpers.php:39:16[0m]8;;\ - Operand of type null|string contains type string, which can be falsy and truthy. This can cause possibly unexpected behavior. Use strict comparison instead. (see https://psalm.dev/356)
-        return [30;47m$path[0m ? $base . $path : $base;
+[0;31mERROR[0m: DuplicateFunction - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/helpers.php#L36\src/[1;31mhelpers.php:36:5[0m]8;;\ - Method base_path has already been defined as a core function (see https://psalm.dev/180)
+    /**
+     * Get the base path of the package.
+     *
+     * @param  string|null  $path  Optional subpath
+     * @return string Full base path of the package
+     */
+    [97;41mfunction base_path(?string $path = ''): string[0m
 
 
-INFO: RiskyTruthyFalsyComparison - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/helpers.php#L53\src/[1;31mhelpers.php:53:16[0m]8;;\ - Operand of type null|string contains type string, which can be falsy and truthy. This can cause possibly unexpected behavior. Use strict comparison instead. (see https://psalm.dev/356)
-        return [30;47m$path[0m ? $base . '/' . $path : $base;
+INFO: RiskyTruthyFalsyComparison - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/helpers.php#L40\src/[1;31mhelpers.php:40:16[0m]8;;\ - Operand of type null|string contains type string, which can be falsy and truthy. This can cause possibly unexpected behavior. Use strict comparison instead. (see https://psalm.dev/356)
+        return [30;47m$path[0m ? $base.$path : $base;
+
+
+[0;31mERROR[0m: DuplicateFunction - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/helpers.php#L51\src/[1;31mhelpers.php:51:5[0m]8;;\ - Method resource_path has already been defined as a core function (see https://psalm.dev/180)
+    /**
+     * Get the path to the resources directory.
+     *
+     * @param  string|null  $path  Optional subpath
+     * @return string Full path to resources directory or file
+     */
+    [97;41mfunction resource_path(?string $path = ''): string[0m
+
+
+INFO: RiskyTruthyFalsyComparison - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/helpers.php#L55\src/[1;31mhelpers.php:55:16[0m]8;;\ - Operand of type null|string contains type string, which can be falsy and truthy. This can cause possibly unexpected behavior. Use strict comparison instead. (see https://psalm.dev/356)
+        return [30;47m$path[0m ? $base.'/'.$path : $base;
 
 
 ------------------------------
-[0;31m260 errors[0m found
+[0;31m265 errors[0m found
 ------------------------------
-337 other issues found.
+338 other issues found.
 ------------------------------
-Psalm can automatically fix 216 issues.
+Psalm can automatically fix 218 issues.
 Run Psalm again with 
 [30;48;5;195m--alter --issues=MissingOverrideAttribute,InvalidNullableReturnType,PossiblyUnusedMethod,ClassMustBeFinal,MissingParamType --dry-run[0m
 to see what it can fix.
 ------------------------------
 
-Checks took 2.90 seconds and used 402.281MB of memory
-Psalm was able to infer types for 87.9713% of the codebase
+Checks took 2.07 seconds and used 427.423MB of memory
+Psalm was able to infer types for 87.9701% of the codebase

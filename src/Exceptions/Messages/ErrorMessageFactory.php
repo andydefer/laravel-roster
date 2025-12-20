@@ -27,7 +27,7 @@ class ErrorMessageFactory
 
     public static function notFound(string $entity): string
     {
-        return ucfirst($entity) . ' not found';
+        return ucfirst($entity).' not found';
     }
 
     public static function requiredField(string $field): string
@@ -37,6 +37,6 @@ class ErrorMessageFactory
 
     public static function invalidTimezone(string $timezone): string
     {
-        return 'Invalid timezone: ' . $timezone;
+        return 'Invalid timezone: '.$timezone;
     }
 }

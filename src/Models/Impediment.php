@@ -66,6 +66,7 @@ class Impediment extends Model
     public function isActive(): bool
     {
         $now = Carbon::now();
+
         return $this->start_datetime->lte($now) && $this->end_datetime->gte($now);
     }
 

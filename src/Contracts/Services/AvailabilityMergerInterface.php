@@ -16,8 +16,8 @@ interface AvailabilityMergerInterface
      * This method identifies adjacent availabilities and merges them with the new data
      * to create larger continuous availability blocks when possible.
      *
-     * @param array<string, mixed> $data New availability data to merge
-     * @param Model $model Schedulable entity model
+     * @param  array<string, mixed>  $data  New availability data to merge
+     * @param  Model  $model  Schedulable entity model
      * @return array<string, mixed> Merged availability data
      */
     public function mergeWithAdjacent(array $data, Model $model): array;
@@ -28,8 +28,8 @@ interface AvailabilityMergerInterface
      * Adjacent availabilities are those that touch the new availability's time range
      * without overlapping, allowing them to be merged into a single continuous block.
      *
-     * @param array<string, mixed> $data Availability data containing time range
-     * @param Model $model Schedulable entity model
+     * @param  array<string, mixed>  $data  Availability data containing time range
+     * @param  Model  $model  Schedulable entity model
      * @return Collection<int, Availability> Collection of adjacent availabilities
      */
     public function findAdjacentAvailabilities(array $data, Model $model): Collection;

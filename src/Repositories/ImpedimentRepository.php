@@ -4,15 +4,14 @@ declare(strict_types=1);
 
 namespace Roster\Repositories;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
-use Illuminate\Database\Eloquent\Builder;
-use Roster\Models\Impediment;
 use Roster\Contracts\Repository\ImpedimentRepositoryInterface;
+use Roster\Models\Impediment;
 
 class ImpedimentRepository extends AbstractRepository implements ImpedimentRepositoryInterface
 {
-
     /**
      * Create a new impediment.
      */
@@ -28,7 +27,7 @@ class ImpedimentRepository extends AbstractRepository implements ImpedimentRepos
     {
         $impediment = $this->findById($id);
 
-        if (!$impediment instanceof Impediment) {
+        if (! $impediment instanceof Impediment) {
             return false;
         }
 
@@ -42,7 +41,7 @@ class ImpedimentRepository extends AbstractRepository implements ImpedimentRepos
     {
         $impediment = $this->findById($id);
 
-        if (!$impediment instanceof Impediment) {
+        if (! $impediment instanceof Impediment) {
             return false;
         }
 
@@ -66,7 +65,6 @@ class ImpedimentRepository extends AbstractRepository implements ImpedimentRepos
             ->orderBy('start_datetime')
             ->get();
     }
-
 
     /**
      * Find impediments for a time slot.

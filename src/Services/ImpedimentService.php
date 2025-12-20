@@ -5,20 +5,20 @@ declare(strict_types=1);
 namespace Roster\Services;
 
 use BadMethodCallException;
-use InvalidArgumentException;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
-use Roster\Exceptions\ValidationException;
-use Roster\Exceptions\Enums\ValidationType;
-use Roster\Models\Availability;
-use Roster\Models\Impediment;
+use InvalidArgumentException;
 use Roster\Contracts\Repository\AvailabilityRepositoryInterface;
 use Roster\Contracts\Repository\ImpedimentRepositoryInterface;
 use Roster\Contracts\Services\SlotFinderInterface;
 use Roster\Contracts\Services\ValidationServiceInterface;
 use Roster\Exceptions\Enums\TimeSlotOverlapType;
+use Roster\Exceptions\Enums\ValidationType;
 use Roster\Exceptions\OverlappingImpedimentException;
+use Roster\Exceptions\ValidationException;
+use Roster\Models\Availability;
+use Roster\Models\Impediment;
 use Roster\Services\Core\AbstractSchedulableService;
 use Roster\Traits\FilterableTrait;
 
@@ -108,7 +108,7 @@ class ImpedimentService extends AbstractSchedulableService
 
     protected function processBeforeCreate(): void
     {
-        if (isset($this->data['metadata']) && !is_array($this->data['metadata'])) {
+        if (isset($this->data['metadata']) && ! is_array($this->data['metadata'])) {
             $this->data['metadata'] = json_decode($this->data['metadata'], true) ?? [];
         }
     }
@@ -122,7 +122,7 @@ class ImpedimentService extends AbstractSchedulableService
     {
         $this->currentImpediment = $this->find($id);
 
-        if (!$this->currentImpediment instanceof Impediment) {
+        if (! $this->currentImpediment instanceof Impediment) {
             $this->throwNotFoundException();
         }
 
@@ -148,7 +148,7 @@ class ImpedimentService extends AbstractSchedulableService
         if (isset($this->data['start_datetime'])) {
             $newAvailability = $this->findMatchingAvailability();
 
-            if (!$newAvailability instanceof Availability) {
+            if (! $newAvailability instanceof Availability) {
                 throw new ValidationException(ValidationType::NO_MATCHING_AVAILABILITY);
             }
 
@@ -198,9 +198,10 @@ class ImpedimentService extends AbstractSchedulableService
     /**
      * Create a new impediment with explicit availability.
      *
-     * @param Availability|array<string, mixed> $availabilityOrData Availability instance or data array
-     * @param array<string, mixed>|null $data Data array if first param is Availability
+     * @param  Availability|array<string, mixed>  $availabilityOrData  Availability instance or data array
+     * @param  array<string, mixed>|null  $data  Data array if first param is Availability
      * @return Impediment Created impediment
+     *
      * @throws ValidationException When validation fails
      */
     public function create($availabilityOrData, ?array $data = null): Impediment
@@ -223,9 +224,10 @@ class ImpedimentService extends AbstractSchedulableService
     /**
      * Create a new impediment with explicit availability.
      *
-     * @param Availability $availability The availability to link to
-     * @param array<string, mixed> $data Impediment data
+     * @param  Availability  $availability  The availability to link to
+     * @param  array<string, mixed>  $data  Impediment data
      * @return Impediment Created impediment
+     *
      * @throws ValidationException When validation fails
      */
     private function createWithAvailability(Availability $availability, array $data): Impediment
@@ -263,7 +265,8 @@ class ImpedimentService extends AbstractSchedulableService
     /**
      * Validate that the availability belongs to the current schedulable.
      *
-     * @param Availability $availability The availability to validate
+     * @param  Availability  $availability  The availability to validate
+     *
      * @throws ValidationException When availability doesn't belong to schedulable
      */
     private function validateAvailabilityOwnership(Availability $availability): void
@@ -292,7 +295,7 @@ class ImpedimentService extends AbstractSchedulableService
         $this->validateSchedulable();
         $impediment = $this->find($id);
 
-        if (!$impediment instanceof Impediment) {
+        if (! $impediment instanceof Impediment) {
             return false;
         }
 
@@ -318,7 +321,7 @@ class ImpedimentService extends AbstractSchedulableService
 
         $availability = $this->availabilityRepository->findForTimeSlot($this->schedulable, $start, $end, $type);
 
-        if (!$availability instanceof Availability) {
+        if (! $availability instanceof Availability) {
             return false;
         }
 
@@ -332,7 +335,7 @@ class ImpedimentService extends AbstractSchedulableService
 
         $availability = $this->availabilityRepository->findForTimeSlot($this->schedulable, $start, $end, $type);
 
-        if (!$availability instanceof Availability) {
+        if (! $availability instanceof Availability) {
             return collect();
         }
 

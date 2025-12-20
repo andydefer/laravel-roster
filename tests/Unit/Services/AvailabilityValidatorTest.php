@@ -16,7 +16,7 @@ final class AvailabilityValidatorTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->availabilityValidator =  app()->make(AvailabilityValidatorInterface::class);
+        $this->availabilityValidator = app()->make(AvailabilityValidatorInterface::class);
     }
 
     public function test_validate_basic_data_with_valid_data(): void
@@ -296,7 +296,7 @@ final class AvailabilityValidatorTest extends TestCase
         );
         $this->assertTrue($dateRangesOverlap);
 
-        if (!$firstData['end_time']->eq($secondData['start_time'])) {
+        if (! $firstData['end_time']->eq($secondData['start_time'])) {
             $secondData['end_time']->eq($firstData['start_time']);
         }
 

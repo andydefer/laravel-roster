@@ -18,11 +18,11 @@ class TimeSlotOverlapException extends RosterException
     /**
      * Create a new TimeSlotOverlapException instance.
      *
-     * @param TimeSlotOverlapType $type Type of overlap that occurred
-     * @param array $context Additional context about the overlap
-     * @param string $message Custom error message
-     * @param int $code Error code
-     * @param Throwable|null $previous Previous exception
+     * @param  TimeSlotOverlapType  $type  Type of overlap that occurred
+     * @param  array  $context  Additional context about the overlap
+     * @param  string  $message  Custom error message
+     * @param  int  $code  Error code
+     * @param  Throwable|null  $previous  Previous exception
      */
     public function __construct(
         TimeSlotOverlapType $type,

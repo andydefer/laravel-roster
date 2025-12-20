@@ -1,14 +1,11 @@
-# 📂 Project File Checklist
+# Project File Checklist
+*Last updated: sam. 20 déc. 2025 08:18:45 WAT*
 
-*Dernière mise à jour: sam. 20 déc. 2025 07:55:16 WAT*
-
-## ✅ Previously Checked Files
-
+## Previously Checked Files
 1. config/roster.php [x]
 2. database/migrations/2024_01_01_000000_create_roster_availabilities_table.php [x]
 
-## ⚠️ Other Files
-
+## Other Files
 1. database/migrations/2024_01_01_000001_create_roster_schedules_table.php [ ]
 2. database/migrations/2024_01_01_000002_create_roster_impediments_table.php [ ]
 3. routes/web.php [ ]

@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Roster\Commands;
 
-use Roster\RosterServiceProvider;
 use Illuminate\Console\Command;
+use Roster\RosterServiceProvider;
 
 /**
  * Command to install the Roster package.
@@ -31,18 +31,17 @@ class InstallRosterCommand extends Command
 
     /**
      * Execute the console command.
-     *
-     * @return void
      */
     public function handle(): void
     {
         $this->info('🚀 Installing Roster package...');
 
-        if (!$this->shouldSkipConfirmation()) {
+        if (! $this->shouldSkipConfirmation()) {
             $this->displayPublishingDetails();
 
-            if (!$this->confirm('Continue?', true)) {
+            if (! $this->confirm('Continue?', true)) {
                 $this->info('Installation cancelled.');
+
                 return;
             }
         }
@@ -54,8 +53,6 @@ class InstallRosterCommand extends Command
 
     /**
      * Determine if confirmation should be skipped.
-     *
-     * @return bool
      */
     private function shouldSkipConfirmation(): bool
     {
@@ -64,8 +61,6 @@ class InstallRosterCommand extends Command
 
     /**
      * Display what will be published during installation.
-     *
-     * @return void
      */
     private function displayPublishingDetails(): void
     {
@@ -78,8 +73,6 @@ class InstallRosterCommand extends Command
 
     /**
      * Publish package resources using vendor:publish command.
-     *
-     * @return void
      */
     private function publishResources(): void
     {
@@ -91,7 +84,7 @@ class InstallRosterCommand extends Command
                 'roster-config',
                 'roster-migrations',
                 'roster-routes',
-                'roster-views'
+                'roster-views',
             ],
             '--force' => $this->option('force'),
         ]);
@@ -99,8 +92,6 @@ class InstallRosterCommand extends Command
 
     /**
      * Run database migrations.
-     *
-     * @return void
      */
     private function runMigrations(): void
     {
@@ -110,8 +101,6 @@ class InstallRosterCommand extends Command
 
     /**
      * Display installation success message and next steps.
-     *
-     * @return void
      */
     private function displaySuccessMessage(): void
     {

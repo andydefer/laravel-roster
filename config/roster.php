@@ -7,8 +7,6 @@ declare(strict_types=1);
  *
  * This configuration file defines all customizable settings for the Roster package.
  * Environment variables can be used to override any default values.
- *
- * @package Roster\Config
  */
 return [
     // Core settings

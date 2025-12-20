@@ -17,7 +17,7 @@ interface SchedulableServiceInterface
     /**
      * Scope the service to work with a specific schedulable model.
      *
-     * @param Model $model Schedulable model instance
+     * @param  Model  $model  Schedulable model instance
      */
     public function for(Model $model): self;
 
@@ -29,7 +29,7 @@ interface SchedulableServiceInterface
     /**
      * Filter results by availability type.
      *
-     * @param string $type Availability type to filter by
+     * @param  string  $type  Availability type to filter by
      */
     public function whereType(string $type): self;
 
@@ -50,8 +50,8 @@ interface SchedulableServiceInterface
     /**
      * Update an existing entity.
      *
-     * @param int $id Entity ID
-     * @param array<string, mixed> $data Update data
+     * @param  int  $id  Entity ID
+     * @param  array<string, mixed>  $data  Update data
      * @return bool True if update successful
      */
     public function update(int $id, array $data): bool;

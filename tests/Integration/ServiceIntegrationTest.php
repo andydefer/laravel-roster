@@ -5,10 +5,10 @@ declare(strict_types=1);
 namespace Tests\Integration;
 
 use Illuminate\Database\Eloquent\Model;
-use Roster\Exceptions\OverlappingScheduleException;
-use Roster\Exceptions\ScheduleImpedimentOverlapException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
+use Roster\Exceptions\OverlappingScheduleException;
+use Roster\Exceptions\ScheduleImpedimentOverlapException;
 use Roster\Exceptions\ValidationException;
 use Roster\Models\Availability;
 use Roster\Models\Impediment;
@@ -32,7 +32,8 @@ final class ServiceIntegrationTest extends TestCase
     {
         parent::setUp();
 
-        $model = new class extends Model {
+        $model = new class extends Model
+        {
             protected $table = 'test_schedulables';
 
             public $timestamps = false;
@@ -96,7 +97,6 @@ final class ServiceIntegrationTest extends TestCase
             'status' => 'available',
         ]);
     }
-
 
     public function test_schedule_overlapping_validation(): void
     {
@@ -278,7 +278,6 @@ final class ServiceIntegrationTest extends TestCase
         Carbon::setTestNow(); // Nettoyer
     }
 
-
     public function test_wrong_availability_validation(): void
     {
         // Créer une availability pour ce schedulable
@@ -290,7 +289,8 @@ final class ServiceIntegrationTest extends TestCase
         ]);
 
         // Créer un autre schedulable avec sa propre availability
-        $otherSchedulable = new class extends Model {
+        $otherSchedulable = new class extends Model
+        {
             protected $table = 'test_schedulables';
 
             public $timestamps = false;

@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace Tests\Feature\Facades;
 
 use BadMethodCallException;
-use Illuminate\Support\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Collection;
 use Roster\Facades\Schedule as ScheduleFacade;
 use Roster\Models\Availability;
 use Roster\Models\Schedule;
@@ -25,7 +25,8 @@ final class ScheduleFacadeTest extends TestCase
     {
         parent::setUp();
 
-        $this->model = new class extends Model {
+        $this->model = new class extends Model
+        {
             protected $table = 'test_schedulables';
         };
 
@@ -69,7 +70,6 @@ final class ScheduleFacadeTest extends TestCase
 
         ScheduleFacade::for($this->model)->create($data);
     }
-
 
     public function test_facade_can_create_schedule(): void
     {

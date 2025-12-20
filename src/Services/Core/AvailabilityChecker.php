@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace Roster\Services\Core;
 
-use Roster\Models\Availability;
 use Illuminate\Support\Carbon;
 use Roster\Contracts\Repository\AvailabilityRepositoryInterface;
 use Roster\Contracts\Services\AvailabilityCheckerInterface;
 use Roster\Contracts\Services\ValidationServiceInterface;
+use Roster\Models\Availability;
 
 class AvailabilityChecker implements AvailabilityCheckerInterface
 {
@@ -37,13 +37,14 @@ class AvailabilityChecker implements AvailabilityCheckerInterface
         $this->validationService->validateTimeRange($start, $end);
 
         $availability = $this->availabilityRepository->findForTimeSlot($schedulable, $start, $end, $type);
+
         return $availability instanceof Availability;
     }
 
     /**
      * Check if there are overlaps.
      *
-     * @param array<string, mixed> $data
+     * @param  array<string, mixed>  $data
      */
     public function hasOverlapping(
         object $schedulable,
