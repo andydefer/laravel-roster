@@ -62,12 +62,12 @@
 58. src/Services/ScheduleService.php [x]
 
 ## Other Files
-1. src/Traits/DateRangeOverlapTrait.php [ ]
-2. src/Traits/EnumValues.php [ ]
-3. src/Traits/FilterableTrait.php [ ]
-4. src/Traits/HasRoster.php [ ]
-5. tests/bootstrap.php [ ]
-6. tests/database/migrations/2024_01_01_000000_create_test_schedulables_table.php [ ]
+1. src/Traits/DateRangeOverlapTrait.php [x]
+2. src/Traits/EnumValues.php [x]
+3. src/Traits/FilterableTrait.php [x]
+4. src/Traits/HasRoster.php [x]
+5. tests/bootstrap.php [x]
+6. tests/database/migrations/2024_01_01_000000_create_test_schedulables_table.php [x]
 7. tests/Feature/Facades/AvailabilityFacadeTest.php [ ]
 8. tests/Feature/Facades/ImpedimentFacadeTest.php [ ]
 9. tests/Feature/Facades/ScheduleFacadeTest.php [ ]

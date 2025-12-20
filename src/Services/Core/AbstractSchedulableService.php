@@ -56,7 +56,7 @@ abstract class AbstractSchedulableService implements SchedulableServiceInterface
      * @param array<string, mixed> $filtersArray Array of filters to apply
      * @return static
      */
-    public function setFilters(array $filtersArray): static
+    final public function setFilters(array $filtersArray): static
     {
         $this->filters = array_merge($this->filters, $filtersArray);
         return $this;
@@ -69,7 +69,7 @@ abstract class AbstractSchedulableService implements SchedulableServiceInterface
      * @param mixed $value The value to filter by
      * @return static
      */
-    public function setFilter(string $key, mixed $value): static
+    final public function setFilter(string $key, mixed $value): static
     {
         $this->filters[$key] = $value;
         return $this;

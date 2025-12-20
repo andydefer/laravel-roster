@@ -5,14 +5,14 @@ declare(strict_types=1);
 namespace Roster\Traits;
 
 /**
- * Trait to provide helper methods for Enums.
+ * Provides helper methods for working with enums.
  */
 trait EnumValues
 {
     /**
-     * Get all possible values of the enum as an array.
+     * Retrieves all possible values of the enum as an array.
      *
-     * @return array<int, string>
+     * @return array<int, string> Array of enum values
      */
     public static function values(): array
     {

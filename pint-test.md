@@ -1,11 +1,11 @@
 # Pint Formatting Test Report
-*Generated: sam. 20 déc. 2025 19:37:53 WAT*
+*Generated: sam. 20 déc. 2025 19:56:55 WAT*
 
 
-  .⨯⨯⨯⨯.............⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯.....⨯.⨯⨯⨯⨯⨯.⨯....⨯.......⨯.........⨯.⨯⨯.⨯..........
+  .⨯⨯⨯⨯.............⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯.....⨯⨯⨯⨯⨯⨯⨯.⨯....⨯.......⨯....⨯....⨯.⨯⨯.⨯....⨯.....
 
   ──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────── Laravel  
-    FAIL   ................................................................................................................................................. 80 files, 27 style issues  
+    FAIL   ................................................................................................................................................. 80 files, 30 style issues  
   ⨯ src/Exceptions/Messages/ErrorMessageFactory.php                                                                                                         concat_space, phpdoc_align  
   ⨯ src/Exceptions/OverlappingImpedimentException.php                                                                                                                     phpdoc_align  
   ⨯ src/Exceptions/OverlappingScheduleException.php                                                                                                                       phpdoc_align  
@@ -28,9 +28,12 @@
   ⨯ src/Services/Core/ValidationService.php                                    concat_space, unary_operator_spaces, phpdoc_separation, not_operator_with_successor_space, phpdoc_align  
   ⨯ src/Services/ImpedimentService.php                   no_superfluous_phpdoc_tags, no_empty_phpdoc, concat_space, no_unused_imports, not_operator_with_successor_space, phpdoc_align  
   ⨯ src/Services/ScheduleService.php   class_attributes_separation, phpdoc_separation, no_unused_imports, not_operator_with_successor_space, blank_line_before_statement, phpdoc_align  
-  ⨯ src/Traits/FilterableTrait.php                                                                              concat_space, unary_operator_spaces, not_operator_with_successor_space  
+  ⨯ src/Traits/DateRangeOverlapTrait.php                                                     unary_operator_spaces, phpdoc_separation, not_operator_with_successor_space, phpdoc_align  
+  ⨯ src/Traits/FilterableTrait.php    no_superfluous_phpdoc_tags, concat_space, unary_operator_spaces, phpdoc_separation, phpdoc_trim, not_operator_with_successor_space, phpdoc_align  
   ⨯ tests/Feature/Facades/AvailabilityFacadeTest.php                                                                                      class_attributes_separation, braces_position  
   ⨯ tests/Feature/Facades/ImpedimentFacadeTest.php                                                                                        class_attributes_separation, braces_position  
   ⨯ tests/Feature/Services/ImpedimentServiceTest.php                                                                    class_attributes_separation, class_definition, braces_position  
   ⨯ tests/Unit/Commands/InstallRosterCommandTest.php                                                                                class_definition, braces_position, ordered_imports  
+  ⨯ tests/bootstrap.php                                                   phpdoc_no_package, concat_space, phpdoc_trim, not_operator_with_successor_space, no_blank_lines_after_phpdoc  
+  ⨯ tests/database/migrations/2024_01_01_000000_create_test_schedulables_table.php class_definition, no_superfluous_phpdoc_tags, unary_operator_spaces, braces_position, phpdoc_trim,…  
 

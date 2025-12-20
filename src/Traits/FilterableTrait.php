@@ -8,15 +8,32 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Carbon;
 
+/**
+ * Provides a fluent interface for filtering Eloquent queries with common date and field filters.
+ *
+ * @method self whereStartDate(Carbon $date)
+ * @method self whereEndDate(Carbon $date)
+ * @method self whereStatus(string $status)
+ * @method self whereReason(string $reason)
+ * @method self whereAvailabilityId(int $availabilityId)
+ */
 trait FilterableTrait
 {
     /**
-     * @var array<string, mixed> Active filters for queries
+     * Active filters for queries.
+     *
+     * @var array<string, mixed>
      */
     protected array $filters = [];
 
     /**
-     * Apply date filters to query.
+     * Applies date range filters to a query builder.
+     *
+     * @param Builder $builder Query builder instance
+     * @param string $startField Field name for start date
+     * @param string $endField Field name for end date
+     *
+     * @return Builder The modified query builder
      */
     protected function applyDateFilters(
         Builder $builder,
@@ -35,7 +52,14 @@ trait FilterableTrait
     }
 
     /**
-     * Apply type filter to query.
+     * Applies type filter to a query builder.
+     *
+     * Supports filtering directly on the model or through a relation.
+     *
+     * @param Builder $builder Query builder instance
+     * @param string $relation Optional relation name for nested filtering
+     *
+     * @return Builder The modified query builder
      */
     protected function applyTypeFilter(Builder $builder, string $relation = ''): Builder
     {
@@ -44,8 +68,8 @@ trait FilterableTrait
         }
 
         if ($relation !== '' && $relation !== '0') {
-            $builder->whereHas($relation, function ($q): void {
-                $q->where('type', $this->filters['type']);
+            $builder->whereHas($relation, function ($query): void {
+                $query->where('type', $this->filters['type']);
             });
         } else {
             $builder->where('type', $this->filters['type']);
@@ -55,7 +79,11 @@ trait FilterableTrait
     }
 
     /**
-     * Apply day filter to query.
+     * Filters query by a specific day in a JSON days array.
+     *
+     * @param Builder $builder Query builder instance
+     *
+     * @return Builder The modified query builder
      */
     protected function applyDayFilter(Builder $builder): Builder
     {
@@ -67,7 +95,11 @@ trait FilterableTrait
     }
 
     /**
-     * Apply status filter to query.
+     * Applies status filter to a query builder.
+     *
+     * @param Builder $builder Query builder instance
+     *
+     * @return Builder The modified query builder
      */
     protected function applyStatusFilter(Builder $builder): Builder
     {
@@ -79,7 +111,11 @@ trait FilterableTrait
     }
 
     /**
-     * Apply reason filter to query.
+     * Applies reason filter with partial matching to a query builder.
+     *
+     * @param Builder $builder Query builder instance
+     *
+     * @return Builder The modified query builder
      */
     protected function applyReasonFilter(Builder $builder): Builder
     {
@@ -91,7 +127,11 @@ trait FilterableTrait
     }
 
     /**
-     * Apply availability ID filter to query.
+     * Filters query by availability ID.
+     *
+     * @param Builder $builder Query builder instance
+     *
+     * @return Builder The modified query builder
      */
     protected function applyAvailabilityIdFilter(Builder $builder): Builder
     {
@@ -103,7 +143,12 @@ trait FilterableTrait
     }
 
     /**
-     * Apply schedulable filter to query.
+     * Filters query by a specific schedulable model.
+     *
+     * @param Builder $builder Query builder instance
+     * @param Model|null $model The model to filter by
+     *
+     * @return Builder The modified query builder
      */
     protected function applySchedulableFilter(Builder $builder, ?Model $model = null): Builder
     {
@@ -116,7 +161,11 @@ trait FilterableTrait
     }
 
     /**
-     * Filter by start date.
+     * Adds a start date filter.
+     *
+     * @param Carbon $date Start date threshold
+     *
+     * @return self
      */
     public function whereStartDate(Carbon $date): self
     {
@@ -126,7 +175,11 @@ trait FilterableTrait
     }
 
     /**
-     * Filter by end date.
+     * Adds an end date filter.
+     *
+     * @param Carbon $date End date threshold
+     *
+     * @return self
      */
     public function whereEndDate(Carbon $date): self
     {
@@ -136,7 +189,11 @@ trait FilterableTrait
     }
 
     /**
-     * Filter by status.
+     * Adds a status filter.
+     *
+     * @param string $status Status value to filter by
+     *
+     * @return self
      */
     public function whereStatus(string $status): self
     {
@@ -146,7 +203,11 @@ trait FilterableTrait
     }
 
     /**
-     * Filter by reason (for impediments).
+     * Adds a reason filter for impediments.
+     *
+     * @param string $reason Reason text to filter by (partial match)
+     *
+     * @return self
      */
     public function whereReason(string $reason): self
     {
@@ -156,7 +217,11 @@ trait FilterableTrait
     }
 
     /**
-     * Filter by availability ID.
+     * Adds an availability ID filter.
+     *
+     * @param int $availabilityId Availability ID to filter by
+     *
+     * @return self
      */
     public function whereAvailabilityId(int $availabilityId): self
     {
@@ -166,7 +231,9 @@ trait FilterableTrait
     }
 
     /**
-     * Clear all filters.
+     * Clears all active filters.
+     *
+     * @return self
      */
     public function clearFilters(): self
     {
@@ -176,7 +243,7 @@ trait FilterableTrait
     }
 
     /**
-     * Get current filters.
+     * Retrieves all currently active filters.
      *
      * @return array<string, mixed>
      */
@@ -186,7 +253,11 @@ trait FilterableTrait
     }
 
     /**
-     * Check if a filter is set.
+     * Checks if a specific filter is currently set.
+     *
+     * @param string $key Filter key to check
+     *
+     * @return bool True if the filter is set, false otherwise
      */
     public function hasFilter(string $key): bool
     {

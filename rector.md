@@ -1,41 +1,42 @@
 # Rector Refactoring Report
-*Generated: sam. 20 déc. 2025 19:37:54 WAT*
+*Generated: sam. 20 déc. 2025 19:56:56 WAT*
 
 
-16 files with changes
+19 files with changes
 =====================
 
-1) /home/andy-kani/pro/sites/packages/laravel-roster/src/Services/ScheduleService.php:6
+1) /home/andy-kani/pro/sites/packages/laravel-roster/src/Traits/HasRoster.php:4
 
     ---------- begin diff ----------
 @@ @@
 
- use BadMethodCallException;
- use Illuminate\Database\Eloquent\Builder;
--use Illuminate\Database\Eloquent\Model;
- use Illuminate\Support\Carbon;
- use Illuminate\Support\Collection;
- use InvalidArgumentException;
+ namespace Roster\Traits;
+
++use Illuminate\Database\Eloquent\Relations\MorphMany;
+ use Roster\Models\Availability;
+ use Roster\Models\Schedule;
+
 @@ @@
-     use FilterableTrait;
-
-     protected ValidationServiceInterface $validationService;
-+
-     protected AvailabilityRepositoryInterface $availabilityRepository;
-+
-     protected ImpedimentRepositoryInterface $impedimentRepository;
-+
-     protected ScheduleRepositoryInterface $scheduleRepository;
-+
-     protected SlotFinderInterface $slotFinder;
-+
-     protected ?Schedule $currentSchedule = null;
-
      /**
+      * Defines the schedules relationship (concrete planned time slots).
+      *
+-     * @return \Illuminate\Database\Eloquent\Relations\MorphMany
++     * @return MorphMany
+      */
+     public function schedules()
+     {
+@@ @@
+     /**
+      * Defines the availabilities relationship (availability rules).
+      *
+-     * @return \Illuminate\Database\Eloquent\Relations\MorphMany
++     * @return MorphMany
+      */
+     public function availabilities()
+     {
     ----------- end diff -----------
 
 Applied rules:
- * NewlineBetweenClassLikeStmtsRector
 
 
 2) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Feature/Facades/AvailabilityFacadeTest.php:4
@@ -165,15 +166,12 @@ Applied rules:
      /**
       * Test resetting filters.
       */
-     public function test_facade_can_reset_filters(): void
-     {
--        $service = ImpedimentFacade::for($this->schedulableModel)
-+        $impedimentService = ImpedimentFacade::for($this->schedulableModel)
+@@ @@
              ->whereReason('test')
              ->resetFilters();
 
 -        $this->assertInstanceOf(\Roster\Services\ImpedimentService::class, $service);
-+        $this->assertInstanceOf(ImpedimentService::class, $impedimentService);
++        $this->assertInstanceOf(ImpedimentService::class, $service);
      }
 
      /**
@@ -224,7 +222,45 @@ Applied rules:
  * AssertEmptyNullableObjectToAssertInstanceofRector
 
 
-5) /home/andy-kani/pro/sites/packages/laravel-roster/src/Models/Availability.php:56
+5) /home/andy-kani/pro/sites/packages/laravel-roster/tests/database/migrations/2024_01_01_000000_create_test_schedulables_table.php:17
+
+    ---------- begin diff ----------
+@@ @@
+      * Run the migrations.
+      *
+      * Creates the `test_schedulables` table if it does not exist.
+-     *
+-     * @return void
+      */
+     public function up(): void
+     {
+         if (! Schema::hasTable('test_schedulables')) {
+-            Schema::create('test_schedulables', function (Blueprint $table): void {
+-                $table->id();
+-                $table->timestamps();
++            Schema::create('test_schedulables', function (Blueprint $blueprint): void {
++                $blueprint->id();
++                $blueprint->timestamps();
+             });
+         }
+     }
+@@ @@
+      * Reverse the migrations.
+      *
+      * Drops the `test_schedulables` table if it exists.
+-     *
+-     * @return void
+      */
+     public function down(): void
+     {
+    ----------- end diff -----------
+
+Applied rules:
+ * RemoveUselessReturnTagRector
+ * RenameParamToMatchTypeRector
+
+
+6) /home/andy-kani/pro/sites/packages/laravel-roster/src/Models/Availability.php:56
 
     ---------- begin diff ----------
 @@ @@
@@ -274,7 +310,7 @@ Applied rules:
  * RemoveUselessReturnTagRector
 
 
-6) /home/andy-kani/pro/sites/packages/laravel-roster/src/Models/Impediment.php:4
+7) /home/andy-kani/pro/sites/packages/laravel-roster/src/Models/Impediment.php:4
 
     ---------- begin diff ----------
 @@ @@
@@ -299,7 +335,7 @@ Applied rules:
 Applied rules:
 
 
-7) /home/andy-kani/pro/sites/packages/laravel-roster/src/Models/Schedule.php:4
+8) /home/andy-kani/pro/sites/packages/laravel-roster/src/Models/Schedule.php:4
 
     ---------- begin diff ----------
 @@ @@
@@ -324,7 +360,7 @@ Applied rules:
 Applied rules:
 
 
-8) /home/andy-kani/pro/sites/packages/laravel-roster/src/Repositories/AvailabilityRepository.php:4
+9) /home/andy-kani/pro/sites/packages/laravel-roster/src/Repositories/AvailabilityRepository.php:4
 
     ---------- begin diff ----------
 @@ @@
@@ -595,7 +631,7 @@ Applied rules:
  * RenameParamToMatchTypeRector
 
 
-9) /home/andy-kani/pro/sites/packages/laravel-roster/src/Repositories/ImpedimentRepository.php:30
+10) /home/andy-kani/pro/sites/packages/laravel-roster/src/Repositories/ImpedimentRepository.php:30
 
     ---------- begin diff ----------
 @@ @@
@@ -615,7 +651,7 @@ Applied rules:
  * TernaryToBooleanOrFalseToBooleanAndRector
 
 
-10) /home/andy-kani/pro/sites/packages/laravel-roster/src/Repositories/ScheduleRepository.php:30
+11) /home/andy-kani/pro/sites/packages/laravel-roster/src/Repositories/ScheduleRepository.php:30
 
     ---------- begin diff ----------
 @@ @@
@@ -644,7 +680,7 @@ Applied rules:
  * TernaryToBooleanOrFalseToBooleanAndRector
 
 
-11) /home/andy-kani/pro/sites/packages/laravel-roster/src/Services/AvailabilityService.php:5
+12) /home/andy-kani/pro/sites/packages/laravel-roster/src/Services/AvailabilityService.php:5
 
     ---------- begin diff ----------
 @@ @@
@@ -688,7 +724,7 @@ Applied rules:
  * NewlineBetweenClassLikeStmtsRector
 
 
-12) /home/andy-kani/pro/sites/packages/laravel-roster/src/Services/Core/AbstractSchedulableService.php:41
+13) /home/andy-kani/pro/sites/packages/laravel-roster/src/Services/Core/AbstractSchedulableService.php:41
 
     ---------- begin diff ----------
 @@ @@
@@ -705,7 +741,7 @@ Applied rules:
       * @param array<string, mixed> $filtersArray Array of filters to apply
 -     * @return static
       */
-     public function setFilters(array $filtersArray): static
+     final public function setFilters(array $filtersArray): static
      {
 @@ @@
       *
@@ -713,7 +749,7 @@ Applied rules:
       * @param mixed $value The value to filter by
 -     * @return static
       */
-     public function setFilter(string $key, mixed $value): static
+     final public function setFilter(string $key, mixed $value): static
      {
 @@ @@
 
@@ -838,7 +874,7 @@ Applied rules:
  * RemoveUselessReturnTagRector
 
 
-13) /home/andy-kani/pro/sites/packages/laravel-roster/src/Services/Core/AvailabilityChecker.php:4
+14) /home/andy-kani/pro/sites/packages/laravel-roster/src/Services/Core/AvailabilityChecker.php:4
 
     ---------- begin diff ----------
 @@ @@
@@ -874,7 +910,7 @@ Applied rules:
 Applied rules:
 
 
-14) /home/andy-kani/pro/sites/packages/laravel-roster/src/Services/Core/AvailabilityMerger.php:35
+15) /home/andy-kani/pro/sites/packages/laravel-roster/src/Services/Core/AvailabilityMerger.php:35
 
     ---------- begin diff ----------
 @@ @@
@@ -951,7 +987,7 @@ Applied rules:
  * RenameParamToMatchTypeRector
 
 
-15) /home/andy-kani/pro/sites/packages/laravel-roster/src/Services/Core/AvailabilityValidator.php:37
+16) /home/andy-kani/pro/sites/packages/laravel-roster/src/Services/Core/AvailabilityValidator.php:37
 
     ---------- begin diff ----------
 @@ @@
@@ -1063,7 +1099,7 @@ Applied rules:
  * ClassMethodArrayDocblockParamFromLocalCallsRector
 
 
-16) /home/andy-kani/pro/sites/packages/laravel-roster/src/Services/ImpedimentService.php:6
+17) /home/andy-kani/pro/sites/packages/laravel-roster/src/Services/ImpedimentService.php:6
 
     ---------- begin diff ----------
 @@ @@
@@ -1129,5 +1165,101 @@ Applied rules:
  * RemoveUselessVarTagRector
 
 
- [OK] 16 files would have been changed (dry-run) by Rector                                                              
+18) /home/andy-kani/pro/sites/packages/laravel-roster/src/Services/ScheduleService.php:6
+
+    ---------- begin diff ----------
+@@ @@
+
+ use BadMethodCallException;
+ use Illuminate\Database\Eloquent\Builder;
+-use Illuminate\Database\Eloquent\Model;
+ use Illuminate\Support\Carbon;
+ use Illuminate\Support\Collection;
+ use InvalidArgumentException;
+@@ @@
+     use FilterableTrait;
+
+     protected ValidationServiceInterface $validationService;
++
+     protected AvailabilityRepositoryInterface $availabilityRepository;
++
+     protected ImpedimentRepositoryInterface $impedimentRepository;
++
+     protected ScheduleRepositoryInterface $scheduleRepository;
++
+     protected SlotFinderInterface $slotFinder;
++
+     protected ?Schedule $currentSchedule = null;
+
+     /**
+    ----------- end diff -----------
+
+Applied rules:
+ * NewlineBetweenClassLikeStmtsRector
+
+
+19) /home/andy-kani/pro/sites/packages/laravel-roster/src/Traits/FilterableTrait.php:164
+
+    ---------- begin diff ----------
+@@ @@
+      * Adds a start date filter.
+      *
+      * @param Carbon $date Start date threshold
+-     *
+-     * @return self
+      */
+     public function whereStartDate(Carbon $date): self
+     {
+@@ @@
+      * Adds an end date filter.
+      *
+      * @param Carbon $date End date threshold
+-     *
+-     * @return self
+      */
+     public function whereEndDate(Carbon $date): self
+     {
+@@ @@
+      * Adds a status filter.
+      *
+      * @param string $status Status value to filter by
+-     *
+-     * @return self
+      */
+     public function whereStatus(string $status): self
+     {
+@@ @@
+      * Adds a reason filter for impediments.
+      *
+      * @param string $reason Reason text to filter by (partial match)
+-     *
+-     * @return self
+      */
+     public function whereReason(string $reason): self
+     {
+@@ @@
+      * Adds an availability ID filter.
+      *
+      * @param int $availabilityId Availability ID to filter by
+-     *
+-     * @return self
+      */
+     public function whereAvailabilityId(int $availabilityId): self
+     {
+@@ @@
+
+     /**
+      * Clears all active filters.
+-     *
+-     * @return self
+      */
+     public function clearFilters(): self
+     {
+    ----------- end diff -----------
+
+Applied rules:
+ * RemoveUselessReturnTagRector
+
+
+ [OK] 19 files would have been changed (dry-run) by Rector                                                              
 

@@ -7,10 +7,17 @@ namespace Roster\Traits;
 use Roster\Models\Availability;
 use Roster\Models\Schedule;
 
+/**
+ * Enables a model to have roster-related relationships.
+ *
+ * Provides morph relationships for schedules and availabilities.
+ */
 trait HasRoster
 {
     /**
-     * Get all schedules (concrete planned time slots) for the model.
+     * Defines the schedules relationship (concrete planned time slots).
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\MorphMany
      */
     public function schedules()
     {
@@ -18,7 +25,9 @@ trait HasRoster
     }
 
     /**
-     * Get all availabilities (availability rules) for the model.
+     * Defines the availabilities relationship (availability rules).
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\MorphMany
      */
     public function availabilities()
     {
