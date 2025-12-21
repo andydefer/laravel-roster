@@ -5,34 +5,37 @@ declare(strict_types=1);
 namespace Roster\Commands;
 
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Schema;
 use Roster\RosterServiceProvider;
 
 /**
  * Command to install the Roster package.
  *
- * Publishes configuration and migration files, then runs database migrations
- * to set up the package in a Laravel application.
+ * This command publishes the package's resources (config, migrations, routes, views)
+ * and runs migrations if necessary. It provides options to skip confirmation
+ * and handles existing database tables gracefully.
  */
 class InstallRosterCommand extends Command
 {
-    /**
-     * The name and signature of the console command.
-     *
-     * @var string
-     */
+    /** @var string The console command signature. */
     protected $signature = 'roster:install {--force : Force publish without confirmation}';
 
-    /**
-     * The console command description.
-     *
-     * @var string
-     */
+    /** @var string The console command description. */
     protected $description = 'Install the Roster package';
+
+    /** @var array<string> Tables managed by the Roster package. */
+    private const ROSTER_TABLES = [
+        'roster_availabilities',
+        'roster_schedules',
+        'roster_impediments',
+    ];
 
     /**
      * Execute the console command.
+     *
+     * @return int Returns Command::SUCCESS on success.
      */
-    public function handle(): void
+    public function handle(): int
     {
         $this->info('🚀 Installing Roster package...');
 
@@ -41,18 +44,28 @@ class InstallRosterCommand extends Command
 
             if (! $this->confirm('Continue?', true)) {
                 $this->info('Installation cancelled.');
-
-                return;
+                return self::SUCCESS;
             }
         }
 
         $this->publishResources();
-        $this->runMigrations();
+
+        if ($this->rosterTablesAlreadyExist()) {
+            $this->warn('⚠️ Roster tables already exist. Skipping migrations.');
+        } else {
+            $this->info('📊 Running migrations...');
+            $this->call('migrate');
+        }
+
         $this->displaySuccessMessage();
+
+        return self::SUCCESS;
     }
 
     /**
      * Determine if confirmation should be skipped.
+     *
+     * @return bool True if the --force option is used, false otherwise.
      */
     private function shouldSkipConfirmation(): bool
     {
@@ -60,7 +73,7 @@ class InstallRosterCommand extends Command
     }
 
     /**
-     * Display what will be published during installation.
+     * Display details about what will be published.
      */
     private function displayPublishingDetails(): void
     {
@@ -72,7 +85,7 @@ class InstallRosterCommand extends Command
     }
 
     /**
-     * Publish package resources using vendor:publish command.
+     * Publish the package resources.
      */
     private function publishResources(): void
     {
@@ -91,16 +104,23 @@ class InstallRosterCommand extends Command
     }
 
     /**
-     * Run database migrations.
+     * Check if any Roster table already exists in the database.
+     *
+     * @return bool True if any roster table exists, false otherwise.
      */
-    private function runMigrations(): void
+    private function rosterTablesAlreadyExist(): bool
     {
-        $this->info('📊 Running migrations...');
-        $this->call('migrate');
+        foreach (self::ROSTER_TABLES as $table) {
+            if (Schema::hasTable($table)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
-     * Display installation success message and next steps.
+     * Display the success message with next steps.
      */
     private function displaySuccessMessage(): void
     {

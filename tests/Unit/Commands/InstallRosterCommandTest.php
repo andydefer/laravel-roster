@@ -6,6 +6,8 @@ namespace Tests\Unit\Commands;
 
 use Illuminate\Console\OutputStyle;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use ReflectionClass;
 use ReflectionMethod;
 use Roster\Commands\InstallRosterCommand;
@@ -15,17 +17,11 @@ use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\Output;
 use Tests\TestCase;
 
-/**
- * Interface pour capturer le buffer de sortie.
- */
 interface OutputWithBuffer
 {
     public function getOutput(): string;
 }
 
-/**
- * Trait réutilisable pour capturer le output.
- */
 trait CapturesOutput
 {
     private string $buffer = '';
@@ -44,12 +40,22 @@ trait CapturesOutput
     }
 }
 
-/**
- * Tests unitaires pour la commande d'installation du package Roster.
- */
 final class InstallRosterCommandTest extends TestCase
 {
     use RefreshDatabase;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        foreach (['roster_availabilities', 'roster_schedules', 'roster_impediments'] as $table) {
+            if (Schema::hasTable($table)) {
+                Schema::drop($table);
+            }
+        }
+
+        DB::table('migrations')->truncate();
+    }
 
     public function test_command_can_be_instantiated(): void
     {
@@ -177,39 +183,36 @@ final class InstallRosterCommandTest extends TestCase
             ->assertExitCode(0);
     }
 
-    public function test_asks_for_confirmation_without_force_option(): void
+    public function test_it_skips_migrations_if_roster_migrations_already_exist(): void
     {
-        $command = $this->getMockBuilder(InstallRosterCommand::class)
-            ->onlyMethods(['confirm', 'call'])
-            ->getMock();
+        DB::table('migrations')->insert([
+            'migration' => '2024_01_01_000001_create_roster_availabilities_table',
+            'batch' => 1,
+        ]);
 
-        $command->expects($this->once())
-            ->method('confirm')
-            ->with('Continue?', true)
-            ->willReturn(true);
+        Schema::create('roster_availabilities', function ($table) {
+            $table->id();
+        });
 
-        $command->expects($this->exactly(2))
-            ->method('call')
-            ->willReturn(0);
+        $this->artisan('roster:install', ['--force' => true])
+            ->expectsOutput('🚀 Installing Roster package...')
+            ->expectsOutput('📤 Publishing resources...')
+            ->expectsOutput('⚠️ Roster tables already exist. Skipping migrations.')
+            ->doesntExpectOutput('📊 Running migrations...')
+            ->assertExitCode(0);
+    }
 
-        $command->setLaravel($this->app);
+    public function test_it_skips_migrations_if_roster_tables_exist(): void
+    {
+        Schema::create('roster_availabilities', function ($table) {
+            $table->id();
+        });
 
-        $arrayInput = new ArrayInput([], $command->getDefinition());
-        $reflectionClass = new ReflectionClass($command);
-        $reflectionProperty = $reflectionClass->getProperty('input');
-        $reflectionProperty->setAccessible(true);
-        $reflectionProperty->setValue($command, $arrayInput);
-
-        /** @var Output&OutputWithBuffer $output */
-        $output = new class extends Output implements OutputWithBuffer
-        {
-            use CapturesOutput;
-        };
-
-        $command->setOutput(new OutputStyle($arrayInput, $output));
-
-        $command->handle();
-
-        $this->assertStringContainsString('Installing Roster package', $output->getOutput());
+        $this->artisan('roster:install', ['--force' => true])
+            ->expectsOutput('🚀 Installing Roster package...')
+            ->expectsOutput('📤 Publishing resources...')
+            ->expectsOutput('⚠️ Roster tables already exist. Skipping migrations.')
+            ->doesntExpectOutput('📊 Running migrations...')
+            ->assertExitCode(0);
     }
 }

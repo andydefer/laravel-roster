@@ -1,11 +1,12 @@
 # Pint Formatting Test Report
-*Generated: dim. 21 déc. 2025 17:41:22 WAT*
+*Generated: dim. 21 déc. 2025 18:43:27 WAT*
 
 
-  .⨯⨯⨯⨯⨯......⨯.⨯..⨯.⨯.⨯.⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯.....⨯⨯⨯⨯⨯⨯⨯⨯.⨯....⨯.......⨯....⨯⨯⨯⨯..⨯.⨯⨯⨯⨯...⨯....
+  .⨯⨯⨯⨯⨯⨯.....⨯.⨯..⨯.⨯.⨯.⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯.....⨯⨯⨯⨯⨯⨯⨯⨯.⨯....⨯.......⨯....⨯⨯⨯⨯..⨯.⨯⨯⨯⨯...⨯....
 
   ──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────── Laravel  
-    FAIL   ................................................................................................................................................. 91 files, 47 style issues  
+    FAIL   ................................................................................................................................................. 91 files, 48 style issues  
+  ⨯ src/Commands/InstallRosterCommand.php                                                        unary_operator_spaces, not_operator_with_successor_space, blank_line_before_statement  
   ⨯ src/Contracts/Services/AvailabilityValidatorInterface.php                                                                                              class_attributes_separation  
   ⨯ src/Contracts/Services/CachableInterface.php                                                                                                                          phpdoc_align  
   ⨯ src/Contracts/Services/ConfigurableInterface.php                                                                                                   phpdoc_separation, phpdoc_align  

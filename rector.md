@@ -1,8 +1,8 @@
 # Rector Refactoring Report
-*Generated: dim. 21 déc. 2025 17:41:25 WAT*
+*Generated: dim. 21 déc. 2025 18:43:29 WAT*
 
 
-3 files with changes
+4 files with changes
 ====================
 
 1) /home/andy-kani/pro/sites/packages/laravel-roster/src/Services/ImpedimentService.php:4
@@ -67,5 +67,31 @@ Applied rules:
  * CatchExceptionNameMatchingTypeRector
 
 
- [OK] 3 files would have been changed (dry-run) by Rector                                                               
+4) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Commands/InstallRosterCommandTest.php:190
+
+    ---------- begin diff ----------
+@@ @@
+             'batch' => 1,
+         ]);
+
+-        Schema::create('roster_availabilities', function ($table) {
++        Schema::create('roster_availabilities', function ($table): void {
+             $table->id();
+         });
+
+@@ @@
+
+     public function test_it_skips_migrations_if_roster_tables_exist(): void
+     {
+-        Schema::create('roster_availabilities', function ($table) {
++        Schema::create('roster_availabilities', function ($table): void {
+             $table->id();
+         });
+    ----------- end diff -----------
+
+Applied rules:
+ * AddClosureVoidReturnTypeWhereNoReturnRector
+
+
+ [OK] 4 files would have been changed (dry-run) by Rector                                                               
 
