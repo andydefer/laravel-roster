@@ -3,8 +3,6 @@
 ![PHP Version](https://img.shields.io/badge/PHP-8.3%2B-blue)
 ![Laravel Version](https://img.shields.io/badge/Laravel-10%2B-orange)
 ![License](https://img.shields.io/badge/license-MIT-green)
-![Tests](https://img.shields.io/badge/tests-161%20passing-brightgreen)
-![Coverage](https://img.shields.io/badge/coverage-88%25-green)
 
 **Roster** est un package Laravel complet et robuste pour la gestion avancée d'emplois du temps, de disponibilités et de réservations. Conçu pour les applications SaaS complexes, il gère les disponibilités récurrentes, les créneaux réservés et les empêchements avec une précision chirurgicale.
 
@@ -36,7 +34,7 @@
 ## 📦 Installation
 
 ```bash
-composer require vendor/laravel-roster
+composer require andydefer/laravel-roster
 ```
 
 Publiez les ressources du package :

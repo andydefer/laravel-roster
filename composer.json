@@ -45,7 +45,7 @@
     ],
     "license": "MIT",
     "minimum-stability": "dev",
-    "name": "andydefer/roster",
+    "name": "andydefer/laravel-roster",
     "prefer-stable": true,
     "require": {
         "illuminate/database": "^12.0",
