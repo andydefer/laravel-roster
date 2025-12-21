@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Roster\Contracts\Services;
 
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Carbon;
 use Roster\Exceptions\ValidationException;
 use Roster\Models\Availability;
@@ -20,33 +19,6 @@ interface AvailabilityValidatorInterface
      */
     public function validateBasicData(array $data): void;
 
-    /**
-     * Check if new availability overlaps with existing ones.
-     *
-     * @param  Model  $model  Schedulable model instance
-     * @param  array<string, mixed>  $data  New availability data
-     * @param  int|null  $exceptId  Availability ID to exclude from overlap check
-     * @return bool True if overlapping availability exists
-     */
-    public function hasOverlapping(Model $model, array $data, ?int $exceptId = null): bool;
-
-    /**
-     * Determine if two availability periods overlap in time and date ranges.
-     *
-     * @param  Availability  $availability  Existing availability instance
-     * @param  Carbon  $newStartTime  New availability start time
-     * @param  Carbon  $newEndTime  New availability end time
-     * @param  Carbon|null  $newStartDate  New availability start date (null for indefinite)
-     * @param  Carbon|null  $newEndDate  New availability end date (null for indefinite)
-     * @return bool True if the periods overlap
-     */
-    public function overlaps(
-        Availability $availability,
-        Carbon $newStartTime,
-        Carbon $newEndTime,
-        ?Carbon $newStartDate,
-        ?Carbon $newEndDate
-    ): bool;
 
     /**
      * Check if two time ranges overlap within a single day.

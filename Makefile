@@ -227,7 +227,7 @@ concat-all:
 # ---------------------------------------------------
 
 .PHONY: test
-test:
+test: clean-testbench-migrations
 	@./vendor/bin/phpunit
 
 
@@ -314,6 +314,13 @@ lint-psalm-md:
 	@echo "" >> psalm.md
 	@$(PSALM) --show-info=true --no-progress 2>&1 >> psalm.md || true
 	@echo "✅ Psalm report saved to psalm.md"
+
+.PHONY: clean-testbench-migrations
+
+clean-testbench-migrations:
+	@echo "🧹 Cleaning Orchestra Testbench migrations..."
+	@rm -f vendor/orchestra/testbench-core/laravel/database/migrations/*_create_roster_*_table.php || true
+	@echo "✅ Testbench migrations cleaned"
 
 
 # ---------------------------------------------------

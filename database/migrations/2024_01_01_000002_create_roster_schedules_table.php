@@ -25,6 +25,7 @@ return new class extends Migration
             $table->foreignId('availability_id')
                 ->constrained('roster_availabilities')
                 ->onDelete('cascade');
+            $table->morphs('schedulable');
 
             $table->string('title')->comment('Title of the scheduled event');
             $table->text('description')->nullable()->comment('Optional description');

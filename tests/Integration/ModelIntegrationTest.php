@@ -65,6 +65,8 @@ final class ModelIntegrationTest extends TestCase
 
         $schedule = Schedule::create([
             'availability_id' => $availability->id,
+            'schedulable_id' => $this->testModel->id, // AJOUTÉ
+            'schedulable_type' => get_class($this->testModel), // AJOUTÉ
             'title' => 'Test Schedule',
             'start_datetime' => '2024-01-01 10:00:00',
             'end_datetime' => '2024-01-01 11:00:00',
@@ -103,6 +105,8 @@ final class ModelIntegrationTest extends TestCase
 
         $schedule = Schedule::create([
             'availability_id' => $availability->id,
+            'schedulable_id' => $this->testModel->id, // AJOUTÉ
+            'schedulable_type' => get_class($this->testModel), // AJOUTÉ
             'title' => 'Test Schedule',
             'start_datetime' => '2024-01-01 10:00:00',
             'end_datetime' => '2024-01-01 11:00:00',

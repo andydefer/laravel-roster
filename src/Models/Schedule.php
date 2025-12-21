@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Carbon;
 use Roster\Enums\ScheduleStatus;
+use Roster\Traits\BelongsToSchedulable;
 
 /**
  * Represents a scheduled event within an availability period.
@@ -30,10 +31,14 @@ use Roster\Enums\ScheduleStatus;
  */
 class Schedule extends Model
 {
+    use BelongsToSchedulable;
+
     protected $table = 'roster_schedules';
 
     protected $fillable = [
         'availability_id',
+        'schedulable_id',
+        'schedulable_type',
         'title',
         'description',
         'start_datetime',

@@ -80,7 +80,7 @@ return new class extends Migration
         if (config('roster.database.check_constraints', true)) {
             DB::statement('
                 ALTER TABLE roster_impediments
-                ADD CONSTRAINT roster_impediments_valid_dates
+                ADD CONSTRAINT roster_impediments_end_after_start
                 CHECK (end_datetime > start_datetime)
             ');
         }
@@ -91,10 +91,10 @@ return new class extends Migration
      */
     private function addPgsqlConstraints(): void
     {
-        if (config('roster.database.use_json_constraints', true)) {
+        if (config('roster.database.use_postgres_exclusion_constraints', true)) {
             DB::statement('
                 ALTER TABLE roster_impediments
-                ADD CONSTRAINT roster_impediments_no_overlap
+                ADD CONSTRAINT roster_impediments_no_time_overlap
                 EXCLUDE USING gist (
                     availability_id WITH =,
                     tsrange(start_datetime, end_datetime) WITH &&

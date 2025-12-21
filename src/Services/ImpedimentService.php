@@ -21,7 +21,9 @@ use Roster\Exceptions\ScheduleImpedimentOverlapException;
 use Roster\Exceptions\ValidationException;
 use Roster\Models\Availability;
 use Roster\Models\Impediment;
-use Roster\Services\Core\AbstractSchedulableService;
+use Roster\Services\Core\AbstractAvailabilityDependentService;
+use Roster\Services\Core\Components\Cachable;
+use Roster\Services\Core\Components\ExceptionHandler;
 use Roster\Traits\FilterableTrait;
 
 /**
@@ -30,9 +32,11 @@ use Roster\Traits\FilterableTrait;
  * Handles creation, validation, and querying of impediments while ensuring
  * they respect availability constraints and don't overlap with existing schedules.
  */
-class ImpedimentService extends AbstractSchedulableService
+class ImpedimentService extends AbstractAvailabilityDependentService
 {
     use FilterableTrait;
+    use ExceptionHandler;
+    use Cachable;
 
     protected ValidationServiceInterface $validationService;
 
@@ -41,6 +45,8 @@ class ImpedimentService extends AbstractSchedulableService
     protected ImpedimentRepositoryInterface $impedimentRepository;
 
     protected ScheduleRepositoryInterface $scheduleRepository;
+
+    protected SlotFinderInterface $slotFinder;
 
     /**
      * @var Impediment|null Current impediment being processed
@@ -51,12 +57,14 @@ class ImpedimentService extends AbstractSchedulableService
         ValidationServiceInterface $validationService,
         AvailabilityRepositoryInterface $availabilityRepository,
         ImpedimentRepositoryInterface $impedimentRepository,
-        ScheduleRepositoryInterface $scheduleRepository
+        ScheduleRepositoryInterface $scheduleRepository,
+        SlotFinderInterface $slotFinder
     ) {
         $this->validationService = $validationService;
         $this->availabilityRepository = $availabilityRepository;
         $this->impedimentRepository = $impedimentRepository;
         $this->scheduleRepository = $scheduleRepository;
+        $this->slotFinder = $slotFinder;
     }
 
     /**
@@ -106,8 +114,9 @@ class ImpedimentService extends AbstractSchedulableService
     /**
      * {@inheritDoc}
      */
-    protected function validateBeforeCreate(): void
+    protected function beforeCreate(mixed ...$args): void
     {
+        // 1️⃣ Validation
         $this->validateImpedimentData();
 
         ['start' => $start, 'end' => $end] = $this->validationService
@@ -149,15 +158,10 @@ class ImpedimentService extends AbstractSchedulableService
             );
         }
 
+        // 2️⃣ Traitement / préparation des données
         $this->data['schedulable_id'] = $this->schedulable->id;
         $this->data['schedulable_type'] = get_class($this->schedulable);
-    }
 
-    /**
-     * {@inheritDoc}
-     */
-    protected function processBeforeCreate(): void
-    {
         if (isset($this->data['metadata']) && !is_array($this->data['metadata'])) {
             $this->data['metadata'] = json_decode($this->data['metadata'], true) ?? [];
         }
@@ -259,9 +263,10 @@ class ImpedimentService extends AbstractSchedulableService
     /**
      * {@inheritDoc}
      */
-    protected function processBeforeUpdate(int $id): void
+    protected function beforeUpdate(int $id): void
     {
         // Additional processing if needed
+        $this->processMetadata();
     }
 
     /**
@@ -270,6 +275,14 @@ class ImpedimentService extends AbstractSchedulableService
     protected function executeUpdate(int $id): bool
     {
         return $this->currentImpediment->update($this->data);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected function executeDelete(int $id): bool
+    {
+        return $this->currentImpediment->delete();
     }
 
     /**
@@ -298,39 +311,6 @@ class ImpedimentService extends AbstractSchedulableService
         throw new InvalidArgumentException('Invalid arguments for create method');
     }
 
-    /**
-     * Create a new impediment with explicit availability.
-     *
-     * @param Availability $availability The availability to link to
-     * @param array<string, mixed> $data Impediment data
-     * @return Impediment Created impediment
-     *
-     * @throws ValidationException When validation fails
-     */
-    private function createWithAvailability(Availability $availability, array $data): Impediment
-    {
-        $this->validateSchedulable();
-        $this->data = $data;
-
-        $this->validateAvailabilityOwnership($availability);
-
-        ['start' => $start, 'end' => $end] = $this->validationService
-            ->parseAndValidateDateTimeRange($this->data);
-
-        $this->validateImpedimentAgainstAvailability($availability, $start, $end);
-
-        $this->data['availability_id'] = $availability->id;
-
-        $this->data = $this->applyConfigurationRules($this->data, 'create');
-        $this->validateConfigurationRules('create');
-        $this->validateBeforeCreate();
-        $this->processBeforeCreate();
-
-        $impediment = $this->executeCreate();
-        $this->afterCreate($impediment);
-
-        return $impediment;
-    }
 
     /**
      * Validate that the impediment time slot matches the availability constraints.
@@ -373,15 +353,7 @@ class ImpedimentService extends AbstractSchedulableService
      *
      * @throws ValidationException When availability doesn't belong to schedulable
      */
-    private function validateAvailabilityOwnership(Availability $availability): void
-    {
-        if (
-            $availability->schedulable_id !== $this->schedulable->id ||
-            $availability->schedulable_type !== get_class($this->schedulable)
-        ) {
-            throw new ValidationException(ValidationType::INVALID_AVAILABILITY);
-        }
-    }
+
 
     /**
      * Find an impediment by ID for the current schedulable.
@@ -413,7 +385,11 @@ class ImpedimentService extends AbstractSchedulableService
             return false;
         }
 
-        return $impediment->delete();
+        $this->beforeDelete($id);
+        $result = $impediment->delete();
+        $this->afterDelete($id, $result);
+
+        return $result;
     }
 
     /**
@@ -483,9 +459,8 @@ class ImpedimentService extends AbstractSchedulableService
         }
 
         $impediments = $this->impedimentRepository->findForTimeSlot($availability->id, $start, $end);
-        $slotFinderService = app(SlotFinderInterface::class);
 
-        return $slotFinderService->getAvailableSlotsFromImpediments($start, $end, $impediments);
+        return $this->slotFinder->getAvailableSlotsFromImpediments($start, $end, $impediments);
     }
 
     /**
@@ -561,44 +536,95 @@ class ImpedimentService extends AbstractSchedulableService
     }
 
     /**
-     * Apply date filters to the query.
-     *
-     * @param Builder $builder Query builder
+     * {@inheritDoc}
      */
-    private function applyDateFilters(Builder $builder): void
+    protected function getEntityClass(): string
     {
-        if (isset($this->filters['start_date'])) {
-            $builder->where('start_datetime', '>=', $this->filters['start_date']);
+        return Impediment::class;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected function getAvailabilityRepository(): AvailabilityRepositoryInterface
+    {
+        return $this->availabilityRepository;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected function getScheduleRepository(): ScheduleRepositoryInterface
+    {
+        return $this->scheduleRepository;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected function getImpedimentRepository(): ImpedimentRepositoryInterface
+    {
+        return $this->impedimentRepository;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected function checkOverlapsForUpdate(int $availabilityId, Carbon $start, Carbon $end, int $exceptId): void
+    {
+        if ($this->impedimentRepository->hasOverlappingImpediments($availabilityId, $start, $end, $exceptId)) {
+            $this->throwOverlapException();
         }
 
-        if (isset($this->filters['end_date'])) {
-            $builder->where('end_datetime', '<=', $this->filters['end_date']);
+        if ($this->scheduleRepository->hasOverlappingSchedule($availabilityId, $start, $end)) {
+            throw ValidationException::withMessage('Cannot update impediment to overlap with existing schedule');
         }
     }
 
     /**
-     * Apply type filter to the query.
-     *
-     * @param Builder $builder Query builder
+     * {@inheritDoc}
      */
-    private function applyTypeFilter(Builder $builder): void
+    protected function clearEntityCache(int $entityId): void
     {
-        if (isset($this->filters['type'])) {
-            $builder->whereHas('availability', function ($q): void {
-                $q->where('type', $this->filters['type']);
-            });
+        // Implementation of cache clearing if needed
+    }
+
+    /**
+     * Process metadata JSON
+     */
+    protected function processMetadata(): void
+    {
+        if (isset($this->data['metadata']) && !is_array($this->data['metadata'])) {
+            $this->data['metadata'] = json_decode($this->data['metadata'], true) ?? [];
         }
     }
 
     /**
-     * Apply reason filter to the query.
-     *
-     * @param Builder $builder Query builder
+     * {@inheritDoc}
      */
-    private function applyReasonFilter(Builder $builder): void
+    protected function afterCreate(mixed $result): void
     {
-        if (isset($this->filters['reason'])) {
-            $builder->where('reason', 'like', '%' . $this->filters['reason'] . '%');
+        // Hook après création
+        $this->clearEntityCache($result->id);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected function afterUpdate(int $id, bool $result): void
+    {
+        if ($result) {
+            $this->clearEntityCache($id);
+        }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected function afterDelete(int $id, bool $result): void
+    {
+        if ($result) {
+            $this->clearEntityCache($id);
         }
     }
 }

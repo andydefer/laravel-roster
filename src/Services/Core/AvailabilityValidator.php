@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Roster\Services\Core;
 
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Carbon;
 use InvalidArgumentException;
 use Roster\Contracts\Services\AvailabilityValidatorInterface;
@@ -29,62 +28,15 @@ class AvailabilityValidator implements AvailabilityValidatorInterface
      */
     public function validateBasicData(array $data): void
     {
+
+
+
         $this->validateDays($data);
         $this->validateTimeRange($data);
         $this->validateDateRange($data);
     }
 
-    /**
-     * Check for overlapping availabilities.
-     *
-     * @param Model $model The schedulable model (e.g., User, Team)
-     * @param  array<string, mixed>  $data  New availability data
-     * @param  int|null  $exceptId  Availability ID to exclude from check (for updates)
-     * @return bool True if overlapping availability exists
-     */
-    public function hasOverlapping(
-        Model $model,
-        array $data,
-        ?int $exceptId = null
-    ): bool {
-        $query = $this->buildOverlapQuery($model, $data, $exceptId);
 
-        return $query->exists();
-    }
-
-    /**
-     * Check if a time range overlaps with an existing availability.
-     *
-     * @param  Availability  $availability  Existing availability to check against
-     * @param  Carbon  $newStartTime  New availability start time
-     * @param  Carbon  $newEndTime  New availability end time
-     * @param  Carbon|null  $newStartDate  New availability start date
-     * @param  Carbon|null  $newEndDate  New availability end date
-     * @return bool True if time ranges overlap
-     */
-    public function overlaps(
-        Availability $availability,
-        Carbon $newStartTime,
-        Carbon $newEndTime,
-        ?Carbon $newStartDate,
-        ?Carbon $newEndDate
-    ): bool {
-        if (! $this->timeOverlaps(
-            $availability->start_time,
-            $availability->end_time,
-            $newStartTime,
-            $newEndTime
-        )) {
-            return false;
-        }
-
-        return $this->dateRangesOverlap(
-            $availability->start_date,
-            $availability->end_date,
-            $newStartDate,
-            $newEndDate
-        );
-    }
 
     /**
      * Check if two time ranges overlap.
@@ -211,62 +163,6 @@ class AvailabilityValidator implements AvailabilityValidatorInterface
         if ($endDate->lt($startDate)) {
             throw new InvalidArgumentException('End date must be after or equal to start date');
         }
-    }
-
-    /**
-     * Build query to check for overlapping availabilities.
-     * @param array<string, mixed> $data
-     */
-    private function buildOverlapQuery(Model $model, array $data, ?int $exceptId = null)
-    {
-        $query = Availability::where('schedulable_id', $model->id)
-            ->where('schedulable_type', get_class($model))
-            ->where(function ($query) use ($data): void {
-                $this->addDaysFilter($query, $data);
-            })
-            ->where(function ($query) use ($data): void {
-                $this->addTimeRangeFilter($query, $data);
-            });
-
-        if ($exceptId !== null) {
-            $query->where('id', '!=', $exceptId);
-        }
-
-        return $query;
-    }
-
-    /**
-     * Add days filter to query.
-     * @param array<string, mixed> $data
-     */
-    private function addDaysFilter($query, array $data): void
-    {
-        if (empty($data['days'])) {
-            return;
-        }
-
-        $query->where(function ($query) use ($data): void {
-            foreach ($data['days'] as $day) {
-                $query->orWhereJsonContains('days', $day);
-            }
-        });
-    }
-
-    /**
-     * Add time range filter to query.
-     * @param array<string, mixed> $data
-     */
-    private function addTimeRangeFilter($query, array $data): void
-    {
-        if (! isset($data['start_time']) || ! isset($data['end_time'])) {
-            return;
-        }
-
-        $startTime = Carbon::parse($data['start_time'])->format('H:i:s');
-        $endTime = Carbon::parse($data['end_time'])->format('H:i:s');
-
-        $query->where('start_time', '<', $endTime)
-            ->where('end_time', '>', $startTime);
     }
 
     /**

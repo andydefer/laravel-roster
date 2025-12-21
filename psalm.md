@@ -1226,7 +1226,7 @@ INFO: MissingClosureParamType - ]8;;file:///home/andy-kani/pro/sites/packages/l
 
 
 INFO: ClassMustBeFinal - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/AvailabilityService.php#L21\src/Services/[1;31mAvailabilityService.php:21:7[0m]8;;\ - Class Roster\Services\AvailabilityService is never extended and is not part of the public API, and thus must be made final. (see https://psalm.dev/361)
-class [30;47mAvailabilityService[0m extends AbstractSchedulableService
+class [30;47mAvailabilityService[0m extends AbstractEntityScopingService
 
 
 [0;31mERROR[0m: MissingOverrideAttribute - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/AvailabilityService.php#L57\src/Services/[1;31mAvailabilityService.php:57:5[0m]8;;\ - Method Roster\Services\AvailabilityService::validatedurationhook should have the "Override" attribute (see https://psalm.dev/358)
@@ -1393,50 +1393,50 @@ INFO: PossiblyNullArgument - ]8;;file:///home/andy-kani/pro/sites/packages/lara
         return $this->availabilityRepository->applyFilters([30;47m$this->schedulable[0m, $this->filters);
 
 
-[0;31mERROR[0m: PossiblyUnusedProperty - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/Core/AbstractSchedulableService.php#L43\src/Services/Core/[1;31mAbstractSchedulableService.php:43:21[0m]8;;\ - Cannot find any references to property Roster\Services\Core\AbstractSchedulableService::$originalData (see https://psalm.dev/149)
+[0;31mERROR[0m: PossiblyUnusedProperty - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/Core/AbstractEntityScopingService.php#L43\src/Services/Core/[1;31mAbstractSchedulableService.php:43:21[0m]8;;\ - Cannot find any references to property Roster\Services\Core\AbstractEntityScopingService::$originalData (see https://psalm.dev/149)
     protected array [97;41m$originalData[0m = [];
 
 
-[0;31mERROR[0m: MissingOverrideAttribute - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/Core/AbstractSchedulableService.php#L48\src/Services/Core/[1;31mAbstractSchedulableService.php:48:5[0m]8;;\ - Method Roster\Services\Core\AbstractSchedulableService::for should have the "Override" attribute (see https://psalm.dev/358)
+[0;31mERROR[0m: MissingOverrideAttribute - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/Core/AbstractEntityScopingService.php#L48\src/Services/Core/[1;31mAbstractSchedulableService.php:48:5[0m]8;;\ - Method Roster\Services\Core\AbstractEntityScopingService::for should have the "Override" attribute (see https://psalm.dev/358)
     /**
      * Scope the service to a specific parent model.
      */
     [97;41mfinal public function for(Model $model): static[0m
 
 
-[0;31mERROR[0m: PossiblyUnusedMethod - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/Core/AbstractSchedulableService.php#L58\src/Services/Core/[1;31mAbstractSchedulableService.php:58:27[0m]8;;\ - Cannot find any calls to method Roster\Services\Core\AbstractSchedulableService::getSchedulable (see https://psalm.dev/087)
+[0;31mERROR[0m: PossiblyUnusedMethod - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/Core/AbstractEntityScopingService.php#L58\src/Services/Core/[1;31mAbstractSchedulableService.php:58:27[0m]8;;\ - Cannot find any calls to method Roster\Services\Core\AbstractEntityScopingService::getSchedulable (see https://psalm.dev/087)
     final public function [97;41mgetSchedulable[0m(): ?Model
 
 
-[0;31mERROR[0m: MissingOverrideAttribute - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/Core/AbstractSchedulableService.php#L66\src/Services/Core/[1;31mAbstractSchedulableService.php:66:5[0m]8;;\ - Method Roster\Services\Core\AbstractSchedulableService::resetfilters should have the "Override" attribute (see https://psalm.dev/358)
+[0;31mERROR[0m: MissingOverrideAttribute - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/Core/AbstractEntityScopingService.php#L66\src/Services/Core/[1;31mAbstractSchedulableService.php:66:5[0m]8;;\ - Method Roster\Services\Core\AbstractEntityScopingService::resetfilters should have the "Override" attribute (see https://psalm.dev/358)
     /**
      * Clear all applied filters.
      */
     [97;41mfinal public function resetFilters(): static[0m
 
 
-[0;31mERROR[0m: MissingOverrideAttribute - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/Core/AbstractSchedulableService.php#L88\src/Services/Core/[1;31mAbstractSchedulableService.php:88:5[0m]8;;\ - Method Roster\Services\Core\AbstractSchedulableService::all should have the "Override" attribute (see https://psalm.dev/358)
+[0;31mERROR[0m: MissingOverrideAttribute - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/Core/AbstractEntityScopingService.php#L88\src/Services/Core/[1;31mAbstractSchedulableService.php:88:5[0m]8;;\ - Method Roster\Services\Core\AbstractEntityScopingService::all should have the "Override" attribute (see https://psalm.dev/358)
     /**
      * Return all matching results.
      */
     [97;41mfinal public function all(): Collection[0m
 
 
-[0;31mERROR[0m: MissingOverrideAttribute - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/Core/AbstractSchedulableService.php#L96\src/Services/Core/[1;31mAbstractSchedulableService.php:96:5[0m]8;;\ - Method Roster\Services\Core\AbstractSchedulableService::get should have the "Override" attribute (see https://psalm.dev/358)
+[0;31mERROR[0m: MissingOverrideAttribute - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/Core/AbstractEntityScopingService.php#L96\src/Services/Core/[1;31mAbstractSchedulableService.php:96:5[0m]8;;\ - Method Roster\Services\Core\AbstractEntityScopingService::get should have the "Override" attribute (see https://psalm.dev/358)
     /**
      * Execute the query with the current filters.
      */
     [97;41mfinal public function get(): Collection[0m
 
 
-[0;31mERROR[0m: MissingOverrideAttribute - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/Core/AbstractSchedulableService.php#L106\src/Services/Core/[1;31mAbstractSchedulableService.php:106:5[0m]8;;\ - Method Roster\Services\Core\AbstractSchedulableService::wheretype should have the "Override" attribute (see https://psalm.dev/358)
+[0;31mERROR[0m: MissingOverrideAttribute - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/Core/AbstractEntityScopingService.php#L106\src/Services/Core/[1;31mAbstractSchedulableService.php:106:5[0m]8;;\ - Method Roster\Services\Core\AbstractEntityScopingService::wheretype should have the "Override" attribute (see https://psalm.dev/358)
     /**
      * Filter results by type.
      */
     [97;41mfinal public function whereType(string $type): static[0m
 
 
-[0;31mERROR[0m: MissingOverrideAttribute - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/Core/AbstractSchedulableService.php#L118\src/Services/Core/[1;31mAbstractSchedulableService.php:118:5[0m]8;;\ - Method Roster\Services\Core\AbstractSchedulableService::update should have the "Override" attribute (see https://psalm.dev/358)
+[0;31mERROR[0m: MissingOverrideAttribute - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/Core/AbstractEntityScopingService.php#L118\src/Services/Core/[1;31mAbstractSchedulableService.php:118:5[0m]8;;\ - Method Roster\Services\Core\AbstractEntityScopingService::update should have the "Override" attribute (see https://psalm.dev/358)
     /**
      * TEMPLATE METHOD: Update with configuration validation
      *
@@ -1445,19 +1445,19 @@ INFO: PossiblyNullArgument - ]8;;file:///home/andy-kani/pro/sites/packages/lara
     [97;41mfinal public function update(int $id, array $data): bool[0m
 
 
-[0;31mERROR[0m: UnusedParam - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/Core/AbstractSchedulableService.php#L237\src/Services/Core/[1;31mAbstractSchedulableService.php:237:57[0m]8;;\ - Param #1 is never referenced in this method (see https://psalm.dev/135)
+[0;31mERROR[0m: UnusedParam - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/Core/AbstractEntityScopingService.php#L237\src/Services/Core/[1;31mAbstractSchedulableService.php:237:57[0m]8;;\ - Param #1 is never referenced in this method (see https://psalm.dev/135)
     final protected function validateFutureDates(string [97;41m$operation[0m, string $entityType, array $entityConfig): void
 
 
-INFO: RiskyTruthyFalsyComparison - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/Core/AbstractSchedulableService.php#L251\src/Services/Core/[1;31mAbstractSchedulableService.php:251:21[0m]8;;\ - Operand of type false|mixed contains type mixed, which can be falsy and truthy. This can cause possibly unexpected behavior. Use strict comparison instead. (see https://psalm.dev/356)
+INFO: RiskyTruthyFalsyComparison - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/Core/AbstractEntityScopingService.php#L251\src/Services/Core/[1;31mAbstractSchedulableService.php:251:21[0m]8;;\ - Operand of type false|mixed contains type mixed, which can be falsy and truthy. This can cause possibly unexpected behavior. Use strict comparison instead. (see https://psalm.dev/356)
                 if ([30;47m! $allowPast[0m) {
 
 
-[0;31mERROR[0m: PossiblyUnusedMethod - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/Core/AbstractSchedulableService.php#L301\src/Services/Core/[1;31mAbstractSchedulableService.php:301:30[0m]8;;\ - Cannot find any calls to method Roster\Services\Core\AbstractSchedulableService::getEntityDisplayName (see https://psalm.dev/087)
+[0;31mERROR[0m: PossiblyUnusedMethod - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/Core/AbstractEntityScopingService.php#L301\src/Services/Core/[1;31mAbstractSchedulableService.php:301:30[0m]8;;\ - Cannot find any calls to method Roster\Services\Core\AbstractEntityScopingService::getEntityDisplayName (see https://psalm.dev/087)
     final protected function [97;41mgetEntityDisplayName[0m(): string
 
 
-[0;31mERROR[0m: PossiblyUnusedMethod - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/Core/AbstractSchedulableService.php#L410\src/Services/Core/[1;31mAbstractSchedulableService.php:410:24[0m]8;;\ - Cannot find any calls to method Roster\Services\Core\AbstractSchedulableService::validateRequiredFields (see https://psalm.dev/087)
+[0;31mERROR[0m: PossiblyUnusedMethod - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/Core/AbstractEntityScopingService.php#L410\src/Services/Core/[1;31mAbstractSchedulableService.php:410:24[0m]8;;\ - Cannot find any calls to method Roster\Services\Core\AbstractEntityScopingService::validateRequiredFields (see https://psalm.dev/087)
     protected function [97;41mvalidateRequiredFields[0m(array $requiredFields = []): void
 
 
@@ -2113,7 +2113,7 @@ class [30;47mValidationService[0m implements ValidationServiceInterface
 
 
 INFO: ClassMustBeFinal - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/ImpedimentService.php#L28\src/Services/[1;31mImpedimentService.php:28:7[0m]8;;\ - Class Roster\Services\ImpedimentService is never extended and is not part of the public API, and thus must be made final. (see https://psalm.dev/361)
-class [30;47mImpedimentService[0m extends AbstractSchedulableService
+class [30;47mImpedimentService[0m extends AbstractEntityScopingService
 
 
 [0;31mERROR[0m: MissingOverrideAttribute - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/ImpedimentService.php#L52\src/Services/[1;31mImpedimentService.php:52:5[0m]8;;\ - Method Roster\Services\ImpedimentService::validatedurationhook should have the "Override" attribute (see https://psalm.dev/358)
@@ -2349,7 +2349,7 @@ INFO: PossiblyNullArgument - ]8;;file:///home/andy-kani/pro/sites/packages/lara
 
 
 INFO: ClassMustBeFinal - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/ScheduleService.php#L27\src/Services/[1;31mScheduleService.php:27:7[0m]8;;\ - Class Roster\Services\ScheduleService is never extended and is not part of the public API, and thus must be made final. (see https://psalm.dev/361)
-class [30;47mScheduleService[0m extends AbstractSchedulableService
+class [30;47mScheduleService[0m extends AbstractEntityScopingService
 
 
 [0;31mERROR[0m: MissingOverrideAttribute - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/ScheduleService.php#L59\src/Services/[1;31mScheduleService.php:59:5[0m]8;;\ - Method Roster\Services\ScheduleService::validatedurationhook should have the "Override" attribute (see https://psalm.dev/358)
@@ -2770,7 +2770,7 @@ INFO: RiskyTruthyFalsyComparison - ]8;;file:///home/andy-kani/pro/sites/package
 338 other issues found.
 ------------------------------
 Psalm can automatically fix 218 issues.
-Run Psalm again with 
+Run Psalm again with
 [30;48;5;195m--alter --issues=MissingOverrideAttribute,InvalidNullableReturnType,PossiblyUnusedMethod,ClassMustBeFinal,MissingParamType --dry-run[0m
 to see what it can fix.
 ------------------------------

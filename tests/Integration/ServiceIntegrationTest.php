@@ -205,10 +205,10 @@ final class ServiceIntegrationTest extends TestCase
             'days' => ['monday'],
         ]);
 
-        $availabilities = $this->availabilityService->all();
-        $this->assertCount(1, $availabilities);
+        $all = $this->availabilityService->getAll();
+        $this->assertCount(1, $all);
 
-        $mergedAvailability = $availabilities->first();
+        $mergedAvailability = $all->first();
         $this->assertSame('09:00:00', $mergedAvailability->start_time->format('H:i:s'));
         $this->assertSame('15:00:00', $mergedAvailability->end_time->format('H:i:s'));
     }

@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Carbon;
+use Roster\Traits\BelongsToSchedulable;
 
 /**
  * Represents an impediment that blocks scheduling within a specific time period.
@@ -28,6 +29,8 @@ use Illuminate\Support\Carbon;
  */
 class Impediment extends Model
 {
+    use BelongsToSchedulable;
+
     protected $table = 'roster_impediments';
 
     protected $fillable = [

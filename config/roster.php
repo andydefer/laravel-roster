@@ -85,7 +85,7 @@ return [
 
     // Database configuration
     'database' => [
-        'use_json_constraints' => env('ROSTER_DB_USE_JSON_CONSTRAINTS', env('DB_CONNECTION') === 'pgsql'),
+        'use_postgres_exclusion_constraints' => env('ROSTER_DB_use_postgres_exclusion_constraints', env('DB_CONNECTION') === 'pgsql'),
         'check_constraints' => env('ROSTER_DB_CHECK_CONSTRAINTS', env('DB_CONNECTION') === 'mysql'),
         'enable_foreign_keys' => env('ROSTER_DB_ENABLE_FOREIGN_KEYS', true),
         'enable_indexes' => env('ROSTER_DB_ENABLE_INDEXES', true),

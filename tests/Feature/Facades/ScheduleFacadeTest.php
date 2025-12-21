@@ -66,7 +66,8 @@ final class ScheduleFacadeTest extends TestCase
         ];
 
         $this->expectException(BadMethodCallException::class);
-        $this->expectExceptionMessage('Method create(array $data) is deprecated. Use create(Availability $availability, array $data) instead.');
+        // AJOUTEZ "for Schedule." à la fin
+        $this->expectExceptionMessage('Method create(array $data) is deprecated. Use create(Availability $availability, array $data) instead for Schedule.');
 
         ScheduleFacade::for($this->testModel)->create($scheduleData);
     }
@@ -122,7 +123,8 @@ final class ScheduleFacadeTest extends TestCase
         ];
 
         $this->expectException(BadMethodCallException::class);
-        $this->expectExceptionMessage('Method create(array $data) is deprecated. Use create(Availability $availability, array $data) instead.');
+        // AJOUTEZ "for Schedule." à la fin
+        $this->expectExceptionMessage('Method create(array $data) is deprecated. Use create(Availability $availability, array $data) instead for Schedule.');
 
         ScheduleFacade::for($this->testModel)->create($scheduleData);
     }
@@ -165,12 +167,12 @@ final class ScheduleFacadeTest extends TestCase
             'status' => 'booked',
         ]);
 
-        /** @var Collection<int, Schedule> $schedules */
-        $schedules = ScheduleFacade::for($this->testModel)->all();
+        /** @var Collection<int, Schedule> $all */
+        $all = ScheduleFacade::for($this->testModel)->getAll();
 
-        $this->assertCount(2, $schedules);
-        $this->assertSame('Schedule 1', $schedules[0]->title);
-        $this->assertSame('Schedule 2', $schedules[1]->title);
+        $this->assertCount(2, $all);
+        $this->assertSame('Schedule 1', $all[0]->title);
+        $this->assertSame('Schedule 2', $all[1]->title);
     }
 
     /**
@@ -192,6 +194,7 @@ final class ScheduleFacadeTest extends TestCase
             'status' => 'booked',
         ]);
 
+        /** @var Collection $availableSchedules */
         $availableSchedules = ScheduleFacade::for($this->testModel)
             ->whereStatus('available')
             ->get();

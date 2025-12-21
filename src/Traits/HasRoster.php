@@ -6,6 +6,7 @@ namespace Roster\Traits;
 
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Roster\Models\Availability;
+use Roster\Models\Impediment;
 use Roster\Models\Schedule;
 
 /**
@@ -33,5 +34,15 @@ trait HasRoster
     public function availabilities()
     {
         return $this->morphMany(Availability::class, 'schedulable');
+    }
+
+    /**
+     * Defines the availabilities relationship (availability rules).
+     *
+     * @return MorphMany
+     */
+    public function impediments()
+    {
+        return $this->morphMany(Impediment::class, 'schedulable');
     }
 }

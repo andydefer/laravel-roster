@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Services;
 
+use Roster\Exceptions\MissingSchedulableException;
+use Illuminate\Database\QueryException;
 use BadMethodCallException;
 use Exception;
 use Illuminate\Database\Eloquent\Model;
@@ -195,7 +197,8 @@ final class ScheduleServiceTest extends TestCase
         ];
 
         $this->expectException(BadMethodCallException::class);
-        $this->expectExceptionMessage('Method create(array $data) is deprecated. Use create(Availability $availability, array $data) instead.');
+        // MISE À JOUR : Message inclut maintenant "for Schedule"
+        $this->expectExceptionMessage('Method create(array $data) is deprecated. Use create(Availability $availability, array $data) instead for Schedule.');
 
         $this->scheduleService->create($scheduleData);
     }
@@ -235,22 +238,40 @@ final class ScheduleServiceTest extends TestCase
     }
 
     /**
-     * Tests database constraint for availability_id field
+     * Tests that schedule creation requires both schedulable and availability
      */
-    public function test_schedule_requires_availability_id_in_database(): void
+    public function test_schedule_creation_requires_both_schedulable_and_availability(): void
     {
-        $scheduleData = [
-            'title' => 'Schedule sans availability_id',
+        // Test 1: Sans schedulable fields
+        $scheduleData1 = [
+            'title' => 'Schedule sans schedulable',
             'start_datetime' => '2038-06-07 10:00:00',
             'end_datetime' => '2038-06-07 11:00:00',
             'status' => 'available',
         ];
 
         try {
-            $schedule = Schedule::create($scheduleData);
-            $this->assertNull($schedule->availability_id, "Le schedule ne devrait pas avoir d'availability_id");
-        } catch (Exception $exception) {
-            $this->assertStringContainsString('availability_id', $exception->getMessage());
+            Schedule::create($scheduleData1);
+            $this->fail('Should have thrown MissingSchedulableException');
+        } catch (MissingSchedulableException $missingSchedulableException) {
+            $this->assertStringContainsString('Schedule must have a schedulable owner', $missingSchedulableException->getMessage());
+        }
+
+        // Test 2: Avec schedulable mais sans availability (cela devrait passer si la DB permet NULL)
+        $scheduleData2 = array_merge($scheduleData1, [
+            'schedulable_id' => $this->testModel->id,
+            'schedulable_type' => get_class($this->testModel),
+        ]);
+
+        try {
+            $schedule = Schedule::create($scheduleData2);
+            // Si cela passe, vérifiez que availability_id est NULL
+            $this->assertNull($schedule->availability_id);
+        } catch (QueryException $e) {
+            // Si la DB a une contrainte NOT NULL sur availability_id
+            $this->assertStringContainsString('availability_id', $e->getMessage());
+        } catch (Exception $e) {
+            $this->assertStringContainsString('availability', $e->getMessage());
         }
     }
 
@@ -286,6 +307,8 @@ final class ScheduleServiceTest extends TestCase
     {
         $schedule = Schedule::create([
             'availability_id' => $this->consultationAvailability->id,
+            'schedulable_id' => $this->testModel->id, // AJOUTÉ pour la nouvelle architecture
+            'schedulable_type' => get_class($this->testModel), // AJOUTÉ pour la nouvelle architecture
             'title' => 'Original Title',
             'start_datetime' => '2038-06-07 10:00:00',
             'end_datetime' => '2038-06-07 11:00:00',
@@ -309,8 +332,7 @@ final class ScheduleServiceTest extends TestCase
      */
     public function test_delete_schedule(): void
     {
-        $schedule = Schedule::create([
-            'availability_id' => $this->consultationAvailability->id,
+        $schedule = $this->scheduleService->create($this->consultationAvailability, [
             'title' => 'Test Schedule',
             'start_datetime' => '2038-06-07 10:00:00',
             'end_datetime' => '2038-06-07 11:00:00',
@@ -330,6 +352,8 @@ final class ScheduleServiceTest extends TestCase
     {
         $schedule = Schedule::create([
             'availability_id' => $this->consultationAvailability->id,
+            'schedulable_id' => $this->testModel->id, // AJOUTÉ pour la nouvelle architecture
+            'schedulable_type' => get_class($this->testModel), // AJOUTÉ pour la nouvelle architecture
             'title' => 'Test Schedule',
             'start_datetime' => '2038-06-07 10:00:00',
             'end_datetime' => '2038-06-07 11:00:00',
@@ -350,6 +374,8 @@ final class ScheduleServiceTest extends TestCase
     {
         Schedule::create([
             'availability_id' => $this->consultationAvailability->id,
+            'schedulable_id' => $this->testModel->id, // AJOUTÉ pour la nouvelle architecture
+            'schedulable_type' => get_class($this->testModel), // AJOUTÉ pour la nouvelle architecture
             'title' => 'Blocked Schedule',
             'start_datetime' => '2038-06-07 10:00:00',
             'end_datetime' => '2038-06-07 11:00:00',
@@ -378,6 +404,8 @@ final class ScheduleServiceTest extends TestCase
 
         Schedule::create([
             'availability_id' => $this->consultationAvailability->id,
+            'schedulable_id' => $this->testModel->id, // AJOUTÉ pour la nouvelle architecture
+            'schedulable_type' => get_class($this->testModel), // AJOUTÉ pour la nouvelle architecture
             'title' => 'Blocked',
             'start_datetime' => '2038-06-07 10:00:00',
             'end_datetime' => '2038-06-07 11:00:00',
@@ -402,6 +430,8 @@ final class ScheduleServiceTest extends TestCase
     {
         Schedule::create([
             'availability_id' => $this->consultationAvailability->id,
+            'schedulable_id' => $this->testModel->id, // AJOUTÉ pour la nouvelle architecture
+            'schedulable_type' => get_class($this->testModel), // AJOUTÉ pour la nouvelle architecture
             'title' => 'Schedule 1',
             'start_datetime' => '2038-06-07 10:00:00',
             'end_datetime' => '2038-06-07 11:00:00',
@@ -410,6 +440,8 @@ final class ScheduleServiceTest extends TestCase
 
         Schedule::create([
             'availability_id' => $this->consultationAvailability->id,
+            'schedulable_id' => $this->testModel->id, // AJOUTÉ pour la nouvelle architecture
+            'schedulable_type' => get_class($this->testModel), // AJOUTÉ pour la nouvelle architecture
             'title' => 'Schedule 2',
             'start_datetime' => '2038-06-07 14:00:00',
             'end_datetime' => '2038-06-07 15:00:00',
@@ -418,6 +450,8 @@ final class ScheduleServiceTest extends TestCase
 
         Schedule::create([
             'availability_id' => $this->consultationAvailability->id,
+            'schedulable_id' => $this->testModel->id, // AJOUTÉ pour la nouvelle architecture
+            'schedulable_type' => get_class($this->testModel), // AJOUTÉ pour la nouvelle architecture
             'title' => 'Schedule 3',
             'start_datetime' => '2038-06-14 10:00:00',
             'end_datetime' => '2038-06-14 11:00:00',
@@ -447,7 +481,8 @@ final class ScheduleServiceTest extends TestCase
         ];
 
         $this->expectException(BadMethodCallException::class);
-        $this->expectExceptionMessage('Method create(array $data) is deprecated. Use create(Availability $availability, array $data) instead.');
+        // MISE À JOUR : Message inclut maintenant "for Schedule"
+        $this->expectExceptionMessage('Method create(array $data) is deprecated. Use create(Availability $availability, array $data) instead for Schedule.');
 
         $this->scheduleService->create($scheduleData);
     }

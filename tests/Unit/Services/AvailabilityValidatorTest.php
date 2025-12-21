@@ -523,12 +523,4 @@ final class AvailabilityValidatorTest extends TestCase
         $this->assertSame('2024-01-01', $mergedData['start_date']);
         $this->assertSame('2024-02-15', $mergedData['end_date']);
     }
-
-    /**
-     * Test that the hasOverlapping method exists.
-     */
-    public function test_has_overlapping_returns_true_when_overlap_exists(): void
-    {
-        $this->assertTrue(method_exists($this->availabilityValidator, 'hasOverlapping'));
-    }
 }

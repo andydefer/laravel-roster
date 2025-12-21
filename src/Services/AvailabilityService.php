@@ -15,21 +15,13 @@ use Roster\Contracts\Services\SlotFinderInterface;
 use Roster\Contracts\Services\ValidationServiceInterface;
 use Roster\Exceptions\ValidationException;
 use Roster\Models\Availability;
-use Roster\Services\Core\AbstractSchedulableService;
-use Roster\Traits\FilterableTrait;
+use Roster\Services\Core\AbstractEntityScopingService;
 
 /**
  * Service for managing availability records within the scheduling system.
- *
- * Handles creation, validation, and management of time slots when resources
- * (users, rooms, equipment) are available for scheduling appointments or events.
- * Integrates with validation, merging, and slot finding services to ensure
- * data consistency and prevent scheduling conflicts.
  */
-class AvailabilityService extends AbstractSchedulableService
+class AvailabilityService extends AbstractEntityScopingService
 {
-    use FilterableTrait;
-
     private AvailabilityValidatorInterface $availabilityValidator;
 
     private ValidationServiceInterface $validationService;
@@ -61,13 +53,7 @@ class AvailabilityService extends AbstractSchedulableService
     }
 
     /**
-     * Validate minimum duration for availability time range.
-     *
-     * @param string $operation Operation type ('create' or 'update')
-     * @param int $minImpedimentMinutes Minimum impediment duration in minutes
-     * @param int $minScheduleMinutes Minimum schedule duration in minutes
-     * @param int $defaultDurationMinutes Default duration in minutes
-     * @throws ValidationException When duration is below minimum threshold
+     * {@inheritDoc}
      */
     protected function validateDurationHook(
         string $operation,
@@ -90,11 +76,7 @@ class AvailabilityService extends AbstractSchedulableService
     }
 
     /**
-     * Validate maximum allowed days for availability period.
-     *
-     * @param string $operation Operation type ('create' or 'update')
-     * @param int $maxDays Maximum allowed days for availability period
-     * @throws ValidationException When period exceeds maximum days
+     * {@inheritDoc}
      */
     protected function validateMaxDaysHook(string $operation, int $maxDays): void
     {
@@ -113,7 +95,7 @@ class AvailabilityService extends AbstractSchedulableService
     }
 
     /**
-     * Get the validation service instance.
+     * {@inheritDoc}
      */
     protected function getValidationService(): ValidationServiceInterface
     {
@@ -121,43 +103,7 @@ class AvailabilityService extends AbstractSchedulableService
     }
 
     /**
-     * Validate data before creating a new availability.
-     *
-     * @throws ValidationException When validation fails or overlapping exists
-     */
-    protected function validateBeforeCreate(): void
-    {
-        $this->availabilityValidator->validateBasicData($this->data);
-        $this->validationService->parseAndValidateTimeRange($this->data);
-
-        if ($this->availabilityChecker->hasOverlapping($this->schedulable, $this->data)) {
-            $this->throwOverlapException();
-        }
-    }
-
-    /**
-     * Process data before creating a new availability.
-     */
-    protected function processBeforeCreate(): void
-    {
-        $this->data = $this->availabilityMerger->mergeAdjacentAvailabilities($this->data, $this->schedulable);
-        $this->data['schedulable_id'] = $this->schedulable->id;
-        $this->data['schedulable_type'] = get_class($this->schedulable);
-    }
-
-    /**
-     * Execute the creation of a new availability record.
-     */
-    protected function executeCreate(): Availability
-    {
-        return $this->availabilityRepository->create($this->data);
-    }
-
-    /**
-     * Validate data before updating an existing availability.
-     *
-     * @param int $id Availability ID to update
-     * @throws ValidationException When validation fails or overlapping exists
+     * {@inheritDoc}
      */
     protected function validateBeforeUpdate(int $id): void
     {
@@ -192,15 +138,15 @@ class AvailabilityService extends AbstractSchedulableService
     }
 
     /**
-     * Process data before updating an existing availability.
+     * {@inheritDoc}
      */
-    protected function processBeforeUpdate(int $id): void
+    protected function executeCreate(): Availability
     {
-        // Additional processing logic can be implemented here
+        return $this->availabilityRepository->create($this->data);
     }
 
     /**
-     * Execute the update of an existing availability record.
+     * {@inheritDoc}
      */
     protected function executeUpdate(int $id): bool
     {
@@ -208,33 +154,23 @@ class AvailabilityService extends AbstractSchedulableService
     }
 
     /**
-     * Create a new availability record.
-     *
-     * @param array<string, mixed> $data Availability data including time range, type, and days
-     * @return Availability Created availability instance
-     * @throws ValidationException When validation fails or overlapping exists
+     * {@inheritDoc}
      */
-    public function create(array $data): Availability
+    protected function executeDelete(int $id): bool
     {
-        $this->validateSchedulable();
-        $this->data = $data;
-
-        $this->data = $this->applyConfigurationRules($this->data, 'create');
-        $this->validateConfigurationRules('create');
-        $this->validateBeforeCreate();
-        $this->processBeforeCreate();
-
-        $availability = $this->executeCreate();
-        $this->afterCreate($availability);
-
-        return $availability;
+        return $this->availabilityRepository->delete($id);
     }
 
     /**
-     * Find an availability record by ID.
-     *
-     * @param int $id Availability ID
-     * @return Availability|null Availability instance or null if not found
+     * {@inheritDoc}
+     */
+    protected function clearEntityCache(int $entityId): void
+    {
+        // Implémentation du cache si nécessaire
+    }
+
+    /**
+     * {@inheritDoc}
      */
     public function find(int $id): ?Availability
     {
@@ -243,10 +179,80 @@ class AvailabilityService extends AbstractSchedulableService
     }
 
     /**
+     * {@inheritDoc}
+     */
+    protected function beforeCreate(mixed ...$args): void
+    {
+        $this->availabilityValidator->validateBasicData($this->data);
+        $this->validationService->parseAndValidateTimeRange($this->data);
+
+        if ($this->availabilityChecker->hasOverlapping($this->schedulable, $this->data)) {
+            $this->throwOverlapException();
+        }
+
+        $this->data = $this->availabilityMerger->mergeAdjacentAvailabilities($this->data, $this->schedulable);
+        $this->data['schedulable_id'] = $this->schedulable->id;
+        $this->data['schedulable_type'] = get_class($this->schedulable);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected function beforeUpdate(int $id): void
+    {
+        // Traitement supplémentaire avant mise à jour si nécessaire
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected function afterCreate(mixed $result): void
+    {
+        // Hook après création (ex: log, notification, cache, etc.)
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected function afterUpdate(int $id, bool $result): void
+    {
+        if ($result) {
+            $this->clearEntityCache($id);
+        }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected function afterDelete(int $id, bool $result): void
+    {
+        if ($result) {
+            $this->clearEntityCache($id);
+        }
+    }
+
+    /**
+     * Create a new availability record.
+     */
+    public function create(array $data): Availability
+    {
+        $this->validateSchedulable();
+        $this->data = $data;
+
+        $this->data = $this->applyConfigurationRules($this->data, 'create');
+        $this->validateConfiguration('create');
+
+        $this->beforeCreate();
+
+        $availability = $this->executeCreate();
+
+        $this->afterCreate($availability);
+
+        return $availability;
+    }
+
+    /**
      * Delete an availability record.
-     *
-     * @param int $id Availability ID to delete
-     * @return bool True if deleted successfully, false if not found
      */
     public function delete(int $id): bool
     {
@@ -257,15 +263,17 @@ class AvailabilityService extends AbstractSchedulableService
             return false;
         }
 
-        return $this->availabilityRepository->delete($id);
+        $this->beforeDelete($id);
+
+        $result = $this->executeDelete($id);
+
+        $this->afterDelete($id, $result);
+
+        return $result;
     }
 
     /**
      * Check if the given availability data overlaps with existing records.
-     *
-     * @param array<string, mixed> $data Availability data to check
-     * @param int|null $exceptId Availability ID to exclude from overlap check
-     * @return bool True if overlapping exists, false otherwise
      */
     public function hasOverlapping(array $data, ?int $exceptId = null): bool
     {
@@ -275,10 +283,6 @@ class AvailabilityService extends AbstractSchedulableService
 
     /**
      * Find all availability records that overlap with the given data.
-     *
-     * @param array<string, mixed> $data Availability data to check against
-     * @param int|null $exceptId Availability ID to exclude from results
-     * @return Collection<int, Availability> Collection of overlapping availability records
      */
     public function findOverlapping(array $data, ?int $exceptId = null): Collection
     {
@@ -290,9 +294,6 @@ class AvailabilityService extends AbstractSchedulableService
 
     /**
      * Find availability records by type.
-     *
-     * @param array<string, mixed> $data Filter criteria including type
-     * @return Collection<int, Availability> Collection of availability records matching the type
      */
     public function findByType(array $data): Collection
     {
@@ -302,9 +303,6 @@ class AvailabilityService extends AbstractSchedulableService
 
     /**
      * Filter availability records by day of week.
-     *
-     * @param string $day Day name (e.g., 'monday', 'tuesday')
-     * @return self Current service instance for method chaining
      */
     public function filterByDay(string $day): self
     {
@@ -314,9 +312,6 @@ class AvailabilityService extends AbstractSchedulableService
 
     /**
      * Check if the schedulable is available at a specific datetime.
-     *
-     * @param Carbon $datetime Datetime to check availability
-     * @return bool True if available, false otherwise
      */
     public function isAvailableAt(Carbon $datetime): bool
     {
@@ -326,11 +321,6 @@ class AvailabilityService extends AbstractSchedulableService
 
     /**
      * Check if the schedulable is available for a continuous period.
-     *
-     * @param Carbon $start Period start datetime
-     * @param Carbon $end Period end datetime
-     * @param string|null $type Optional availability type filter
-     * @return bool True if available for the entire period, false otherwise
      */
     public function isAvailableForPeriod(Carbon $start, Carbon $end, ?string $type = null): bool
     {
@@ -340,13 +330,6 @@ class AvailabilityService extends AbstractSchedulableService
 
     /**
      * Find available time slots within a specified period.
-     *
-     * @param Carbon $startDate Start date of the search period
-     * @param Carbon $endDate End date of the search period
-     * @param int $durationMinutes Required slot duration in minutes
-     * @param int $intervalMinutes Interval between slot checks in minutes
-     * @param string|null $type Optional availability type filter
-     * @return array<array<string, mixed>> Array of available time slots
      */
     public function findSlotsInPeriod(
         Carbon $startDate,
@@ -369,10 +352,6 @@ class AvailabilityService extends AbstractSchedulableService
 
     /**
      * Prepare data for overlap checking by merging current availability with update data.
-     *
-     * @param Availability $availability Current availability instance
-     * @param array<string, mixed> $updateData New data to merge
-     * @return array<string, mixed> Complete data for overlap checking
      */
     private function prepareCheckData(Availability $availability, array $updateData): array
     {
@@ -397,7 +376,7 @@ class AvailabilityService extends AbstractSchedulableService
     }
 
     /**
-     * Build a query with applied filters.
+     * {@inheritDoc}
      */
     protected function buildQueryWithFilters(): Builder
     {

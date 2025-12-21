@@ -13,7 +13,6 @@ use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Roster\Exceptions\OverlappingImpedimentException;
 use Roster\Exceptions\ScheduleImpedimentOverlapException;
-use Roster\Exceptions\TimeRangeValidationException;
 use Roster\Exceptions\ValidationException;
 use Roster\Facades\Impediment as ImpedimentFacade;
 use Roster\Facades\Schedule;
@@ -373,7 +372,8 @@ final class ImpedimentFacadeTest extends TestCase
      */
     public function test_impediment_creation_fails_when_end_before_start(): void
     {
-        $this->expectException(TimeRangeValidationException::class);
+        $this->expectException(ValidationException::class);
+        $this->expectExceptionMessage('Impediment must be at least 5 minutes');
 
         ImpedimentFacade::for($this->schedulableModel)->create(
             $this->juneAvailability,
@@ -439,7 +439,7 @@ final class ImpedimentFacadeTest extends TestCase
         $this->assertInstanceOf(Impediment::class, $impediment2);
         $this->assertInstanceOf(Impediment::class, $impediment3);
 
-        $allImpediments = ImpedimentFacade::for($this->schedulableModel)->all();
+        $allImpediments = ImpedimentFacade::for($this->schedulableModel)->getAll();
         $this->assertCount(3, $allImpediments);
     }
 
@@ -607,12 +607,12 @@ final class ImpedimentFacadeTest extends TestCase
             ]
         );
 
-        /** @var Collection<int, Impediment> $impediments */
-        $impediments = ImpedimentFacade::for($this->schedulableModel)->all();
+        /** @var Collection<int, Impediment> $all */
+        $all = ImpedimentFacade::for($this->schedulableModel)->getAll();
 
-        $this->assertCount(2, $impediments);
-        $this->assertSame('Morning briefing', $impediments[0]->reason);
-        $this->assertSame('Client presentation', $impediments[1]->reason);
+        $this->assertCount(2, $all);
+        $this->assertSame('Morning briefing', $all[0]->reason);
+        $this->assertSame('Client presentation', $all[1]->reason);
     }
 
     /**

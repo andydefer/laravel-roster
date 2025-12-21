@@ -117,12 +117,12 @@ final class AvailabilityFacadeTest extends TestCase
             'days' => ['monday'],
         ]);
 
-        /** @var Collection<int, Availability> $availabilities */
-        $availabilities = AvailabilityFacade::for($this->schedulableModel)->all();
+        /** @var Collection<int, Availability> $all */
+        $all = AvailabilityFacade::for($this->schedulableModel)->getAll();
 
-        $this->assertCount(2, $availabilities);
-        $this->assertSame('consultation', $availabilities[0]->type);
-        $this->assertSame('training', $availabilities[1]->type);
+        $this->assertCount(2, $all);
+        $this->assertSame('consultation', $all[0]->type);
+        $this->assertSame('training', $all[1]->type);
     }
 
     /**

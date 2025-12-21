@@ -15,6 +15,10 @@ use Roster\Contracts\Services\AvailabilityMergerInterface;
 use Roster\Contracts\Services\AvailabilityValidatorInterface;
 use Roster\Contracts\Services\SlotFinderInterface;
 use Roster\Contracts\Services\ValidationServiceInterface;
+use Roster\Models\Availability;
+use Roster\Models\Impediment;
+use Roster\Models\Schedule;
+use Roster\Observers\SchedulableObserver;
 use Roster\Repositories\AvailabilityRepository;
 use Roster\Repositories\ImpedimentRepository;
 use Roster\Repositories\ScheduleRepository;
@@ -51,6 +55,11 @@ class RosterServiceProvider extends ServiceProvider
         }
 
         $this->loadPublishedResources();
+
+
+        Availability::observe(SchedulableObserver::class);
+        Schedule::observe(SchedulableObserver::class);
+        Impediment::observe(SchedulableObserver::class);
     }
 
     /**
@@ -127,6 +136,7 @@ class RosterServiceProvider extends ServiceProvider
                 availabilityRepository: $app->make(AvailabilityRepositoryInterface::class),
                 impedimentRepository: $app->make(ImpedimentRepositoryInterface::class),
                 scheduleRepository: $app->make(ScheduleRepositoryInterface::class),
+                slotFinder: $app->make(SlotFinderInterface::class),
             );
         });
 

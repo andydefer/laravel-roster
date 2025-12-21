@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Support\Carbon;
+use Roster\Traits\BelongsToSchedulable;
 
 /**
  * Represents an availability period for a schedulable resource.
@@ -18,6 +19,8 @@ use Illuminate\Support\Carbon;
  */
 class Availability extends Model
 {
+    use BelongsToSchedulable;
+
     /**
      * The table associated with the model.
      *
