@@ -286,33 +286,6 @@ class ImpedimentService extends AbstractAvailabilityDependentService
     }
 
     /**
-     * Create a new impediment with explicit availability.
-     *
-     * @param Availability|array<string, mixed> $availabilityOrData Availability instance or data array
-     * @param array<string, mixed>|null $data Data array if first param is Availability
-     * @return Impediment Created impediment
-     *
-     * @throws ValidationException When validation fails
-     * @throws BadMethodCallException When deprecated signature is used
-     * @throws InvalidArgumentException When invalid arguments are provided
-     */
-    public function create($availabilityOrData, ?array $data = null): Impediment
-    {
-        if ($availabilityOrData instanceof Availability && $data !== null) {
-            return $this->createWithAvailability($availabilityOrData, $data);
-        }
-
-        if (is_array($availabilityOrData) && $data === null) {
-            throw new BadMethodCallException(
-                'Method create(array $data) is deprecated. Use create(Availability $availability, array $data) instead.'
-            );
-        }
-
-        throw new InvalidArgumentException('Invalid arguments for create method');
-    }
-
-
-    /**
      * Validate that the impediment time slot matches the availability constraints.
      *
      * @param Availability $availability The availability to validate against

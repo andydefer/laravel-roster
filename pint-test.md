@@ -1,11 +1,11 @@
 # Pint Formatting Test Report
-*Generated: dim. 21 déc. 2025 16:38:48 WAT*
+*Generated: dim. 21 déc. 2025 17:31:37 WAT*
 
 
-  .⨯⨯⨯⨯⨯......⨯.⨯..⨯.⨯.⨯.⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯.....⨯⨯⨯⨯⨯⨯⨯⨯.⨯....⨯.......⨯....⨯⨯⨯⨯..⨯.⨯⨯⨯....⨯....
+  .⨯⨯⨯⨯⨯......⨯.⨯..⨯.⨯.⨯.⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯.....⨯⨯⨯⨯⨯⨯⨯⨯.⨯....⨯.......⨯....⨯⨯⨯⨯..⨯.⨯⨯⨯⨯...⨯....
 
   ──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────── Laravel  
-    FAIL   ................................................................................................................................................. 91 files, 46 style issues  
+    FAIL   ................................................................................................................................................. 91 files, 47 style issues  
   ⨯ src/Contracts/Services/AvailabilityValidatorInterface.php                                                                                              class_attributes_separation  
   ⨯ src/Contracts/Services/CachableInterface.php                                                                                                                          phpdoc_align  
   ⨯ src/Contracts/Services/ConfigurableInterface.php                                                                                                   phpdoc_separation, phpdoc_align  
@@ -38,13 +38,14 @@
   ⨯ src/Services/Core/ResourcePublisherService.php             increment_style, concat_space, braces_position, not_operator_with_successor_space, single_line_empty_body, phpdoc_align  
   ⨯ src/Services/Core/SlotFinderService.php function_declaration, increment_style, unary_operator_spaces, braces_position, not_operator_with_successor_space, single_line_empty_body,…  
   ⨯ src/Services/Core/ValidationService.php                                    concat_space, unary_operator_spaces, phpdoc_separation, not_operator_with_successor_space, phpdoc_align  
-  ⨯ src/Services/ImpedimentService.php                                                    class_attributes_separation, ordered_traits, not_operator_with_successor_space, phpdoc_align  
+  ⨯ src/Services/ImpedimentService.php                                 class_attributes_separation, ordered_traits, no_unused_imports, not_operator_with_successor_space, phpdoc_align  
   ⨯ src/Services/ScheduleService.php                                                                                                   not_operator_with_successor_space, phpdoc_align  
   ⨯ src/Traits/BelongsToSchedulable.php                                                                                                                                ordered_imports  
   ⨯ src/Traits/DateRangeOverlapTrait.php                                                     unary_operator_spaces, phpdoc_separation, not_operator_with_successor_space, phpdoc_align  
   ⨯ src/Traits/FilterableTrait.php                                             concat_space, unary_operator_spaces, phpdoc_separation, not_operator_with_successor_space, phpdoc_align  
   ⨯ tests/Feature/Facades/AvailabilityFacadeTest.php                                                                                                  braces_position, ordered_imports  
-  ⨯ tests/Feature/Facades/ImpedimentFacadeTest.php                                                                                                    braces_position, ordered_imports  
+  ⨯ tests/Feature/Facades/ImpedimentFacadeTest.php                                                    class_attributes_separation, braces_position, no_unused_imports, ordered_imports  
+  ⨯ tests/Feature/Facades/ScheduleFacadeTest.php                                                                        class_attributes_separation, class_definition, braces_position  
   ⨯ tests/Feature/Services/AvailabilityServiceTest.php                                                                                                braces_position, ordered_imports  
   ⨯ tests/Feature/Services/ScheduleServiceTest.php                                                                                  class_definition, braces_position, ordered_imports  
   ⨯ tests/Integration/ModelIntegrationTest.php                                                                                      class_definition, braces_position, ordered_imports  

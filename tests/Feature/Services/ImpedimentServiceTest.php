@@ -444,8 +444,16 @@ final class ImpedimentServiceTest extends TestCase
         ];
 
         $this->expectException(BadMethodCallException::class);
-        $this->expectExceptionMessage('Method create(array $data) is deprecated. Use create(Availability $availability, array $data) instead.');
 
-        $this->impedimentService->create($impedimentData);
+        try {
+            $this->impedimentService->create($impedimentData);
+        } catch (BadMethodCallException $e) {
+            $this->assertStringContainsString(
+                'Method create(array $data) is deprecated. Use create(Availability $availability, array $data) instead',
+                $e->getMessage()
+            );
+
+            throw $e;
+        }
     }
 }

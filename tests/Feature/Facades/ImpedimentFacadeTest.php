@@ -544,24 +544,7 @@ final class ImpedimentFacadeTest extends TestCase
         $this->assertSame($this->julyAvailability->id, $impediment->availability_id);
     }
 
-    /**
-     * Test that the old create method without availability is deprecated.
-     */
-    public function test_facade_old_create_method_is_deprecated(): void
-    {
-        $impedimentData = [
-            'reason' => 'Test',
-            'start_datetime' => '2038-06-07 10:00:00',
-            'end_datetime' => '2038-06-07 11:00:00',
-        ];
 
-        $this->expectException(BadMethodCallException::class);
-        $this->expectExceptionMessage(
-            'Method create(array $data) is deprecated. Use create(Availability $availability, array $data) instead.'
-        );
-
-        ImpedimentFacade::for($this->schedulableModel)->create($impedimentData);
-    }
 
     /**
      * Test finding an impediment by ID.

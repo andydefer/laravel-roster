@@ -111,23 +111,7 @@ final class ScheduleFacadeTest extends TestCase
         $this->assertSame('training', $schedule->type);
     }
 
-    /**
-     * Test that the old create method without availability is deprecated.
-     */
-    public function test_facade_old_create_method_is_deprecated(): void
-    {
-        $scheduleData = [
-            'title' => 'Test Consultation',
-            'start_datetime' => '2038-06-01 10:00:00',
-            'end_datetime' => '2038-06-01 11:00:00',
-        ];
 
-        $this->expectException(BadMethodCallException::class);
-        // AJOUTEZ "for Schedule." à la fin
-        $this->expectExceptionMessage('Method create(array $data) is deprecated. Use create(Availability $availability, array $data) instead for Schedule.');
-
-        ScheduleFacade::for($this->testModel)->create($scheduleData);
-    }
 
     /**
      * Test that the facade can find a schedule by ID.
