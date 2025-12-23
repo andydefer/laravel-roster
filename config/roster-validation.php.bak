@@ -58,6 +58,7 @@ return [
         // app_path('Validation/Rules'),
     ],
 
-    'with_cache' => false,
+    'availability_types' => [],
+    'with_cache' => true,
 
 ];

@@ -89,6 +89,7 @@ class AvailabilityService extends AbstractValidatingService
      */
     public function update(int $id, array $data): bool
     {
+        parent::update($id, $data);
         $entity = $this->find($id);
 
         if (!$entity instanceof Availability) {

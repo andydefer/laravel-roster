@@ -108,6 +108,7 @@ class ImpedimentService extends AbstractAvailabilityValidatingService
      */
     public function update(int $id, array $data): bool
     {
+        parent::update($id, $data);
         $this->data = $data;
 
         // Trouver l'impediment existant

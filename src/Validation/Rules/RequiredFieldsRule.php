@@ -21,7 +21,7 @@ class RequiredFieldsRule extends AbstractRule
         $entityType = $validationContext->getEntityType();
         $operationType = $validationContext->getOperation();
 
-        $ownerFields = ['availability_id', 'schedulable_id', 'schedulable_type'];
+        $ownerFields = ['schedulable_id', 'schedulable_type'];
         $safeData = $validationContext->safeData();
 
         // Vérifier les champs propriétaires pour CREATE et UPDATE

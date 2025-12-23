@@ -117,6 +117,15 @@ abstract class AbstractService
         return $this;
     }
 
+    public function update(int $id, array $data): bool
+    {
+
+        // Supprime les clés spécifiées si elles existent
+        $data = array_diff_key($data, array_flip(['schedulable_id', 'schedulable_type', 'availability_id']));
+        return true;
+    }
+
+
     /**
      * Scope the service to a specific schedulable model.
      *

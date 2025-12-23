@@ -7,6 +7,7 @@ namespace Roster\Repositories;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Log;
 use Roster\Contracts\Repository\ImpedimentRepositoryInterface;
 use Roster\Models\Impediment;
 
@@ -105,6 +106,8 @@ class ImpedimentRepository extends AbstractRepository implements ImpedimentRepos
         if ($excludeId) {
             $query->where('id', '!=', $excludeId);
         }
+
+
 
         return $query->exists();
     }

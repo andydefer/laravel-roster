@@ -225,6 +225,7 @@ final class ScheduleServiceTest extends TestCase
 
     public function test_update_schedule_fails_when_overlap(): void
     {
+
         // Arrange - Créer deux schedules
         $schedule1 = $this->scheduleService->create($this->testAvailability, [
             'title' => 'Schedule 1',
@@ -232,11 +233,13 @@ final class ScheduleServiceTest extends TestCase
             'end_datetime' => '2038-01-04 11:00:00',
         ]);
 
-        $this->scheduleService->for($this->testSchedulable)->create($this->testAvailability, [
+
+        $schedule2 = $this->scheduleService->create($this->testAvailability, [
             'title' => 'Schedule 2',
             'start_datetime' => '2038-01-04 12:00:00',
             'end_datetime' => '2038-01-04 13:00:00',
         ]);
+
 
         // Essayer de déplacer schedule1 pour qu'il chevauche schedule2
         $updateData = [
@@ -244,9 +247,11 @@ final class ScheduleServiceTest extends TestCase
             'end_datetime' => '2038-01-04 13:30:00',
         ];
 
+
         // Expect
         $this->expectException(ValidationFailedException::class);
         $this->expectExceptionMessageMatches('/Schedule overlaps with an existing schedule/');
+
 
         // Act
         $this->scheduleService->update($schedule1->id, $updateData);
@@ -254,11 +259,14 @@ final class ScheduleServiceTest extends TestCase
 
     public function test_update_schedule_fails_when_not_found(): void
     {
-        // Act
-        $result = $this->scheduleService->update(999999, ['title' => 'test']);
-
         // Assert
-        $this->assertFalse($result);
+        $this->expectException(ValidationFailedException::class);
+        $this->expectExceptionMessageMatches(
+            '/Update validation failed for Schedule.*does not exist/'
+        );
+
+        // Act
+        $this->scheduleService->update(999999, ['title' => 'test']);
     }
 
     public function test_delete_schedule_successfully(): void
@@ -276,11 +284,14 @@ final class ScheduleServiceTest extends TestCase
 
     public function test_delete_schedule_fails_when_not_found(): void
     {
-        // Act
-        $result = $this->scheduleService->delete(999999);
-
         // Assert
-        $this->assertFalse($result);
+        $this->expectException(ValidationFailedException::class);
+        $this->expectExceptionMessageMatches(
+            '/Update validation failed for Schedule.*does not exist/'
+        );
+
+        // Act
+        $this->scheduleService->delete(999999);
     }
 
     public function test_find_schedule_by_id(): void
@@ -431,7 +442,7 @@ final class ScheduleServiceTest extends TestCase
             60, // 1 heure
             'consultation',
             false,
-            Carbon::parse('2038-01-04 09:00:00') // Chercher à partir de 9h
+            Carbon::parse('2038-01-04 10:00:00') // Chercher à partir de 9h
         );
 
         // Assert - Devrait trouver après 11h
@@ -443,6 +454,7 @@ final class ScheduleServiceTest extends TestCase
         $this->assertArrayHasKey('duration_minutes', $slot);
 
         // Le créneau doit commencer après 11h (fin du schedule existant)
+
         $this->assertTrue($slot['start']->gte(Carbon::parse('2038-01-04 11:00:00')));
         $this->assertEquals(60, $slot['duration_minutes']);
     }

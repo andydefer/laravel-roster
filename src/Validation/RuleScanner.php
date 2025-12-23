@@ -38,6 +38,7 @@ class RuleScanner
 
     private function doScan(): array
     {
+
         // Si déjà scanné intra-requête
         if ($this->cachedRules !== null) {
             return $this->cachedRules;

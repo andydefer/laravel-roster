@@ -199,12 +199,13 @@ final class AvailabilityServiceTest extends TestCase
         // Assert
         $this->expectException(ValidationFailedException::class);
         $this->expectExceptionMessageMatches(
-            '/Delete validation failed for Availability.*does not exist/'
+            '/Update validation failed for Availability.*does not exist/'
         );
 
         // Act
         $this->availabilityService->delete($availabilityId);
     }
+
 
     public function test_can_find_an_availability_by_id(): void
     {

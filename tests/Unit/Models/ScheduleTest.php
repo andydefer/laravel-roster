@@ -4,15 +4,26 @@ declare(strict_types=1);
 
 namespace Unit\Models;
 
-use PHPUnit\Framework\TestCase;
+use Illuminate\Support\Carbon;
+use Rector\Carbon\NodeFactory\CarbonCallFactory;
+use Roster\Models\Availability;
+use Tests\Support\TestSchedulable;
+use Tests\TestCase;
 
 final class ScheduleTest extends TestCase
 {
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+    }
     /**
      * Test basic data validation with valid input.
      */
     public function test_validate_basic_data_with_valid_data(): void
     {
+
+
         // Arrange
 
         // Act

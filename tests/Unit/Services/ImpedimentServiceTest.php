@@ -224,12 +224,13 @@ final class ImpedimentServiceTest extends TestCase
         // Assert
         $this->expectException(ValidationFailedException::class);
         $this->expectExceptionMessageMatches(
-            '/Delete validation failed for Impediment.*does not exist/'
+            '/Update validation failed for Impediment.*does not exist/'
         );
 
         // Act
         $this->impedimentService->delete(999999);
     }
+
     /* -----------------------------------------------------------------
      | Tests de Recherche
      | -----------------------------------------------------------------

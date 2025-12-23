@@ -34,10 +34,14 @@ abstract class AbstractAvailabilityValidatingService extends AbstractEntityScopi
     /**
      * Validate data using the centralized validation system.
      */
-    protected function validate(array $data, OperationType $operationType, ?int $entityId = null): void
+    protected function validate(array $data, OperationType $operationType, ?int $entityId = null, ?object $currentEntity = null): void
     {
         $entityType = $this->getEntityTypeEnum();
-        $currentEntity = $entityId ? $this->find($entityId) : null;
+
+        // Si currentEntity n'est pas fourni mais entityId l'est, essayer de le trouver
+        if ($currentEntity === null && $entityId !== null) {
+            $currentEntity = $this->find($entityId);
+        }
 
         $validationContext = new ValidationContext(
             operationType: $operationType,
@@ -56,7 +60,6 @@ abstract class AbstractAvailabilityValidatingService extends AbstractEntityScopi
                 $entityType
             );
         }
-
     }
 
     /**

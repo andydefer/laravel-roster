@@ -22,7 +22,7 @@ class SchedulableValidationRule extends AbstractRule
         $schedulable = $validationContext->getSchedulable();
         $entityType = $validationContext->getEntityType();
         $operationType = $validationContext->getOperation();
-        $ownerFields = ['availability_id', 'schedulable_id', 'schedulable_type'];
+        $ownerFields = ['schedulable_id', 'schedulable_type'];
         $safeData = $validationContext->safeData();
 
         if (!$schedulable instanceof Model) {

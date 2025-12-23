@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Roster;
 
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Filesystem\Filesystem;
 use Illuminate\Support\ServiceProvider;
 use Roster\Commands\InstallRosterCommand;
@@ -44,6 +45,8 @@ class RosterServiceProvider extends ServiceProvider
         Availability::observe(SchedulableObserver::class);
         Schedule::observe(SchedulableObserver::class);
         Impediment::observe(SchedulableObserver::class);
+
+        Model::automaticallyEagerLoadRelationships();
     }
 
     public function register(): void

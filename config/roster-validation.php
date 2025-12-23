@@ -59,6 +59,6 @@ return [
     ],
 
     'availability_types' => [],
-    'with_cache' => false,
+    'with_cache' => true,
 
 ];

@@ -7,6 +7,7 @@ namespace Roster\Repositories;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Log;
 use Roster\Contracts\Repository\ScheduleRepositoryInterface;
 use Roster\Models\Schedule;
 
@@ -114,7 +115,17 @@ class ScheduleRepository extends AbstractRepository implements ScheduleRepositor
             $query->where('id', '!=', $excludeId);
         }
 
-        return $query->exists();
+        // Log pour déboguer
+        $sql = $query->toSql();
+        $bindings = $query->getBindings();
+
+
+
+        $result = $query->exists();
+
+
+
+        return $result;
     }
 
     /**

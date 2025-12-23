@@ -107,7 +107,6 @@ class ScheduleService extends AbstractAvailabilityValidatingService
 
         // Récupérer l'entité existante AVANT validation
         $existingEntity = $this->find($id);
-        //  dd($existingEntity);
 
         if (!$existingEntity instanceof Schedule) {
             throw ValidationFailedException::fromViolations(
@@ -124,6 +123,11 @@ class ScheduleService extends AbstractAvailabilityValidatingService
 
         // Ajouter l'ID et l'entité pour la validation
         $data['id'] = $id;
+
+        // Assurez-vous que availability_id est présent dans les données
+        if (!isset($data['availability_id']) && $existingEntity->availability_id) {
+            $data['availability_id'] = $existingEntity->availability_id;
+        }
 
         // Créer le DTO avec les données mises à jour
         $scheduleData = $this->createDTOFromArray($data, OperationType::UPDATE);
@@ -173,7 +177,7 @@ class ScheduleService extends AbstractAvailabilityValidatingService
         ];
 
         // Valider la suppression
-        $this->validate($deleteData, OperationType::DELETE, $id);
+        $this->validate($deleteData, OperationType::DELETE, $id, $entity);
 
         // Supprimer l'entité
         $result = $this->executeDelete($id);
@@ -286,19 +290,15 @@ class ScheduleService extends AbstractAvailabilityValidatingService
         $endBefore = $endBefore ?? $startFrom->copy()->addDays(config('roster.durations.max_search_period_days', 30));
 
         // Chercher dans une fenêtre de temps progressive
-        $searchDate = $startFrom->copy();
-        $searchEnd = $searchDate->copy()->addDays(1); // Chercher par jour
-
-        // Pour le premier jour, on doit passer l'heure de début spécifique
-        $searchStart = $startFrom->copy();
+        $searchDate = $startFrom->copy()->startOfDay();
 
         while ($searchDate->lt($endBefore)) {
             $result = $this->findAvailableSlotInDay(
                 $searchDate,
                 $durationMinutes,
                 $type,
-                // Passer searchStart seulement pour le premier jour
-                $searchDate->isSameDay($searchStart) ? $searchStart : null
+                // Pour le premier jour, passer l'heure de début spécifique
+                $searchDate->isSameDay($startFrom) ? $startFrom : null
             );
 
             if ($result !== null) {
@@ -307,8 +307,6 @@ class ScheduleService extends AbstractAvailabilityValidatingService
 
             // Passer au jour suivant
             $searchDate->addDay()->startOfDay();
-            // Réinitialiser searchStart pour les jours suivants
-            $searchStart = null;
         }
 
         return null;
@@ -391,36 +389,44 @@ class ScheduleService extends AbstractAvailabilityValidatingService
         $availabilityStart = $day->copy()->setTimeFromTimeString($availability->daily_start->format('H:i:s'));
         $availabilityEnd = $day->copy()->setTimeFromTimeString($availability->daily_end->format('H:i:s'));
 
-        // Ajuster le début de recherche si spécifié
+        // Déterminer le point de départ de la recherche
         $slotStart = $availabilityStart->copy();
-        if ($searchStart && $searchStart->gt($slotStart)) {
-            // Si searchStart est après availabilityStart, commencer à searchStart
-            // mais seulement s'il est dans la même journée
-            if ($searchStart->isSameDay($day) && $searchStart->lt($availabilityEnd)) {
+
+        // Si un searchStart est spécifié et qu'il est dans la même journée
+        if ($searchStart !== null && $searchStart->isSameDay($day)) {
+            // Si searchStart est avant availabilityStart, commencer à availabilityStart
+            if ($searchStart->lt($availabilityStart)) {
+                $slotStart = $availabilityStart->copy();
+            }
+            // Si searchStart est après availabilityStart mais avant availabilityEnd, commencer à searchStart
+            elseif ($searchStart->lt($availabilityEnd)) {
                 $slotStart = $searchStart->copy();
-
-                // Arrondir à l'intervalle le plus proche (par pas de 15 minutes par défaut)
-                $slotInterval = config('roster.durations.default_slot_interval_minutes', 15);
-                $minutes = $slotStart->minute;
-                $roundedMinutes = ceil($minutes / $slotInterval) * $slotInterval;
-                $slotStart->setMinute((int)$roundedMinutes)->setSecond(0);
-
-                // Si après arrondi on dépasse availabilityEnd, retourner null
-                if ($slotStart->copy()->addMinutes($durationMinutes)->gt($availabilityEnd)) {
-                    return null;
-                }
+            }
+            // Si searchStart est après availabilityEnd, pas de créneau possible ce jour
+            else {
+                return null;
             }
         }
 
-        // Chercher un créneau par pas de 15 minutes
+        // Arrondir le slotStart à l'intervalle le plus proche
         $slotInterval = config('roster.durations.default_slot_interval_minutes', 15);
+        if ($slotStart->minute > 0 || $slotStart->second > 0) {
+            $minutes = $slotStart->minute;
+            $roundedMinutes = ceil($minutes / $slotInterval) * $slotInterval;
+            $slotStart->setMinute((int)$roundedMinutes)->setSecond(0);
+        }
 
+        // Vérifier que slotStart + durée ne dépasse pas availabilityEnd
+        if ($slotStart->copy()->addMinutes($durationMinutes)->gt($availabilityEnd)) {
+            return null;
+        }
+
+        // Chercher un créneau par pas de l'intervalle
         while ($slotStart->copy()->addMinutes($durationMinutes)->lte($availabilityEnd)) {
             $slotEnd = $slotStart->copy()->addMinutes($durationMinutes);
 
-            // Vérifier que le créneau est disponible en utilisant isPeriodAvailable
-            // qui vérifie à la fois les schedules et les impediments
-            if ($this->isPeriodAvailable($slotStart, $slotEnd, $availability->type)) {
+            // Vérifier que le créneau est disponible
+            if ($this->isTimeSlotAvailable($slotStart, $slotEnd, $availability->type)) {
                 return [
                     'start' => $slotStart->copy(),
                     'end' => $slotEnd->copy(),
@@ -529,6 +535,7 @@ class ScheduleService extends AbstractAvailabilityValidatingService
             $impStart = $impediment->start_datetime;
             $impEnd = $impediment->end_datetime;
 
+            // S'il y a un espace avant l'impediment
             if ($impStart->gt($currentTime)) {
                 $availableSlots->push([
                     'start' => $currentTime->copy(),
@@ -536,9 +543,11 @@ class ScheduleService extends AbstractAvailabilityValidatingService
                 ]);
             }
 
-            $currentTime = $currentTime->max($impEnd);
+            // Avancer le temps courant à la fin de l'impediment
+            $currentTime = max($currentTime, $impEnd);
         }
 
+        // S'il reste du temps après le dernier impediment
         if ($currentTime->lt($end)) {
             $availableSlots->push([
                 'start' => $currentTime->copy(),
