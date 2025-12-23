@@ -8,15 +8,12 @@ use InvalidArgumentException;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Carbon;
 use Roster\Contracts\Repository\AvailabilityRepositoryInterface;
-use Roster\Contracts\Services\AvailabilityCheckerInterface;
-use Roster\Contracts\Services\ValidationServiceInterface;
 use Roster\Models\Availability;
 
-class AvailabilityChecker implements AvailabilityCheckerInterface
+class AvailabilityChecker
 {
     public function __construct(
-        private AvailabilityRepositoryInterface $availabilityRepository,
-        private ValidationServiceInterface $validationService
+        private AvailabilityRepositoryInterface $availabilityRepository
     ) {}
 
     /**
@@ -47,29 +44,9 @@ class AvailabilityChecker implements AvailabilityCheckerInterface
         Carbon $end,
         ?string $type = null
     ): bool {
-        $this->validationService->validateTimeRange($start, $end);
 
         $availability = $this->availabilityRepository->findForTimeSlot($model, $start, $end, $type);
 
         return $availability instanceof Availability;
-    }
-
-    /**
-     * Check if there are overlapping availabilities for the schedulable resource.
-     *
-     * @param Model $model The schedulable resource
-     * @param array<string, mixed> $data Availability data containing start and end times
-     * @param int|null $exceptId Optional ID to exclude from overlap checking (for updates)
-     * @return bool True if overlapping availabilities exist
-     * @throws InvalidArgumentException If the time range data is invalid
-     */
-    public function hasOverlapping(
-        Model $model,
-        array $data,
-        ?int $exceptId = null
-    ): bool {
-        $this->validationService->parseAndValidateTimeRange($data);
-
-        return $this->availabilityRepository->findOverlapping($model, $data, $exceptId)->isNotEmpty();
     }
 }

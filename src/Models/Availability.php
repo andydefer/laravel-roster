@@ -37,11 +37,11 @@ class Availability extends Model
         'schedulable_id',
         'schedulable_type',
         'type',
-        'start_time',
-        'end_time',
+        'daily_start',
+        'daily_end',
         'days',
-        'start_date',
-        'end_date',
+        'validity_start',
+        'validity_end',
     ];
 
     /**
@@ -50,11 +50,11 @@ class Availability extends Model
      * @var array<string, string>
      */
     protected $casts = [
-        'start_time' => 'datetime:H:i',
-        'end_time' => 'datetime:H:i',
-        'days' => 'array',
-        'start_date' => 'date',
-        'end_date' => 'date',
+        'daily_start' => 'datetime:H:i',
+        'daily_end' => 'datetime:H:i',
+        'validity_start' => 'date',
+        'validity_end' => 'date',
+        'days' => 'array'
     ];
 
     /**
@@ -93,15 +93,15 @@ class Availability extends Model
      */
     public function isAvailableForSchedule(Carbon $start, Carbon $end): bool
     {
-        if (! $this->isAvailableOnDay($start)) {
+        if (!$this->isAvailableOnDay($start)) {
             return false;
         }
 
-        if (! $this->isWithinTimeWindow($start, $end)) {
+        if (!$this->isWithinDailyWindow($start, $end)) {
             return false;
         }
 
-        return $this->isWithinDateRange($start, $end);
+        return $this->isWithinValidityPeriod($start, $end);
     }
 
     /**
@@ -118,35 +118,135 @@ class Availability extends Model
     }
 
     /**
-     * Check if the time period falls within the availability's time window.
+     * Check if the time period falls within the availability's daily time window.
      *
      * @param Carbon $start Start time to check
      * @param Carbon $end End time to check
-     * @return bool True if within time window, false otherwise
+     * @return bool True if within daily time window, false otherwise
      */
-    private function isWithinTimeWindow(Carbon $start, Carbon $end): bool
+    private function isWithinDailyWindow(Carbon $start, Carbon $end): bool
     {
         $startTime = $start->format('H:i:s');
         $endTime = $end->format('H:i:s');
-        $availabilityStart = $this->start_time->format('H:i:s');
-        $availabilityEnd = $this->end_time->format('H:i:s');
+        $dailyStart = $this->daily_start->format('H:i:s');
+        $dailyEnd = $this->daily_end->format('H:i:s');
 
-        return $startTime >= $availabilityStart && $endTime <= $availabilityEnd;
+        return $startTime >= $dailyStart && $endTime <= $dailyEnd;
     }
 
     /**
-     * Check if the time period falls within the availability's date range.
+     * Check if the time period falls within the availability's validity period.
      *
      * @param Carbon $start Start date to check
      * @param Carbon $end End date to check
-     * @return bool True if within date range, false otherwise
+     * @return bool True if within validity period, false otherwise
      */
-    private function isWithinDateRange(Carbon $start, Carbon $end): bool
+    private function isWithinValidityPeriod(Carbon $start, Carbon $end): bool
     {
-        if ($this->start_date && $start->lt($this->start_date)) {
+        if ($this->validity_start && $start->lt($this->validity_start)) {
             return false;
         }
 
-        return !($this->end_date && $end->gt($this->end_date));
+        return !($this->validity_end && $end->gt($this->validity_end));
+    }
+
+    /**
+     * Check if the availability is active on a specific date.
+     *
+     * @param Carbon $date Date to check
+     * @return bool True if active on the given date, false otherwise
+     */
+    public function isActiveOnDate(Carbon $date): bool
+    {
+        if (!$this->isAvailableOnDay($date)) {
+            return false;
+        }
+
+        if ($this->validity_start && $date->lt($this->validity_start)) {
+            return false;
+        }
+
+        return !($this->validity_end && $date->gt($this->validity_end));
+    }
+
+    /**
+     * Get the daily slot duration in minutes.
+     *
+     * @return int Duration in minutes
+     */
+    public function getDailyDurationMinutes(): int
+    {
+        return $this->daily_start->diffInMinutes($this->daily_end);
+    }
+
+    /**
+     * Get the validity period duration in days.
+     *
+     * @return int|null Duration in days, or null if unlimited
+     */
+    public function getValidityDurationDays(): ?int
+    {
+        if (!$this->validity_start || !$this->validity_end) {
+            return null;
+        }
+
+        return $this->validity_start->diffInDays($this->validity_end);
+    }
+
+    /**
+     * Check if the validity period is unlimited (no end date).
+     *
+     * @return bool True if unlimited, false otherwise
+     */
+    public function hasUnlimitedValidity(): bool
+    {
+        return $this->validity_end === null;
+    }
+
+    /**
+     * Check if the validity period has started.
+     *
+     * @param Carbon|null $date Optional date to check (defaults to now)
+     * @return bool True if validity period has started
+     */
+    public function hasValidityStarted(?Carbon $date = null): bool
+    {
+        $date = $date ?? Carbon::now();
+
+        if ($this->validity_start === null) {
+            return true; // No start date means it's always started
+        }
+
+        return $date->gte($this->validity_start);
+    }
+
+    /**
+     * Check if the validity period has ended.
+     *
+     * @param Carbon|null $date Optional date to check (defaults to now)
+     * @return bool True if validity period has ended
+     */
+    public function hasValidityEnded(?Carbon $date = null): bool
+    {
+        $date = $date ?? Carbon::now();
+
+        if ($this->validity_end === null) {
+            return false; // No end date means it never ends
+        }
+
+        return $date->gt($this->validity_end);
+    }
+
+    /**
+     * Check if the validity period is currently active.
+     *
+     * @param Carbon|null $date Optional date to check (defaults to now)
+     * @return bool True if currently within validity period
+     */
+    public function isValidityActive(?Carbon $date = null): bool
+    {
+        $date = $date ?? Carbon::now();
+
+        return $this->hasValidityStarted($date) && !$this->hasValidityEnded($date);
     }
 }

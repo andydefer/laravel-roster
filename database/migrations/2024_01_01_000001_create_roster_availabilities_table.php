@@ -5,6 +5,7 @@ declare(strict_types=1);
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
+use Roster\Enums\DaysOfWeek;
 
 /**
  * Creates the roster_availabilities table for storing recurring availability patterns.
@@ -24,17 +25,22 @@ return new class extends Migration
             $table->morphs('schedulable');
 
             $table->string('type')->comment('Type of availability (e.g., consultation, service)');
-            $table->time('start_time');
-            $table->time('end_time');
-            $table->json('days')->comment('Recurring days of the week (e.g., ["monday","wednesday"])');
+            $table->time('daily_start')->comment('Daily start time of the availability slot');
+            $table->time('daily_end')->comment('Daily end time of the availability slot');
 
-            $table->date('start_date')->nullable()->comment('Start date of the availability period');
-            $table->date('end_date')->nullable()->comment('End date of the availability period');
+            // Dans la migration roster_availabilities
+            $table->json('days')
+                ->default(json_encode(DaysOfWeek::values())) // Tous les jours par défaut
+                ->comment('Recurring days of the week (e.g., ["monday","wednesday"])');
+
+            $table->date('validity_start')->nullable()->comment('Start date of the availability validity period');
+            $table->date('validity_end')->nullable()->comment('End date of the availability validity period');
 
             $table->timestamps();
 
             $table->index('type');
-            $table->index(['start_date', 'end_date']);
+            $table->index(['validity_start', 'validity_end']);
+            $table->index(['daily_start', 'daily_end']);
         });
     }
 

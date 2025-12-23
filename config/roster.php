@@ -14,25 +14,16 @@ return [
 
     // Future dates validation - unified setting
     'validate_future_dates' => [
+        // Enable or disable future date validation globally
         'enabled' => env('ROSTER_VALIDATE_FUTURE_DATES', true),
 
-        // Entity-specific overrides
-        'availability' => [
-            'enabled' => env('ROSTER_VALIDATE_AVAILABILITY_FUTURE_DATES'), // null = use parent
-            'allow_past' => env('ROSTER_ALLOW_PAST_AVAILABILITIES', false),
-            'validation_field' => 'start_date',
-        ],
-        'schedule' => [
-            'enabled' => env('ROSTER_VALIDATE_SCHEDULE_FUTURE_DATES'), // null = use parent
-            'allow_past' => env('ROSTER_ALLOW_PAST_SCHEDULES', false),
-            'validation_field' => 'start_datetime',
-        ],
-        'impediment' => [
-            'enabled' => env('ROSTER_VALIDATE_IMPEDIMENT_FUTURE_DATES'), // null = use parent
-            'allow_past' => env('ROSTER_ALLOW_PAST_IMPEDIMENTS', false),
-            'validation_field' => 'start_datetime',
-        ],
+        // Allow dates in the past (global rule)
+        'allow_past' => env('ROSTER_ALLOW_PAST_DATES', false),
+
+        // Field used for validation (must exist in the payload)
+        'validation_field' => 'start_datetime',
     ],
+
 
     // Duration constraints
     'durations' => [
@@ -121,4 +112,6 @@ return [
 
         'use_tags' => env('ROSTER_CACHE_USE_TAGS', true),
     ],
+
+
 ];

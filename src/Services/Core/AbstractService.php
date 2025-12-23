@@ -6,19 +6,15 @@ namespace Roster\Services\Core;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
-use Roster\Services\Core\Components\ExceptionHandler;
 use Roster\Traits\FilterableTrait;
 
 /**
- * Abstract service providing a CRUD template with lifecycle hooks.
+ * Abstract service providing a CRUD template.
  *
- * This abstract class implements the Template Method pattern for CRUD operations,
- * allowing concrete services to define specific execution logic while maintaining
- * consistent lifecycle hooks (before/after operations).
+ * This abstract class implements basic CRUD operations.
  */
 abstract class AbstractService
 {
-    use ExceptionHandler;
     use FilterableTrait;
 
     /**
@@ -41,152 +37,19 @@ abstract class AbstractService
     protected array $data = [];
 
     /**
-     * Execute the creation operation.
-     *
-     * Concrete implementations must define the specific creation logic.
-     *
-     * @return mixed The created entity or result
-     */
-    abstract protected function executeCreate(): mixed;
-
-    /**
-     * Execute the update operation.
-     *
-     * Concrete implementations must define the specific update logic.
-     *
-     * @param int $id The ID of the entity to update
-     * @return bool True if update was successful
-     */
-    abstract protected function executeUpdate(int $id): bool;
-
-    /**
-     * Execute the deletion operation.
-     *
-     * Concrete implementations must define the specific deletion logic.
-     *
-     * @param int $id The ID of the entity to delete
-     * @return bool True if deletion was successful
-     */
-    abstract protected function executeDelete(int $id): bool;
-
-    /**
-     * Hook executed before creation.
-     *
-     * Override in concrete classes to add pre-creation logic.
-     *
-     * @param mixed ...$args Variable arguments for the hook
-     */
-    protected function beforeCreate(mixed ...$args): void {}
-
-    /**
-     * Hook executed after creation.
-     *
-     * Override in concrete classes to add post-creation logic.
-     *
-     * @param mixed $result The result from executeCreate()
-     */
-    protected function afterCreate(mixed $result): void {}
-
-    /**
-     * Hook executed before update.
-     *
-     * Override in concrete classes to add pre-update logic.
-     *
-     * @param int $id The ID of the entity being updated
-     */
-    protected function beforeUpdate(int $id): void {}
-
-    /**
-     * Hook executed after update.
-     *
-     * Override in concrete classes to add post-update logic.
-     *
-     * @param int $id The ID of the entity that was updated
-     * @param bool $result The result from executeUpdate()
-     */
-    protected function afterUpdate(int $id, bool $result): void {}
-
-    /**
-     * Hook executed before deletion.
-     *
-     * Override in concrete classes to add pre-deletion logic.
-     *
-     * @param int $id The ID of the entity being deleted
-     */
-    protected function beforeDelete(int $id): void {}
-
-    /**
-     * Hook executed after deletion.
-     *
-     * Override in concrete classes to add post-deletion logic.
-     *
-     * @param int $id The ID of the entity that was deleted
-     * @param bool $result The result from executeDelete()
-     */
-    protected function afterDelete(int $id, bool $result): void {}
-
-    /**
      * Retrieve entities.
-     *
-     * Default implementation returns an empty collection.
-     * Override in concrete classes to implement specific retrieval logic.
      *
      * @return Collection<int, mixed> The collection of entities
      */
-    public function get(): Collection
-    {
-        return collect();
-    }
+    abstract public function get(): Collection;
 
     /**
-     * Create a new entity with lifecycle hooks.
+     * Find entity by ID.
      *
-     * @param array<string, mixed> $data The data for creation
-     * @return mixed The created entity or result
+     * @param int $id Entity ID
+     * @return mixed Entity or null if not found
      */
-    public function create(array $data): mixed
-    {
-        $this->data = $data;
-
-        $this->beforeCreate();
-        $result = $this->executeCreate();
-        $this->afterCreate($result);
-
-        return $result;
-    }
-
-    /**
-     * Update an existing entity with lifecycle hooks.
-     *
-     * @param int $id The ID of the entity to update
-     * @param array<string, mixed> $data The data for update
-     * @return bool True if update was successful
-     */
-    public function update(int $id, array $data): bool
-    {
-        $this->data = $data;
-
-        $this->beforeUpdate($id);
-        $result = $this->executeUpdate($id);
-        $this->afterUpdate($id, $result);
-
-        return $result;
-    }
-
-    /**
-     * Delete an entity with lifecycle hooks.
-     *
-     * @param int $id The ID of the entity to delete
-     * @return bool True if deletion was successful
-     */
-    public function delete(int $id): bool
-    {
-        $this->beforeDelete($id);
-        $result = $this->executeDelete($id);
-        $this->afterDelete($id, $result);
-
-        return $result;
-    }
+    abstract public function find(int $id): mixed;
 
     /**
      * Get the current data payload.
@@ -251,6 +114,31 @@ abstract class AbstractService
     public function setSchedulable(Model $model): self
     {
         $this->schedulable = $model;
+        return $this;
+    }
+
+    /**
+     * Scope the service to a specific schedulable model.
+     *
+     * @param Model $model The parent model to scope operations to
+     * @return $this
+     */
+    public function for(Model $model): static
+    {
+        $this->schedulable = $model;
+        return $this;
+    }
+
+    /**
+     * Set a single filter.
+     *
+     * @param string $key Filter key
+     * @param mixed $value Filter value
+     * @return $this
+     */
+    public function setFilter(string $key, mixed $value): self
+    {
+        $this->filters[$key] = $value;
         return $this;
     }
 

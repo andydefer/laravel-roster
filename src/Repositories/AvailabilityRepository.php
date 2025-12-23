@@ -10,7 +10,6 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Roster\Contracts\Repository\AvailabilityRepositoryInterface;
-use Roster\Contracts\Services\ValidationServiceInterface;
 use Roster\Models\Availability;
 use Roster\Traits\DateRangeOverlapTrait;
 
@@ -23,13 +22,6 @@ use Roster\Traits\DateRangeOverlapTrait;
 class AvailabilityRepository extends AbstractRepository implements AvailabilityRepositoryInterface
 {
     use DateRangeOverlapTrait;
-
-    /**
-     * @param ValidationServiceInterface $validationService Service for validating time ranges
-     */
-    public function __construct(
-        protected ValidationServiceInterface $validationService
-    ) {}
 
     /**
      * {@inheritdoc}
@@ -85,6 +77,24 @@ class AvailabilityRepository extends AbstractRepository implements AvailabilityR
     }
 
     /**
+     * Find availabilities for a specific schedulable entity.
+     *
+     * @param Model $model The schedulable entity
+     * @param string|null $type Optional availability type filter
+     * @return Collection<int, Availability> Collection of availabilities for the schedulable
+     */
+    public function findForSchedulable(Model $model, ?string $type = null): Collection
+    {
+        $builder = $this->buildBaseQuery($model);
+
+        if ($type !== null) {
+            $builder->where('type', $type);
+        }
+
+        return $builder->orderBy('daily_start')->get();
+    }
+
+    /**
      * Get availabilities for a specific date range.
      *
      * @param Model $model The schedulable entity
@@ -101,12 +111,12 @@ class AvailabilityRepository extends AbstractRepository implements AvailabilityR
     ): Collection {
         $builder = $this->buildBaseQuery($model)
             ->where(function ($query) use ($end): void {
-                $query->whereNull('start_date')
-                    ->orWhere('start_date', '<=', $end);
+                $query->whereNull('validity_start')
+                    ->orWhere('validity_start', '<=', $end);
             })
             ->where(function ($query) use ($start): void {
-                $query->whereNull('end_date')
-                    ->orWhere('end_date', '>=', $start);
+                $query->whereNull('validity_end')
+                    ->orWhere('validity_end', '>=', $start);
             });
 
         if ($type) {
@@ -132,7 +142,6 @@ class AvailabilityRepository extends AbstractRepository implements AvailabilityR
         Carbon $end,
         ?string $type = null
     ): ?Availability {
-        $this->validationService->validateTimeRange($start, $end);
 
         return Availability::where('schedulable_id', $model->id)
             ->where('schedulable_type', get_class($model))
@@ -140,15 +149,15 @@ class AvailabilityRepository extends AbstractRepository implements AvailabilityR
                 $query->where('type', $type);
             })
             ->whereJsonContains('days', strtolower($start->englishDayOfWeek))
-            ->where('start_time', '<=', $start->format('H:i:s'))
-            ->where('end_time', '>=', $end->format('H:i:s'))
+            ->where('daily_start', '<=', $start->format('H:i:s'))
+            ->where('daily_end', '>=', $end->format('H:i:s'))
             ->where(function ($query) use ($start): void {
-                $query->whereNull('start_date')
-                    ->orWhere('start_date', '<=', $start->toDateString());
+                $query->whereNull('validity_start')
+                    ->orWhere('validity_start', '<=', $start->toDateString());
             })
             ->where(function ($query) use ($end): void {
-                $query->whereNull('end_date')
-                    ->orWhere('end_date', '>=', $end->toDateString());
+                $query->whereNull('validity_end')
+                    ->orWhere('validity_end', '>=', $end->toDateString());
             })
             ->withExists([
                 'schedules as has_overlapping_schedules' => function ($query) use ($start, $end): void {
@@ -179,7 +188,6 @@ class AvailabilityRepository extends AbstractRepository implements AvailabilityR
         Carbon $end,
         ?string $type = null
     ): ?Availability {
-        $this->validationService->validateTimeRange($start, $end);
 
         $builder = $this->buildBaseQuery($model);
 
@@ -218,7 +226,7 @@ class AvailabilityRepository extends AbstractRepository implements AvailabilityR
         $this->applyDateFilters($builder, $date);
 
         /** @var Collection<int, Availability> $availabilities */
-        $availabilities = $builder->orderBy('start_time')->get();
+        $availabilities = $builder->orderBy('daily_start')->get();
 
         return $availabilities;
     }
@@ -229,7 +237,7 @@ class AvailabilityRepository extends AbstractRepository implements AvailabilityR
     public function getAll(): Collection
     {
         return Availability::query()
-            ->orderBy('start_time')
+            ->orderBy('daily_start')
             ->get();
     }
 
@@ -257,7 +265,7 @@ class AvailabilityRepository extends AbstractRepository implements AvailabilityR
             $builder->whereJsonContains('days', strtolower($day));
         }
 
-        return $builder->orderBy('start_time')->get();
+        return $builder->orderBy('daily_start')->get();
     }
 
     /**
@@ -274,8 +282,8 @@ class AvailabilityRepository extends AbstractRepository implements AvailabilityR
 
         $builder = $this->buildBaseQuery($model)
             ->whereJsonContains('days', $dayOfWeek)
-            ->where('start_time', '<=', $time)
-            ->where('end_time', '>=', $time);
+            ->where('daily_start', '<=', $time)
+            ->where('daily_end', '>=', $time);
 
         $this->applyDateFilters($builder, $datetime);
 
@@ -296,12 +304,11 @@ class AvailabilityRepository extends AbstractRepository implements AvailabilityR
         array $data,
         ?int $exceptId = null
     ): Collection {
-        ['start' => $startTime, 'end' => $endTime] = $this->validationService
-            ->parseAndValidateTimeRange($data);
-
+        $dailyStart = isset($data['daily_start']) ? Carbon::parse($data['daily_start']) : null;
+        $dailyEnd = isset($data['daily_end']) ? Carbon::parse($data['daily_end']) : null;
         $days = $data['days'] ?? [];
-        $startDate = isset($data['start_date']) ? Carbon::parse($data['start_date']) : null;
-        $endDate = isset($data['end_date']) ? Carbon::parse($data['end_date']) : null;
+        $validityStart = isset($data['validity_start']) ? Carbon::parse($data['validity_start']) : null;
+        $validityEnd = isset($data['validity_end']) ? Carbon::parse($data['validity_end']) : null;
 
         $builder = $this->buildBaseQuery($model);
 
@@ -310,9 +317,9 @@ class AvailabilityRepository extends AbstractRepository implements AvailabilityR
         }
 
         $this->applyDayFilters($builder, $days);
-        $this->applyTimeOverlapFilters($builder, $startTime, $endTime);
-        $this->applyDateOverlapFilters($builder, $startDate, $endDate);
-        $this->eagerLoadRelations($builder, $startDate, $endDate);
+        $this->applyTimeOverlapFilters($builder, $dailyStart, $dailyEnd);
+        $this->applyDateOverlapFilters($builder, $validityStart, $validityEnd);
+        $this->eagerLoadRelations($builder, $validityStart, $validityEnd);
 
         /** @var Collection<int, Availability> $overlappingAvailabilities */
         $overlappingAvailabilities = $builder->get();
@@ -404,10 +411,10 @@ class AvailabilityRepository extends AbstractRepository implements AvailabilityR
             return false;
         }
 
-        $isBeforeStartDate = $availability->start_date !== null && $date->lt($availability->start_date);
-        $isAfterEndDate = $availability->end_date !== null && $date->gt($availability->end_date);
+        $isBeforeValidityStart = $availability->validity_start !== null && $date->lt($availability->validity_start);
+        $isAfterValidityEnd = $availability->validity_end !== null && $date->gt($availability->validity_end);
 
-        return !$isBeforeStartDate && !$isAfterEndDate;
+        return !$isBeforeValidityStart && !$isAfterValidityEnd;
     }
 
     /**
@@ -466,8 +473,8 @@ class AvailabilityRepository extends AbstractRepository implements AvailabilityR
     private function applyTimeSlotFilters(Builder $builder, Carbon $start, Carbon $end): void
     {
         $builder->whereJsonContains('days', strtolower($start->englishDayOfWeek))
-            ->where('start_time', '<=', $start->format('H:i:s'))
-            ->where('end_time', '>=', $end->format('H:i:s'));
+            ->where('daily_start', '<=', $start->format('H:i:s'))
+            ->where('daily_end', '>=', $end->format('H:i:s'));
 
         $this->applyDateRangeFilters($builder, $start, $end);
     }
@@ -493,11 +500,11 @@ class AvailabilityRepository extends AbstractRepository implements AvailabilityR
     private function applyDateRangeFilters(Builder $builder, Carbon $startDate, Carbon $endDate): void
     {
         $builder->where(function ($query) use ($startDate): void {
-            $query->whereNull('start_date')
-                ->orWhere('start_date', '<=', $startDate->toDateString());
+            $query->whereNull('validity_start')
+                ->orWhere('validity_start', '<=', $startDate->toDateString());
         })->where(function ($query) use ($endDate): void {
-            $query->whereNull('end_date')
-                ->orWhere('end_date', '>=', $endDate->toDateString());
+            $query->whereNull('validity_end')
+                ->orWhere('validity_end', '>=', $endDate->toDateString());
         });
     }
 
@@ -530,8 +537,8 @@ class AvailabilityRepository extends AbstractRepository implements AvailabilityR
     private function applyTimeOverlapFilters(Builder $builder, Carbon $startTime, Carbon $endTime): void
     {
         $builder->where(function ($query) use ($startTime, $endTime): void {
-            $query->where('start_time', '<', $endTime->format('H:i:s'))
-                ->where('end_time', '>', $startTime->format('H:i:s'));
+            $query->where('daily_start', '<', $endTime->format('H:i:s'))
+                ->where('daily_end', '>', $startTime->format('H:i:s'));
         });
     }
 
@@ -547,25 +554,25 @@ class AvailabilityRepository extends AbstractRepository implements AvailabilityR
         $builder->where(function ($query) use ($startDate, $endDate): void {
             match (true) {
                 $startDate instanceof Carbon && $endDate instanceof Carbon =>
-                $query->where('start_date', '<=', $endDate)
-                    ->where('end_date', '>=', $startDate),
+                $query->where('validity_start', '<=', $endDate)
+                    ->where('validity_end', '>=', $startDate),
 
                 $startDate instanceof Carbon =>
                 $query->where(function ($subQuery) use ($startDate): void {
-                    $subQuery->where('end_date', '>=', $startDate)
-                        ->orWhereNull('end_date');
+                    $subQuery->where('validity_end', '>=', $startDate)
+                        ->orWhereNull('validity_end');
                 }),
 
                 $endDate instanceof Carbon =>
                 $query->where(function ($subQuery) use ($endDate): void {
-                    $subQuery->where('start_date', '<=', $endDate)
-                        ->orWhereNull('start_date');
+                    $subQuery->where('validity_start', '<=', $endDate)
+                        ->orWhereNull('validity_start');
                 }),
 
                 default =>
                 $query->where(function ($subQuery): void {
-                    $subQuery->whereNull('start_date')
-                        ->orWhereNull('end_date');
+                    $subQuery->whereNull('validity_start')
+                        ->orWhereNull('validity_end');
                 }),
             };
         });

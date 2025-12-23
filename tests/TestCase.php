@@ -6,35 +6,26 @@ namespace Tests;
 
 use Orchestra\Testbench\TestCase as OrchestraTestCase;
 use Roster\RosterServiceProvider;
+use Illuminate\Support\Facades\Config;
 
-/**
- * Base test case for Roster package testing.
- *
- * Provides common setup for all package tests including:
- * - Database migrations loading
- * - Service provider registration
- * - Test environment configuration
- */
 abstract class TestCase extends OrchestraTestCase
 {
-    /**
-     * Set up the test environment.
-     */
     protected function setUp(): void
     {
         parent::setUp();
 
-
-
+        // Charger les migrations du package
         $this->loadMigrationsFrom(__DIR__ . '/../database/migrations');
+
+        // Charger les migrations de test
         $this->loadMigrationsFrom(__DIR__ . '/database/migrations');
+
+        // Utiliser le cache en mémoire pour les tests
+        Config::set('cache.default', 'array');
     }
 
     /**
-     * Get the package service providers.
-     *
-     * @param mixed $app Laravel application instance
-     * @return array<class-string>
+     * Enregistre le ServiceProvider du package
      */
     protected function getPackageProviders($app): array
     {
@@ -44,26 +35,16 @@ abstract class TestCase extends OrchestraTestCase
     }
 
     /**
-     * Define environment setup for testing.
-     *
-     * @param mixed $app Laravel application instance
+     * Configuration de l’environnement de test
      */
     protected function defineEnvironment($app): void
     {
         $app['config']->set('database.default', 'testbench');
+
         $app['config']->set('database.connections.testbench', [
             'driver' => 'sqlite',
             'database' => ':memory:',
             'prefix' => '',
         ]);
-    }
-
-    /**
-     * Define database migrations for testing.
-     */
-    protected function defineDatabaseMigrations(): void
-    {
-        $this->loadMigrationsFrom(__DIR__ . '/../database/migrations');
-        $this->loadMigrationsFrom(__DIR__ . '/database/migrations');
     }
 }

@@ -26,6 +26,12 @@ IGNORED_FILES = CHANGED_FILES.md FILES_CHECKLIST.md psalm.md phpstan.md pint-tes
 # Version Control Operations
 # ---------------------------------------------------
 
+.PHONY: enable-cache
+enable-cache:
+	@echo "Activation automatique de 'with_cache = true' dans roster-validation.php..."
+	@sed -i.bak -E "s/('with_cache'\s*=>\s*)false/\1true/" config/roster-validation.php
+	@echo "'with_cache' activé ✅"
+
 .PHONY: pre-commit
 pre-commit:
 	@echo "🔍 Running pre-commit checks..."
@@ -34,7 +40,7 @@ pre-commit:
 	@echo "✅ Pre-commit checks passed"
 
 .PHONY: git-commit-push
-git-commit-push: pre-commit
+git-commit-push: pre-commit enable-cache
 	@read -p "Enter commit message: " commit_message; \
 	if [ -z "$$commit_message" ]; then \
 		echo "Error: Commit message cannot be empty"; \
@@ -228,7 +234,7 @@ concat-all:
 
 .PHONY: test
 test: clean-testbench-migrations
-	@./vendor/bin/phpunit
+	@./vendor/bin/phpunit --testdox --display-notices
 
 
 # ---------------------------------------------------

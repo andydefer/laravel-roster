@@ -190,7 +190,7 @@ final class InstallRosterCommandTest extends TestCase
             'batch' => 1,
         ]);
 
-        Schema::create('roster_availabilities', function ($table) {
+        Schema::create('roster_availabilities', function ($table): void {
             $table->id();
         });
 
@@ -204,7 +204,7 @@ final class InstallRosterCommandTest extends TestCase
 
     public function test_it_skips_migrations_if_roster_tables_exist(): void
     {
-        Schema::create('roster_availabilities', function ($table) {
+        Schema::create('roster_availabilities', function ($table): void {
             $table->id();
         });
 

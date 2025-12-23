@@ -36,6 +36,15 @@ interface AvailabilityRepositoryInterface
     public function update(int $id, array $data): bool;
 
     /**
+     * Find availabilities for a specific schedulable entity.
+     *
+     * @param Model $model The schedulable entity
+     * @param string|null $type Optional availability type filter
+     * @return Collection<int, Availability> Collection of availabilities for the schedulable
+     */
+    public function findForSchedulable(Model $model, ?string $type = null): Collection;
+
+    /**
      * Delete an availability record.
      *
      * @param  int  $id  Availability ID

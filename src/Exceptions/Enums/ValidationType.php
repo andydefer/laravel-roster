@@ -18,6 +18,7 @@ enum ValidationType: string
     case NO_MATCHING_AVAILABILITY = 'NO_MATCHING_AVAILABILITY';
     case INVALID_AVAILABILITY = 'INVALID_AVAILABILITY';
     case CUSTOM = 'CUSTOM';
+    case OVERLAPPING_TIME_SLOT = 'OVERLAPPING_TIME_SLOT'; // <-- ajouté
 
     /**
      * Get the default human-readable message for this validation type.
@@ -32,6 +33,7 @@ enum ValidationType: string
             self::NO_MATCHING_AVAILABILITY => 'No matching availability found',
             self::INVALID_AVAILABILITY => 'The provided availability does not belong to this schedulable',
             self::CUSTOM => 'Custom validation error',
+            self::OVERLAPPING_TIME_SLOT => 'Time slot overlaps with an existing schedule', // <-- message par défaut
         };
     }
 }

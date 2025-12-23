@@ -215,8 +215,8 @@ final class BelongsToSchedulableTest extends TestCase
             'schedulable_id' => $this->model->id,
             'schedulable_type' => get_class($this->model),
             'type' => 'consultation',
-            'start_time' => '09:00:00',
-            'end_time' => '12:00:00',
+            'daily_start' => '09:00:00',
+            'daily_end' => '12:00:00',
             'days' => ['monday'],
         ]);
     }
@@ -248,8 +248,8 @@ final class BelongsToSchedulableTest extends TestCase
             'schedulable_id' => $model->id,
             'schedulable_type' => get_class($model),
             'type' => 'consultation',
-            'start_time' => '09:00:00',
-            'end_time' => '12:00:00',
+            'daily_start' => '09:00:00',
+            'daily_end' => '12:00:00',
             'days' => ['monday'],
         ]);
     }

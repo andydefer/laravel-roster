@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Roster\Models;
 
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -46,8 +47,20 @@ class Impediment extends Model
     protected $casts = [
         'start_datetime' => 'datetime',
         'end_datetime' => 'datetime',
-        'metadata' => 'array',
     ];
+
+
+    /**
+     * Accessor & mutator for metadata.
+     * Accepts either a JSON string or an array from the user.
+     */
+    protected function metadata(): Attribute
+    {
+        return Attribute::make(
+            get: fn($value) => is_string($value) ? json_decode($value, true) : $value,
+            set: fn($value) => is_array($value) ? json_encode($value) : $value
+        );
+    }
 
     /**
      * Get the availability this impediment belongs to.

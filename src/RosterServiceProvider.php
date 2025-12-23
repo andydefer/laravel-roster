@@ -11,10 +11,8 @@ use Roster\Contracts\Repository\AvailabilityRepositoryInterface;
 use Roster\Contracts\Repository\ImpedimentRepositoryInterface;
 use Roster\Contracts\Repository\ScheduleRepositoryInterface;
 use Roster\Contracts\Services\AvailabilityCheckerInterface;
-use Roster\Contracts\Services\AvailabilityMergerInterface;
-use Roster\Contracts\Services\AvailabilityValidatorInterface;
 use Roster\Contracts\Services\SlotFinderInterface;
-use Roster\Contracts\Services\ValidationServiceInterface;
+use Roster\Contracts\Validation\ValidatorInterface;
 use Roster\Models\Availability;
 use Roster\Models\Impediment;
 use Roster\Models\Schedule;
@@ -24,28 +22,15 @@ use Roster\Repositories\ImpedimentRepository;
 use Roster\Repositories\ScheduleRepository;
 use Roster\Services\AvailabilityService;
 use Roster\Services\Core\AvailabilityChecker;
-use Roster\Services\Core\AvailabilityMerger;
-use Roster\Services\Core\AvailabilityValidator;
 use Roster\Services\Core\ResourcePublisherService;
 use Roster\Services\Core\SlotFinderService;
-use Roster\Services\Core\ValidationService;
 use Roster\Services\ImpedimentService;
 use Roster\Services\ScheduleService;
+use Roster\Validation\RuleScanner;
+use Roster\Validation\Validator;
 
-/**
- * Service provider for the Roster package.
- *
- * Handles registration and bootstrapping of all package components,
- * including configuration, migrations, views, routes, and service bindings.
- */
 class RosterServiceProvider extends ServiceProvider
 {
-    /**
-     * Bootstrap any package services.
-     *
-     * Publishes configuration, migrations, and views when running in console mode.
-     * Does NOT load migrations automatically - user must publish them.
-     */
     public function boot(): void
     {
         if ($this->app->runningInConsole()) {
@@ -56,45 +41,46 @@ class RosterServiceProvider extends ServiceProvider
 
         $this->loadPublishedResources();
 
-
         Availability::observe(SchedulableObserver::class);
         Schedule::observe(SchedulableObserver::class);
         Impediment::observe(SchedulableObserver::class);
     }
 
-    /**
-     * Register the service provider.
-     *
-     * Merges package configuration and registers all service bindings.
-     */
     public function register(): void
     {
         $this->mergeConfigFrom(__DIR__ . '/../config/roster.php', 'roster');
+        $this->mergeConfigFrom(__DIR__ . '/../config/roster-validation.php', 'roster-validation');
+
+        // Charger les helpers
+        $this->loadHelpers();
 
         $this->registerCoreServices();
         $this->registerRepositories();
+        $this->registerValidationSystem();
         $this->registerDomainServices();
     }
 
     /**
-     * Register reusable core services.
-     *
-     * Binds interfaces to their concrete implementations for core service components.
+     * Charger les fichiers helpers
      */
-    protected function registerCoreServices(): void
+    protected function loadHelpers(): void
     {
-        $this->app->bind(AvailabilityValidatorInterface::class, AvailabilityValidator::class);
-        $this->app->bind(AvailabilityCheckerInterface::class, AvailabilityChecker::class);
-        $this->app->bind(AvailabilityMergerInterface::class, AvailabilityMerger::class);
-        $this->app->bind(SlotFinderInterface::class, SlotFinderService::class);
-        $this->app->bind(ValidationServiceInterface::class, ValidationService::class);
+        $helpersFile = __DIR__ . '/helpers.php';
+
+        if (file_exists($helpersFile)) {
+            require_once $helpersFile;
+        }
     }
 
-    /**
-     * Register repository implementations.
-     *
-     * Binds repository interfaces to their concrete implementations.
-     */
+    // Le reste du code reste inchangé...
+    protected function registerCoreServices(): void
+    {
+        $this->app->bind(AvailabilityCheckerInterface::class, AvailabilityChecker::class);
+
+        $this->app->bind(SlotFinderInterface::class, SlotFinderService::class);
+    }
+
+
     protected function registerRepositories(): void
     {
         $this->app->bind(AvailabilityRepositoryInterface::class, AvailabilityRepository::class);
@@ -102,76 +88,90 @@ class RosterServiceProvider extends ServiceProvider
         $this->app->bind(ScheduleRepositoryInterface::class, ScheduleRepository::class);
     }
 
-    /**
-     * Register main domain services with their dependencies.
-     *
-     * Creates singleton instances of the main business services and aliases them.
-     */
+    protected function registerValidationSystem(): void
+    {
+        $withCache = config('roster-validation.with_cache', false);
+
+        $this->app->singleton(ValidatorInterface::class, function ($app) use ($withCache): Validator {
+            $directories = array_merge(
+                [__DIR__ . '/Validation/Rules'],
+                config('roster-validation.rule_directories', [])
+            );
+
+            $ruleScanner = new RuleScanner($directories, $withCache);
+
+            return new Validator($ruleScanner);
+        });
+
+        $this->app->singleton(RuleScanner::class, function ($app) use ($withCache): RuleScanner {
+            return new RuleScanner(
+                array_merge([__DIR__ . '/Validation/Rules'], config('roster-validation.rule_directories', [])),
+                $withCache
+            );
+        });
+    }
+
+
     protected function registerDomainServices(): void
     {
-        $this->app->singleton('roster.schedule', function ($app): ScheduleService {
-            return new ScheduleService(
-                validationService: $app->make(ValidationServiceInterface::class),
-                availabilityRepository: $app->make(AvailabilityRepositoryInterface::class),
-                impedimentRepository: $app->make(ImpedimentRepositoryInterface::class),
-                scheduleRepository: $app->make(ScheduleRepositoryInterface::class),
-                slotFinder: $app->make(SlotFinderInterface::class),
-            );
-        });
-
+        // AvailabilityService avec le nouveau système de validation
         $this->app->singleton('roster.availability', function ($app): AvailabilityService {
             return new AvailabilityService(
-                availabilityValidator: $app->make(AvailabilityValidatorInterface::class),
-                validationService: $app->make(ValidationServiceInterface::class),
+                validator: $app->make(ValidatorInterface::class),
                 availabilityRepository: $app->make(AvailabilityRepositoryInterface::class),
-                availabilityMerger: $app->make(AvailabilityMergerInterface::class),
-                slotFinder: $app->make(SlotFinderInterface::class),
-                availabilityChecker: $app->make(AvailabilityCheckerInterface::class),
+
             );
         });
 
-        $this->app->singleton('roster.impediment', function ($app): ImpedimentService {
-            return new ImpedimentService(
-                validationService: $app->make(ValidationServiceInterface::class),
+        // ScheduleService
+        $this->app->singleton('roster.schedule', function ($app): ScheduleService {
+            return new ScheduleService(
+                validator: $app->make(ValidatorInterface::class),
                 availabilityRepository: $app->make(AvailabilityRepositoryInterface::class),
                 impedimentRepository: $app->make(ImpedimentRepositoryInterface::class),
                 scheduleRepository: $app->make(ScheduleRepositoryInterface::class),
-                slotFinder: $app->make(SlotFinderInterface::class),
             );
         });
 
-        $this->app->alias('roster.schedule', ScheduleService::class);
+        // ImpedimentService
+        $this->app->singleton('roster.impediment', function ($app): ImpedimentService {
+            return new ImpedimentService(
+                validator: $app->make(ValidatorInterface::class),
+                availabilityRepository: $app->make(AvailabilityRepositoryInterface::class),
+                impedimentRepository: $app->make(ImpedimentRepositoryInterface::class),
+                scheduleRepository: $app->make(ScheduleRepositoryInterface::class),
+                slotFinder: $app->make(SlotFinderInterface::class)
+            );
+        });
+
         $this->app->alias('roster.availability', AvailabilityService::class);
+        $this->app->alias('roster.schedule', ScheduleService::class);
         $this->app->alias('roster.impediment', ImpedimentService::class);
     }
 
-    /**
-     * Register the resource publisher service.
-     */
     private function registerResourcePublisher(): void
     {
         $this->app->singleton(ResourcePublisherService::class, function ($app): ResourcePublisherService {
             return new ResourcePublisherService(
                 application: $app,
-                filesystem: new Filesystem
+                filesystem: new Filesystem()
             );
         });
     }
 
-    /**
-     * Publish package resources for console usage.
-     *
-     * Publishes configuration files, migrations, and views to the application.
-     * User MUST publish these resources to use the package.
-     */
     private function publishResources(): void
     {
-        // Configuration
+        // Configuration de validation
+        $this->publishes([
+            __DIR__ . '/../config/roster-validation.php' => config_path('roster-validation.php'),
+        ], 'roster-validation-config');
+
+        // Configuration principale
         $this->publishes([
             __DIR__ . '/../config/roster.php' => config_path('roster.php'),
         ], 'roster-config');
 
-        // Migrations - préfixées avec roster_
+        // Migrations
         $this->publishes([
             __DIR__ . '/../database/migrations/' => database_path('migrations'),
         ], 'roster-migrations');
@@ -187,9 +187,6 @@ class RosterServiceProvider extends ServiceProvider
         ], 'roster-routes');
     }
 
-    /**
-     * Load published resources if they exist.
-     */
     private function loadPublishedResources(): void
     {
         $routesPath = base_path('routes/roster.php');
