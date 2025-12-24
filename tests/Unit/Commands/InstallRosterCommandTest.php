@@ -86,13 +86,20 @@ final class InstallRosterCommandTest extends TestCase
 
         $this->assertStringContainsString('Configuration (config/roster.php)', $output->getOutput());
         $this->assertStringContainsString('Database migrations (roster_* tables)', $output->getOutput());
-        $this->assertStringContainsString('Routes (routes/roster.php)', $output->getOutput());
-        $this->assertStringContainsString('Views (resources/views/vendor/roster)', $output->getOutput());
     }
 
     public function test_displays_success_message_with_next_steps(): void
     {
-        $installRosterCommand = new InstallRosterCommand;
+        // On mocke le call() pour éviter l'erreur lors du test
+        $installRosterCommand = $this->getMockBuilder(InstallRosterCommand::class)
+            ->onlyMethods(['call'])
+            ->getMock();
+
+        $installRosterCommand->expects($this->once())
+            ->method('call')
+            ->with('roster:cache-rules', ['--force' => true])
+            ->willReturn(0);
+
         $installRosterCommand->setLaravel($this->app);
 
         $reflectionMethod = new ReflectionMethod($installRosterCommand, 'displaySuccessMessage');
@@ -112,7 +119,6 @@ final class InstallRosterCommandTest extends TestCase
         $this->assertStringContainsString('Review config/roster.php', $output->getOutput());
         $this->assertStringContainsString('Add the HasRoster trait', $output->getOutput());
         $this->assertStringContainsString('Use the facades', $output->getOutput());
-        $this->assertStringContainsString('Check routes/roster.php', $output->getOutput());
     }
 
     public function test_private_methods_return_correct_values(): void
@@ -145,7 +151,7 @@ final class InstallRosterCommandTest extends TestCase
     public function test_handles_cancellation_gracefully(): void
     {
         $command = $this->getMockBuilder(InstallRosterCommand::class)
-            ->onlyMethods(['confirm'])
+            ->onlyMethods(['confirm', 'call'])
             ->getMock();
 
         $command->expects($this->once())

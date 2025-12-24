@@ -40,8 +40,6 @@ class RosterServiceProvider extends ServiceProvider
             $this->commands([InstallRosterCommand::class]);
         }
 
-        $this->loadPublishedResources();
-
         Availability::observe(SchedulableObserver::class);
         Schedule::observe(SchedulableObserver::class);
         Impediment::observe(SchedulableObserver::class);
@@ -54,35 +52,32 @@ class RosterServiceProvider extends ServiceProvider
         $this->mergeConfigFrom(__DIR__ . '/../config/roster.php', 'roster');
         $this->mergeConfigFrom(__DIR__ . '/../config/roster-validation.php', 'roster-validation');
 
-        // Charger les helpers
         $this->loadHelpers();
-
         $this->registerCoreServices();
         $this->registerRepositories();
         $this->registerValidationSystem();
         $this->registerDomainServices();
+
+        if ($this->app->runningInConsole()) {
+            $this->commands([
+                \Roster\Commands\CacheRulesCommand::class,
+            ]);
+        }
     }
 
-    /**
-     * Charger les fichiers helpers
-     */
     protected function loadHelpers(): void
     {
         $helpersFile = __DIR__ . '/helpers.php';
-
         if (file_exists($helpersFile)) {
             require_once $helpersFile;
         }
     }
 
-    // Le reste du code reste inchangé...
     protected function registerCoreServices(): void
     {
         $this->app->bind(AvailabilityCheckerInterface::class, AvailabilityChecker::class);
-
         $this->app->bind(SlotFinderInterface::class, SlotFinderService::class);
     }
-
 
     protected function registerRepositories(): void
     {
@@ -93,40 +88,36 @@ class RosterServiceProvider extends ServiceProvider
 
     protected function registerValidationSystem(): void
     {
-        $withCache = config('roster-validation.with_cache', false);
+        $useFileCache = config('roster-validation.cache.use_file_cache', true);
 
-        $this->app->singleton(ValidatorInterface::class, function ($app) use ($withCache): Validator {
+        $this->app->singleton(ValidatorInterface::class, function ($app) use ($useFileCache): Validator {
             $directories = array_merge(
                 [__DIR__ . '/Validation/Rules'],
                 config('roster-validation.rule_directories', [])
             );
 
-            $ruleScanner = new RuleScanner($directories, $withCache);
+            $ruleScanner = new RuleScanner($directories, $useFileCache);
 
             return new Validator($ruleScanner);
         });
 
-        $this->app->singleton(RuleScanner::class, function ($app) use ($withCache): RuleScanner {
+        $this->app->singleton(RuleScanner::class, function ($app) use ($useFileCache): RuleScanner {
             return new RuleScanner(
                 array_merge([__DIR__ . '/Validation/Rules'], config('roster-validation.rule_directories', [])),
-                $withCache
+                $useFileCache
             );
         });
     }
 
-
     protected function registerDomainServices(): void
     {
-        // AvailabilityService avec le nouveau système de validation
         $this->app->singleton('roster.availability', function ($app): AvailabilityService {
             return new AvailabilityService(
                 validator: $app->make(ValidatorInterface::class),
-                availabilityRepository: $app->make(AvailabilityRepositoryInterface::class),
-
+                availabilityRepository: $app->make(AvailabilityRepositoryInterface::class)
             );
         });
 
-        // ScheduleService
         $this->app->singleton('roster.schedule', function ($app): ScheduleService {
             return new ScheduleService(
                 validator: $app->make(ValidatorInterface::class),
@@ -136,7 +127,6 @@ class RosterServiceProvider extends ServiceProvider
             );
         });
 
-        // ImpedimentService
         $this->app->singleton('roster.impediment', function ($app): ImpedimentService {
             return new ImpedimentService(
                 validator: $app->make(ValidatorInterface::class),
@@ -178,28 +168,5 @@ class RosterServiceProvider extends ServiceProvider
         $this->publishes([
             __DIR__ . '/../database/migrations/' => database_path('migrations'),
         ], 'roster-migrations');
-
-        // Views
-        $this->publishes([
-            __DIR__ . '/../resources/views' => resource_path('views/vendor/roster'),
-        ], 'roster-views');
-
-        // Routes
-        $this->publishes([
-            __DIR__ . '/../routes/web.php' => base_path('routes/roster.php'),
-        ], 'roster-routes');
-    }
-
-    private function loadPublishedResources(): void
-    {
-        $routesPath = base_path('routes/roster.php');
-        if (file_exists($routesPath)) {
-            $this->loadRoutesFrom($routesPath);
-        }
-
-        $viewsPath = resource_path('views/vendor/roster');
-        if (file_exists($viewsPath)) {
-            $this->loadViewsFrom($viewsPath, 'roster');
-        }
     }
 }

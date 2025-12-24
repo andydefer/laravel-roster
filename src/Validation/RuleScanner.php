@@ -4,10 +4,12 @@ declare(strict_types=1);
 
 namespace Roster\Validation;
 
+use Illuminate\Support\Facades\Log;
 use ReflectionClass;
 use Throwable;
 use Roster\Contracts\Validation\RuleInterface;
 use Roster\Validation\Attributes\ValidationRule;
+use Roster\Validation\Cache\RuleCacheGenerator;
 use Symfony\Component\Finder\Finder;
 
 class RuleScanner
@@ -21,20 +23,89 @@ class RuleScanner
 
     private ?array $cachedRules = null;
 
-    public function __construct(array $ruleDirectories = [], bool $withCache = false)
-    {
+    private bool $useCacheFile;
+    private ?string $cacheFile;
+
+    public function __construct(
+        array $ruleDirectories = [],
+        bool $useCacheFile = true
+    ) {
         $this->ruleDirectories = $ruleDirectories;
-        $this->withCache = $withCache;
+        $this->useCacheFile = $useCacheFile;
+        $this->cacheFile = config('roster-validation.cache_file');
     }
 
     public function scan(): array
     {
-        if ($this->withCache) {
-            return cache()->rememberForever('roster_validation_rules', fn(): array => $this->doScan());
+        if ($this->useCacheFile && $this->shouldUseCache()) {
+            return $this->loadFromCache();
         }
 
         return $this->doScan();
     }
+    private function shouldUseCache(): bool
+    {
+        if (!$this->cacheFile || !file_exists($this->cacheFile)) {
+            return false;
+        }
+
+        // En production, toujours utiliser le cache
+        if (app()->isProduction()) {
+            return true;
+        }
+
+        // En développement, vérifier si le cache est frais
+        $cacheGenerator = new RuleCacheGenerator($this);
+        return $cacheGenerator->isCacheFresh();
+    }
+
+    private function loadFromCache(): array
+    {
+        try {
+            $rules = require $this->cacheFile;
+
+            // Valider la structure du cache
+            if (!is_array($rules)) {
+                throw new \RuntimeException('Invalid cache file structure');
+            }
+
+            // Convertir les données en objets ValidationRule
+            $result = [];
+            foreach ($rules as $className => $data) {
+                $result[$className] = new Attributes\ValidationRule(
+                    priority: $data['priority'],
+                    entities: array_map(
+                        fn($e) => \Roster\Enums\EntityType::from($e),
+                        $data['entities']
+                    ),
+                    operations: array_map(
+                        fn($o) => \Roster\Enums\OperationType::from($o),
+                        $data['operations']
+                    )
+                );
+            }
+
+            return $result;
+        } catch (\Throwable $e) {
+            // Si le cache est corrompu, régénérer
+            Log::warning('Roster rule cache corrupted, regenerating', [
+                'file' => $this->cacheFile,
+                'error' => $e->getMessage()
+            ]);
+
+            return $this->regenerateCache();
+        }
+    }
+
+    private function regenerateCache(): array
+    {
+        $rules = $this->doScan();
+        $cacheGenerator = new RuleCacheGenerator($this);
+        $cacheGenerator->generate();
+
+        return $rules;
+    }
+
 
     private function doScan(): array
     {

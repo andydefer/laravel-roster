@@ -68,7 +68,14 @@
     },
     "scripts": {
         "post-autoload-dump": [
-            "@php ./vendor/bin/testbench package:discover --ansi"
+            "@php ./vendor/bin/testbench package:discover --ansi",
+            "@php artisan roster:cache-rules --force"
+        ],
+        "post-install-cmd": [
+            "@php artisan roster:cache-rules --force"
+        ],
+        "post-update-cmd": [
+            "@php artisan roster:cache-rules --force"
         ],
         "test": "vendor/bin/phpunit",
         "test-coverage": "vendor/bin/phpunit --coverage-html coverage"

@@ -1,11 +1,66 @@
 # Rector Refactoring Report
-*Generated: mar. 23 déc. 2025 23:26:49 WAT*
+*Generated: mer. 24 déc. 2025 05:29:33 WAT*
 
 
-11 files with changes
+15 files with changes
 =====================
 
-1) /home/andy-kani/pro/sites/packages/laravel-roster/src/DTOs/ScheduleData.php:4
+1) /home/andy-kani/pro/sites/packages/laravel-roster/src/Commands/CacheRulesCommand.php:18
+
+    ---------- begin diff ----------
+@@ @@
+
+     protected $description = 'Manage Roster validation rules cache';
+
+-    public function handle(RuleScanner $scanner): int
++    public function handle(RuleScanner $ruleScanner): int
+     {
+-        $generator = new RuleCacheGenerator($scanner);
++        $ruleCacheGenerator = new RuleCacheGenerator($ruleScanner);
+
+         if ($this->option('clear')) {
+-            return $this->clearCache($generator);
++            return $this->clearCache($ruleCacheGenerator);
+         }
+
+         if ($this->option('show')) {
+-            return $this->showCache($generator);
++            return $this->showCache($ruleCacheGenerator);
+         }
+
+-        return $this->generateCache($generator);
++        return $this->generateCache($ruleCacheGenerator);
+     }
+
+     private function generateCache(RuleCacheGenerator $generator): int
+@@ @@
+         if ($generator->generate()) {
+             $duration = round((microtime(true) - $start) * 1000, 2);
+             $this->info("✅ Cache generated successfully at: " . $generator->getCachePath());
+-            $this->info("⏱️  Duration: {$duration}ms");
++            $this->info(sprintf('⏱️  Duration: %sms', $duration));
+
+             // Afficher des stats
+             $this->showCacheStats($generator);
+@@ @@
+
+         while ($bytes >= 1024 && $i < count($units) - 1) {
+             $bytes /= 1024;
+-            $i++;
++            ++$i;
+         }
+
+         return round($bytes, 2) . ' ' . $units[$i];
+    ----------- end diff -----------
+
+Applied rules:
+ * EncapsedStringsToSprintfRector
+ * PostIncDecToPreIncDecRector
+ * RenameParamToMatchTypeRector
+ * RenameVariableToMatchNewTypeRector
+
+
+2) /home/andy-kani/pro/sites/packages/laravel-roster/src/DTOs/ScheduleData.php:4
 
     ---------- begin diff ----------
 @@ @@
@@ -41,7 +96,61 @@ Applied rules:
  * AddArrayFunctionClosureParamTypeRector
 
 
-2) /home/andy-kani/pro/sites/packages/laravel-roster/src/Repositories/ImpedimentRepository.php:7
+3) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Support/TestSchedulable.php:10
+
+    ---------- begin diff ----------
+@@ @@
+ class TestSchedulable extends Model
+ {
+     use HasRoster;
++
+     protected $table = 'test_schedulables';
+
+     public $timestamps = false;
+    ----------- end diff -----------
+
+Applied rules:
+ * NewlineBetweenClassLikeStmtsRector
+
+
+4) /home/andy-kani/pro/sites/packages/laravel-roster/src/Validation/Rules/ScheduleOverlapRule.php:39
+
+    ---------- begin diff ----------
+@@ @@
+
+             $currentEntity = $validationContext->getCurrentEntity();
+
+-
+-            if ($currentEntity) {
+-            }
+-
+             $excludeId = $currentEntity ? ($currentEntity->id ?? null) : null;
+
+
+@@ @@
+             // Vérifiez d'abord SANS exclusion pour voir ce qui existe
+             $allOverlapping = $scheduleRepository->findOverlappingSchedules($availabilityId, $start, $end);
+             if ($allOverlapping->count() > 0) {
+-                foreach ($allOverlapping as $schedule) {
+-                }
+             }
+
+             // Puis vérifiez AVEC exclusion
+@@ @@
+             if ($excludeId) {
+                 $overlappingExcludingSelf = $scheduleRepository->findOverlappingSchedules($availabilityId, $start, $end, $excludeId);
+                 if ($overlappingExcludingSelf->count() > 0) {
+-                    foreach ($overlappingExcludingSelf as $schedule) {
+-                    }
+                 }
+             }
+    ----------- end diff -----------
+
+Applied rules:
+ * RemoveDeadIfForeachForRector
+
+
+5) /home/andy-kani/pro/sites/packages/laravel-roster/src/Repositories/ImpedimentRepository.php:7
 
     ---------- begin diff ----------
 @@ @@
@@ -56,7 +165,7 @@ Applied rules:
 Applied rules:
 
 
-3) /home/andy-kani/pro/sites/packages/laravel-roster/src/Repositories/ScheduleRepository.php:7
+6) /home/andy-kani/pro/sites/packages/laravel-roster/src/Repositories/ScheduleRepository.php:7
 
     ---------- begin diff ----------
 @@ @@
@@ -96,7 +205,32 @@ Applied rules:
  * RemoveUnusedVariableAssignRector
 
 
-4) /home/andy-kani/pro/sites/packages/laravel-roster/src/Services/Core/AbstractService.php:120
+7) /home/andy-kani/pro/sites/packages/laravel-roster/src/RosterServiceProvider.php:4
+
+    ---------- begin diff ----------
+@@ @@
+
+ namespace Roster;
+
++use Roster\Commands\CacheRulesCommand;
+ use Illuminate\Database\Eloquent\Model;
+ use Illuminate\Filesystem\Filesystem;
+ use Illuminate\Support\ServiceProvider;
+@@ @@
+
+         if ($this->app->runningInConsole()) {
+             $this->commands([
+-                \Roster\Commands\CacheRulesCommand::class,
++                CacheRulesCommand::class,
+             ]);
+         }
+     }
+    ----------- end diff -----------
+
+Applied rules:
+
+
+8) /home/andy-kani/pro/sites/packages/laravel-roster/src/Services/Core/AbstractService.php:120
 
     ---------- begin diff ----------
 @@ @@
@@ -113,7 +247,7 @@ Applied rules:
  * RemoveUnusedVariableAssignRector
 
 
-5) /home/andy-kani/pro/sites/packages/laravel-roster/src/Services/ImpedimentService.php:168
+9) /home/andy-kani/pro/sites/packages/laravel-roster/src/Services/ImpedimentService.php:168
 
     ---------- begin diff ----------
 @@ @@
@@ -130,7 +264,7 @@ Applied rules:
  * NewlineAfterStatementRector
 
 
-6) /home/andy-kani/pro/sites/packages/laravel-roster/src/Services/ScheduleService.php:4
+10) /home/andy-kani/pro/sites/packages/laravel-roster/src/Services/ScheduleService.php:4
 
     ---------- begin diff ----------
 @@ @@
@@ -172,61 +306,194 @@ Applied rules:
  * RenameForeachValueVariableToMatchExprVariableRector
 
 
-7) /home/andy-kani/pro/sites/packages/laravel-roster/src/Validation/Rules/ScheduleOverlapRule.php:39
+11) /home/andy-kani/pro/sites/packages/laravel-roster/src/Validation/Cache/RuleCacheGenerator.php:5
 
     ---------- begin diff ----------
 @@ @@
 
-             $currentEntity = $validationContext->getCurrentEntity();
+ namespace Roster\Validation\Cache;
 
--
--            if ($currentEntity) {
--            }
--
-             $excludeId = $currentEntity ? ($currentEntity->id ?? null) : null;
++use Carbon\Carbon;
++use Roster\Enums\EntityType;
++use Roster\Enums\OperationType;
+ use Roster\Validation\RuleScanner;
+ use Roster\Validation\Attributes\ValidationRule;
+-use ReflectionClass;
 
-
-@@ @@
-             // Vérifiez d'abord SANS exclusion pour voir ce qui existe
-             $allOverlapping = $scheduleRepository->findOverlappingSchedules($availabilityId, $start, $end);
-             if ($allOverlapping->count() > 0) {
--                foreach ($allOverlapping as $schedule) {
--                }
-             }
-
-             // Puis vérifiez AVEC exclusion
-@@ @@
-             if ($excludeId) {
-                 $overlappingExcludingSelf = $scheduleRepository->findOverlappingSchedules($availabilityId, $start, $end, $excludeId);
-                 if ($overlappingExcludingSelf->count() > 0) {
--                    foreach ($overlappingExcludingSelf as $schedule) {
--                    }
-                 }
-             }
-    ----------- end diff -----------
-
-Applied rules:
- * RemoveDeadIfForeachForRector
-
-
-8) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Support/TestSchedulable.php:10
-
-    ---------- begin diff ----------
-@@ @@
- class TestSchedulable extends Model
+ class RuleCacheGenerator
  {
-     use HasRoster;
-+
-     protected $table = 'test_schedulables';
+@@ @@
 
-     public $timestamps = false;
+         // Vérifier si le fichier a été généré il y a moins de X heures
+         $maxAge = config('roster-validation.cache_max_age_hours', 24);
+-        return (time() - filemtime($this->cachePath)) < ($maxAge * 3600);
++        return (Carbon::now()
++            ->getTimestamp() - filemtime($this->cachePath)) < ($maxAge * 3600);
+     }
+
+     public function clear(): bool
+@@ @@
+
+     private function buildCacheFile(array $rules): string
+     {
+-        $timestamp = date('Y-m-d H:i:s');
++        $timestamp = Carbon::now()
++            ->format('Y-m-d H:i:s');
+         $rulesCount = count($rules);
+
+         $content = <<<PHP
+@@ @@
+             $content .= $this->buildRuleEntry($className, $attribute);
+         }
+
+-        $content .= "];\n";
+-
+-        return $content;
++        return $content . "];\n";
+     }
+
+-    private function buildRuleEntry(string $className, ValidationRule $attribute): string
++    private function buildRuleEntry(string $className, ValidationRule $validationRule): string
+     {
+-        $entities = array_map(fn($e) => $e->value, $attribute->entities);
+-        $operations = array_map(fn($o) => $o->value, $attribute->operations);
++        $entities = array_map(fn(EntityType $entityType) => $entityType->value, $validationRule->entities);
++        $operations = array_map(fn(OperationType $operationType) => $operationType->value, $validationRule->operations);
+
+         $indent = '    ';
+         $entry = $indent . "'" . addslashes($className) . "' => [\n";
+-        $entry .= $indent . $indent . "'priority' => " . $attribute->priority . ",\n";
+-        $entry .= $indent . $indent . "'entities' => [" . implode(', ', array_map(fn($e) => "'$e'", $entities)) . "],\n";
+-        $entry .= $indent . $indent . "'operations' => [" . implode(', ', array_map(fn($o) => "'$o'", $operations)) . "],\n";
++        $entry .= $indent . $indent . "'priority' => " . $validationRule->priority . ",\n";
++        $entry .= $indent . $indent . "'entities' => [" . implode(', ', array_map(fn(string $e): string => sprintf("'%s'", $e), $entities)) . "],\n";
++        $entry .= $indent . $indent . "'operations' => [" . implode(', ', array_map(fn(string $o): string => sprintf("'%s'", $o), $operations)) . "],\n";
+         $entry .= $indent . $indent . "'class' => '" . addslashes($className) . "',\n";
+-        $entry .= $indent . "],\n";
+
+-        return $entry;
++        return $entry . ($indent . "],\n");
+     }
+ }
     ----------- end diff -----------
 
 Applied rules:
+ * DateFuncCallToCarbonRector
+ * TimeFuncCallToCarbonRector
+ * SimplifyUselessVariableRector
+ * EncapsedStringsToSprintfRector
+ * RenameParamToMatchTypeRector
+ * AddArrowFunctionReturnTypeRector
+ * AddParamStringTypeFromSprintfUseRector
+ * AddArrayFunctionClosureParamTypeRector
+
+
+12) /home/andy-kani/pro/sites/packages/laravel-roster/src/Validation/RuleScanner.php:4
+
+    ---------- begin diff ----------
+@@ @@
+
+ namespace Roster\Validation;
+
++use RuntimeException;
++use Roster\Enums\EntityType;
++use Roster\Enums\OperationType;
+ use Illuminate\Support\Facades\Log;
+ use ReflectionClass;
+ use Throwable;
+@@ @@
+      */
+     private array $ruleDirectories;
+
+-    private bool $withCache;
+-
+     private ?array $cachedRules = null;
+
+     private bool $useCacheFile;
++
+     private ?string $cacheFile;
+
+     public function __construct(
+@@ @@
+
+         return $this->doScan();
+     }
++
+     private function shouldUseCache(): bool
+     {
+         if (!$this->cacheFile || !file_exists($this->cacheFile)) {
+@@ @@
+         }
+
+         // En développement, vérifier si le cache est frais
+-        $cacheGenerator = new RuleCacheGenerator($this);
+-        return $cacheGenerator->isCacheFresh();
++        $ruleCacheGenerator = new RuleCacheGenerator($this);
++        return $ruleCacheGenerator->isCacheFresh();
+     }
+
+     private function loadFromCache(): array
+@@ @@
+
+             // Valider la structure du cache
+             if (!is_array($rules)) {
+-                throw new \RuntimeException('Invalid cache file structure');
++                throw new RuntimeException('Invalid cache file structure');
+             }
+
+             // Convertir les données en objets ValidationRule
+             $result = [];
+             foreach ($rules as $className => $data) {
+-                $result[$className] = new Attributes\ValidationRule(
++                $result[$className] = new ValidationRule(
+                     priority: $data['priority'],
+                     entities: array_map(
+-                        fn($e) => \Roster\Enums\EntityType::from($e),
++                        fn($e) => EntityType::from($e),
+                         $data['entities']
+                     ),
+                     operations: array_map(
+-                        fn($o) => \Roster\Enums\OperationType::from($o),
++                        fn($o) => OperationType::from($o),
+                         $data['operations']
+                     )
+                 );
+@@ @@
+             }
+
+             return $result;
+-        } catch (\Throwable $e) {
++        } catch (Throwable $throwable) {
+             // Si le cache est corrompu, régénérer
+             Log::warning('Roster rule cache corrupted, regenerating', [
+                 'file' => $this->cacheFile,
+-                'error' => $e->getMessage()
++                'error' => $throwable->getMessage()
+             ]);
+
+             return $this->regenerateCache();
+@@ @@
+     private function regenerateCache(): array
+     {
+         $rules = $this->doScan();
+-        $cacheGenerator = new RuleCacheGenerator($this);
+-        $cacheGenerator->generate();
++        $ruleCacheGenerator = new RuleCacheGenerator($this);
++        $ruleCacheGenerator->generate();
+
+         return $rules;
+     }
+    ----------- end diff -----------
+
+Applied rules:
+ * CatchExceptionNameMatchingTypeRector
  * NewlineBetweenClassLikeStmtsRector
+ * RemoveUnusedPrivatePropertyRector
+ * RenameVariableToMatchNewTypeRector
+ * DocblockVarFromParamDocblockInConstructorRector
 
 
-9) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Models/ScheduleTest.php:4
+13) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Models/ScheduleTest.php:4
 
     ---------- begin diff ----------
 @@ @@
@@ -254,7 +521,7 @@ Applied rules:
  * NewlineBetweenClassLikeStmtsRector
 
 
-10) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Services/ImpedimentServiceTest.php:188
+14) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Services/ImpedimentServiceTest.php:188
 
     ---------- begin diff ----------
 @@ @@
@@ -271,7 +538,7 @@ Applied rules:
  * NewlineBetweenClassLikeStmtsRector
 
 
-11) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Services/ScheduleServiceTest.php:7
+15) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Services/ScheduleServiceTest.php:7
 
     ---------- begin diff ----------
 @@ @@
@@ -390,5 +657,5 @@ Applied rules:
  * AssertEqualsToSameRector
 
 
- [OK] 11 files would have been changed (dry-run) by Rector                                                              
+ [OK] 15 files would have been changed (dry-run) by Rector                                                              
 

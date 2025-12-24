@@ -11,9 +11,8 @@ use Roster\RosterServiceProvider;
 /**
  * Command to install the Roster package.
  *
- * This command publishes the package's resources (config, migrations, routes, views)
- * and runs migrations if necessary. It provides options to skip confirmation
- * and handles existing database tables gracefully.
+ * This command publishes the package's resources (config, migrations)
+ * and runs migrations if necessary.
  */
 class InstallRosterCommand extends Command
 {
@@ -80,8 +79,6 @@ class InstallRosterCommand extends Command
         $this->warn('📦 This will publish:');
         $this->line('   - Configuration (config/roster.php)');
         $this->line('   - Database migrations (roster_* tables)');
-        $this->line('   - Routes (routes/roster.php)');
-        $this->line('   - Views (resources/views/vendor/roster)');
     }
 
     /**
@@ -96,8 +93,6 @@ class InstallRosterCommand extends Command
             '--tag' => [
                 'roster-config',
                 'roster-migrations',
-                'roster-routes',
-                'roster-views',
             ],
             '--force' => $this->option('force'),
         ]);
@@ -131,6 +126,7 @@ class InstallRosterCommand extends Command
         $this->line('   1. Review config/roster.php for configuration options');
         $this->line('   2. Add the HasRoster trait to your models');
         $this->line('   3. Use the facades: Availability::for($model)->create([...])');
-        $this->line('   4. Check routes/roster.php for available API endpoints');
+        $this->info('🔄 Generating validation rules cache...');
+        $this->call('roster:cache-rules', ['--force' => true]);
     }
 }

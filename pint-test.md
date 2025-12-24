@@ -1,12 +1,14 @@
 # Pint Formatting Test Report
-*Generated: mar. 23 déc. 2025 23:26:47 WAT*
+*Generated: mer. 24 déc. 2025 05:29:30 WAT*
 
 
-  ..⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯...⨯.⨯⨯⨯..⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯..⨯....⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯.....⨯...⨯.⨯⨯.............⨯....⨯⨯⨯.........⨯......⨯⨯...⨯......⨯.....⨯....
+  ..⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯...⨯.⨯⨯⨯..⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯..⨯....⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯.....⨯...⨯⨯⨯⨯.............⨯....⨯⨯⨯.........⨯......⨯⨯...⨯......⨯.....⨯....
 
   ──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────── Laravel  
-    FAIL   ................................................................................................................................................ 142 files, 69 style issues  
+    FAIL   ................................................................................................................................................ 144 files, 72 style issues  
+  ⨯ config/roster-validation.php                                                                                                                                  no_extra_blank_lines  
   ⨯ config/roster.php                                                                                                                                             no_extra_blank_lines  
+  ⨯ src/Commands/CacheRulesCommand.php                        single_quote, blank_line_after_opening_tag, concat_space, not_operator_with_successor_space, blank_line_before_statement  
   ⨯ src/Commands/InstallRosterCommand.php                                                        unary_operator_spaces, not_operator_with_successor_space, blank_line_before_statement  
   ⨯ src/Contracts/Repository/AvailabilityRepositoryInterface.php                                                                                                          phpdoc_align  
   ⨯ src/Contracts/Repository/ImpedimentRepositoryInterface.php                                                                                                            phpdoc_align  
@@ -28,7 +30,7 @@
   ⨯ src/Repositories/AvailabilityRepository.php function_declaration, no_multiline_whitespace_around_double_arrow, trailing_comma_in_multiline, phpdoc_separation, not_operator_with_…  
   ⨯ src/Repositories/ImpedimentRepository.php                                                                                    no_unused_imports, no_extra_blank_lines, phpdoc_align  
   ⨯ src/Repositories/ScheduleRepository.php                                                                                                         no_extra_blank_lines, phpdoc_align  
-  ⨯ src/RosterServiceProvider.php                                                                                      class_attributes_separation, new_with_parentheses, concat_space  
+  ⨯ src/RosterServiceProvider.php                                                                                                                   new_with_parentheses, concat_space  
   ⨯ src/Services/AvailabilityService.php        function_declaration, trailing_comma_in_multiline, phpdoc_separation, not_operator_with_successor_space, ordered_imports, phpdoc_align  
   ⨯ src/Services/Core/AbstractAvailabilityValidatingService.php                                                                        not_operator_with_successor_space, phpdoc_align  
   ⨯ src/Services/Core/AbstractEntityScopingService.php class_attributes_separation, unary_operator_spaces, not_operator_with_successor_space, blank_line_before_statement, phpdoc_ali…  
@@ -43,9 +45,10 @@
   ⨯ src/Traits/DateRangeOverlapTrait.php                                                     unary_operator_spaces, phpdoc_separation, not_operator_with_successor_space, phpdoc_align  
   ⨯ src/Traits/FilterableTrait.php                                             concat_space, unary_operator_spaces, phpdoc_separation, not_operator_with_successor_space, phpdoc_align  
   ⨯ src/Validation/Attributes/ValidationRule.php                                                                                 braces_position, single_line_empty_body, phpdoc_align  
+  ⨯ src/Validation/Cache/RuleCacheGenerator.php function_declaration, blank_line_after_opening_tag, concat_space, no_unused_imports, not_operator_with_successor_space, blank_line_be…  
   ⨯ src/Validation/Context/ValidationContext.php                                                       function_declaration, not_operator_with_successor_space, binary_operator_spaces  
   ⨯ src/Validation/Exceptions/ValidationFailedException.php                                                                                              concat_space, ordered_imports  
-  ⨯ src/Validation/RuleScanner.php           new_with_parentheses, function_declaration, concat_space, not_operator_with_successor_space, blank_line_before_statement, ordered_imports  
+  ⨯ src/Validation/RuleScanner.php class_attributes_separation, new_with_parentheses, function_declaration, concat_space, trailing_comma_in_multiline, not_operator_with_successor_sp…  
   ⨯ src/Validation/Rules/AbstractRule.php                                                                                                                  blank_line_before_statement  
   ⨯ src/Validation/Rules/AvailabilityDateRangeRule.php                                                  single_quote, concat_space, not_operator_with_successor_space, ordered_imports  
   ⨯ src/Validation/Rules/AvailabilityDaysCoherenceRule.php                                             not_operator_with_successor_space, blank_line_before_statement, ordered_imports  

@@ -61,4 +61,20 @@ return [
     'availability_types' => [],
     'with_cache' => true,
 
+    'cache' => [
+        // Utiliser un fichier PHP au lieu du cache Laravel
+        'use_file_cache' => env('ROSTER_USE_FILE_CACHE', true),
+
+        // Chemin du fichier de cache
+        'cache_file' => storage_path('framework/cache/roster_rules.php'),
+
+        // Durée de validité du cache (en heures, seulement pour dev)
+        'cache_max_age_hours' => env('ROSTER_CACHE_MAX_AGE', 24),
+
+        // Toujours utiliser le cache en production
+        'always_cache_in_production' => true,
+    ],
+
+
+
 ];
