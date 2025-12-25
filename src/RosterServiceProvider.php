@@ -21,7 +21,6 @@ use Roster\Observers\EnforceDomainMutationObserver;
 use Roster\Repositories\AvailabilityRepository;
 use Roster\Repositories\ImpedimentRepository;
 use Roster\Repositories\ScheduleRepository;
-use Roster\Services\AvailabilityMergeService;
 use Roster\Services\AvailabilityService;
 use Roster\Services\Core\ResourcePublisherService;
 use Roster\Services\Core\SlotFinderService;
@@ -111,12 +110,10 @@ class RosterServiceProvider extends ServiceProvider
 
     protected function registerDomainServices(): void
     {
-        $this->app->singleton(AvailabilityMergeService::class);
         $this->app->singleton('roster.availability', function ($app): AvailabilityService {
             return new AvailabilityService(
                 validator: $app->make(ValidatorInterface::class),
                 availabilityRepository: $app->make(AvailabilityRepositoryInterface::class),
-                availabilityMergeService: $app->make(AvailabilityMergeService::class), // Nouveau
                 impedimentRepository: $app->make(ImpedimentRepositoryInterface::class),
                 scheduleRepository: $app->make(ScheduleRepositoryInterface::class),
             );

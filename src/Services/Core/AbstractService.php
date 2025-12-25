@@ -128,6 +128,40 @@ abstract class AbstractService implements EntityServiceInterface
     }
 
     /**
+     * Intercepte les appels dynamiques pour les méthodes "whereXyz".
+     *
+     * Exemple :
+     *   $service->whereType('consultation');
+     *   $service->whereReason('holiday');
+     *
+     * @param string $method Nom de la méthode appelée
+     * @param array $arguments Arguments passés à la méthode
+     * @return $this
+     *
+     * @throws \BadMethodCallException Si la méthode ne correspond pas au pattern whereXyz
+     */
+    public function __call(string $method, array $arguments): self
+    {
+        // Vérifie si la méthode commence par "where" (insensible à la casse)
+        if (str_starts_with($method, 'where') && !empty($arguments)) {
+            // Extrait le nom du champ à partir du nom de la méthode
+            // whereType => type, whereReason => reason
+            $field = lcfirst(substr($method, 5)); // enlève 'where' et passe la première lettre en minuscule
+
+            // Définit le filtre avec la valeur fournie
+            $this->setFilter($field, $arguments[0]);
+
+            return $this;
+        }
+
+        throw new \BadMethodCallException(sprintf(
+            'Call to undefined method %s::%s()',
+            static::class,
+            $method
+        ));
+    }
+
+    /**
      * Set the filters.
      *
      * @param array<string, mixed> $filters The filters to set

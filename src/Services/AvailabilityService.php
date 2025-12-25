@@ -25,19 +25,16 @@ use Roster\Validation\Exceptions\ValidationFailedException;
 
 class AvailabilityService extends AbstractValidatingService
 {
-    private AvailabilityMergeService $availabilityMergeService;
 
     protected ?Availability $pendingDeletion = null;
 
     public function __construct(
         ValidatorInterface $validator,
         AvailabilityRepositoryInterface $availabilityRepository,
-        AvailabilityMergeService $availabilityMergeService,
         ImpedimentRepositoryInterface $impedimentRepository,
         ScheduleRepositoryInterface $scheduleRepository,
     ) {
         parent::__construct($validator, $availabilityRepository, $impedimentRepository, $scheduleRepository);
-        $this->availabilityMergeService = $availabilityMergeService;
     }
 
     protected function createDTOFromArray(array $data, OperationType $operationType): AvailabilityData
@@ -58,8 +55,9 @@ class AvailabilityService extends AbstractValidatingService
      */
     public function create(array $data = [])
     {
-
         $this->requireContext();
+
+        // Ajouter les informations schedulable
         $this->data = array_merge($data, [
             'schedulable_id' => $this->schedulable->id,
             'schedulable_type' => get_class($this->schedulable)
@@ -68,11 +66,9 @@ class AvailabilityService extends AbstractValidatingService
         // Convertir en DTO
         $dto = $this->createDTOFromArray($data, OperationType::CREATE);
 
-
         // Ajouter les jours ajustés automatiquement si non fournis
         $adjustedDays = $dto->getAutoAdjustedDays();
         $dto = $dto->withDaysInfo($adjustedDays);
-
 
         // Valider le DTO
         $this->validate($dto->toArray(), OperationType::CREATE);
@@ -83,55 +79,10 @@ class AvailabilityService extends AbstractValidatingService
             get_class($this->schedulable)
         );
 
-
         // Mettre à jour les données avec le DTO complet
         $this->data = $dto->toArray();
 
-        // Récupérer les disponibilités existantes pour ce schedulable
-        $existingAvailabilities = $this->availabilityRepository->findForSchedulable(
-            $this->schedulable,
-            $this->data['type'] ?? null
-        );
-
-        // Essayer de fusionner avec les availabilités adjacentes
-        $mergedData = $this->data;
-        $mergedInto = null;
-
-        foreach ($existingAvailabilities as $existingAvailability) {
-            try {
-                $mergedData = $this->availabilityMergeService->mergeIfAdjacent(
-                    $mergedData,
-                    $existingAvailability,
-                    $this->schedulable
-                );
-
-                if (isset($mergedData['_merged_into'])) {
-                    $mergedInto = $mergedData['_merged_into'];
-                    break; // On fusionne avec une seule disponibilité existante
-                }
-            } catch (MergeConflictException $e) {
-                // Loguer le conflit mais continuer sans fusion
-                Log::warning('Merge conflict detected', [
-                    'existing_id' => $e->getExistingAvailabilityId(),
-                    'dependencies' => $e->getDependencies()
-                ]);
-                // Continuer sans fusionner avec cette disponibilité
-                continue;
-            }
-        }
-
-        // Si fusionnée, mettre à jour l'existante et ne pas créer de nouvelle
-        if ($mergedInto) {
-            // Récupérer l'entité mise à jour
-            $availability = $this->availabilityRepository->find($mergedInto);
-
-            // Nettoyer le cache
-            $this->clearEntityCache($availability->id);
-
-            return $availability;
-        }
-
-        // Sinon, créer une nouvelle entité
+        // Créer une nouvelle entité
         $availability = $this->executeCreate();
 
         // Nettoyer le cache si nécessaire
@@ -220,8 +171,9 @@ class AvailabilityService extends AbstractValidatingService
      */
     public function delete(int $id): bool
     {
+        $this->requireContext();
         $entity = $this->find($id);
-        if (!$entity instanceof RosterDataInterface) {
+        if (!$entity instanceof Availability) {
             throw ValidationFailedException::fromViolations(
                 [
                     'id' => sprintf(
@@ -283,16 +235,9 @@ class AvailabilityService extends AbstractValidatingService
 
     public function all(): Collection
     {
-        return $this->availabilityRepository->all($this->schedulable);
-    }
-
-
-
-    /**
-     * Get the merge service instance.
-     */
-    public function getMergeService(): AvailabilityMergeService
-    {
-        return $this->availabilityMergeService;
+        return $this->availabilityRepository->all(
+            schedulable: $this->schedulable,
+            filters: $this->filters
+        );
     }
 }

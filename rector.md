@@ -1,5 +1,5 @@
 # Rector Refactoring Report
-*Generated: jeu. 25 déc. 2025 16:13:49 WAT*
+*Generated: jeu. 25 déc. 2025 17:52:40 WAT*
 
 
 18 files with changes
@@ -72,11 +72,11 @@ Applied rules:
  * NewlineBetweenClassLikeStmtsRector
 
 
-5) /home/andy-kani/pro/sites/packages/laravel-roster/src/Repositories/AbstractRepository.php:108
+5) /home/andy-kani/pro/sites/packages/laravel-roster/src/Repositories/AbstractRepository.php:109
 
     ---------- begin diff ----------
 @@ @@
-     {
+
          $model = $this->getModel();
 
 -        $result = $model::query()
@@ -122,7 +122,17 @@ Applied rules:
 -use Illuminate\Support\Carbon;
  use Illuminate\Support\Collection;
  use Illuminate\Support\Facades\DB;
- use Illuminate\Support\Facades\Log;
+-use Illuminate\Support\Facades\Log;
+ use Roster\Contracts\Repository\AvailabilityRepositoryInterface;
+-use Roster\Contracts\RosterDataInterface;
+ use Roster\Contracts\Validation\ValidatorInterface;
+ use Roster\DTOs\AvailabilityData;
+ use Roster\Enums\EntityType;
+ use Roster\Enums\OperationType;
+-use Roster\Exceptions\MergeConflictException;
+ use Roster\Models\Availability;
+ use Roster\Services\Core\AbstractValidatingService;
+ use Roster\Validation\Exceptions\ValidationFailedException;
     ----------- end diff -----------
 
 Applied rules:
@@ -163,10 +173,14 @@ Applied rules:
 Applied rules:
 
 
-9) /home/andy-kani/pro/sites/packages/laravel-roster/src/Services/Core/AbstractService.php:7
+9) /home/andy-kani/pro/sites/packages/laravel-roster/src/Services/Core/AbstractService.php:4
 
     ---------- begin diff ----------
 @@ @@
+
+ namespace Roster\Services\Core;
+
++use BadMethodCallException;
  use LogicException;
  use Illuminate\Contracts\Pagination\LengthAwarePaginator;
  use Illuminate\Database\Eloquent\Model;
@@ -174,6 +188,34 @@ Applied rules:
  use Roster\Contracts\EntityServiceInterface;
  use Roster\Contracts\Repository\AvailabilityRepositoryInterface;
  use Roster\Contracts\Repository\ImpedimentRepositoryInterface;
+@@ @@
+      *   $service->whereReason('holiday');
+      *
+      * @param string $method Nom de la méthode appelée
+-     * @param array $arguments Arguments passés à la méthode
++     * @param array<int, mixed> $arguments Arguments passés à la méthode
+      * @return $this
+      *
+-     * @throws \BadMethodCallException Si la méthode ne correspond pas au pattern whereXyz
++     * @throws BadMethodCallException Si la méthode ne correspond pas au pattern whereXyz
+      */
+     public function __call(string $method, array $arguments): self
+     {
+         // Vérifie si la méthode commence par "where" (insensible à la casse)
+-        if (str_starts_with($method, 'where') && !empty($arguments)) {
++        if (str_starts_with($method, 'where') && $arguments !== []) {
+             // Extrait le nom du champ à partir du nom de la méthode
+             // whereType => type, whereReason => reason
+             $field = lcfirst(substr($method, 5)); // enlève 'where' et passe la première lettre en minuscule
+@@ @@
+             return $this;
+         }
+
+-        throw new \BadMethodCallException(sprintf(
++        throw new BadMethodCallException(sprintf(
+             'Call to undefined method %s::%s()',
+             static::class,
+             $method
 @@ @@
          return $this;
      }
@@ -186,6 +228,8 @@ Applied rules:
     ----------- end diff -----------
 
 Applied rules:
+ * SimplifyEmptyCheckOnEmptyArrayRector
+ * AddParamArrayDocblockFromDimFetchAccessRector
  * AddParamFromDimFetchKeyUseRector
 
 
@@ -303,9 +347,17 @@ Applied rules:
  * AssertEmptyNullableObjectToAssertInstanceofRector
 
 
-15) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Services/AvailabilityServiceTest.php:298
+15) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Services/AvailabilityServiceTest.php:6
 
     ---------- begin diff ----------
+@@ @@
+
+ use Illuminate\Foundation\Testing\RefreshDatabase;
+ use Roster\Facades\Availability as AvailabilityFacade;
+-use Roster\Facades\Schedule as ScheduleFacade;
+ use Roster\Models\Availability;
+ use Roster\Validation\Exceptions\ValidationFailedException;
+ use Tests\Support\TestSchedulable;
 @@ @@
          $result = AvailabilityFacade::for($this->testSchedulable)->find($availabilityId);
 

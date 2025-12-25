@@ -106,6 +106,7 @@ abstract class AbstractRepository implements RepositoryInterface
      */
     final public function all(Model $schedulable, ?Model $owner = null, array $filters = []): Collection
     {
+
         $model = $this->getModel();
 
         $result = $model::query()

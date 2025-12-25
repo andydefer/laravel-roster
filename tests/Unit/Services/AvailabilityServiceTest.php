@@ -77,113 +77,6 @@ final class AvailabilityServiceTest extends TestCase
         );
     }
 
-    public function test_merges_adjacent_availabilities_during_creation(): void
-    {
-        // Arrange - Créer une disponibilité existante via la Facade
-        $existingAvailability = AvailabilityFacade::for($this->testSchedulable)->create([
-            'type' => 'consultation',
-            'daily_start' => '09:00:00',
-            'daily_end' => '12:00:00',
-            'days' => ['monday', 'wednesday'],
-            'validity_start' => '2038-07-01',
-            'validity_end' => '2038-07-31',
-        ]);
-
-
-        $newData = [
-            'type' => 'consultation',
-            'daily_start' => '12:00:00',
-            'daily_end' => '17:00:00',
-            'days' => ['monday', 'wednesday', 'friday'],
-            'validity_start' => '2038-07-01',
-            'validity_end' => '2038-07-31',
-        ];
-
-        // Act
-        $availability = AvailabilityFacade::for($this->testSchedulable)->create($newData);
-        dd("hello");
-
-
-        // Assert - La nouvelle disponibilité doit être fusionnée
-        $this->assertDatabaseMissing('roster_availabilities', [
-            'id' => $existingAvailability->id,
-        ]);
-
-        $this->assertDatabaseHas('roster_availabilities', [
-            'id' => $availability->id,
-            'daily_start' => '09:00:00',
-            'daily_end' => '17:00:00',
-            'days' => json_encode(['monday', 'wednesday', 'friday']),
-        ]);
-    }
-
-    public function test_does_not_merge_availabilities_with_different_type_or_schedulable(): void
-    {
-        // Arrange - Créer une disponibilité existante
-        $existingAvailability = AvailabilityFacade::for($this->testSchedulable)->create([
-            'type' => 'consultation',
-            'daily_start' => '09:00:00',
-            'daily_end' => '12:00:00',
-            'days' => ['monday', 'wednesday'],
-            'validity_start' => '2038-07-01',
-            'validity_end' => '2038-07-31',
-        ]);
-
-        // Type différent (même schedulable)
-        $differentTypeData = [
-            'type' => 'emergency',
-            'daily_start' => '12:00:00',
-            'daily_end' => '17:00:00',
-            'days' => ['monday', 'wednesday'],
-            'validity_start' => '2038-07-01',
-            'validity_end' => '2038-07-31',
-        ];
-
-        // Schedulable différent
-        $otherSchedulable = TestSchedulable::create();
-
-        $differentSchedulableData = [
-            'type' => 'consultation',
-            'daily_start' => '12:00:00',
-            'daily_end' => '17:00:00',
-            'days' => ['monday', 'wednesday'],
-            'validity_start' => '2038-07-01',
-            'validity_end' => '2038-07-31',
-        ];
-
-        // Act
-        // 1. Créer avec type différent (même schedulable)
-        $availability1 = AvailabilityFacade::for($this->testSchedulable)->create($differentTypeData);
-
-        // 2. Créer avec schedulable différent
-        $availability2 = AvailabilityFacade::for($otherSchedulable)->create($differentSchedulableData);
-
-        // Assert - Aucune fusion avec l'existante
-        $this->assertDatabaseHas('roster_availabilities', [
-            'id' => $existingAvailability->id,
-            'daily_start' => '09:00:00',
-            'daily_end' => '12:00:00',
-            'type' => 'consultation',
-            'schedulable_id' => $this->testSchedulable->id,
-        ]);
-
-        $this->assertDatabaseHas('roster_availabilities', [
-            'id' => $availability1->id,
-            'daily_start' => '12:00:00',
-            'daily_end' => '17:00:00',
-            'type' => 'emergency',
-            'schedulable_id' => $this->testSchedulable->id,
-        ]);
-
-        $this->assertDatabaseHas('roster_availabilities', [
-            'id' => $availability2->id,
-            'daily_start' => '12:00:00',
-            'daily_end' => '17:00:00',
-            'type' => 'consultation',
-            'schedulable_id' => $otherSchedulable->id,
-        ]);
-    }
-
     public function test_can_update_an_existing_availability(): void
     {
         // Arrange - Créer une disponibilité
@@ -600,12 +493,9 @@ final class AvailabilityServiceTest extends TestCase
 
         // Act - Filtrer par availability_id
         $result = AvailabilityFacade::for($this->testSchedulable)
-            ->setFilter('availability_id', $availability->id)
-            ->all();
-
+            ->find($availability->id);
         // Assert
-        $this->assertCount(1, $result);
-        $this->assertEquals($availability->id, $result->first()->id);
+        $this->assertEquals($availability->id, $result->id);
     }
 
     public function test_validate_invalid_days_format(): void
@@ -745,93 +635,6 @@ final class AvailabilityServiceTest extends TestCase
         $this->assertEquals('anything', $availability->type);
     }
 
-    public function test_creates_new_availability_when_merge_conflict_detected(): void
-    {
-        // Arrange - Créer une disponibilité existante avec un schedule
-        $existingAvailability = AvailabilityFacade::for($this->testSchedulable)->create([
-            'type' => 'consultation',
-            'daily_start' => '09:00:00',
-            'daily_end' => '12:00:00',
-            'days' => ['monday', 'wednesday'],
-            'validity_start' => '2038-07-01',
-            'validity_end' => '2038-07-31',
-        ]);
-
-        // Créer un schedule dépendant
-        ScheduleFacade::for($this->testSchedulable)
-            ->owner($existingAvailability)
-            ->create([
-                'title' => 'Existing Schedule',
-                'start_datetime' => '2038-07-01 10:00:00',
-                'end_datetime' => '2038-07-01 11:00:00',
-            ]);
-
-        $newData = [
-            'type' => 'consultation',
-            'daily_start' => '12:00:00',
-            'daily_end' => '17:00:00',
-            'days' => ['monday', 'wednesday'],
-            'validity_start' => '2038-07-01',
-            'validity_end' => '2038-07-31',
-        ];
-
-        // Act - Devrait créer une nouvelle availability
-        $availability = AvailabilityFacade::for($this->testSchedulable)->create($newData);
-
-        // Assert - Les deux doivent exister
-        $this->assertDatabaseHas('roster_availabilities', [
-            'id' => $existingAvailability->id,
-            'daily_start' => '09:00:00',
-            'daily_end' => '12:00:00',
-        ]);
-
-        $this->assertDatabaseHas('roster_availabilities', [
-            'id' => $availability->id,
-            'daily_start' => '12:00:00',
-            'daily_end' => '17:00:00',
-        ]);
-    }
-
-    public function test_merges_safely_when_no_dependencies(): void
-    {
-        // Arrange - Créer une disponibilité existante sans dépendances
-        $existingAvailability = AvailabilityFacade::for($this->testSchedulable)->create([
-            'type' => 'consultation',
-            'daily_start' => '09:00:00',
-            'daily_end' => '12:00:00',
-            'days' => ['monday', 'wednesday'],
-            'validity_start' => '2038-07-01',
-            'validity_end' => '2038-07-31',
-        ]);
-
-        $newData = [
-            'type' => 'consultation',
-            'daily_start' => '12:00:00',
-            'daily_end' => '17:00:00',
-            'days' => ['monday', 'wednesday', 'friday'],
-            'validity_start' => '2038-07-01',
-            'validity_end' => '2038-07-31',
-        ];
-
-        // Act
-        $availability = AvailabilityFacade::for($this->testSchedulable)->create($newData);
-
-        // Assert - L'existante doit être mise à jour
-        $this->assertDatabaseMissing('roster_availabilities', [
-            'daily_start' => '12:00:00',
-            'daily_end' => '17:00:00',
-            'schedulable_id' => $this->testSchedulable->id,
-        ]);
-
-        $existingAvailability->refresh();
-        $this->assertEquals('09:00:00', $existingAvailability->daily_start->format('H:i:s'));
-        $this->assertEquals('17:00:00', $existingAvailability->daily_end->format('H:i:s'));
-        $this->assertEquals(['monday', 'wednesday', 'friday'], $existingAvailability->days);
-
-        // La "nouvelle" entité retournée devrait être l'existante mise à jour
-        $this->assertEquals($existingAvailability->id, $availability->id);
-    }
-
     public function test_update_does_not_trigger_merge(): void
     {
         // Arrange - Créer deux availabilities
@@ -875,43 +678,5 @@ final class AvailabilityServiceTest extends TestCase
             'id' => $availability2->id,
             'daily_start' => '12:00:00',
         ]);
-    }
-
-    public function test_merge_rule_prevents_dangerous_merge(): void
-    {
-        // Arrange - Créer une disponibilité avec dépendances
-        $existingAvailability = AvailabilityFacade::for($this->testSchedulable)->create([
-            'type' => 'consultation',
-            'daily_start' => '09:00:00',
-            'daily_end' => '12:00:00',
-            'days' => ['monday'],
-            'validity_start' => '2038-07-01',
-            'validity_end' => '2038-07-31',
-        ]);
-
-        // Créer un schedule dépendant
-        ScheduleFacade::for($this->testSchedulable)
-            ->owner($existingAvailability)
-            ->create([
-                'title' => 'Dependent Schedule',
-                'start_datetime' => '2038-07-01 10:00:00',
-                'end_datetime' => '2038-07-01 11:00:00',
-            ]);
-
-        $newData = [
-            'type' => 'consultation',
-            'daily_start' => '12:00:00',
-            'daily_end' => '17:00:00',
-            'days' => ['monday'],
-            'validity_start' => '2038-07-01',
-            'validity_end' => '2038-07-31',
-        ];
-
-        // Expect exception
-        $this->expectException(ValidationFailedException::class);
-        $this->expectExceptionMessageMatches('/Cannot merge/');
-
-        // Act
-        AvailabilityFacade::for($this->testSchedulable)->create($newData);
     }
 }

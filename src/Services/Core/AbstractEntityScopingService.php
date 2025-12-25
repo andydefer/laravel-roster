@@ -23,29 +23,6 @@ abstract class AbstractEntityScopingService extends AbstractService
     protected mixed $currentEntity = null;
 
 
-    /**
-     * Filter by entity type.
-     *
-     * @param string $type Entity type to filter by
-     * @return $this
-     */
-    final public function whereType(string $type): static
-    {
-        $this->filters['type'] = $type;
-        return $this;
-    }
-
-    /**
-     * Clear all filters.
-     *
-     * @return $this
-     */
-    final public function resetFilters(): static
-    {
-        $this->filters = [];
-        return $this;
-    }
-
 
 
     /**
