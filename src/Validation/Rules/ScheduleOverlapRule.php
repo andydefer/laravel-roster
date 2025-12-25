@@ -15,7 +15,7 @@ use Roster\Enums\OperationType;
 
 #[ValidationRule(
     priority: 80,
-    entities: [EntityType::SCHEDULE],
+    entities: [EntityType::SCHEDULE, EntityType::IMPEDIMENT],
     operations: [OperationType::CREATE, OperationType::UPDATE]
 )]
 class ScheduleOverlapRule extends AbstractRule
@@ -39,10 +39,6 @@ class ScheduleOverlapRule extends AbstractRule
 
             $currentEntity = $validationContext->getCurrentEntity();
 
-
-            if ($currentEntity) {
-            }
-
             $excludeId = $currentEntity ? ($currentEntity->id ?? null) : null;
 
 
@@ -53,16 +49,12 @@ class ScheduleOverlapRule extends AbstractRule
             // Vérifiez d'abord SANS exclusion pour voir ce qui existe
             $allOverlapping = $scheduleRepository->findOverlappingSchedules($availabilityId, $start, $end);
             if ($allOverlapping->count() > 0) {
-                foreach ($allOverlapping as $schedule) {
-                }
             }
 
             // Puis vérifiez AVEC exclusion
             if ($excludeId) {
                 $overlappingExcludingSelf = $scheduleRepository->findOverlappingSchedules($availabilityId, $start, $end, $excludeId);
                 if ($overlappingExcludingSelf->count() > 0) {
-                    foreach ($overlappingExcludingSelf as $schedule) {
-                    }
                 }
             }
 

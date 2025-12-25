@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace Roster\Validation;
 
+use RuntimeException;
+use Roster\Enums\EntityType;
+use Roster\Enums\OperationType;
 use Illuminate\Support\Facades\Log;
 use ReflectionClass;
 use Throwable;
@@ -19,11 +22,10 @@ class RuleScanner
      */
     private array $ruleDirectories;
 
-    private bool $withCache;
-
     private ?array $cachedRules = null;
 
     private bool $useCacheFile;
+
     private ?string $cacheFile;
 
     public function __construct(
@@ -43,6 +45,7 @@ class RuleScanner
 
         return $this->doScan();
     }
+
     private function shouldUseCache(): bool
     {
         if (!$this->cacheFile || !file_exists($this->cacheFile)) {
@@ -55,8 +58,8 @@ class RuleScanner
         }
 
         // En développement, vérifier si le cache est frais
-        $cacheGenerator = new RuleCacheGenerator($this);
-        return $cacheGenerator->isCacheFresh();
+        $ruleCacheGenerator = new RuleCacheGenerator($this);
+        return $ruleCacheGenerator->isCacheFresh();
     }
 
     private function loadFromCache(): array
@@ -66,31 +69,31 @@ class RuleScanner
 
             // Valider la structure du cache
             if (!is_array($rules)) {
-                throw new \RuntimeException('Invalid cache file structure');
+                throw new RuntimeException('Invalid cache file structure');
             }
 
             // Convertir les données en objets ValidationRule
             $result = [];
             foreach ($rules as $className => $data) {
-                $result[$className] = new Attributes\ValidationRule(
+                $result[$className] = new ValidationRule(
                     priority: $data['priority'],
                     entities: array_map(
-                        fn($e) => \Roster\Enums\EntityType::from($e),
+                        fn($e) => EntityType::from($e),
                         $data['entities']
                     ),
                     operations: array_map(
-                        fn($o) => \Roster\Enums\OperationType::from($o),
+                        fn($o) => OperationType::from($o),
                         $data['operations']
                     )
                 );
             }
 
             return $result;
-        } catch (\Throwable $e) {
+        } catch (Throwable $throwable) {
             // Si le cache est corrompu, régénérer
             Log::warning('Roster rule cache corrupted, regenerating', [
                 'file' => $this->cacheFile,
-                'error' => $e->getMessage()
+                'error' => $throwable->getMessage()
             ]);
 
             return $this->regenerateCache();
@@ -100,8 +103,8 @@ class RuleScanner
     private function regenerateCache(): array
     {
         $rules = $this->doScan();
-        $cacheGenerator = new RuleCacheGenerator($this);
-        $cacheGenerator->generate();
+        $ruleCacheGenerator = new RuleCacheGenerator($this);
+        $ruleCacheGenerator->generate();
 
         return $rules;
     }

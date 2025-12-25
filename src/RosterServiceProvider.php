@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Roster;
 
+use Roster\Commands\CacheRulesCommand;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Filesystem\Filesystem;
 use Illuminate\Support\ServiceProvider;
@@ -11,18 +12,17 @@ use Roster\Commands\InstallRosterCommand;
 use Roster\Contracts\Repository\AvailabilityRepositoryInterface;
 use Roster\Contracts\Repository\ImpedimentRepositoryInterface;
 use Roster\Contracts\Repository\ScheduleRepositoryInterface;
-use Roster\Contracts\Services\AvailabilityCheckerInterface;
 use Roster\Contracts\Services\SlotFinderInterface;
 use Roster\Contracts\Validation\ValidatorInterface;
 use Roster\Models\Availability;
 use Roster\Models\Impediment;
 use Roster\Models\Schedule;
-use Roster\Observers\SchedulableObserver;
+use Roster\Observers\EnforceDomainMutationObserver;
 use Roster\Repositories\AvailabilityRepository;
 use Roster\Repositories\ImpedimentRepository;
 use Roster\Repositories\ScheduleRepository;
+use Roster\Services\AvailabilityMergeService;
 use Roster\Services\AvailabilityService;
-use Roster\Services\Core\AvailabilityChecker;
 use Roster\Services\Core\ResourcePublisherService;
 use Roster\Services\Core\SlotFinderService;
 use Roster\Services\ImpedimentService;
@@ -40,9 +40,9 @@ class RosterServiceProvider extends ServiceProvider
             $this->commands([InstallRosterCommand::class]);
         }
 
-        Availability::observe(SchedulableObserver::class);
-        Schedule::observe(SchedulableObserver::class);
-        Impediment::observe(SchedulableObserver::class);
+        Availability::observe(EnforceDomainMutationObserver::class);
+        Schedule::observe(EnforceDomainMutationObserver::class);
+        Impediment::observe(EnforceDomainMutationObserver::class);
 
         Model::automaticallyEagerLoadRelationships();
     }
@@ -60,7 +60,7 @@ class RosterServiceProvider extends ServiceProvider
 
         if ($this->app->runningInConsole()) {
             $this->commands([
-                \Roster\Commands\CacheRulesCommand::class,
+                CacheRulesCommand::class,
             ]);
         }
     }
@@ -75,7 +75,7 @@ class RosterServiceProvider extends ServiceProvider
 
     protected function registerCoreServices(): void
     {
-        $this->app->bind(AvailabilityCheckerInterface::class, AvailabilityChecker::class);
+
         $this->app->bind(SlotFinderInterface::class, SlotFinderService::class);
     }
 
@@ -111,10 +111,14 @@ class RosterServiceProvider extends ServiceProvider
 
     protected function registerDomainServices(): void
     {
+        $this->app->singleton(AvailabilityMergeService::class);
         $this->app->singleton('roster.availability', function ($app): AvailabilityService {
             return new AvailabilityService(
                 validator: $app->make(ValidatorInterface::class),
-                availabilityRepository: $app->make(AvailabilityRepositoryInterface::class)
+                availabilityRepository: $app->make(AvailabilityRepositoryInterface::class),
+                availabilityMergeService: $app->make(AvailabilityMergeService::class), // Nouveau
+                impedimentRepository: $app->make(ImpedimentRepositoryInterface::class),
+                scheduleRepository: $app->make(ScheduleRepositoryInterface::class),
             );
         });
 
@@ -133,7 +137,6 @@ class RosterServiceProvider extends ServiceProvider
                 availabilityRepository: $app->make(AvailabilityRepositoryInterface::class),
                 impedimentRepository: $app->make(ImpedimentRepositoryInterface::class),
                 scheduleRepository: $app->make(ScheduleRepositoryInterface::class),
-                slotFinder: $app->make(SlotFinderInterface::class)
             );
         });
 

@@ -11,7 +11,6 @@ use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Roster\Contracts\Repository\AvailabilityRepositoryInterface;
 use Roster\Models\Availability;
-use Roster\Traits\DateRangeOverlapTrait;
 
 /**
  * Repository for managing Availability entities.
@@ -21,60 +20,6 @@ use Roster\Traits\DateRangeOverlapTrait;
  */
 class AvailabilityRepository extends AbstractRepository implements AvailabilityRepositoryInterface
 {
-    use DateRangeOverlapTrait;
-
-    /**
-     * {@inheritdoc}
-     */
-    public function create(array $data): Availability
-    {
-        return Availability::create($data);
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function update(int $id, array $data): bool
-    {
-        $availability = $this->find($id);
-
-        return match (true) {
-            $availability instanceof Availability => $availability->update($data),
-            default => false,
-        };
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function delete(int $id): bool
-    {
-        $availability = $this->find($id);
-
-        return match (true) {
-            $availability instanceof Availability => $availability->delete(),
-            default => false,
-        };
-    }
-
-    /**
-     * Delete multiple availabilities by their IDs.
-     *
-     * @param array<int> $ids Array of availability IDs to delete
-     * @return bool True if any records were deleted
-     */
-    public function deleteMultiple(array $ids): bool
-    {
-        return Availability::whereIn('id', $ids)->delete() > 0;
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function find(int $id): ?Availability
-    {
-        return Availability::find($id);
-    }
 
     /**
      * Find availabilities for a specific schedulable entity.
@@ -92,6 +37,43 @@ class AvailabilityRepository extends AbstractRepository implements AvailabilityR
         }
 
         return $builder->orderBy('daily_start')->get();
+    }
+
+    /**
+     * Determines whether two date ranges overlap.
+     *
+     * Null start or end dates are treated as open-ended ranges:
+     * - Null start becomes year 0001-01-01
+     * - Null end becomes year 9999-12-31
+     *
+     * @param Carbon|null $existingStartDate Start of the existing range
+     * @param Carbon|null $existingEndDate End of the existing range
+     * @param Carbon|null $newStartDate Start of the new range
+     * @param Carbon|null $newEndDate End of the new range
+     *
+     * @return bool True if ranges overlap, false otherwise
+     */
+    public function dateRangesOverlap(
+        ?Carbon $existingStartDate,
+        ?Carbon $existingEndDate,
+        ?Carbon $newStartDate,
+        ?Carbon $newEndDate
+    ): bool {
+        if (! $existingStartDate && ! $existingEndDate) {
+            return true;
+        }
+
+        if (! $newStartDate && ! $newEndDate) {
+            return true;
+        }
+
+        $effectiveExistingStart = $existingStartDate ?? Carbon::create(1, 1, 1);
+        $effectiveExistingEnd = $existingEndDate ?? Carbon::create(9999, 12, 31);
+        $effectiveNewStart = $newStartDate ?? Carbon::create(1, 1, 1);
+        $effectiveNewEnd = $newEndDate ?? Carbon::create(9999, 12, 31);
+
+        return $effectiveNewStart->lte($effectiveExistingEnd) &&
+            $effectiveNewEnd->gte($effectiveExistingStart);
     }
 
     /**
@@ -182,7 +164,7 @@ class AvailabilityRepository extends AbstractRepository implements AvailabilityR
      * @return Availability|null The matching availability or null
      * @throws InvalidArgumentException If the time range is invalid
      */
-    public function findForTimeSlot(
+    public function getAvailabilityForTimeSlot(
         Model $model,
         Carbon $start,
         Carbon $end,
@@ -232,65 +214,6 @@ class AvailabilityRepository extends AbstractRepository implements AvailabilityR
     }
 
     /**
-     * {@inheritdoc}
-     */
-    public function getAll(): Collection
-    {
-        return Availability::query()
-            ->orderBy('daily_start')
-            ->get();
-    }
-
-    /**
-     * Get all availabilities for a schedulable entity.
-     *
-     * @param Model $model The schedulable entity
-     * @param string|null $type Optional availability type filter
-     * @param string|null $day Optional day filter
-     * @return Collection<int, Availability> Collection of availabilities
-     */
-    public function getAllForSchedulable(
-        Model $model,
-        ?string $type = null,
-        ?string $day = null
-    ): Collection {
-        $builder = $this->buildBaseQuery($model)
-            ->with(['schedules', 'impediments']);
-
-        if ($type) {
-            $builder->where('type', $type);
-        }
-
-        if ($day) {
-            $builder->whereJsonContains('days', strtolower($day));
-        }
-
-        return $builder->orderBy('daily_start')->get();
-    }
-
-    /**
-     * Check if schedulable is available at specific datetime.
-     *
-     * @param Model $model The schedulable entity
-     * @param Carbon $datetime The datetime to check
-     * @return bool True if available at the given datetime
-     */
-    public function isAvailableAt(Model $model, Carbon $datetime): bool
-    {
-        $dayOfWeek = strtolower($datetime->englishDayOfWeek);
-        $time = $datetime->format('H:i:s');
-
-        $builder = $this->buildBaseQuery($model)
-            ->whereJsonContains('days', $dayOfWeek)
-            ->where('daily_start', '<=', $time)
-            ->where('daily_end', '>=', $time);
-
-        $this->applyDateFilters($builder, $datetime);
-
-        return $builder->exists();
-    }
-
-    /**
      * Find overlapping availabilities.
      *
      * @param Model $model The schedulable entity
@@ -325,75 +248,6 @@ class AvailabilityRepository extends AbstractRepository implements AvailabilityR
         $overlappingAvailabilities = $builder->get();
 
         return $overlappingAvailabilities;
-    }
-
-    /**
-     * Check if time ranges overlap.
-     *
-     * @param Carbon $existingStart Existing start time
-     * @param Carbon $existingEnd Existing end time
-     * @param Carbon $newStart New start time
-     * @param Carbon $newEnd New end time
-     * @return bool True if time ranges overlap
-     */
-    public function doTimeRangesOverlap(
-        Carbon $existingStart,
-        Carbon $existingEnd,
-        Carbon $newStart,
-        Carbon $newEnd
-    ): bool {
-        return $newStart->lt($existingEnd) && $newEnd->gt($existingStart);
-    }
-
-    /**
-     * Find related availabilities based on search criteria.
-     *
-     * @param Model $model The schedulable entity
-     * @param array<string, mixed> $data Search criteria
-     * @return Collection<int, Availability> Collection of related availabilities
-     */
-    public function findByType(Model $model, array $data): Collection
-    {
-        $type = $data['type'] ?? null;
-
-        $builder = $this->buildBaseQuery($model);
-
-        if ($type !== null) {
-            $builder->where('type', $type);
-        }
-
-        /** @var Collection<int, Availability> $availabilities */
-        $availabilities = $builder->get();
-
-        return $availabilities;
-    }
-
-    /**
-     * Build filtered query for availabilities.
-     *
-     * @param Model $model The schedulable entity
-     * @param array<string, mixed> $filters Filters to apply
-     * @return Builder Eloquent query builder
-     */
-    public function buildQueryWithFilters(Model $model, array $filters = []): Builder
-    {
-        $builder = $this->buildBaseQuery($model);
-
-        match (true) {
-            isset($filters['type']) && isset($filters['day']) =>
-            $builder->where('type', $filters['type'])
-                ->whereJsonContains('days', strtolower($filters['day'])),
-
-            isset($filters['type']) =>
-            $builder->where('type', $filters['type']),
-
-            isset($filters['day']) =>
-            $builder->whereJsonContains('days', strtolower($filters['day'])),
-
-            default => null,
-        };
-
-        return $builder;
     }
 
     /**
@@ -435,20 +289,6 @@ class AvailabilityRepository extends AbstractRepository implements AvailabilityR
         $availabilities = $this->getForDateRange($model, $start, $end, $type);
 
         return $availabilities->load(['schedules', 'impediments']);
-    }
-
-    /**
-     * Filter availabilities for a specific date.
-     *
-     * @param Collection<int, Availability> $availabilities Collection of availabilities
-     * @param Carbon $date Date to filter for
-     * @return Collection<int, Availability> Filtered availabilities
-     */
-    public function filterAvailabilitiesForDate(Collection $availabilities, Carbon $date): Collection
-    {
-        return $availabilities->filter(
-            fn(Availability $availability): bool => $this->isAvailableOnDate($availability, $date)
-        );
     }
 
     /**

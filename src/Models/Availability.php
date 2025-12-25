@@ -50,13 +50,12 @@ class Availability extends Model
      * @var array<string, string>
      */
     protected $casts = [
-        'daily_start' => 'datetime:H:i',
-        'daily_end' => 'datetime:H:i',
-        'validity_start' => 'date',
-        'validity_end' => 'date',
+        'daily_start' => 'datetime:h:i:s',
+        'daily_end' => 'datetime:h:i:s',
+        'validity_start' => 'datetime',  // Changé de 'date' à 'datetime'
+        'validity_end' => 'datetime',     // Changé de 'date' à 'datetime'
         'days' => 'array'
     ];
-
     /**
      * Get the schedulable resource that owns this availability.
      */

@@ -4,14 +4,13 @@ declare(strict_types=1);
 
 namespace Roster\Services;
 
-use Roster\Models\Impediment;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Roster\Contracts\Repository\AvailabilityRepositoryInterface;
 use Roster\Contracts\Repository\ImpedimentRepositoryInterface;
 use Roster\Contracts\Repository\ScheduleRepositoryInterface;
-use Roster\Contracts\Validation\ValidatorInterface;
 use Roster\DTOs\ScheduleData;
 use Roster\Enums\EntityType;
 use Roster\Enums\OperationType;
@@ -25,23 +24,6 @@ use Roster\Validation\Exceptions\ValidationFailedException;
  */
 class ScheduleService extends AbstractAvailabilityValidatingService
 {
-    private AvailabilityRepositoryInterface $availabilityRepository;
-
-    private ImpedimentRepositoryInterface $impedimentRepository;
-
-    private ScheduleRepositoryInterface $scheduleRepository;
-
-    public function __construct(
-        ValidatorInterface $validator,
-        AvailabilityRepositoryInterface $availabilityRepository,
-        ImpedimentRepositoryInterface $impedimentRepository,
-        ScheduleRepositoryInterface $scheduleRepository,
-    ) {
-        parent::__construct($validator);
-        $this->availabilityRepository = $availabilityRepository;
-        $this->impedimentRepository = $impedimentRepository;
-        $this->scheduleRepository = $scheduleRepository;
-    }
 
     /**
      * {@inheritDoc}
@@ -66,13 +48,15 @@ class ScheduleService extends AbstractAvailabilityValidatingService
      * @param array $data Entity data
      * @return Schedule Created entity
      */
-    public function create(Availability $availability, array $data): Schedule
+    public function create(array $data): Schedule
     {
+        $this->requireContext();
         $this->data = array_merge($data, [
-            'availability_id' => $availability->id,
+            'availability_id' => $this->owner->id,
             'schedulable_id' => $this->schedulable->id,
             'schedulable_type' => get_class($this->schedulable)
         ]);
+
 
         // Convert to DTO and validate with new system
         $dto = $this->createDTOFromArray($this->data, OperationType::CREATE);
@@ -103,6 +87,7 @@ class ScheduleService extends AbstractAvailabilityValidatingService
      */
     public function update(int $id, array $data): bool
     {
+        $this->requireContext();
         $this->data = $data;
 
         // Récupérer l'entité existante AVANT validation
@@ -154,6 +139,7 @@ class ScheduleService extends AbstractAvailabilityValidatingService
      */
     public function delete(int $id): bool
     {
+        $this->requireContext();
         $entity = $this->find($id);
         if (!$entity instanceof Schedule) {
             throw ValidationFailedException::fromViolations(
@@ -227,9 +213,15 @@ class ScheduleService extends AbstractAvailabilityValidatingService
      */
     public function find(int $id): ?Schedule
     {
+
         return Schedule::where('schedulable_id', $this->schedulable->id)
             ->where('schedulable_type', get_class($this->schedulable))
             ->find($id);
+    }
+
+    public function all(): Collection
+    {
+        return $this->scheduleRepository->all($this->schedulable, $this->owner, $this->filters);
     }
 
     /**
@@ -246,8 +238,7 @@ class ScheduleService extends AbstractAvailabilityValidatingService
     protected function buildQueryWithFilters(): Builder
     {
         return $this->scheduleRepository->buildQueryWithFilters(
-            $this->schedulable->id,
-            get_class($this->schedulable),
+            $this->schedulable,
             $this->filters
         );
     }
@@ -366,6 +357,21 @@ class ScheduleService extends AbstractAvailabilityValidatingService
         return null;
     }
 
+    public function paginate(
+        int $perPage = 15,
+        array $columns = ['*'],
+        string $pageName = 'page',
+        ?int $page = null
+    ): LengthAwarePaginator {
+        return $this->buildQueryWithFilters()
+            ->paginate(
+                perPage: $perPage,
+                columns: $columns,
+                pageName: $pageName,
+                page: $page
+            );
+    }
+
     /**
      * Find available slot within a specific availability.
      */
@@ -393,7 +399,7 @@ class ScheduleService extends AbstractAvailabilityValidatingService
         $slotStart = $availabilityStart->copy();
 
         // Si un searchStart est spécifié et qu'il est dans la même journée
-        if ($searchStart !== null && $searchStart->isSameDay($day)) {
+        if ($searchStart instanceof Carbon && $searchStart->isSameDay($day)) {
             // Si searchStart est avant availabilityStart, commencer à availabilityStart
             if ($searchStart->lt($availabilityStart)) {
                 $slotStart = $availabilityStart->copy();
@@ -476,7 +482,7 @@ class ScheduleService extends AbstractAvailabilityValidatingService
         ?string $type = null
     ): bool {
         // Vérifier s'il y a une disponibilité continue
-        $availability = $this->availabilityRepository->findForTimeSlot(
+        $availability = $this->availabilityRepository->getAvailabilityForTimeSlot(
             $this->schedulable,
             $start,
             $end,
@@ -506,55 +512,5 @@ class ScheduleService extends AbstractAvailabilityValidatingService
         );
 
         return !$hasScheduleConflict && !$hasImpedimentConflict;
-    }
-
-    /**
-     * Get available slots between impediments.
-     */
-    public function getAvailableSlotsFromImpediments(
-        Carbon $start,
-        Carbon $end,
-        Collection $impediments
-    ): Collection {
-        $availableSlots = collect();
-        $currentTime = $start->copy();
-
-        if ($impediments->isEmpty()) {
-            $availableSlots->push([
-                'start' => $start->copy(),
-                'end' => $end->copy(),
-            ]);
-            return $availableSlots;
-        }
-
-        // Trier les impediments par start_datetime
-        $sortedImpediments = $impediments->sortBy('start_datetime');
-
-        /** @var Impediment $impediment */
-        foreach ($sortedImpediments as $impediment) {
-            $impStart = $impediment->start_datetime;
-            $impEnd = $impediment->end_datetime;
-
-            // S'il y a un espace avant l'impediment
-            if ($impStart->gt($currentTime)) {
-                $availableSlots->push([
-                    'start' => $currentTime->copy(),
-                    'end' => $impStart->copy(),
-                ]);
-            }
-
-            // Avancer le temps courant à la fin de l'impediment
-            $currentTime = max($currentTime, $impEnd);
-        }
-
-        // S'il reste du temps après le dernier impediment
-        if ($currentTime->lt($end)) {
-            $availableSlots->push([
-                'start' => $currentTime->copy(),
-                'end' => $end->copy(),
-            ]);
-        }
-
-        return $availableSlots;
     }
 }

@@ -4,9 +4,10 @@ declare(strict_types=1);
 
 namespace Roster\Services\Core;
 
-use Roster\Contracts\Validation\ValidatorInterface;
+use Illuminate\Database\Eloquent\Model;
 use Roster\Enums\EntityType;
 use Roster\Enums\OperationType;
+use Roster\Exceptions\InvalidServiceContextException;
 use Roster\Validation\Context\ValidationContext;
 use Roster\Validation\Exceptions\ValidationFailedException;
 
@@ -16,13 +17,6 @@ use Roster\Validation\Exceptions\ValidationFailedException;
  */
 abstract class AbstractValidatingService extends AbstractEntityScopingService
 {
-    protected ValidatorInterface $validator;
-
-    public function __construct(ValidatorInterface $validator)
-    {
-        $this->validator = $validator;
-    }
-
     /**
      * Validate data against rules.
      *

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Roster\DTOs;
 
+use ValueError;
 use Illuminate\Support\Carbon;
 use Roster\Enums\ScheduleStatus;
 use Roster\Models\Schedule;
@@ -42,7 +43,7 @@ class ScheduleData
         if (is_string($status)) {
             try {
                 $status = ScheduleStatus::from($status);
-            } catch (\ValueError $e) {
+            } catch (ValueError $e) {
                 // Si la valeur n'est pas valide, utiliser la valeur par défaut
                 $status = ScheduleStatus::AVAILABLE;
             }
@@ -109,7 +110,7 @@ class ScheduleData
             'status' => $status,
             'schedulable_id' => $this->schedulableId,
             'schedulable_type' => $this->schedulableType,
-        ], static fn($value) => $value !== null);
+        ], static fn(int|string|array|null $value): bool => $value !== null);
     }
 
     public function withSchedulableInfo(?int $schedulableId, ?string $schedulableType): self

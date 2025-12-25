@@ -64,8 +64,8 @@ class AvailabilityData
             'id' => $this->id,
             'type' => $this->type,
             'days' => $this->days,
-            'validity_start' => $this->validityStart?->format('Y-m-d'),
-            'validity_end' => $this->validityEnd?->format('Y-m-d'),
+            'validity_start' => $this->validityStart?->format('Y-m-d H:i:s'),
+            'validity_end' => $this->validityEnd?->format('Y-m-d H:i:s'),
             'daily_start' => $this->dailyStart?->format('H:i:s'),
             'daily_end' => $this->dailyEnd?->format('H:i:s'),
             'schedulable_id' => $this->schedulableId,
@@ -168,10 +168,13 @@ class AvailabilityData
             return $this->days;
         }
 
+
         // Si pas de dates de validité, utiliser tous les jours
         if (!$this->validityStart instanceof Carbon || !$this->validityEnd instanceof Carbon) {
             return DaysOfWeek::values();
         }
+
+
 
         // Utiliser le helper pour déterminer si on doit ajuster
         if (!roster_should_auto_adjust_days($this->validityStart, $this->validityEnd)) {

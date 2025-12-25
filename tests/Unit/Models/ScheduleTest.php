@@ -4,10 +4,6 @@ declare(strict_types=1);
 
 namespace Unit\Models;
 
-use Illuminate\Support\Carbon;
-use Rector\Carbon\NodeFactory\CarbonCallFactory;
-use Roster\Models\Availability;
-use Tests\Support\TestSchedulable;
 use Tests\TestCase;
 
 final class ScheduleTest extends TestCase
@@ -17,6 +13,7 @@ final class ScheduleTest extends TestCase
     {
         parent::setUp();
     }
+
     /**
      * Test basic data validation with valid input.
      */

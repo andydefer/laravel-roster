@@ -18,19 +18,19 @@ class CacheRulesCommand extends Command
 
     protected $description = 'Manage Roster validation rules cache';
 
-    public function handle(RuleScanner $scanner): int
+    public function handle(RuleScanner $ruleScanner): int
     {
-        $generator = new RuleCacheGenerator($scanner);
+        $ruleCacheGenerator = new RuleCacheGenerator($ruleScanner);
 
         if ($this->option('clear')) {
-            return $this->clearCache($generator);
+            return $this->clearCache($ruleCacheGenerator);
         }
 
         if ($this->option('show')) {
-            return $this->showCache($generator);
+            return $this->showCache($ruleCacheGenerator);
         }
 
-        return $this->generateCache($generator);
+        return $this->generateCache($ruleCacheGenerator);
     }
 
     private function generateCache(RuleCacheGenerator $generator): int
@@ -42,7 +42,7 @@ class CacheRulesCommand extends Command
         if ($generator->generate()) {
             $duration = round((microtime(true) - $start) * 1000, 2);
             $this->info("✅ Cache generated successfully at: " . $generator->getCachePath());
-            $this->info("⏱️  Duration: {$duration}ms");
+            $this->info(sprintf('⏱️  Duration: %sms', $duration));
 
             // Afficher des stats
             $this->showCacheStats($generator);
@@ -132,7 +132,7 @@ class CacheRulesCommand extends Command
 
         while ($bytes >= 1024 && $i < count($units) - 1) {
             $bytes /= 1024;
-            $i++;
+            ++$i;
         }
 
         return round($bytes, 2) . ' ' . $units[$i];

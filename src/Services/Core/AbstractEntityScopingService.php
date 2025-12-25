@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Roster\Services\Core;
 
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Config;
 
 /**
@@ -23,17 +22,6 @@ abstract class AbstractEntityScopingService extends AbstractService
      */
     protected mixed $currentEntity = null;
 
-    /**
-     * Set multiple filters at once.
-     *
-     * @param array<string, mixed> $filters Associative array of filter key-value pairs
-     * @return $this
-     */
-    final public function setFilters(array $filters): static
-    {
-        $this->filters = array_merge($this->filters, $filters);
-        return $this;
-    }
 
     /**
      * Filter by entity type.
@@ -56,16 +44,6 @@ abstract class AbstractEntityScopingService extends AbstractService
     {
         $this->filters = [];
         return $this;
-    }
-
-    /**
-     * Get all matching results.
-     *
-     * @return Collection<int, TEntity>
-     */
-    final public function getAll(): Collection
-    {
-        return $this->get();
     }
 
 
@@ -133,10 +111,6 @@ abstract class AbstractEntityScopingService extends AbstractService
         return ucfirst($this->getEntityType());
     }
 
-
-
-    // Abstract methods that must be implemented by child classes
-    abstract protected function buildQueryWithFilters(): Builder;
 
     abstract protected function clearEntityCache(int $entityId): void;
 }

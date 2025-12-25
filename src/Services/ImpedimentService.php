@@ -4,14 +4,11 @@ declare(strict_types=1);
 
 namespace Roster\Services;
 
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
-use Roster\Contracts\Repository\AvailabilityRepositoryInterface;
-use Roster\Contracts\Repository\ImpedimentRepositoryInterface;
-use Roster\Contracts\Repository\ScheduleRepositoryInterface;
-use Roster\Contracts\Services\SlotFinderInterface;
-use Roster\Contracts\Validation\ValidatorInterface;
 use Roster\DTOs\ImpedimentData;
 use Roster\Enums\EntityType;
 use Roster\Enums\OperationType;
@@ -25,27 +22,6 @@ use Roster\Validation\Exceptions\ValidationFailedException;
  */
 class ImpedimentService extends AbstractAvailabilityValidatingService
 {
-    private AvailabilityRepositoryInterface $availabilityRepository;
-
-    private ImpedimentRepositoryInterface $impedimentRepository;
-
-    private ScheduleRepositoryInterface $scheduleRepository;
-
-    private SlotFinderInterface $slotFinder;
-
-    public function __construct(
-        ValidatorInterface $validator,
-        AvailabilityRepositoryInterface $availabilityRepository,
-        ImpedimentRepositoryInterface $impedimentRepository,
-        ScheduleRepositoryInterface $scheduleRepository,
-        SlotFinderInterface $slotFinder
-    ) {
-        parent::__construct($validator);
-        $this->availabilityRepository = $availabilityRepository;
-        $this->impedimentRepository = $impedimentRepository;
-        $this->scheduleRepository = $scheduleRepository;
-        $this->slotFinder = $slotFinder;
-    }
 
     /**
      * {@inheritDoc}
@@ -70,10 +46,11 @@ class ImpedimentService extends AbstractAvailabilityValidatingService
      * @param array $data Entity data
      * @return Impediment Created entity
      */
-    public function create(Availability $availability, array $data): Impediment
+    public function create(array $data): Model
     {
+        $this->requireContext();
         $this->data = array_merge($data, [
-            'availability_id' => $availability->id,
+            'availability_id' => $this->owner->id,
             'schedulable_id' => $this->schedulable->id,
             'schedulable_type' => get_class($this->schedulable)
         ]);
@@ -94,12 +71,27 @@ class ImpedimentService extends AbstractAvailabilityValidatingService
         $this->data = $dto->toArray();
 
         // Create entity using repository
-        $impediment = $this->impedimentRepository->create($this->data);
+        $model = $this->impedimentRepository->create($this->data);
 
         // Clear cache
-        $this->clearEntityCache($impediment->id);
+        $this->clearEntityCache($model->id);
 
-        return $impediment;
+        return $model;
+    }
+
+    public function paginate(
+        int $perPage = 15,
+        array $columns = ['*'],
+        string $pageName = 'page',
+        ?int $page = null
+    ): LengthAwarePaginator {
+        return $this->impedimentRepository
+            ->paginate(
+                perPage: $perPage,
+                columns: $columns,
+                pageName: $pageName,
+                page: $page
+            );
     }
 
     /**
@@ -108,7 +100,7 @@ class ImpedimentService extends AbstractAvailabilityValidatingService
      */
     public function update(int $id, array $data): bool
     {
-        parent::update($id, $data);
+        $this->requireContext();
         $this->data = $data;
 
         // Trouver l'impediment existant
@@ -150,11 +142,18 @@ class ImpedimentService extends AbstractAvailabilityValidatingService
         return $result;
     }
 
+    public function all(): Collection
+    {
+        return $this->impedimentRepository->all($this->schedulable, $this->owner, $this->filters);
+    }
+
+
     /**
      * Delete an impediment.
      */
     public function delete(int $id): bool
     {
+        $this->requireContext();
         $entity = $this->find($id);
         if (!$entity instanceof Impediment) {
             throw ValidationFailedException::fromViolations(
@@ -168,6 +167,7 @@ class ImpedimentService extends AbstractAvailabilityValidatingService
                 EntityType::IMPEDIMENT
             );
         }
+
         // Préparer les données de validation avec les infos schedulable
         $deleteData = [
             'id' => $id,
@@ -238,59 +238,19 @@ class ImpedimentService extends AbstractAvailabilityValidatingService
             ->find($id);
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function get(): Collection
-    {
-        return $this->buildQueryWithFilters()->get();
-    }
 
     /**
      * {@inheritDoc}
      */
-    protected function buildQueryWithFilters(): Builder
-    {
-        $query = Impediment::where('schedulable_id', $this->schedulable->id)
-            ->where('schedulable_type', get_class($this->schedulable));
 
-        $this->applyDateFilters($query);
-        $this->applyTypeFilter($query);
-        $this->applyReasonFilter($query);
 
-        return $query;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    protected function getAvailabilityRepository(): AvailabilityRepositoryInterface
-    {
-        return $this->availabilityRepository;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    protected function getScheduleRepository(): ScheduleRepositoryInterface
-    {
-        return $this->scheduleRepository;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    protected function getImpedimentRepository(): ImpedimentRepositoryInterface
-    {
-        return $this->impedimentRepository;
-    }
 
     /**
      * Check if a time slot is blocked by an impediment.
      */
     public function isTimeSlotBlocked(Carbon $start, Carbon $end, ?string $type = null): bool
     {
-        $availability = $this->availabilityRepository->findForTimeSlot($this->schedulable, $start, $end, $type);
+        $availability = $this->availabilityRepository->getAvailabilityForTimeSlot($this->schedulable, $start, $end, $type);
 
         if (!$availability instanceof Availability) {
             return false;
@@ -304,15 +264,16 @@ class ImpedimentService extends AbstractAvailabilityValidatingService
      */
     public function getAvailableTimeSlots(Carbon $start, Carbon $end, ?string $type = null): Collection
     {
-        $availability = $this->availabilityRepository->findForTimeSlot($this->schedulable, $start, $end, $type);
+        $availability = $this->availabilityRepository->getAvailabilityForTimeSlot($this->schedulable, $start, $end, $type);
 
         if (!$availability instanceof Availability) {
             return collect();
         }
 
+        /* @var Collection<int, \Roster\Models\Impediment> impediments */
         $impediments = $this->impedimentRepository->findForTimeSlot($availability->id, $start, $end);
 
-        return $this->slotFinder->getAvailableSlotsFromImpediments($start, $end, $impediments);
+        return $this->impedimentRepository->getAvailableSlotsFromImpediments($start, $end, $impediments);
     }
 
     /**

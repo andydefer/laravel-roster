@@ -5,9 +5,11 @@ declare(strict_types=1);
 
 namespace Roster\Validation\Cache;
 
+use Carbon\Carbon;
+use Roster\Enums\EntityType;
+use Roster\Enums\OperationType;
 use Roster\Validation\RuleScanner;
 use Roster\Validation\Attributes\ValidationRule;
-use ReflectionClass;
 
 class RuleCacheGenerator
 {
@@ -53,7 +55,8 @@ class RuleCacheGenerator
 
         // Vérifier si le fichier a été généré il y a moins de X heures
         $maxAge = config('roster-validation.cache_max_age_hours', 24);
-        return (time() - filemtime($this->cachePath)) < ($maxAge * 3600);
+        return (Carbon::now()
+            ->getTimestamp() - filemtime($this->cachePath)) < ($maxAge * 3600);
     }
 
     public function clear(): bool
@@ -67,7 +70,8 @@ class RuleCacheGenerator
 
     private function buildCacheFile(array $rules): string
     {
-        $timestamp = date('Y-m-d H:i:s');
+        $timestamp = Carbon::now()
+            ->format('Y-m-d H:i:s');
         $rulesCount = count($rules);
 
         $content = <<<PHP
@@ -89,24 +93,21 @@ PHP;
             $content .= $this->buildRuleEntry($className, $attribute);
         }
 
-        $content .= "];\n";
-
-        return $content;
+        return $content . "];\n";
     }
 
-    private function buildRuleEntry(string $className, ValidationRule $attribute): string
+    private function buildRuleEntry(string $className, ValidationRule $validationRule): string
     {
-        $entities = array_map(fn($e) => $e->value, $attribute->entities);
-        $operations = array_map(fn($o) => $o->value, $attribute->operations);
+        $entities = array_map(fn(EntityType $entityType) => $entityType->value, $validationRule->entities);
+        $operations = array_map(fn(OperationType $operationType) => $operationType->value, $validationRule->operations);
 
         $indent = '    ';
         $entry = $indent . "'" . addslashes($className) . "' => [\n";
-        $entry .= $indent . $indent . "'priority' => " . $attribute->priority . ",\n";
-        $entry .= $indent . $indent . "'entities' => [" . implode(', ', array_map(fn($e) => "'$e'", $entities)) . "],\n";
-        $entry .= $indent . $indent . "'operations' => [" . implode(', ', array_map(fn($o) => "'$o'", $operations)) . "],\n";
+        $entry .= $indent . $indent . "'priority' => " . $validationRule->priority . ",\n";
+        $entry .= $indent . $indent . "'entities' => [" . implode(', ', array_map(fn(string $e): string => sprintf("'%s'", $e), $entities)) . "],\n";
+        $entry .= $indent . $indent . "'operations' => [" . implode(', ', array_map(fn(string $o): string => sprintf("'%s'", $o), $operations)) . "],\n";
         $entry .= $indent . $indent . "'class' => '" . addslashes($className) . "',\n";
-        $entry .= $indent . "],\n";
 
-        return $entry;
+        return $entry . ($indent . "],\n");
     }
 }

@@ -9,14 +9,6 @@ use Illuminate\Support\Carbon;
 
 interface AvailabilityCheckerInterface
 {
-    /**
-     * Check if a schedulable entity is available at a specific datetime.
-     *
-     * @param  Model  $model  Schedulable model instance
-     * @param  Carbon  $datetime  Datetime to check availability
-     * @return bool True if available at the specified time
-     */
-    public function isAvailableAt(Model $model, Carbon $datetime): bool;
 
     /**
      * Check availability for an entire time period.

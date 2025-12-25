@@ -48,52 +48,79 @@ class AvailabilityTimeRangeRule extends AbstractRule
             // La validation de format est gérée par d'autres règles
         }
     }
-
     private function validateTimeRange(
         ValidationContextInterface $validationContext,
-        $availability,
+        Availability $availability,
         Carbon $start,
         Carbon $end
     ): void {
-        // 1. Vérifie le jour de la semaine
+        /**
+         * 1. Vérifie le jour de la semaine
+         */
         $dayOfWeek = strtolower($start->englishDayOfWeek);
+
         if (!in_array($dayOfWeek, $availability->days, true)) {
             $validationContext->setViolation(
                 'start_datetime',
-                sprintf('Day %s is not available in this availability', $dayOfWeek)
+                sprintf(
+                    'The selected date %s (%s) is not allowed because this availability only permits the following days: %s',
+                    $start->toDateString(),
+                    $dayOfWeek,
+                    implode(', ', $availability->days)
+                )
             );
         }
 
-        // 2. Vérifie la plage horaire
+        /**
+         * 2. Vérifie la plage horaire
+         */
         $availabilityStart = $start->copy()->setTimeFrom(Carbon::parse($availability->daily_start));
         $availabilityEnd = $start->copy()->setTimeFrom(Carbon::parse($availability->daily_end));
 
         if ($start->lt($availabilityStart)) {
             $validationContext->setViolation(
                 'start_datetime',
-                'Start time is before availability start time'
+                sprintf(
+                    'The selected start time %s is before the availability start time %s',
+                    $start->format('H:i'),
+                    Carbon::parse($availability->daily_start)->format('H:i')
+                )
             );
         }
 
         if ($end->gt($availabilityEnd)) {
             $validationContext->setViolation(
                 'end_datetime',
-                'End time is after availability end time'
+                sprintf(
+                    'The selected end time %s is after the availability end time %s',
+                    $end->format('H:i'),
+                    Carbon::parse($availability->daily_end)->format('H:i')
+                )
             );
         }
 
-        // 3. Vérifie la plage de dates (validity_start / validity_end)
+        /**
+         * 3. Vérifie la plage de dates (validity_start / validity_end)
+         */
         if ($availability->validity_start && $start->lt(Carbon::parse($availability->validity_start))) {
             $validationContext->setViolation(
                 'start_datetime',
-                'Start date is before availability start date'
+                sprintf(
+                    'The selected start datetime %s is before the availability start datetime %s',
+                    $start->toDateTimeString(), // Modifier ici
+                    Carbon::parse($availability->validity_start)->toDateTimeString() // Modifier ici
+                )
             );
         }
 
         if ($availability->validity_end && $end->gt(Carbon::parse($availability->validity_end))) {
             $validationContext->setViolation(
                 'end_datetime',
-                'End date is after availability end date'
+                sprintf(
+                    'The selected end datetime %s is after the availability end datetime %s',
+                    $end->toDateTimeString(), // Modifier ici
+                    Carbon::parse($availability->validity_end)->toDateTimeString() // Modifier ici
+                )
             );
         }
     }

@@ -4,23 +4,31 @@ declare(strict_types=1);
 
 namespace Roster\Services\Core;
 
+use LogicException;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Collection;
-use Roster\Traits\FilterableTrait;
+use Roster\Contracts\CrudInterface;
+use Roster\Contracts\EntityServiceInterface;
+use Roster\Contracts\Repository\AvailabilityRepositoryInterface;
+use Roster\Contracts\Repository\ImpedimentRepositoryInterface;
+use Roster\Contracts\Repository\ScheduleRepositoryInterface;
+use Roster\Contracts\Validation\ValidatorInterface;
+use Roster\Exceptions\InvalidServiceContextException;
 
 /**
  * Abstract service providing a CRUD template.
  *
  * This abstract class implements basic CRUD operations.
  */
-abstract class AbstractService
+abstract class AbstractService implements EntityServiceInterface
 {
-    use FilterableTrait;
 
     /**
      * The schedulable model instance.
      */
     protected ?Model $schedulable = null;
+
+    protected ?Model $owner = null;
 
     /**
      * Current filters for data operations.
@@ -37,11 +45,47 @@ abstract class AbstractService
     protected array $data = [];
 
     /**
-     * Retrieve entities.
-     *
-     * @return Collection<int, mixed> The collection of entities
+     * Common dependencies for all services.
      */
-    abstract public function get(): Collection;
+    protected ValidatorInterface $validator;
+
+    protected AvailabilityRepositoryInterface $availabilityRepository;
+
+    protected ImpedimentRepositoryInterface $impedimentRepository;
+
+    protected ScheduleRepositoryInterface $scheduleRepository;
+
+    public function __construct(
+        ValidatorInterface $validator,
+        AvailabilityRepositoryInterface $availabilityRepository,
+        ImpedimentRepositoryInterface $impedimentRepository,
+        ScheduleRepositoryInterface $scheduleRepository,
+    ) {
+        $this->validator = $validator;
+        $this->availabilityRepository = $availabilityRepository;
+        $this->impedimentRepository = $impedimentRepository;
+        $this->scheduleRepository = $scheduleRepository;
+    }
+
+
+    /**
+     * Vérifie que le contexte du service est complet avant toute action.
+     *
+     * Lance une exception pédagogique si le schedulable ou l'owner est manquant.
+     */
+    protected function requireContext(): void
+    {
+        if (!$this->schedulable instanceof Model) {
+            throw InvalidServiceContextException::forService(static::class);
+        }
+    }
+
+    abstract public function paginate(
+        int $perPage = 15,
+        array $columns = ['*'],
+        string $pageName = 'page',
+        ?int $page = null
+    ): LengthAwarePaginator;
 
     /**
      * Find entity by ID.
@@ -95,6 +139,18 @@ abstract class AbstractService
         return $this;
     }
 
+    public function resetFilters(): self
+    {
+        $this->filters = [];
+        return $this;
+    }
+
+    public function setFilter($key, $value): self
+    {
+        $this->filters[$key] = $value;
+        return $this;
+    }
+
     /**
      * Get the schedulable model instance.
      *
@@ -117,39 +173,37 @@ abstract class AbstractService
         return $this;
     }
 
-    public function update(int $id, array $data): bool
-    {
-
-        // Supprime les clés spécifiées si elles existent
-        $data = array_diff_key($data, array_flip(['schedulable_id', 'schedulable_type', 'availability_id']));
-        return true;
-    }
-
-
     /**
      * Scope the service to a specific schedulable model.
      *
      * @param Model $model The parent model to scope operations to
      * @return $this
      */
-    public function for(Model $model): static
+    final public function for(Model $model): static
     {
-        $this->schedulable = $model;
-        return $this;
+        $clone = clone $this;
+        $clone->schedulable = $model;
+
+        return $clone;
     }
 
     /**
-     * Set a single filter.
+     * Définit l'entité "parent" ou "owner" pour ce service.
      *
-     * @param string $key Filter key
-     * @param mixed $value Filter value
-     * @return $this
+     * @param Model $model La disponibilité ou autre modèle parent
+     * @return static Retourne une nouvelle instance du service avec l'owner défini
      */
-    public function setFilter(string $key, mixed $value): self
+    final public function owner(Model $model): static
     {
-        $this->filters[$key] = $value;
-        return $this;
+        // Créer un clone pour rester immuable
+        $clone = clone $this;
+
+        // Définir l'owner sur le clone
+        $clone->owner = $model;
+
+        return $clone;
     }
+
 
     /**
      * Clear the data and filters.
@@ -161,5 +215,58 @@ abstract class AbstractService
         $this->data = [];
         $this->filters = [];
         return $this;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected function getAvailabilityRepository(): AvailabilityRepositoryInterface
+    {
+        return $this->availabilityRepository;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected function getScheduleRepository(): ScheduleRepositoryInterface
+    {
+        return $this->scheduleRepository;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected function getImpedimentRepository(): ImpedimentRepositoryInterface
+    {
+        return $this->impedimentRepository;
+    }
+
+    /**
+     * Get the "current" repository for this service.
+     *
+     * The child class must define the protected property $repositoryType
+     * with one of: 'availability', 'schedule', 'impediment'.
+     *
+     * @return AvailabilityRepositoryInterface|ScheduleRepositoryInterface|ImpedimentRepositoryInterface
+     */
+    public function getCurrentRepository(): mixed
+    {
+        $childClass = static::class; // classe de l'enfant qui appelle
+
+        return match (true) {
+            str_contains($childClass, 'Availability') => $this->availabilityRepository,
+            str_contains($childClass, 'Schedule') => $this->scheduleRepository,
+            str_contains($childClass, 'Impediment') => $this->impedimentRepository,
+            default => throw new LogicException('Repository not defined for child class ' . $childClass)
+        };
+    }
+
+
+    /**
+     * Get the validator.
+     */
+    protected function getValidator(): ValidatorInterface
+    {
+        return $this->validator;
     }
 }

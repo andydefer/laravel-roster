@@ -10,6 +10,7 @@ use Roster\Traits\HasRoster;
 class TestSchedulable extends Model
 {
     use HasRoster;
+
     protected $table = 'test_schedulables';
 
     public $timestamps = false;

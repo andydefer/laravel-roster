@@ -13,13 +13,13 @@ use Roster\Validation\Rules\AvailabilityDateRangeRule;
 use Roster\Validation\Rules\TimeSlotDateTimeRule;
 use Tests\Support\TestSchedulable;
 use Tests\TestCase;
+use Roster\Facades\Availability as AvailabilityFacade;
+use Roster\Support\RosterMutationContext;
 
 final class DateRangeRulesTest extends TestCase
 {
     private AvailabilityDateRangeRule $availabilityDateRangeRule;
-
     private TimeSlotDateTimeRule $timeSlotDateTimeRule;
-
     private TestSchedulable $testSchedulable;
 
     protected function setUp(): void
@@ -78,17 +78,20 @@ final class DateRangeRulesTest extends TestCase
 
     public function test_availability_validate_update_partial_date(): void
     {
-        // Créer une disponibilité existante
-        $availability = Availability::create([
-            'schedulable_id' => $this->testSchedulable->id,
-            'schedulable_type' => TestSchedulable::class,
-            'type' => 'consultation',
-            'daily_start' => '09:00:00',
-            'daily_end' => '17:00:00',
-            'days' => ['monday'],
-            'validity_start' => '2038-07-01',
-            'validity_end' => '2038-07-31',
-        ]);
+        // Créer une disponibilité existante via le service autorisé
+        $availability = RosterMutationContext::allow(function () {
+            // Créer directement dans le contexte de mutation autorisé
+            return Availability::create([
+                'schedulable_id' => $this->testSchedulable->id,
+                'schedulable_type' => TestSchedulable::class,
+                'type' => 'consultation',
+                'daily_start' => '09:00:00',
+                'daily_end' => '17:00:00',
+                'days' => ['monday'],
+                'validity_start' => '2038-07-01',
+                'validity_end' => '2038-07-31',
+            ]);
+        });
 
         // Mise à jour avec seulement la date de fin modifiée (valide)
         $data = [
@@ -110,17 +113,19 @@ final class DateRangeRulesTest extends TestCase
 
     public function test_availability_validate_update_partial_date_fails(): void
     {
-        // Créer une disponibilité existante
-        $availability = Availability::create([
-            'schedulable_id' => $this->testSchedulable->id,
-            'schedulable_type' => TestSchedulable::class,
-            'type' => 'consultation',
-            'daily_start' => '09:00:00',
-            'daily_end' => '17:00:00',
-            'days' => ['monday'],
-            'validity_start' => '2038-07-01',
-            'validity_end' => '2038-07-31',
-        ]);
+        // Créer une disponibilité existante via le service autorisé
+        $availability = RosterMutationContext::allow(function () {
+            return Availability::create([
+                'schedulable_id' => $this->testSchedulable->id,
+                'schedulable_type' => TestSchedulable::class,
+                'type' => 'consultation',
+                'daily_start' => '09:00:00',
+                'daily_end' => '17:00:00',
+                'days' => ['monday'],
+                'validity_start' => '2038-07-01',
+                'validity_end' => '2038-07-31',
+            ]);
+        });
 
         // Mise à jour invalide : date de fin avant date de début existante
         $data = [
@@ -143,17 +148,19 @@ final class DateRangeRulesTest extends TestCase
 
     public function test_availability_validate_update_skip_when_no_dates_changed(): void
     {
-        // Créer une disponibilité existante
-        $availability = Availability::create([
-            'schedulable_id' => $this->testSchedulable->id,
-            'schedulable_type' => TestSchedulable::class,
-            'type' => 'consultation',
-            'daily_start' => '09:00:00',
-            'daily_end' => '17:00:00',
-            'days' => ['monday'],
-            'validity_start' => '2038-07-01',
-            'validity_end' => '2038-07-31',
-        ]);
+        // Créer une disponibilité existante via le service autorisé
+        $availability = RosterMutationContext::allow(function () {
+            return Availability::create([
+                'schedulable_id' => $this->testSchedulable->id,
+                'schedulable_type' => TestSchedulable::class,
+                'type' => 'consultation',
+                'daily_start' => '09:00:00',
+                'daily_end' => '17:00:00',
+                'days' => ['monday'],
+                'validity_start' => '2038-07-01',
+                'validity_end' => '2038-07-31',
+            ]);
+        });
 
         // Mise à jour sans toucher aux dates
         $data = [
@@ -281,7 +288,7 @@ final class DateRangeRulesTest extends TestCase
 
     public function test_schedule_validate_update_partial(): void
     {
-        // Simuler un schedule existant
+        // Simuler un schedule existant (pas besoin de le créer réellement pour le test)
         $schedule = new stdClass();
         $schedule->start_datetime = '2038-07-01 10:00:00';
         $schedule->end_datetime = '2038-07-01 11:00:00';

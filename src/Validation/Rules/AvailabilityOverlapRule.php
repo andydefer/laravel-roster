@@ -75,10 +75,12 @@ class AvailabilityOverlapRule extends AbstractRule
             $availabilityRepository = app(AvailabilityRepositoryInterface::class);
             $overlapping = $availabilityRepository->findOverlapping($schedulable, $data, $excludeId);
 
+
             if ($overlapping->isNotEmpty()) {
+                $firstOverlap = $overlapping->first();
                 $validationContext->setViolation(
                     'overlap',
-                    'Availability overlaps with an existing availability'
+                    "Availability overlaps with an existing availability {#$firstOverlap->id} -> type : {$firstOverlap->type} {$firstOverlap->validity_start} - {$firstOverlap->validity_end} for {$firstOverlap->daily_start}- {$firstOverlap->daily_end} "
                 );
             }
         } catch (Exception $exception) {

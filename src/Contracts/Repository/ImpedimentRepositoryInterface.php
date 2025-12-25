@@ -4,56 +4,17 @@ declare(strict_types=1);
 
 namespace Roster\Contracts\Repository;
 
+use Roster\Models\Impediment;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
-use Roster\Models\Impediment;
+use Roster\Contracts\CrudInterface;
+use Roster\Contracts\RepositoryInterface;
 
 /**
  * Interface for Impediment repository implementations.
  */
-interface ImpedimentRepositoryInterface
+interface ImpedimentRepositoryInterface extends RepositoryInterface
 {
-    /**
-     * Create a new impediment.
-     *
-     * @param array<string, mixed> $data
-     */
-    public function create(array $data): Impediment;
-
-    /**
-     * Update an existing impediment.
-     *
-     * @param array<string, mixed> $data
-     */
-    public function update(int $id, array $data): bool;
-
-    /**
-     * Delete an impediment.
-     */
-    public function delete(int $id): bool;
-
-    /**
-     * Find an impediment by ID.
-     */
-    public function find(int $id): ?Impediment;
-
-    /**
-     * Get all impediments.
-     *
-     * @return Collection<int, Impediment>
-     */
-    public function getAll(): Collection;
-
-    /**
-     * Find impediments for a specific time slot.
-     *
-     * @param int $availabilityId The availability ID
-     * @param Carbon $start Start of time slot
-     * @param Carbon $end End of time slot
-     * @return Collection<int, Impediment>
-     */
-    public function findForTimeSlot(int $availabilityId, Carbon $start, Carbon $end): Collection;
-
     /**
      * Check if a time slot has overlapping impediments.
      *
@@ -71,18 +32,18 @@ interface ImpedimentRepositoryInterface
     ): bool;
 
     /**
-     * Find overlapping impediments with a time range.
+     * Find impediments for a time slot.
      *
      * @param int $availabilityId The availability ID
-     * @param Carbon $start Start of time range
-     * @param Carbon $end End of time range
-     * @param int|null $excludeId Impediment ID to exclude
+     * @param Carbon $start Start of time slot
+     * @param Carbon $end End of time slot
      * @return Collection<int, Impediment>
      */
-    public function findOverlappingImpediments(
-        int $availabilityId,
+    public function findForTimeSlot(int $availabilityId, Carbon $start, Carbon $end): Collection;
+
+    public function getAvailableSlotsFromImpediments(
         Carbon $start,
         Carbon $end,
-        ?int $excludeId = null
+        Collection $impediments
     ): Collection;
 }

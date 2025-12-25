@@ -5,11 +5,12 @@ declare(strict_types=1);
 namespace Roster\Services\Core;
 
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
-use Roster\Contracts\Validation\ValidatorInterface;
 use Roster\Enums\EntityType;
 use Roster\Enums\OperationType;
+use Roster\Exceptions\InvalidServiceContextException;
 use Roster\Models\Availability;
 use Roster\Validation\Context\ValidationContext;
 use Roster\Validation\Exceptions\ValidationFailedException;
@@ -20,16 +21,10 @@ use Roster\Validation\Exceptions\ValidationFailedException;
  */
 abstract class AbstractAvailabilityValidatingService extends AbstractEntityScopingService
 {
-    protected ValidatorInterface $validator;
 
     protected ?Availability $currentAvailability = null;
 
     protected mixed $currentEntity = null;
-
-    public function __construct(ValidatorInterface $validator)
-    {
-        $this->validator = $validator;
-    }
 
     /**
      * Validate data using the centralized validation system.
@@ -62,6 +57,17 @@ abstract class AbstractAvailabilityValidatingService extends AbstractEntityScopi
         }
     }
 
+    protected function requireContext(): void
+    {
+        // Appelle d'abord la validation du parent (schedulable)
+        parent::requireContext();
+
+        // Services dérivés (Schedule, Impediment) nécessitent un owner
+        if (!$this->owner instanceof Model) {
+            throw InvalidServiceContextException::forService(static::class);
+        }
+    }
+
     /**
      * Template method for DTO creation from array.
      */
@@ -71,24 +77,6 @@ abstract class AbstractAvailabilityValidatingService extends AbstractEntityScopi
      * Get the entity type as an enum.
      */
     abstract protected function getEntityTypeEnum(): EntityType;
-
-    /**
-     * Get entities between two dates.
-     *
-     * @param Carbon $start Start date
-     * @param Carbon $end End date
-     * @return Collection Entities within the date range
-     */
-    public function between(Carbon $start, Carbon $end): Collection
-    {
-        $this->validateDateRange($start, $end);
-
-        return $this->buildQueryWithFilters()
-            ->where('start_datetime', '>=', $start)
-            ->where('end_datetime', '<=', $end)
-            ->orderBy('start_datetime')
-            ->get();
-    }
 
     /**
      * Validate date range using validation rules.
@@ -120,6 +108,8 @@ abstract class AbstractAvailabilityValidatingService extends AbstractEntityScopi
         }
     }
 
+
+
     // Abstract methods
     abstract protected function executeCreate(): mixed;
 
@@ -127,17 +117,8 @@ abstract class AbstractAvailabilityValidatingService extends AbstractEntityScopi
 
     abstract protected function executeDelete(int $id): bool;
 
-    abstract public function find(int $id): mixed;
 
-    abstract public function get(): Collection;
 
-    abstract protected function buildQueryWithFilters(): Builder;
 
     abstract protected function clearEntityCache(int $entityId): void;
-
-    abstract protected function getAvailabilityRepository(): mixed;
-
-    abstract protected function getScheduleRepository(): mixed;
-
-    abstract protected function getImpedimentRepository(): mixed;
 }
