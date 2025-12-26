@@ -1,23 +1,23 @@
 # Pint Formatting Test Report
-*Generated: ven. 26 déc. 2025 22:27:08 WAT*
+*Generated: ven. 26 déc. 2025 23:50:24 WAT*
 
 
-  ..⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯..⨯⨯⨯⨯⨯⨯⨯...⨯⨯⨯⨯⨯⨯⨯.⨯⨯⨯⨯⨯..⨯.....⨯⨯⨯⨯⨯.⨯⨯⨯⨯.....⨯....⨯.......⨯......⨯....⨯⨯⨯⨯⨯.........⨯......⨯⨯⨯⨯⨯..⨯....⨯⨯⨯.....⨯..⨯.
+  ..⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯..⨯⨯⨯⨯⨯⨯⨯...⨯⨯⨯⨯⨯..⨯⨯.⨯⨯⨯⨯⨯..⨯.....⨯⨯⨯⨯⨯.⨯⨯⨯⨯....⨯....⨯.......⨯......⨯....⨯⨯⨯⨯⨯.........⨯....⨯....⨯⨯⨯⨯⨯..⨯....⨯⨯⨯.....⨯..⨯.
 
   ──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────── Laravel  
-    FAIL   ................................................................................................................................................ 146 files, 75 style issues  
+    FAIL   ................................................................................................................................................ 150 files, 76 style issues  
   ⨯ database/migrations/2024_01_01_000001_create_roster_availabilities_table.php         class_definition, no_superfluous_phpdoc_tags, braces_position, phpdoc_trim, no_unused_imports  
-  ⨯ src/Commands/CacheRulesCommand.php       increment_style, single_quote, blank_line_after_opening_tag, concat_space, not_operator_with_successor_space, blank_line_before_statement  
+  ⨯ src/Commands/CacheRulesCommand.php                                                                                                                      concat_space, phpdoc_align  
   ⨯ src/Commands/InstallRosterCommand.php                                                        unary_operator_spaces, not_operator_with_successor_space, blank_line_before_statement  
-  ⨯ src/Contracts/EntityServiceInterface.php                                                                                                        no_extra_blank_lines, phpdoc_align  
   ⨯ src/Contracts/Repository/AvailabilityRepositoryInterface.php                                                                                                          phpdoc_align  
-  ⨯ src/Contracts/Repository/ImpedimentRepositoryInterface.php                                                                                                            phpdoc_align  
-  ⨯ src/Contracts/Repository/ScheduleRepositoryInterface.php                                                                                                              phpdoc_align  
-  ⨯ src/Contracts/RepositoryInterface.php                                                                              class_attributes_separation, no_extra_blank_lines, phpdoc_align  
+  ⨯ src/Contracts/Repository/ImpedimentRepositoryInterface.php                                                                                           ordered_imports, phpdoc_align  
+  ⨯ src/Contracts/Repository/RepositoryInterface.php                                                                                                                      phpdoc_align  
+  ⨯ src/Contracts/Repository/ScheduleRepositoryInterface.php                                                                                             ordered_imports, phpdoc_align  
   ⨯ src/Contracts/RosterDataInterface.php                                                        class_definition, braces_position, single_line_empty_body, blank_line_after_namespace  
   ⨯ src/DTOs/AvailabilityData.php class_attributes_separation, function_declaration, braces_position, cast_spaces, not_operator_with_successor_space, single_line_empty_body, no_extr…  
   ⨯ src/DTOs/ImpedimentData.php                                                                            function_declaration, braces_position, single_line_empty_body, phpdoc_align  
   ⨯ src/DTOs/ScheduleData.php                                                                   function_declaration, not_operator_with_successor_space, ordered_imports, phpdoc_align  
+  ⨯ src/Domain/DTOs/CacheStats.php                                     concat_space, unary_operator_spaces, braces_position, not_operator_with_successor_space, single_line_empty_body  
   ⨯ src/Domain/Helpers/TimeSlotHelper.php                                                          phpdoc_separation, not_operator_with_successor_space, ordered_imports, phpdoc_align  
   ⨯ src/Domain/Services/TemporalConflictService.php function_declaration, no_multiline_whitespace_around_double_arrow, trailing_comma_in_multiline, braces_position, phpdoc_separatio…  
   ⨯ src/Enums/EntityType.php                                                                                                                                              concat_space  
@@ -26,9 +26,9 @@
   ⨯ src/Exceptions/MissingOwnerException.php                                                                                                               blank_line_before_statement  
   ⨯ src/Exceptions/NotFoundException.php                                                                                        cast_spaces, blank_line_before_statement, phpdoc_align  
   ⨯ src/Exceptions/RosterException.php                                                                                                                                    phpdoc_align  
-  ⨯ src/Models/Availability.php                                                               no_superfluous_phpdoc_tags, phpdoc_trim, not_operator_with_successor_space, phpdoc_align  
-  ⨯ src/Models/Impediment.php                                                                              function_declaration, no_superfluous_phpdoc_tags, phpdoc_trim, phpdoc_align  
-  ⨯ src/Models/Schedule.php                                                                                                      no_superfluous_phpdoc_tags, phpdoc_trim, phpdoc_align  
+  ⨯ src/Models/Availability.php                                                                           not_operator_with_successor_space, blank_line_before_statement, phpdoc_align  
+  ⨯ src/Models/Impediment.php                                                                                                                       function_declaration, phpdoc_align  
+  ⨯ src/Models/Schedule.php                                                                                                                              ordered_imports, phpdoc_align  
   ⨯ src/Observers/EnforceDomainMutationObserver.php                                                                                                  not_operator_with_successor_space  
   ⨯ src/Repositories/AbstractRepository.php no_multiline_whitespace_around_double_arrow, concat_space, phpdoc_separation, not_operator_with_successor_space, blank_line_before_statem…  
   ⨯ src/Repositories/AvailabilityRepository.php                                                                         trailing_comma_in_multiline, not_operator_with_successor_space  
@@ -65,12 +65,13 @@
   ⨯ tests/Feature/Services/AvailabilityServiceDaysCoherenceTest.php                                                                class_attributes_separation, binary_operator_spaces  
   ⨯ tests/Integration/Traits/BelongsToSchedulableTest.php                              class_attributes_separation, single_line_comment_spacing, no_extra_blank_lines, ordered_imports  
   ⨯ tests/TestCase.php                                                                                                                                   concat_space, ordered_imports  
+  ⨯ tests/Unit/Commands/CacheRulesCommandTest.php                                                                                                                    no_unused_imports  
   ⨯ tests/Unit/Domain/ModelMutationForbiddenTest.php                                                                                                                   ordered_imports  
   ⨯ tests/Unit/Domain/MutationContextAllowsMutationTest.php                                                                                                            ordered_imports  
-  ⨯ tests/Unit/Domain/RepositoryMutationTest.php                                          class_attributes_separation, trailing_comma_in_multiline, no_unused_imports, ordered_imports  
+  ⨯ tests/Unit/Domain/RepositoryMutationTest.php                                                             class_attributes_separation, trailing_comma_in_multiline, ordered_imports  
   ⨯ tests/Unit/HelpersTest.php                                                                                                                             class_attributes_separation  
-  ⨯ tests/Unit/Models/AvailabilityTest.php                                                                                                                             ordered_imports  
-  ⨯ tests/Unit/Models/ImpedimentTest.php                                                                                            not_operator_with_successor_space, ordered_imports  
+  ⨯ tests/Unit/Models/AvailabilityTest.php                                                                                            phpdoc_separation, ordered_imports, phpdoc_align  
+  ⨯ tests/Unit/Models/ImpedimentTest.php                                                                                              phpdoc_separation, ordered_imports, phpdoc_align  
   ⨯ tests/Unit/Models/ScheduleTest.php                                                                                               class_attributes_separation, no_extra_blank_lines  
   ⨯ tests/Unit/Services/AvailabilityServiceTest.php                                                                                                                       single_quote  
   ⨯ tests/Unit/Services/ImpedimentServiceTest.php class_attributes_separation, increment_style, single_quote, concat_space, trailing_comma_in_multiline, no_extra_blank_lines, ordere…  

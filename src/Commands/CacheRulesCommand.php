@@ -1,140 +1,83 @@
 <?php
-// src/Commands/CacheRulesCommand.php
 
 declare(strict_types=1);
 
 namespace Roster\Commands;
 
 use Illuminate\Console\Command;
-use Roster\Validation\Cache\RuleCacheGenerator;
-use Roster\Validation\RuleScanner;
+use Roster\Domain\DTOs\CacheStats;
+use Roster\Services\CacheRulesService;
 
+/**
+ * Command to manage validation rules cache for the Roster package.
+ *
+ * This command allows generating, clearing, and displaying cached validation rules
+ * to improve performance of rule scanning operations.
+ */
 class CacheRulesCommand extends Command
 {
+    /**
+     * The command signature.
+     *
+     * @var string
+     */
     protected $signature = 'roster:cache-rules
                             {--clear : Clear the cache}
                             {--force : Force regeneration}
                             {--show : Show cache contents}';
 
+    /**
+     * The command description.
+     *
+     * @var string
+     */
     protected $description = 'Manage Roster validation rules cache';
 
-    public function handle(RuleScanner $ruleScanner): int
+    /**
+     * Execute the console command.
+     *
+     * @param CacheRulesService $service The cache rules service instance
+     * @return int Command exit code (SUCCESS or FAILURE)
+     */
+    public function handle(CacheRulesService $service): int
     {
-        $ruleCacheGenerator = new RuleCacheGenerator($ruleScanner);
+        try {
+            if ($this->option('clear')) {
+                $stats = $service->clear(
+                    force: (bool) $this->option('force')
+                );
+            } elseif ($this->option('show')) {
+                $stats = $service->show();
+            } else {
+                $stats = $service->generate();
+            }
 
-        if ($this->option('clear')) {
-            return $this->clearCache($ruleCacheGenerator);
-        }
-
-        if ($this->option('show')) {
-            return $this->showCache($ruleCacheGenerator);
-        }
-
-        return $this->generateCache($ruleCacheGenerator);
-    }
-
-    private function generateCache(RuleCacheGenerator $generator): int
-    {
-        $this->info('Generating Roster validation rules cache...');
-
-        $start = microtime(true);
-
-        if ($generator->generate()) {
-            $duration = round((microtime(true) - $start) * 1000, 2);
-            $this->info("✅ Cache generated successfully at: " . $generator->getCachePath());
-            $this->info(sprintf('⏱️  Duration: %sms', $duration));
-
-            // Afficher des stats
-            $this->showCacheStats($generator);
-
-            return self::SUCCESS;
-        }
-
-        $this->error('Failed to generate cache');
-        return self::FAILURE;
-    }
-
-    private function clearCache(RuleCacheGenerator $generator): int
-    {
-        if ($generator->clear()) {
-            $this->info('✅ Cache cleared');
-
-            // Régénérer si demandé
-            if ($this->option('force')) {
-                return $this->generateCache($generator);
+            if ($stats instanceof CacheStats) {
+                $this->displayCacheStats($stats);
             }
 
             return self::SUCCESS;
-        }
+        } catch (\Throwable $exception) {
+            $this->error($exception->getMessage());
 
-        $this->error('Failed to clear cache');
-        return self::FAILURE;
-    }
-
-    private function showCache(RuleCacheGenerator $generator): int
-    {
-        $cacheFile = $generator->getCachePath();
-
-        if (!file_exists($cacheFile)) {
-            $this->warn('Cache file does not exist: ' . $cacheFile);
-            $this->info('Generating cache automatically...');
-
-            // Générer le cache automatiquement
-            $generator->generate();
-
-            $this->info("✅ Cache generated successfully at: " . $cacheFile);
-        }
-
-        // Maintenant on est sûr que le fichier existe, on peut l'afficher
-        $rules = require $cacheFile;
-        $this->info('Rules count: ' . count($rules));
-
-        // Préparer les lignes du tableau avec index
-        $rows = [];
-        $i = 1;
-        foreach ($rules as $rule) {
-            $rows[] = [
-                $i++,                             // numéro de ligne
-                $rule['class'],                   // nom de la classe
-                $rule['priority'],
-                implode(', ', $rule['entities']),
-                implode(', ', $rule['operations']),
-            ];
-        }
-
-        $this->table(
-            ['#', 'Class', 'Priority', 'Entities', 'Operations'],
-            $rows
-        );
-
-        return self::SUCCESS;
-    }
-
-    private function showCacheStats(RuleCacheGenerator $generator): void
-    {
-        $cacheFile = $generator->getCachePath();
-
-        if (file_exists($cacheFile)) {
-            $size = filesize($cacheFile);
-            $rules = require $cacheFile;
-
-            $this->line("📊 Cache stats:");
-            $this->line("   Size: " . $this->formatBytes($size));
-            $this->line("   Rules: " . count($rules));
-            $this->line("   Path: " . $cacheFile);
+            return self::FAILURE;
         }
     }
 
-    private function formatBytes(int $bytes): string
+    /**
+     * Display cache statistics.
+     *
+     * @param CacheStats $stats The cache statistics DTO
+     */
+    protected function displayCacheStats(CacheStats $stats): void
     {
-        $units = ['B', 'KB', 'MB', 'GB'];
-        $i = 0;
+        $this->line('📊 Cache stats:');
+        $this->line('   Path: ' . $stats->path);
+        $this->line('   Rules: ' . $stats->rulesCount);
+        $this->line('   Size: ' . $stats->formattedSize());
 
-        while ($bytes >= 1024 && $i < count($units) - 1) {
-            $bytes /= 1024;
-            ++$i;
+        if ($stats->generationTimeMs > 0) {
+            $this->line('   Duration: ' . $stats->generationTimeMs . ' ms');
         }
-
-        return round($bytes, 2) . ' ' . $units[$i];
     }
 }

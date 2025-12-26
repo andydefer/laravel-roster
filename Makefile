@@ -40,7 +40,7 @@ pre-commit:
 	@echo "✅ Pre-commit checks passed"
 
 .PHONY: git-commit-push
-git-commit-push: pre-commit enable-cache
+git-commit-push: pre-commit enable-cache update-checklist
 	@read -p "Enter commit message: " commit_message; \
 	if [ -z "$$commit_message" ]; then \
 		echo "Error: Commit message cannot be empty"; \

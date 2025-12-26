@@ -22,7 +22,7 @@ final class ImpedimentTest extends TestCase
     /**
      * Test schedulable instance.
      */
-    private TestSchedulable $schedulable;
+    private TestSchedulable $testSchedulable;
 
     /**
      * Test availability instance.
@@ -36,7 +36,7 @@ final class ImpedimentTest extends TestCase
     {
         parent::setUp();
 
-        $this->schedulable = TestSchedulable::create();
+        $this->testSchedulable = TestSchedulable::create();
         $this->availability = $this->createAvailability();
     }
 
@@ -45,7 +45,7 @@ final class ImpedimentTest extends TestCase
      */
     private function createAvailability(): Availability
     {
-        return \Roster\Facades\Availability::for($this->schedulable)
+        return \Roster\Facades\Availability::for($this->testSchedulable)
             ->create([
                 'type' => 'consultation',
                 'daily_start' => '09:00:00',
@@ -58,11 +58,12 @@ final class ImpedimentTest extends TestCase
 
     /**
      * Helper method to create an impediment instance for testing model methods.
+     * @param array<string, Carbon> $attributes
      */
     private function createImpedimentModelInstance(array $attributes = []): ImpedimentModel
     {
         // Create via facade first to get valid instance
-        $impediment = Impediment::for($this->schedulable)
+        $impediment = Impediment::for($this->testSchedulable)
             ->owner($this->availability)
             ->create([
                 'reason' => 'Test Impediment',
@@ -72,10 +73,8 @@ final class ImpedimentTest extends TestCase
             ]);
 
         // Then update with test attributes if needed
-        if (!empty($attributes)) {
-            foreach ($attributes as $key => $value) {
-                $impediment->$key = $value;
-            }
+        foreach ($attributes as $key => $value) {
+            $impediment->$key = $value;
         }
 
         return $impediment;
@@ -86,7 +85,7 @@ final class ImpedimentTest extends TestCase
      */
     public function test_impediment_can_be_created_with_valid_attributes(): void
     {
-        $impediment = Impediment::for($this->schedulable)
+        $impediment = Impediment::for($this->testSchedulable)
             ->owner($this->availability)
             ->create([
                 'reason' => 'Vacation',
@@ -96,7 +95,7 @@ final class ImpedimentTest extends TestCase
             ]);
 
         $this->assertInstanceOf(ImpedimentModel::class, $impediment);
-        $this->assertSame($this->schedulable->id, $impediment->schedulable_id);
+        $this->assertSame($this->testSchedulable->id, $impediment->schedulable_id);
         $this->assertSame(TestSchedulable::class, $impediment->schedulable_type);
         $this->assertSame($this->availability->id, $impediment->availability_id);
         $this->assertEquals('Vacation', $impediment->reason);
@@ -108,7 +107,7 @@ final class ImpedimentTest extends TestCase
      */
     public function test_datetime_attributes_are_properly_cast(): void
     {
-        $impediment = Impediment::for($this->schedulable)
+        $impediment = Impediment::for($this->testSchedulable)
             ->owner($this->availability)
             ->create([
                 'reason' => 'Meeting',
@@ -126,7 +125,7 @@ final class ImpedimentTest extends TestCase
      */
     public function test_metadata_is_properly_cast_to_array(): void
     {
-        $impediment = Impediment::for($this->schedulable)
+        $impediment = Impediment::for($this->testSchedulable)
             ->owner($this->availability)
             ->create([
                 'reason' => 'Emergency',
@@ -136,7 +135,7 @@ final class ImpedimentTest extends TestCase
             ]);
 
         $this->assertIsArray($impediment->metadata);
-        $this->assertEquals(['type' => 'emergency', 'priority' => 'high'], $impediment->metadata);
+        $this->assertSame(['type' => 'emergency', 'priority' => 'high'], $impediment->metadata);
     }
 
     /**
@@ -153,7 +152,7 @@ final class ImpedimentTest extends TestCase
         ));
 
         $this->assertIsArray($impediment->metadata);
-        $this->assertEquals(['note' => 'Test note', 'category' => 'technical'], $impediment->metadata);
+        $this->assertSame(['note' => 'Test note', 'category' => 'technical'], $impediment->metadata);
     }
 
     /**
@@ -161,7 +160,7 @@ final class ImpedimentTest extends TestCase
      */
     public function test_metadata_returns_empty_array_when_null(): void
     {
-        $impediment = Impediment::for($this->schedulable)
+        $impediment = Impediment::for($this->testSchedulable)
             ->owner($this->availability)
             ->create([
                 'reason' => 'Test',
@@ -193,7 +192,7 @@ final class ImpedimentTest extends TestCase
         $impediment = $this->createImpedimentModelInstance();
 
         $this->assertInstanceOf(TestSchedulable::class, $impediment->schedulable);
-        $this->assertEquals($this->schedulable->id, $impediment->schedulable->id);
+        $this->assertEquals($this->testSchedulable->id, $impediment->schedulable->id);
     }
 
     /**
@@ -234,7 +233,7 @@ final class ImpedimentTest extends TestCase
      */
     public function test_duration_minutes_attribute_returns_correct_duration(): void
     {
-        $impediment = Impediment::for($this->schedulable)
+        $impediment = Impediment::for($this->testSchedulable)
             ->owner($this->availability)
             ->create([
                 'reason' => 'Long Meeting',
@@ -243,7 +242,7 @@ final class ImpedimentTest extends TestCase
                 'metadata' => null,
             ]);
 
-        $this->assertEquals(150.0, $impediment->duration_minutes);
+        $this->assertEqualsWithDelta(150.0, $impediment->duration_minutes, PHP_FLOAT_EPSILON);
     }
 
     /**
@@ -424,7 +423,7 @@ final class ImpedimentTest extends TestCase
      */
     public function test_impediment_duration_is_calculated_correctly(): void
     {
-        $impediment = Impediment::for($this->schedulable)
+        $impediment = Impediment::for($this->testSchedulable)
             ->owner($this->availability)
             ->create([
                 'reason' => 'Training',
@@ -433,7 +432,7 @@ final class ImpedimentTest extends TestCase
                 'metadata' => null,
             ]);
 
-        $this->assertEquals(90.0, $impediment->duration_minutes);
+        $this->assertEqualsWithDelta(90.0, $impediment->duration_minutes, PHP_FLOAT_EPSILON);
     }
 
     /**
@@ -463,7 +462,7 @@ final class ImpedimentTest extends TestCase
      */
     public function test_duration_minutes_for_exact_hours(): void
     {
-        $impediment = Impediment::for($this->schedulable)
+        $impediment = Impediment::for($this->testSchedulable)
             ->owner($this->availability)
             ->create([
                 'reason' => 'Full Day',
@@ -472,6 +471,6 @@ final class ImpedimentTest extends TestCase
                 'metadata' => null,
             ]);
 
-        $this->assertEquals(480.0, $impediment->duration_minutes);
+        $this->assertEqualsWithDelta(480.0, $impediment->duration_minutes, PHP_FLOAT_EPSILON);
     }
 }

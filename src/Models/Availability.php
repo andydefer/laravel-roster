@@ -59,8 +59,6 @@ class Availability extends Model
 
     /**
      * Get the schedulable resource that owns this availability.
-     *
-     * @return MorphTo
      */
     public function schedulable(): MorphTo
     {
@@ -69,8 +67,6 @@ class Availability extends Model
 
     /**
      * Get the schedules associated with this availability.
-     *
-     * @return HasMany
      */
     public function schedules(): HasMany
     {
@@ -79,8 +75,6 @@ class Availability extends Model
 
     /**
      * Get the impediments associated with this availability.
-     *
-     * @return HasMany
      */
     public function impediments(): HasMany
     {
@@ -146,12 +140,7 @@ class Availability extends Model
         if ($this->validity_start && $start->lt($this->validity_start)) {
             return false;
         }
-
-        if ($this->validity_end && $end->gt($this->validity_end)) {
-            return false;
-        }
-
-        return true;
+        return !($this->validity_end && $end->gt($this->validity_end));
     }
 
     /**
@@ -169,12 +158,7 @@ class Availability extends Model
         if ($this->validity_start && $date->lt($this->validity_start)) {
             return false;
         }
-
-        if ($this->validity_end && $date->gt($this->validity_end)) {
-            return false;
-        }
-
-        return true;
+        return !($this->validity_end && $date->gt($this->validity_end));
     }
 
     /**

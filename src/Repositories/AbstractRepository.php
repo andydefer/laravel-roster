@@ -10,7 +10,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use LogicException;
-use Roster\Contracts\RepositoryInterface;
+use Roster\Contracts\Repository\RepositoryInterface;
 use Roster\Exceptions\InvalidOwnerException;
 use Roster\Exceptions\MissingOwnerException;
 use Roster\Exceptions\MissingSchedulableException;
@@ -287,6 +287,7 @@ abstract class AbstractRepository implements RepositoryInterface
 
     /**
      * Build a query with schedulable scope and applied filters.
+     * @param array<string, mixed> $filters
      */
     public function buildQueryWithFilters(Model $model, array $filters): Builder
     {

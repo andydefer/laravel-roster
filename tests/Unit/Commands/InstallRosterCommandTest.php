@@ -17,29 +17,6 @@ use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\Output;
 use Tests\TestCase;
 
-interface OutputWithBuffer
-{
-    public function getOutput(): string;
-}
-
-trait CapturesOutput
-{
-    private string $buffer = '';
-
-    protected function doWrite(string $message, bool $newline): void
-    {
-        $this->buffer .= $message;
-        if ($newline) {
-            $this->buffer .= PHP_EOL;
-        }
-    }
-
-    public function getOutput(): string
-    {
-        return $this->buffer;
-    }
-}
-
 final class InstallRosterCommandTest extends TestCase
 {
     use RefreshDatabase;

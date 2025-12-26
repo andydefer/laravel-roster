@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Roster\Models;
 
+use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Carbon;
@@ -82,10 +83,8 @@ class Schedule extends Model
 
     /**
      * Get the schedulable entity through the parent availability.
-     *
-     * @return \Illuminate\Database\Eloquent\Relations\Relation|null
      */
-    public function schedulable(): ?\Illuminate\Database\Eloquent\Relations\Relation
+    public function schedulable(): ?Relation
     {
         return $this->availability?->schedulable();
     }

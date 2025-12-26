@@ -11,7 +11,7 @@ use Roster\Facades\Impediment;
 use Exception;
 use Roster\Services\AvailabilityService;
 use Illuminate\Database\Eloquent\Model;
-use Roster\Contracts\EntityServiceInterface;
+use Roster\Contracts\Services\ServiceInterface;
 use Roster\Contracts\Validation\ValidationContextInterface;
 use Roster\Enums\EntityType;
 use Roster\Enums\OperationType;
@@ -84,9 +84,9 @@ class ValidationContext implements ValidationContextInterface
      * - For Availability: schedulable already set via for()
      * - For Schedule and Impediment: schedulable set via for() and owner already set via owner()
      *
-     * @return EntityServiceInterface The service instance with context configured
+     * @return ServiceInterface The service instance with context configured
      */
-    public function getCurrentService(): EntityServiceInterface
+    public function getCurrentService(): ServiceInterface
     {
         // Récupérer le schedulable du contexte
         $schedulable = $this->getSchedulable();
@@ -114,7 +114,7 @@ class ValidationContext implements ValidationContextInterface
     /**
      * Configure le service Schedule avec le contexte approprié.
      */
-    private function setupScheduleService(Model $model): EntityServiceInterface
+    private function setupScheduleService(Model $model): ServiceInterface
     {
         // Récupérer l'owner depuis les données ou l'entité courante
         $owner = $this->resolveOwner();
@@ -129,7 +129,7 @@ class ValidationContext implements ValidationContextInterface
     /**
      * Configure le service Impediment avec le contexte approprié.
      */
-    private function setupImpedimentService(Model $model): EntityServiceInterface
+    private function setupImpedimentService(Model $model): ServiceInterface
     {
         // Récupérer l'owner depuis les données ou l'entité courante
         $owner = $this->resolveOwner();

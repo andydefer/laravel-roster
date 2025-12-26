@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace Roster\Contracts\Repository;
 
+use Roster\Models\Impediment;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
-use Roster\Contracts\RepositoryInterface;
 
 interface ImpedimentRepositoryInterface extends RepositoryInterface
 {
@@ -30,7 +30,7 @@ interface ImpedimentRepositoryInterface extends RepositoryInterface
      *
      * @param int $availabilityId The ID of the availability
      * @param Carbon $from Starting date for future impediments
-     * @return Collection<int, \Roster\Models\Impediment> Collection of future impediments
+     * @return Collection<int, Impediment> Collection of future impediments
      */
     public function getFutureImpediments(
         int $availabilityId,

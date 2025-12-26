@@ -8,7 +8,6 @@ use Roster\Repositories\AvailabilityRepository;
 use Roster\Repositories\ScheduleRepository;
 use Tests\Support\TestSchedulable;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\Schedule as FacadesSchedule;
 use Roster\Facades\Availability;
 use Roster\Facades\Schedule;
 use Roster\Models\Availability as AvailabilityModel;
@@ -16,8 +15,6 @@ use Roster\Models\Schedule as ScheduleModel;
 use Roster\Exceptions\ForbiddenModelMutationException;
 use Roster\Exceptions\InvalidOwnerException;
 use Roster\Exceptions\MissingOwnerException;
-use Roster\Exceptions\MissingSchedulableException;
-use Roster\Validation\Exceptions\ValidationFailedException;
 use Tests\TestCase;
 
 final class RepositoryMutationTest extends TestCase
@@ -274,7 +271,7 @@ final class RepositoryMutationTest extends TestCase
         $endDate = now()->addDays(30)->startOfDay();
         $day = strtolower($startDate->format('l'));
 
-        $availability = Availability::for($testSchedulable)
+        Availability::for($testSchedulable)
             ->create([
                 'type' => 'consultation',
                 'daily_start' => '09:00:00',
@@ -287,7 +284,7 @@ final class RepositoryMutationTest extends TestCase
         // Tenter d'utiliser le repository sans schedulable (devrait échouer)
         $this->expectException(MissingOwnerException::class);
 
-        $scheduleRepository = app(ScheduleRepository::class);
+        app(ScheduleRepository::class);
 
         Schedule::for($testSchedulable)->find(999);
     }

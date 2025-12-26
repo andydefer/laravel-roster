@@ -68,8 +68,6 @@ class Impediment extends Model
      * Accessor and mutator for metadata attribute.
      *
      * Accepts either a JSON string or an array from the user.
-     *
-     * @return Attribute
      */
     protected function metadata(): Attribute
     {
@@ -91,8 +89,6 @@ class Impediment extends Model
 
     /**
      * Get the schedulable entity associated with this impediment.
-     *
-     * @return MorphTo
      */
     public function schedulable(): MorphTo
     {

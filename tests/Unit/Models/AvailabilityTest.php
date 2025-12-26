@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Models;
 
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Roster\Facades\Availability;
 use Roster\Models\Availability as AvailabilityModel;
 use Tests\Support\TestSchedulable;
@@ -21,7 +22,7 @@ final class AvailabilityTest extends TestCase
     /**
      * Test schedulable instance.
      */
-    private TestSchedulable $schedulable;
+    private TestSchedulable $testSchedulable;
 
     /**
      * Set up the test environment.
@@ -30,11 +31,12 @@ final class AvailabilityTest extends TestCase
     {
         parent::setUp();
 
-        $this->schedulable = TestSchedulable::create();
+        $this->testSchedulable = TestSchedulable::create();
     }
 
     /**
      * Helper method to create an availability instance.
+     * @param array<string, string[]>|array<string, string> $attributes
      */
     private function createAvailability(array $attributes = []): AvailabilityModel
     {
@@ -47,7 +49,7 @@ final class AvailabilityTest extends TestCase
             'validity_end' => '2038-07-31 23:59:59',
         ];
 
-        return Availability::for($this->schedulable)
+        return Availability::for($this->testSchedulable)
             ->create(array_merge($defaultAttributes, $attributes));
     }
 
@@ -64,7 +66,7 @@ final class AvailabilityTest extends TestCase
         ]);
 
         $this->assertInstanceOf(AvailabilityModel::class, $availability);
-        $this->assertSame($this->schedulable->id, $availability->schedulable_id);
+        $this->assertSame($this->testSchedulable->id, $availability->schedulable_id);
         $this->assertSame(TestSchedulable::class, $availability->schedulable_type);
         $this->assertEquals('training', $availability->type);
         $this->assertEquals(['monday', 'wednesday', 'friday'], $availability->days);
@@ -108,7 +110,7 @@ final class AvailabilityTest extends TestCase
         ]);
 
         $this->assertIsArray($availability->days);
-        $this->assertEquals(['tuesday', 'thursday'], $availability->days);
+        $this->assertSame(['tuesday', 'thursday'], $availability->days);
     }
 
     /**
@@ -216,7 +218,7 @@ final class AvailabilityTest extends TestCase
     {
         $availability = $this->createAvailability();
 
-        $this->assertEquals(480, $availability->getDailyDurationMinutes()); // 8 heures * 60 minutes
+        $this->assertSame(480, $availability->getDailyDurationMinutes()); // 8 heures * 60 minutes
     }
 
     /**
@@ -226,7 +228,7 @@ final class AvailabilityTest extends TestCase
     {
         $availability = $this->createAvailability();
 
-        $this->assertEquals(30, $availability->getValidityDurationDays()); // 31 jours - 1
+        $this->assertSame(30, $availability->getValidityDurationDays()); // 31 jours - 1
     }
 
     /**
@@ -237,7 +239,7 @@ final class AvailabilityTest extends TestCase
         // Pour tester cette méthode dans un contexte où les dates seraient null,
         // nous devons créer une instance sans passer par la validation
         $availability = new AvailabilityModel([
-            'schedulable_id' => $this->schedulable->id,
+            'schedulable_id' => $this->testSchedulable->id,
             'schedulable_type' => TestSchedulable::class,
             'type' => 'consultation',
             'daily_start' => '09:00:00',
@@ -270,7 +272,7 @@ final class AvailabilityTest extends TestCase
     {
         // Création d'une instance sans passer par la validation pour tester la méthode
         $availability = new AvailabilityModel([
-            'schedulable_id' => $this->schedulable->id,
+            'schedulable_id' => $this->testSchedulable->id,
             'schedulable_type' => TestSchedulable::class,
             'type' => 'consultation',
             'daily_start' => '09:00:00',
@@ -318,7 +320,7 @@ final class AvailabilityTest extends TestCase
     {
         // Création d'une instance sans passer par la validation
         $availability = new AvailabilityModel([
-            'schedulable_id' => $this->schedulable->id,
+            'schedulable_id' => $this->testSchedulable->id,
             'schedulable_type' => TestSchedulable::class,
             'type' => 'consultation',
             'daily_start' => '09:00:00',
@@ -366,7 +368,7 @@ final class AvailabilityTest extends TestCase
     {
         // Création d'une instance sans passer par la validation
         $availability = new AvailabilityModel([
-            'schedulable_id' => $this->schedulable->id,
+            'schedulable_id' => $this->testSchedulable->id,
             'schedulable_type' => TestSchedulable::class,
             'type' => 'consultation',
             'daily_start' => '09:00:00',
@@ -426,7 +428,7 @@ final class AvailabilityTest extends TestCase
         $availability = $this->createAvailability();
 
         $this->assertInstanceOf(TestSchedulable::class, $availability->schedulable);
-        $this->assertEquals($this->schedulable->id, $availability->schedulable->id);
+        $this->assertEquals($this->testSchedulable->id, $availability->schedulable->id);
     }
 
     /**
@@ -436,7 +438,7 @@ final class AvailabilityTest extends TestCase
     {
         $availability = $this->createAvailability();
 
-        $this->assertInstanceOf(\Illuminate\Database\Eloquent\Relations\HasMany::class, $availability->schedules());
+        $this->assertInstanceOf(HasMany::class, $availability->schedules());
     }
 
     /**
@@ -446,7 +448,7 @@ final class AvailabilityTest extends TestCase
     {
         $availability = $this->createAvailability();
 
-        $this->assertInstanceOf(\Illuminate\Database\Eloquent\Relations\HasMany::class, $availability->impediments());
+        $this->assertInstanceOf(HasMany::class, $availability->impediments());
     }
 
     /**

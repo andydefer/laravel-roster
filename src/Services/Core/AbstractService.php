@@ -13,7 +13,6 @@ use BadMethodCallException;
 use LogicException;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Model;
-use Roster\Contracts\EntityServiceInterface;
 use Roster\Contracts\Repository\AvailabilityRepositoryInterface;
 use Roster\Contracts\Repository\ImpedimentRepositoryInterface;
 use Roster\Contracts\Repository\ScheduleRepositoryInterface;
@@ -21,11 +20,12 @@ use Roster\Contracts\Validation\ValidatorInterface;
 use Roster\Domain\Services\TemporalConflictService;
 use Roster\Exceptions\InvalidServiceContextException;
 use ReflectionClass;
+use Roster\Contracts\Services\ServiceInterface;
 
 /**
  * Abstract service providing a complete CRUD template with dynamic repository resolution.
  */
-abstract class AbstractService implements EntityServiceInterface
+abstract class AbstractService implements ServiceInterface
 {
     protected ?Model $schedulable = null;
 
