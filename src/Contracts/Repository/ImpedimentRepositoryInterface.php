@@ -12,12 +12,12 @@ use Roster\Contracts\RepositoryInterface;
 interface ImpedimentRepositoryInterface extends RepositoryInterface
 {
     /**
-     * Find impediments for a given availability.
+     * Build a query for impediments related to a specific availability.
      *
-     * This method only builds a query.
-     * No business logic must be implemented here.
-     *
-     *
+     * @param int $availabilityId The ID of the availability
+     * @param Carbon|null $start Optional start date filter
+     * @param Carbon|null $end Optional end date filter
+     * @return Builder Query builder for impediments
      */
     public function findByAvailability(
         int $availabilityId,
@@ -26,9 +26,11 @@ interface ImpedimentRepositoryInterface extends RepositoryInterface
     ): Builder;
 
     /**
-     * Get future impediments for a given availability.
+     * Get all future impediments for a specific availability.
      *
-     *
+     * @param int $availabilityId The ID of the availability
+     * @param Carbon $from Starting date for future impediments
+     * @return Collection<int, \Roster\Models\Impediment> Collection of future impediments
      */
     public function getFutureImpediments(
         int $availabilityId,

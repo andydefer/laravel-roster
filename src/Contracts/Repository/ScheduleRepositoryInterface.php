@@ -12,12 +12,12 @@ use Roster\Contracts\RepositoryInterface;
 interface ScheduleRepositoryInterface extends RepositoryInterface
 {
     /**
-     * Find schedules for a given availability.
+     * Build a query for schedules related to a specific availability.
      *
-     * This method MUST NOT contain business logic.
-     * It only builds a query.
-     *
-     *
+     * @param int $availabilityId The ID of the availability
+     * @param Carbon|null $start Optional start date filter
+     * @param Carbon|null $end Optional end date filter
+     * @return Builder Query builder for schedules
      */
     public function findByAvailability(
         int $availabilityId,
@@ -26,9 +26,11 @@ interface ScheduleRepositoryInterface extends RepositoryInterface
     ): Builder;
 
     /**
-     * Get future schedules for a given availability.
+     * Get all future schedules for a specific availability.
      *
-     *
+     * @param int $availabilityId The ID of the availability
+     * @param Carbon $from Starting date for future schedules
+     * @return Collection<int, \Roster\Models\Schedule> Collection of future schedules
      */
     public function getFutureSchedules(
         int $availabilityId,
@@ -36,10 +38,14 @@ interface ScheduleRepositoryInterface extends RepositoryInterface
     ): Collection;
 
     /**
-     * Get schedules for a schedulable within a date range.
+     * Get schedules for a schedulable resource within a date range.
      *
-     * @param array<string, mixed> $filters
-     *
+     * @param int $schedulableId The ID of the schedulable resource
+     * @param string $schedulableType The type/class of the schedulable resource
+     * @param Carbon $start Start date of the range
+     * @param Carbon $end End date of the range
+     * @param array<string, mixed> $filters Additional filters to apply
+     * @return Collection<int, \Roster\Models\Schedule> Collection of schedules
      */
     public function getForDateRange(
         int $schedulableId,

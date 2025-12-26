@@ -1,18 +1,19 @@
 # Pint Formatting Test Report
-*Generated: ven. 26 déc. 2025 16:02:38 WAT*
+*Generated: ven. 26 déc. 2025 16:10:35 WAT*
 
 
-  ..⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯..⨯⨯⨯⨯⨯⨯⨯...⨯⨯⨯⨯.⨯⨯⨯⨯.⨯⨯.⨯⨯⨯⨯⨯..⨯.....⨯⨯⨯⨯⨯.⨯⨯⨯⨯⨯......⨯....⨯.......⨯......⨯....⨯⨯⨯⨯⨯.........⨯......⨯⨯⨯⨯⨯..⨯......⨯.....⨯..⨯.
+  ..⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯..⨯⨯⨯⨯⨯⨯⨯...⨯⨯⨯⨯⨯⨯⨯⨯⨯.⨯⨯.⨯⨯⨯⨯⨯..⨯.....⨯⨯⨯⨯⨯.⨯⨯⨯⨯⨯......⨯....⨯.......⨯......⨯....⨯⨯⨯⨯⨯.........⨯......⨯⨯⨯⨯⨯..⨯......⨯.....⨯..⨯.
 
   ──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────── Laravel  
-    FAIL   ................................................................................................................................................ 153 files, 77 style issues  
+    FAIL   ................................................................................................................................................ 153 files, 78 style issues  
   ⨯ database/migrations/2024_01_01_000001_create_roster_availabilities_table.php         class_definition, no_superfluous_phpdoc_tags, braces_position, phpdoc_trim, no_unused_imports  
   ⨯ src/Commands/CacheRulesCommand.php       increment_style, single_quote, blank_line_after_opening_tag, concat_space, not_operator_with_successor_space, blank_line_before_statement  
   ⨯ src/Commands/InstallRosterCommand.php                                                        unary_operator_spaces, not_operator_with_successor_space, blank_line_before_statement  
   ⨯ src/Contracts/EntityServiceInterface.php                                                                                                        no_extra_blank_lines, phpdoc_align  
   ⨯ src/Contracts/Filters/FilterableInterface.php                                                                                                          class_attributes_separation  
-  ⨯ src/Contracts/Repository/ImpedimentRepositoryInterface.php                                                                                                             phpdoc_trim  
-  ⨯ src/Contracts/Repository/ScheduleRepositoryInterface.php                                                                                                 phpdoc_trim, phpdoc_align  
+  ⨯ src/Contracts/Repository/AvailabilityRepositoryInterface.php                                                                                                          phpdoc_align  
+  ⨯ src/Contracts/Repository/ImpedimentRepositoryInterface.php                                                                                                            phpdoc_align  
+  ⨯ src/Contracts/Repository/ScheduleRepositoryInterface.php                                                                                                              phpdoc_align  
   ⨯ src/Contracts/RepositoryInterface.php                                                                              class_attributes_separation, no_extra_blank_lines, phpdoc_align  
   ⨯ src/Contracts/RosterDataInterface.php                                                        class_definition, braces_position, single_line_empty_body, blank_line_after_namespace  
   ⨯ src/Contracts/Services/AvailabilityCheckerInterface.php                                                                                                class_attributes_separation  
