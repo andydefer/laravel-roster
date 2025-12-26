@@ -1,8 +1,8 @@
 # Rector Refactoring Report
-*Generated: ven. 26 déc. 2025 23:50:26 WAT*
+*Generated: ven. 26 déc. 2025 23:57:47 WAT*
 
 
-6 files with changes
+9 files with changes
 ====================
 
 1) /home/andy-kani/pro/sites/packages/laravel-roster/src/Commands/CacheRulesCommand.php:4
@@ -15,7 +15,7 @@
 +use Throwable;
  use Illuminate\Console\Command;
  use Roster\Domain\DTOs\CacheStats;
- use Roster\Services\CacheRulesService;
+ use Roster\Domain\Services\CacheRulesService;
 @@ @@
      /**
       * Execute the console command.
@@ -85,63 +85,29 @@ Applied rules:
  * RenameParamToMatchTypeRector
 
 
-2) /home/andy-kani/pro/sites/packages/laravel-roster/src/Domain/CacheRulesService.php:1
+2) /home/andy-kani/pro/sites/packages/laravel-roster/src/Commands/InstallRosterCommand.php:10
 
     ---------- begin diff ----------
 @@ @@
- <?php
-
-+declare(strict_types=1);
-+
- namespace Roster\Services;
-
-+use RuntimeException;
- use Roster\Domain\DTOs\CacheStats;
- use Roster\Validation\Cache\RuleCacheGenerator;
-
-@@ @@
- final class CacheRulesService
+ final class InstallRosterCommand extends Command
  {
-     public function __construct(
--        private RuleCacheGenerator $generator,
-+        private RuleCacheGenerator $ruleCacheGenerator,
-     ) {}
+     protected $signature = 'roster:install {--force : Force publish without confirmation}';
++
+     protected $description = 'Install the Roster package';
 
-     public function generate(): CacheStats
+-    public function handle(RosterInstallerService $installer): int
++    public function handle(RosterInstallerService $rosterInstallerService): int
      {
--        if (! $this->generator->generate()) {
--            throw new \RuntimeException('Cache generation failed');
-+        if (! $this->ruleCacheGenerator->generate()) {
-+            throw new RuntimeException('Cache generation failed');
-         }
-
--        return CacheStats::fromPath($this->generator->getCachePath());
-+        return CacheStats::fromPath($this->ruleCacheGenerator->getCachePath());
+-        $installer->install($this, (bool) $this->option('force'));
++        $rosterInstallerService->install($this, (bool) $this->option('force'));
+         return self::SUCCESS;
      }
-
-     public function clear(bool $force = false): ?CacheStats
-     {
--        if (! $this->generator->clear()) {
--            throw new \RuntimeException('Cache clear failed');
-+        if (! $this->ruleCacheGenerator->clear()) {
-+            throw new RuntimeException('Cache clear failed');
-         }
-
-         if ($force) {
-@@ @@
-
-     public function show(): CacheStats
-     {
--        $path = $this->generator->getCachePath();
-+        $path = $this->ruleCacheGenerator->getCachePath();
-
-         if (! file_exists($path)) {
-             return $this->generate();
+ }
     ----------- end diff -----------
 
 Applied rules:
- * RenamePropertyToMatchTypeRector
- * DeclareStrictTypesRector
+ * NewlineBetweenClassLikeStmtsRector
+ * RenameParamToMatchTypeRector
 
 
 3) /home/andy-kani/pro/sites/packages/laravel-roster/src/Domain/DTOs/CacheStats.php:4
@@ -188,7 +154,83 @@ Applied rules:
  * PostIncDecToPreIncDecRector
 
 
-4) /home/andy-kani/pro/sites/packages/laravel-roster/src/Models/Availability.php:140
+4) /home/andy-kani/pro/sites/packages/laravel-roster/src/Domain/Services/CacheRulesService.php:1
+
+    ---------- begin diff ----------
+@@ @@
+ <?php
+
++declare(strict_types=1);
++
+ namespace Roster\Domain\Services;
+
++use RuntimeException;
+ use Roster\Domain\DTOs\CacheStats;
+ use Roster\Validation\Cache\RuleCacheGenerator;
+
+@@ @@
+ class CacheRulesService
+ {
+     public function __construct(
+-        private RuleCacheGenerator $generator,
++        private RuleCacheGenerator $ruleCacheGenerator,
+     ) {}
+
+     public function generate(): CacheStats
+     {
+-        if (! $this->generator->generate()) {
+-            throw new \RuntimeException('Cache generation failed');
++        if (! $this->ruleCacheGenerator->generate()) {
++            throw new RuntimeException('Cache generation failed');
+         }
+
+-        return CacheStats::fromPath($this->generator->getCachePath());
++        return CacheStats::fromPath($this->ruleCacheGenerator->getCachePath());
+     }
+
+     public function clear(bool $force = false): ?CacheStats
+     {
+-        if (! $this->generator->clear()) {
+-            throw new \RuntimeException('Cache clear failed');
++        if (! $this->ruleCacheGenerator->clear()) {
++            throw new RuntimeException('Cache clear failed');
+         }
+
+         if ($force) {
+@@ @@
+
+     public function show(): CacheStats
+     {
+-        $path = $this->generator->getCachePath();
++        $path = $this->ruleCacheGenerator->getCachePath();
+
+         if (! file_exists($path)) {
+             return $this->generate();
+    ----------- end diff -----------
+
+Applied rules:
+ * RenamePropertyToMatchTypeRector
+ * DeclareStrictTypesRector
+
+
+5) /home/andy-kani/pro/sites/packages/laravel-roster/src/Domain/Services/RosterInstallerService.php:1
+
+    ---------- begin diff ----------
+@@ @@
+ <?php
+
++declare(strict_types=1);
++
+ namespace Roster\Domain\Services;
+
+ use Illuminate\Console\Command;
+    ----------- end diff -----------
+
+Applied rules:
+ * DeclareStrictTypesRector
+
+
+6) /home/andy-kani/pro/sites/packages/laravel-roster/src/Models/Availability.php:140
 
     ---------- begin diff ----------
 @@ @@
@@ -212,7 +254,7 @@ Applied rules:
  * NewlineAfterStatementRector
 
 
-5) /home/andy-kani/pro/sites/packages/laravel-roster/src/Repositories/AbstractRepository.php:405
+7) /home/andy-kani/pro/sites/packages/laravel-roster/src/Repositories/AbstractRepository.php:405
 
     ---------- begin diff ----------
 @@ @@
@@ -229,7 +271,7 @@ Applied rules:
  * ClassMethodArrayDocblockParamFromLocalCallsRector
 
 
-6) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Commands/CacheRulesCommandTest.php:4
+8) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Commands/CacheRulesCommandTest.php:4
 
     ---------- begin diff ----------
 @@ @@
@@ -342,5 +384,57 @@ Applied rules:
  * RenameVariableToMatchNewTypeRector
 
 
- [OK] 6 files would have been changed (dry-run) by Rector                                                               
+9) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Commands/InstallRosterCommandTest.php:13
+
+    ---------- begin diff ----------
+@@ @@
+ {
+     public function test_command_can_be_instantiated(): void
+     {
+-        $command = new InstallRosterCommand;
+-        $this->assertSame('roster:install', $command->getName());
+-        $this->assertSame('Install the Roster package', $command->getDescription());
++        $installRosterCommand = new InstallRosterCommand;
++        $this->assertSame('roster:install', $installRosterCommand->getName());
++        $this->assertSame('Install the Roster package', $installRosterCommand->getDescription());
+     }
+
+     public function test_handle_calls_installer_service_with_force_option(): void
+@@ @@
+         $mockService = Mockery::mock(RosterInstallerService::class);
+         $mockService->shouldReceive('install')
+             ->once()
+-            ->withArgs(function ($command, $force) {
++            ->withArgs(function ($command, $force): bool {
+                 return $command instanceof InstallRosterCommand && $force === true;
+             });
+
+-        $command = new InstallRosterCommand;
++        new InstallRosterCommand;
+         $this->app->instance(RosterInstallerService::class, $mockService);
+
+         $this->artisan('roster:install', ['--force' => true])
+@@ @@
+         $mockService = Mockery::mock(RosterInstallerService::class);
+         $mockService->shouldReceive('install')
+             ->once()
+-            ->withArgs(function ($command, $force) {
++            ->withArgs(function ($command, $force): bool {
+                 return $command instanceof InstallRosterCommand && $force === false;
+             });
+
+-        $command = new InstallRosterCommand;
++        new InstallRosterCommand;
+         $this->app->instance(RosterInstallerService::class, $mockService);
+
+         $this->artisan('roster:install')
+    ----------- end diff -----------
+
+Applied rules:
+ * RemoveUnusedVariableAssignRector
+ * RenameVariableToMatchNewTypeRector
+ * ClosureReturnTypeRector
+
+
+ [OK] 9 files would have been changed (dry-run) by Rector                                                               
 

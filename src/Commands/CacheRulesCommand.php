@@ -6,7 +6,7 @@ namespace Roster\Commands;
 
 use Illuminate\Console\Command;
 use Roster\Domain\DTOs\CacheStats;
-use Roster\Services\CacheRulesService;
+use Roster\Domain\Services\CacheRulesService;
 
 /**
  * Command to manage validation rules cache for the Roster package.

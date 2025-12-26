@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\File;
 use Mockery;
 use Roster\Commands\CacheRulesCommand;
 use Roster\Domain\DTOs\CacheStats;
-use Roster\Services\CacheRulesService;
+use Roster\Domain\Services\CacheRulesService;
 use Tests\TestCase;
 
 final class CacheRulesCommandTest extends TestCase

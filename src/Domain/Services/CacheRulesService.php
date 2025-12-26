@@ -1,11 +1,11 @@
 <?php
 
-namespace Roster\Services;
+namespace Roster\Domain\Services;
 
 use Roster\Domain\DTOs\CacheStats;
 use Roster\Validation\Cache\RuleCacheGenerator;
 
-final class CacheRulesService
+class CacheRulesService
 {
     public function __construct(
         private RuleCacheGenerator $generator,

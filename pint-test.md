@@ -1,14 +1,14 @@
 # Pint Formatting Test Report
-*Generated: ven. 26 déc. 2025 23:50:24 WAT*
+*Generated: ven. 26 déc. 2025 23:57:44 WAT*
 
 
-  ..⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯..⨯⨯⨯⨯⨯⨯⨯...⨯⨯⨯⨯⨯..⨯⨯.⨯⨯⨯⨯⨯..⨯.....⨯⨯⨯⨯⨯.⨯⨯⨯⨯....⨯....⨯.......⨯......⨯....⨯⨯⨯⨯⨯.........⨯....⨯....⨯⨯⨯⨯⨯..⨯....⨯⨯⨯.....⨯..⨯.
+  ..⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯..⨯⨯⨯⨯⨯⨯⨯...⨯⨯⨯⨯⨯.⨯⨯..⨯⨯⨯⨯⨯⨯..⨯.....⨯⨯⨯⨯⨯.⨯⨯⨯⨯....⨯....⨯.......⨯......⨯....⨯⨯⨯⨯⨯.........⨯....⨯....⨯⨯⨯⨯⨯..⨯....⨯⨯⨯.....⨯..⨯.
 
   ──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────── Laravel  
-    FAIL   ................................................................................................................................................ 150 files, 76 style issues  
+    FAIL   ................................................................................................................................................ 151 files, 77 style issues  
   ⨯ database/migrations/2024_01_01_000001_create_roster_availabilities_table.php         class_definition, no_superfluous_phpdoc_tags, braces_position, phpdoc_trim, no_unused_imports  
   ⨯ src/Commands/CacheRulesCommand.php                                                                                                                      concat_space, phpdoc_align  
-  ⨯ src/Commands/InstallRosterCommand.php                                                        unary_operator_spaces, not_operator_with_successor_space, blank_line_before_statement  
+  ⨯ src/Commands/InstallRosterCommand.php                                                                                     class_attributes_separation, blank_line_before_statement  
   ⨯ src/Contracts/Repository/AvailabilityRepositoryInterface.php                                                                                                          phpdoc_align  
   ⨯ src/Contracts/Repository/ImpedimentRepositoryInterface.php                                                                                           ordered_imports, phpdoc_align  
   ⨯ src/Contracts/Repository/RepositoryInterface.php                                                                                                                      phpdoc_align  
@@ -19,6 +19,7 @@
   ⨯ src/DTOs/ScheduleData.php                                                                   function_declaration, not_operator_with_successor_space, ordered_imports, phpdoc_align  
   ⨯ src/Domain/DTOs/CacheStats.php                                     concat_space, unary_operator_spaces, braces_position, not_operator_with_successor_space, single_line_empty_body  
   ⨯ src/Domain/Helpers/TimeSlotHelper.php                                                          phpdoc_separation, not_operator_with_successor_space, ordered_imports, phpdoc_align  
+  ⨯ src/Domain/Services/RosterInstallerService.php                    unary_operator_spaces, not_operator_with_successor_space, single_line_after_imports, blank_line_before_statement  
   ⨯ src/Domain/Services/TemporalConflictService.php function_declaration, no_multiline_whitespace_around_double_arrow, trailing_comma_in_multiline, braces_position, phpdoc_separatio…  
   ⨯ src/Enums/EntityType.php                                                                                                                                              concat_space  
   ⨯ src/Exceptions/InvalidServiceContextException.php                                                                                                       single_quote, concat_space  
