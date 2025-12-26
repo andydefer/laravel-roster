@@ -19,8 +19,6 @@ use Roster\Enums\OperationType;
 )]
 class AvailabilityOverlapRule extends AbstractRule
 {
-    public function __construct() {}
-
     public function validate(ValidationContextInterface $validationContext): void
     {
         $operationType = $validationContext->getOperation();

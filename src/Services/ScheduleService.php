@@ -12,7 +12,6 @@ use Roster\DTOs\ScheduleData;
 use Roster\Enums\EntityType;
 use Roster\Enums\OperationType;
 use Roster\Models\Availability;
-use Roster\Models\Schedule;
 use Roster\Services\Core\AbstractService;
 use Roster\Validation\Exceptions\ValidationFailedException;
 
@@ -153,6 +152,7 @@ class ScheduleService extends AbstractService
             if ($slot !== null) {
                 $availableSlots->push($slot);
             }
+
             $currentDate->addDay();
         }
 
@@ -196,7 +196,7 @@ class ScheduleService extends AbstractService
         ?string $type = null,
         ?Carbon $searchStart = null
     ): ?array {
-        /** @var \Illuminate\Support\Collection<\Roster\Models\Availability> $availabilities */
+        /** @var Collection<Availability> $availabilities */
         $availabilities = $this->getAvailabilityRepository()->getForDate(
             $this->schedulable,
             $day,

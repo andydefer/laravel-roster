@@ -17,7 +17,6 @@ use Roster\Exceptions\InvalidOwnerException;
 use Roster\Exceptions\MissingOwnerException;
 use Roster\Exceptions\MissingSchedulableException;
 use Tests\TestCase;
-use Illuminate\Support\Carbon;
 
 final class RepositoryMutationTest extends TestCase
 {

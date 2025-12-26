@@ -4,6 +4,11 @@ declare(strict_types=1);
 
 namespace Roster\Services\Core;
 
+use Roster\Enums\OperationType;
+use Roster\Validation\Exceptions\ValidationFailedException;
+use Illuminate\Support\Collection;
+use Roster\Enums\EntityType;
+use Roster\Validation\Context\ValidationContext;
 use BadMethodCallException;
 use LogicException;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
@@ -23,8 +28,11 @@ use ReflectionClass;
 abstract class AbstractService implements EntityServiceInterface
 {
     protected ?Model $schedulable = null;
+
     protected ?Model $owner = null;
+
     protected array $filters = [];
+
     protected array $data = [];
 
     public function __construct(
@@ -54,13 +62,13 @@ abstract class AbstractService implements EntityServiceInterface
         }
 
         // Create DTO
-        $dto = $this->createDTOFromArray($this->data, \Roster\Enums\OperationType::CREATE);
+        $dto = $this->createDTOFromArray($this->data, OperationType::CREATE);
 
         // Add schedulable info to DTO
         $dto = $this->addSchedulableInfoToDto($dto);
 
         // Validate
-        $this->validate($dto->toArray(), \Roster\Enums\OperationType::CREATE);
+        $this->validate($dto->toArray(), OperationType::CREATE);
 
         // Check conflicts if applicable
         $this->checkEntityConflicts($dto);
@@ -92,9 +100,9 @@ abstract class AbstractService implements EntityServiceInterface
         // Find existing entity
         $existingEntity = $this->find($id);
         if (!$existingEntity) {
-            throw \Roster\Validation\Exceptions\ValidationFailedException::fromViolations(
+            throw ValidationFailedException::fromViolations(
                 ['id' => sprintf('%s with given ID does not exist', $this->getEntityTypeEnum()->displayName())],
-                \Roster\Enums\OperationType::UPDATE,
+                OperationType::UPDATE,
                 $this->getEntityTypeEnum()
             );
         }
@@ -108,10 +116,10 @@ abstract class AbstractService implements EntityServiceInterface
         }
 
         // Create DTO
-        $entityData = $this->createDTOFromArray($data, \Roster\Enums\OperationType::UPDATE);
+        $entityData = $this->createDTOFromArray($data, OperationType::UPDATE);
 
         // Validate
-        $this->validate($entityData->toArray(), \Roster\Enums\OperationType::UPDATE, $id, $existingEntity);
+        $this->validate($entityData->toArray(), OperationType::UPDATE, $id, $existingEntity);
 
         // Check conflicts with exclusion
         $this->checkEntityConflicts($entityData, $id);
@@ -144,9 +152,9 @@ abstract class AbstractService implements EntityServiceInterface
         $entity = $this->find($id);
 
         if (!$entity) {
-            throw \Roster\Validation\Exceptions\ValidationFailedException::fromViolations(
+            throw ValidationFailedException::fromViolations(
                 ['id' => sprintf('%s with given ID does not exist', $this->getEntityTypeEnum()->displayName())],
-                \Roster\Enums\OperationType::DELETE,
+                OperationType::DELETE,
                 $this->getEntityTypeEnum()
             );
         }
@@ -164,7 +172,7 @@ abstract class AbstractService implements EntityServiceInterface
         }
 
         // Validate deletion
-        $this->validate($deleteData, \Roster\Enums\OperationType::DELETE, $id);
+        $this->validate($deleteData, OperationType::DELETE, $id);
 
         // Delete entity
         $result = $this->getCurrentRepository()->delete(
@@ -208,7 +216,7 @@ abstract class AbstractService implements EntityServiceInterface
     /**
      * Get all entities.
      */
-    final public function all(): \Illuminate\Support\Collection
+    final public function all(): Collection
     {
         return $this->getCurrentRepository()->all($this->schedulable, $this->owner, $this->filters);
     }
@@ -246,12 +254,12 @@ abstract class AbstractService implements EntityServiceInterface
     /**
      * Template method for DTO creation from array.
      */
-    abstract protected function createDTOFromArray(array $data, \Roster\Enums\OperationType $operationType): mixed;
+    abstract protected function createDTOFromArray(array $data, OperationType $operationType): mixed;
 
     /**
      * Get the entity type as an enum.
      */
-    abstract protected function getEntityTypeEnum(): \Roster\Enums\EntityType;
+    abstract protected function getEntityTypeEnum(): EntityType;
 
     /**
      * Add schedulable info to DTO.
@@ -264,6 +272,7 @@ abstract class AbstractService implements EntityServiceInterface
                 get_class($this->schedulable)
             );
         }
+
         return $dto;
     }
 
@@ -279,7 +288,7 @@ abstract class AbstractService implements EntityServiceInterface
     /**
      * Validate data.
      */
-    protected function validate(array $data, \Roster\Enums\OperationType $operationType, ?int $entityId = null, ?object $currentEntity = null): void
+    protected function validate(array $data, OperationType $operationType, ?int $entityId = null, ?object $currentEntity = null): void
     {
         $entityType = $this->getEntityTypeEnum();
 
@@ -287,7 +296,7 @@ abstract class AbstractService implements EntityServiceInterface
             $currentEntity = $this->find($entityId);
         }
 
-        $validationContext = new \Roster\Validation\Context\ValidationContext(
+        $validationContext = new ValidationContext(
             operationType: $operationType,
             entityType: $entityType,
             data: $data,
@@ -298,7 +307,7 @@ abstract class AbstractService implements EntityServiceInterface
         $validationResult = $this->validator->validate($validationContext);
 
         if (!$validationResult->isValid()) {
-            throw \Roster\Validation\Exceptions\ValidationFailedException::fromViolations(
+            throw ValidationFailedException::fromViolations(
                 $validationResult->getViolations(),
                 $operationType,
                 $entityType
@@ -419,6 +428,7 @@ abstract class AbstractService implements EntityServiceInterface
 
     /**
      * Intercept dynamic method calls for "whereXyz" methods.
+     * @param array<int, mixed> $arguments
      */
     public function __call(string $method, array $arguments): self
     {

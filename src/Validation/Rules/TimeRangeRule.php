@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Roster\Validation\Rules;
 
 use Roster\Models\Availability;
-use Roster\Contracts\Repository\AvailabilityRepositoryInterface;
 use Exception;
 use Illuminate\Support\Carbon;
 use Roster\Contracts\Validation\ValidationContextInterface;
@@ -22,7 +21,7 @@ class TimeRangeRule extends AbstractRule
 {
     public function validate(ValidationContextInterface $validationContext): void
     {
-        $operation = $validationContext->getOperation();
+        $validationContext->getOperation();
         $currentEntity = $validationContext->getCurrentEntity();
 
         try {
@@ -31,7 +30,7 @@ class TimeRangeRule extends AbstractRule
             $end = $this->getDateTimeValue($validationContext, 'end_datetime', $currentEntity);
 
             // Si les deux dates sont absentes, pas de validation
-            if ($start === null && $end === null) {
+            if (!$start instanceof Carbon && !$end instanceof Carbon) {
                 return;
             }
 
@@ -49,7 +48,7 @@ class TimeRangeRule extends AbstractRule
                 return; // AvailabilityOwnershipRule devrait déjà avoir échoué
             }
 
-            $this->validateTimeRange($validationContext, $availability, $start, $end, $currentEntity);
+            $this->validateTimeRange($validationContext, $availability, $start, $end);
         } catch (Exception $exception) {
             // La validation de format est gérée par d'autres règles
         }
@@ -66,6 +65,7 @@ class TimeRangeRule extends AbstractRule
             if ($value === null) {
                 return null;
             }
+
             try {
                 return Carbon::parse($value);
             } catch (Exception $e) {
@@ -79,6 +79,7 @@ class TimeRangeRule extends AbstractRule
             if ($value === null) {
                 return null;
             }
+
             try {
                 return $value instanceof Carbon ? $value : Carbon::parse($value);
             } catch (Exception $e) {
@@ -112,33 +113,30 @@ class TimeRangeRule extends AbstractRule
         ValidationContextInterface $validationContext,
         Availability $availability,
         ?Carbon $start,
-        ?Carbon $end,
-        ?object $currentEntity
+        ?Carbon $end
     ): void {
         /**
          * 1. Vérifie que les deux dates sont présentes pour certaines validations
          */
-        if ($start !== null && $end !== null) {
-            // Vérification de cohérence start < end
-            if ($start->gte($end)) {
-                $validationContext->setViolation(
-                    'end_datetime',
-                    'The end datetime must be after the start datetime'
-                );
-            }
+        // Vérification de cohérence start < end
+        if ($start instanceof Carbon && $end instanceof Carbon && $start->gte($end)) {
+            $validationContext->setViolation(
+                'end_datetime',
+                'The end datetime must be after the start datetime'
+            );
         }
 
         /**
          * 2. Validation pour la date de début si fournie
          */
-        if ($start !== null) {
+        if ($start instanceof Carbon) {
             $this->validateStartDateTime($validationContext, $availability, $start);
         }
 
         /**
          * 3. Validation pour la date de fin si fournie
          */
-        if ($end !== null) {
+        if ($end instanceof Carbon) {
             $this->validateEndDateTime($validationContext, $availability, $end, $start);
         }
     }
@@ -243,7 +241,7 @@ class TimeRangeRule extends AbstractRule
         /**
          * 3. Si start est fourni, vérifie que end est le même jour ou après
          */
-        if ($start !== null) {
+        if ($start instanceof Carbon) {
             // Vérifie que end n'est pas avant start
             if ($end->lte($start)) {
                 $validationContext->setViolation(
@@ -254,14 +252,12 @@ class TimeRangeRule extends AbstractRule
 
             // Vérifie que si start est un jour permis, end ne dépasse pas minuit du jour suivant
             // (pour empêcher les événements qui traversent minuit)
-            if (!$start->isSameDay($end) && $availabilityEndTime->format('H:i') === '00:00') {
-                // Si la disponibilité finit à minuit, vérifier que l'événement ne traverse pas minuit
-                if ($end->copy()->startOfDay()->gt($start->copy()->startOfDay())) {
-                    $validationContext->setViolation(
-                        'end_datetime',
-                        'Events cannot span across midnight when availability ends at 00:00'
-                    );
-                }
+            // Si la disponibilité finit à minuit, vérifier que l'événement ne traverse pas minuit
+            if (!$start->isSameDay($end) && $availabilityEndTime->format('H:i') === '00:00' && $end->copy()->startOfDay()->gt($start->copy()->startOfDay())) {
+                $validationContext->setViolation(
+                    'end_datetime',
+                    'Events cannot span across midnight when availability ends at 00:00'
+                );
             }
         }
     }

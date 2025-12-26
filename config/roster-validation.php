@@ -31,8 +31,6 @@ return [
     | Date Validation Settings
     |--------------------------------------------------------------------------
     */
-    'max_days' => 365,
-    'validate_future_dates' => true,
     'allow_past_dates' => false,
 
     /*

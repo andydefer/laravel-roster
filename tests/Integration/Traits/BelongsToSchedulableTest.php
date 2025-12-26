@@ -7,7 +7,6 @@ namespace Tests\Integration\Traits;
 use Roster\Validation\Exceptions\ValidationFailedException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Roster\Exceptions\ForbiddenModelMutationException;
-use Roster\Exceptions\InvalidServiceContextException;
 use Roster\Facades\Availability;
 use Roster\Facades\Schedule;
 use Roster\Facades\Impediment;

@@ -24,15 +24,15 @@ class TemporalConflictService
     ) {}
 
     /* -----------------------------------------------------------------
-     | Chevauchments de disponibilités (Availability vs Availability)
-     | -----------------------------------------------------------------
-     */
-
+       | Chevauchments de disponibilités (Availability vs Availability)
+       | -----------------------------------------------------------------
+       */
     /**
      * Check availability conflicts (overlapping availabilities).
+     * @param array<string, mixed> $availabilityData
      */
     public function checkAvailabilityConflicts(
-        Model $schedulable,
+        Model $model,
         array $availabilityData,
         ?int $excludeId = null
     ): ConflictResult {
@@ -45,12 +45,12 @@ class TemporalConflictService
         $type = $availabilityData['type'] ?? null;
 
         // Vérifier les conditions minimales
-        if (!$dailyStart || !$dailyEnd || empty($days)) {
+        if (!$dailyStart instanceof Carbon || !$dailyEnd instanceof Carbon || empty($days)) {
             return ConflictResult::noConflict();
         }
 
         // Récupérer les disponibilités potentielles en conflit
-        $builder = $this->availabilityRepository->findForSchedulable($schedulable, $type);
+        $builder = $this->availabilityRepository->findForSchedulable($model, $type);
 
         if ($excludeId !== null) {
             $builder->where('id', '!=', $excludeId);

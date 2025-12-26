@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Roster\Validation\Rules;
 
+use Exception;
 use Roster\Domain\Services\TemporalConflictService;
 use Illuminate\Support\Carbon;
 use Roster\Contracts\Validation\ValidationContextInterface;
@@ -19,7 +20,7 @@ use Roster\Enums\OperationType;
 class ScheduleOverlapRule extends AbstractRule
 {
     public function __construct(
-        private TemporalConflictService $conflictService
+        private TemporalConflictService $temporalConflictService
     ) {}
 
     public function validate(ValidationContextInterface $validationContext): void
@@ -49,7 +50,7 @@ class ScheduleOverlapRule extends AbstractRule
                 }
             }
 
-            $conflictResult = $this->conflictService->checkAllConflicts(
+            $conflictResult = $this->temporalConflictService->checkAllConflicts(
                 availabilityId: $availabilityId,
                 start: $start,
                 end: $end,
@@ -63,7 +64,7 @@ class ScheduleOverlapRule extends AbstractRule
                     $conflictResult->message
                 );
             }
-        } catch (\Exception $exception) {
+        } catch (Exception $exception) {
             report($exception);
         }
     }

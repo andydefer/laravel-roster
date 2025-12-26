@@ -31,7 +31,7 @@ class AvailabilityTypeRule extends AbstractRule
         }
 
         // Charger les types autorisés
-        $allowedTypes = config('roster-validation.availability_types', []);
+        $allowedTypes = config('roster.availability.types', []);
 
         // Si la config est vide → tout est permis
         if ($allowedTypes === []) {

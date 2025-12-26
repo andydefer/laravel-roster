@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Roster\Services;
 
+use Roster\Validation\Exceptions\ValidationFailedException;
 use Roster\DTOs\AvailabilityData;
 use Roster\Enums\EntityType;
 use Roster\Enums\OperationType;
@@ -81,7 +82,7 @@ class AvailabilityService extends AbstractService
     {
         $entity = $this->find($id);
         if (!$entity instanceof Availability) {
-            throw \Roster\Validation\Exceptions\ValidationFailedException::fromViolations(
+            throw ValidationFailedException::fromViolations(
                 [
                     'id' => sprintf(
                         '%s with given ID does not exist',

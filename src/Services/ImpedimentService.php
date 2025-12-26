@@ -5,15 +5,12 @@ declare(strict_types=1);
 namespace Roster\Services;
 
 use Roster\Domain\Helpers\TimeSlotHelper;
-use Roster\Domain\Services\TemporalConflictService;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Roster\DTOs\ImpedimentData;
 use Roster\Enums\EntityType;
 use Roster\Enums\OperationType;
 use Roster\Models\Availability;
-use Roster\Models\Impediment;
-use Roster\Contracts\Repository\AvailabilityRepositoryInterface;
 use Roster\Services\Core\AbstractService;
 use Roster\Validation\Exceptions\ValidationFailedException;
 

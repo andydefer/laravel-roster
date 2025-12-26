@@ -6,7 +6,6 @@ namespace Roster;
 
 use Roster\Commands\CacheRulesCommand;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Filesystem\Filesystem;
 use Illuminate\Support\ServiceProvider;
 use Roster\Commands\InstallRosterCommand;
 use Roster\Contracts\Repository\AvailabilityRepositoryInterface;
@@ -22,7 +21,6 @@ use Roster\Repositories\AvailabilityRepository;
 use Roster\Repositories\ImpedimentRepository;
 use Roster\Repositories\ScheduleRepository;
 use Roster\Services\AvailabilityService;
-use Roster\Services\Core\ResourcePublisherService;
 use Roster\Services\ImpedimentService;
 use Roster\Services\ScheduleService;
 use Roster\Validation\RuleScanner;
@@ -48,7 +46,6 @@ class RosterServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->mergeConfigFrom(__DIR__ . '/../config/roster.php', 'roster');
-        $this->mergeConfigFrom(__DIR__ . '/../config/roster-validation.php', 'roster-validation');
 
         $this->loadHelpers();
         $this->registerRepositories();
@@ -81,12 +78,12 @@ class RosterServiceProvider extends ServiceProvider
 
     protected function registerValidationSystem(): void
     {
-        $useFileCache = config('roster-validation.cache.use_file_cache', true);
+        $useFileCache = config('roster.cache.use_file_cache', true);
 
         $this->app->singleton(ValidatorInterface::class, function ($app) use ($useFileCache): Validator {
             $directories = array_merge(
                 [__DIR__ . '/Validation/Rules'],
-                config('roster-validation.rule_directories', [])
+                config('roster.rule_directories', [])
             );
 
             $ruleScanner = new RuleScanner($directories, $useFileCache);
@@ -95,7 +92,7 @@ class RosterServiceProvider extends ServiceProvider
         });
 
 
-        $this->app->singleton(TemporalConflictService::class, function ($app) {
+        $this->app->singleton(TemporalConflictService::class, function ($app): TemporalConflictService {
             return new TemporalConflictService(
                 $app->make(AvailabilityRepositoryInterface::class),
                 $app->make(ScheduleRepositoryInterface::class),
@@ -105,7 +102,7 @@ class RosterServiceProvider extends ServiceProvider
 
         $this->app->singleton(RuleScanner::class, function ($app) use ($useFileCache): RuleScanner {
             return new RuleScanner(
-                array_merge([__DIR__ . '/Validation/Rules'], config('roster-validation.rule_directories', [])),
+                array_merge([__DIR__ . '/Validation/Rules'], config('roster.rule_directories', [])),
                 $useFileCache
             );
         });
@@ -150,24 +147,11 @@ class RosterServiceProvider extends ServiceProvider
         $this->app->alias('roster.impediment', ImpedimentService::class);
     }
 
-    private function registerResourcePublisher(): void
-    {
-        $this->app->singleton(ResourcePublisherService::class, function ($app): ResourcePublisherService {
-            return new ResourcePublisherService(
-                application: $app,
-                filesystem: new Filesystem()
-            );
-        });
-    }
+    private function registerResourcePublisher(): void {}
 
     private function publishResources(): void
     {
         // Configuration de validation
-        $this->publishes([
-            __DIR__ . '/../config/roster-validation.php' => config_path('roster-validation.php'),
-        ], 'roster-validation-config');
-
-        // Configuration principale
         $this->publishes([
             __DIR__ . '/../config/roster.php' => config_path('roster.php'),
         ], 'roster-config');

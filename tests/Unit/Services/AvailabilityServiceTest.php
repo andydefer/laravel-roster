@@ -590,7 +590,7 @@ final class AvailabilityServiceTest extends TestCase
 
     public function test_validate_invalid_type(): void
     {
-        config()->set('roster-validation.availability_types', [
+        config()->set('roster.availability.types', [
             'consultation',
             'training',
             'coaching',
@@ -618,7 +618,7 @@ final class AvailabilityServiceTest extends TestCase
 
     public function test_validate_type_allowed_when_config_empty(): void
     {
-        config()->set('roster-validation.availability_types', []);
+        config()->set('roster.availability.types', []);
 
         // Act - Type quelconque devrait être accepté
         $availability = AvailabilityFacade::for($this->testSchedulable)->create([

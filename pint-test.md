@@ -1,18 +1,16 @@
 # Pint Formatting Test Report
-*Generated: ven. 26 déc. 2025 11:14:57 WAT*
+*Generated: ven. 26 déc. 2025 15:09:40 WAT*
 
 
-  ..⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯..⨯⨯⨯⨯⨯⨯⨯...⨯⨯⨯⨯⨯⨯⨯⨯⨯.⨯⨯.⨯⨯⨯⨯⨯⨯⨯⨯..⨯.....⨯⨯⨯⨯⨯.⨯⨯⨯⨯⨯......⨯...⨯⨯⨯.......⨯......⨯....⨯⨯⨯⨯⨯.........⨯......⨯⨯⨯⨯⨯...⨯......⨯.....⨯....
+  ..⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯..⨯⨯⨯⨯⨯⨯⨯...⨯⨯⨯⨯.⨯⨯⨯⨯.⨯⨯.⨯⨯⨯⨯⨯..⨯.....⨯⨯⨯⨯⨯.⨯⨯⨯⨯⨯......⨯....⨯⨯.......⨯......⨯....⨯⨯⨯⨯⨯.........⨯......⨯⨯⨯⨯⨯..⨯......⨯.....⨯....
 
   ──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────── Laravel  
-    FAIL   ................................................................................................................................................ 158 files, 82 style issues  
+    FAIL   ................................................................................................................................................ 154 files, 77 style issues  
   ⨯ config/roster-validation.php                                                                                                                                  no_extra_blank_lines  
-  ⨯ config/roster.php                                                                                                                                             no_extra_blank_lines  
   ⨯ src/Commands/CacheRulesCommand.php       increment_style, single_quote, blank_line_after_opening_tag, concat_space, not_operator_with_successor_space, blank_line_before_statement  
   ⨯ src/Commands/InstallRosterCommand.php                                                        unary_operator_spaces, not_operator_with_successor_space, blank_line_before_statement  
   ⨯ src/Contracts/EntityServiceInterface.php                                                                                                        no_extra_blank_lines, phpdoc_align  
   ⨯ src/Contracts/Filters/FilterableInterface.php                                                                                                          class_attributes_separation  
-  ⨯ src/Contracts/Repository/AvailabilityRepositoryInterface.php                                                                                           class_attributes_separation  
   ⨯ src/Contracts/Repository/ImpedimentRepositoryInterface.php                                                                                                             phpdoc_trim  
   ⨯ src/Contracts/Repository/ScheduleRepositoryInterface.php                                                                                                 phpdoc_trim, phpdoc_align  
   ⨯ src/Contracts/RepositoryInterface.php                                                                              class_attributes_separation, no_extra_blank_lines, phpdoc_align  
@@ -24,7 +22,7 @@
   ⨯ src/DTOs/ImpedimentData.php                                                                            function_declaration, braces_position, single_line_empty_body, phpdoc_align  
   ⨯ src/DTOs/ScheduleData.php                                                                   function_declaration, not_operator_with_successor_space, ordered_imports, phpdoc_align  
   ⨯ src/Domain/Helpers/TimeSlotHelper.php                                                          phpdoc_separation, not_operator_with_successor_space, ordered_imports, phpdoc_align  
-  ⨯ src/Domain/Services/TemporalConflictService.php function_declaration, no_multiline_whitespace_around_double_arrow, trailing_comma_in_multiline, braces_position, not_operator_wit…  
+  ⨯ src/Domain/Services/TemporalConflictService.php function_declaration, no_multiline_whitespace_around_double_arrow, trailing_comma_in_multiline, braces_position, phpdoc_separatio…  
   ⨯ src/Enums/EntityType.php                                                                                                                                              concat_space  
   ⨯ src/Exceptions/InvalidServiceContextException.php                                                                                                       single_quote, concat_space  
   ⨯ src/Exceptions/MergeConflictException.php                                                                                                               concat_space, phpdoc_align  
@@ -38,13 +36,10 @@
   ⨯ src/Observers/EnforceDomainMutationObserver.php                                                                                                  not_operator_with_successor_space  
   ⨯ src/Repositories/AbstractRepository.php no_multiline_whitespace_around_double_arrow, concat_space, phpdoc_separation, not_operator_with_successor_space, blank_line_before_statem…  
   ⨯ src/Repositories/AvailabilityRepository.php                                                                         trailing_comma_in_multiline, not_operator_with_successor_space  
-  ⨯ src/RosterServiceProvider.php                                               class_attributes_separation, new_with_parentheses, concat_space, no_extra_blank_lines, ordered_imports  
-  ⨯ src/Services/AvailabilityService.php                                                                                trailing_comma_in_multiline, not_operator_with_successor_space  
-  ⨯ src/Services/Core/AbstractAvailabilityValidatingService.php                                                         class_attributes_separation, not_operator_with_successor_space  
-  ⨯ src/Services/Core/AbstractEntityScopingService.php class_attributes_separation, unary_operator_spaces, not_operator_with_successor_space, blank_line_before_statement, phpdoc_ali…  
-  ⨯ src/Services/Core/AbstractService.php class_attributes_separation, concat_space, trailing_comma_in_multiline, braces_position, not_operator_with_successor_space, single_line_emp…  
-  ⨯ src/Services/Core/ResourcePublisherService.php             increment_style, concat_space, braces_position, not_operator_with_successor_space, single_line_empty_body, phpdoc_align  
-  ⨯ src/Services/ImpedimentService.php                 class_attributes_separation, trailing_comma_in_multiline, no_unused_imports, not_operator_with_successor_space, ordered_imports  
+  ⨯ src/RosterServiceProvider.php                            class_attributes_separation, concat_space, braces_position, single_line_empty_body, no_extra_blank_lines, ordered_imports  
+  ⨯ src/Services/AvailabilityService.php                                                               trailing_comma_in_multiline, not_operator_with_successor_space, ordered_imports  
+  ⨯ src/Services/Core/AbstractService.php concat_space, trailing_comma_in_multiline, braces_position, phpdoc_separation, not_operator_with_successor_space, single_line_empty_body, b…  
+  ⨯ src/Services/ImpedimentService.php                                    class_attributes_separation, trailing_comma_in_multiline, not_operator_with_successor_space, ordered_imports  
   ⨯ src/Services/ScheduleService.php                                                      trailing_comma_in_multiline, cast_spaces, not_operator_with_successor_space, ordered_imports  
   ⨯ src/Support/RosterMutationContext.php                                                                                                 increment_style, blank_line_before_statement  
   ⨯ src/Validation/Attributes/ValidationRule.php                                                                                 braces_position, single_line_empty_body, phpdoc_align  
@@ -55,7 +50,7 @@
   ⨯ src/Validation/Rules/AbstractRule.php                                                                                                                  blank_line_before_statement  
   ⨯ src/Validation/Rules/AvailabilityDateRangeRule.php                                                  single_quote, concat_space, not_operator_with_successor_space, ordered_imports  
   ⨯ src/Validation/Rules/AvailabilityDaysCoherenceRule.php                                             not_operator_with_successor_space, blank_line_before_statement, ordered_imports  
-  ⨯ src/Validation/Rules/AvailabilityOverlapRule.php                                       braces_position, not_operator_with_successor_space, single_line_empty_body, ordered_imports  
+  ⨯ src/Validation/Rules/AvailabilityOverlapRule.php                                                                                not_operator_with_successor_space, ordered_imports  
   ⨯ src/Validation/Rules/AvailabilityOwnershipRule.php                           not_operator_with_successor_space, no_extra_blank_lines, blank_line_before_statement, ordered_imports  
   ⨯ src/Validation/Rules/AvailabilityTemporalCoherenceRule.php function_declaration, single_quote, not_operator_with_successor_space, blank_line_before_statement, ordered_imports, b…  
   ⨯ src/Validation/Rules/AvailabilityTypeRule.php                                                             not_operator_with_successor_space, no_extra_blank_lines, ordered_imports  
@@ -67,16 +62,16 @@
   ⨯ src/Validation/Rules/SchedulableConsistencyRule.php                                                not_operator_with_successor_space, blank_line_before_statement, ordered_imports  
   ⨯ src/Validation/Rules/SchedulableValidationRule.php                                                 not_operator_with_successor_space, blank_line_before_statement, ordered_imports  
   ⨯ src/Validation/Rules/ScheduleOverlapRule.php                                           braces_position, not_operator_with_successor_space, single_line_empty_body, ordered_imports  
-  ⨯ src/Validation/Rules/TimeRangeRule.php                                          no_unused_imports, not_operator_with_successor_space, blank_line_before_statement, ordered_imports  
+  ⨯ src/Validation/Rules/TimeRangeRule.php                                                             not_operator_with_successor_space, blank_line_before_statement, ordered_imports  
   ⨯ src/Validation/Rules/TimeSlotDateTimeRule.php                                                       single_quote, concat_space, not_operator_with_successor_space, ordered_imports  
   ⨯ src/Validation/Validator.php function_declaration, no_multiline_whitespace_around_double_arrow, concat_space, not_operator_with_successor_space, blank_line_before_statement, ord…  
   ⨯ src/helpers.php                 function_declaration, increment_style, concat_space, not_operator_with_successor_space, blank_line_before_statement, ordered_imports, phpdoc_align  
   ⨯ tests/Feature/Services/AvailabilityServiceDaysCoherenceTest.php                                                                class_attributes_separation, binary_operator_spaces  
-  ⨯ tests/Integration/Traits/BelongsToSchedulableTest.php           class_attributes_separation, single_line_comment_spacing, no_unused_imports, no_extra_blank_lines, ordered_imports  
+  ⨯ tests/Integration/Traits/BelongsToSchedulableTest.php                              class_attributes_separation, single_line_comment_spacing, no_extra_blank_lines, ordered_imports  
   ⨯ tests/TestCase.php                                                                                                                                   concat_space, ordered_imports  
   ⨯ tests/Unit/Domain/ModelMutationForbiddenTest.php                                                                                                                   ordered_imports  
   ⨯ tests/Unit/Domain/MutationContextAllowsMutationTest.php                                                                                                            ordered_imports  
-  ⨯ tests/Unit/Domain/RepositoryMutationTest.php                                          class_attributes_separation, trailing_comma_in_multiline, no_unused_imports, ordered_imports  
+  ⨯ tests/Unit/Domain/RepositoryMutationTest.php                                                             class_attributes_separation, trailing_comma_in_multiline, ordered_imports  
   ⨯ tests/Unit/HelpersTest.php                                                                                                                             class_attributes_separation  
   ⨯ tests/Unit/Models/ScheduleTest.php                                                                                               class_attributes_separation, no_extra_blank_lines  
   ⨯ tests/Unit/Services/AvailabilityServiceTest.php                                                                                                                       single_quote  
