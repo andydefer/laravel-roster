@@ -7,36 +7,33 @@ namespace Roster\Commands;
 use Illuminate\Console\Command;
 use Roster\Domain\DTOs\CacheStats;
 use Roster\Domain\Services\CacheRulesService;
+use Throwable;
 
 /**
- * Command to manage validation rules cache for the Roster package.
+ * Command for managing validation rules cache in the Roster package.
  *
- * This command allows generating, clearing, and displaying cached validation rules
- * to improve performance of rule scanning operations.
+ * Provides operations to generate, clear, display cache statistics, and list all validation rules.
  */
 class CacheRulesCommand extends Command
 {
     /**
-     * The command signature.
-     *
-     * @var string
+     * The command signature with available options.
      */
     protected $signature = 'roster:cache-rules
                             {--clear : Clear the cache}
                             {--force : Force regeneration}
-                            {--show : Show cache contents}';
+                            {--show : Show cache stats}
+                            {--list : Display all rules as a table}';
 
     /**
      * The command description.
-     *
-     * @var string
      */
     protected $description = 'Manage Roster validation rules cache';
 
     /**
      * Execute the console command.
      *
-     * @param CacheRulesService $service The cache rules service instance
+     * @param CacheRulesService $service The cache rules service
      * @return int Command exit code (SUCCESS or FAILURE)
      */
     public function handle(CacheRulesService $service): int
@@ -46,6 +43,9 @@ class CacheRulesCommand extends Command
                 $stats = $service->clear(
                     force: (bool) $this->option('force')
                 );
+            } elseif ($this->option('list')) {
+                $service->displayRulesTable($this);
+                return self::SUCCESS;
             } elseif ($this->option('show')) {
                 $stats = $service->show();
             } else {
@@ -57,17 +57,16 @@ class CacheRulesCommand extends Command
             }
 
             return self::SUCCESS;
-        } catch (\Throwable $exception) {
+        } catch (Throwable $exception) {
             $this->error($exception->getMessage());
-
             return self::FAILURE;
         }
     }
 
     /**
-     * Display cache statistics.
+     * Display cache statistics in a formatted way.
      *
-     * @param CacheStats $stats The cache statistics DTO
+     * @param CacheStats $stats Cache statistics to display
      */
     protected function displayCacheStats(CacheStats $stats): void
     {

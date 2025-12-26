@@ -280,18 +280,6 @@ class ValidationContext implements ValidationContextInterface
         $this->violations[$field] = $message;
     }
 
-    public function addViolation(string $field, string $message): void
-    {
-        if (!isset($this->violations[$field])) {
-            $this->violations[$field] = [];
-        }
-
-        if (is_string($this->violations[$field])) {
-            $this->violations[$field] = [$this->violations[$field]];
-        }
-
-        $this->violations[$field][] = $message;
-    }
 
     /**
      * @return array<string, string|array<int, string>>

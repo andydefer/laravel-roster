@@ -1,10 +1,10 @@
 # Changed and Untracked Files
-*Updated: dim. 21 déc. 2025 18:42:20 WAT*
+*Updated: sam. 27 déc. 2025 00:22:59 WAT*
 
 ## Files to Review (modifications on checked files)
-1. src/Commands/InstallRosterCommand.php [x]
-2. tests/Unit/Commands/InstallRosterCommandTest.php [x]
+1. src/Commands/CacheRulesCommand.php [x]
 
 ## Other Modified Files
-1. README.md [ ]
+1. src/Domain/Services/CacheRulesService.php [ ]
+2. tests/Unit/Commands/CacheRulesCommandTest.php [ ]
 

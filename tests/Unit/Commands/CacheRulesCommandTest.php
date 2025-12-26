@@ -37,9 +37,6 @@ final class CacheRulesCommandTest extends TestCase
         parent::tearDown();
     }
 
-    /**
-     * Test that the command can be instantiated and has the correct signature.
-     */
     public function test_command_can_be_instantiated(): void
     {
         $command = new CacheRulesCommand;
@@ -51,11 +48,9 @@ final class CacheRulesCommandTest extends TestCase
         $this->assertTrue($definition->hasOption('clear'));
         $this->assertTrue($definition->hasOption('force'));
         $this->assertTrue($definition->hasOption('show'));
+        $this->assertTrue($definition->hasOption('list'));
     }
 
-    /**
-     * Test that the command executes successfully when generating cache.
-     */
     public function test_command_generates_cache_successfully(): void
     {
         $mockStats = new CacheStats(
@@ -75,9 +70,6 @@ final class CacheRulesCommandTest extends TestCase
             ->assertExitCode(0);
     }
 
-    /**
-     * Test that the command clears cache successfully.
-     */
     public function test_command_clears_cache_successfully(): void
     {
         $mockService = Mockery::mock(CacheRulesService::class);
@@ -89,9 +81,6 @@ final class CacheRulesCommandTest extends TestCase
             ->assertExitCode(0);
     }
 
-    /**
-     * Test that the command clears cache and regenerates when force option is used.
-     */
     public function test_command_clears_and_regenerates_with_force(): void
     {
         $mockStats = new CacheStats(
@@ -111,9 +100,6 @@ final class CacheRulesCommandTest extends TestCase
             ->assertExitCode(0);
     }
 
-    /**
-     * Test that the command shows cache successfully.
-     */
     public function test_command_shows_cache_successfully(): void
     {
         $mockStats = new CacheStats(
@@ -133,9 +119,39 @@ final class CacheRulesCommandTest extends TestCase
             ->assertExitCode(0);
     }
 
-    /**
-     * Test failure when cache generation fails.
-     */
+    public function test_command_displays_rules_table(): void
+    {
+        $rules = [
+            'Test\RuleOne' => [
+                'priority' => 100,
+                'entities' => ['availability'],
+                'operations' => ['create', 'update'],
+            ],
+            'Test\RuleTwo' => [
+                'priority' => 90,
+                'entities' => ['schedule'],
+                'operations' => ['delete'],
+            ],
+        ];
+
+        File::put($this->cacheFilePath, '<?php return ' . var_export($rules, true) . ';');
+
+        $mockService = Mockery::mock(CacheRulesService::class)->makePartial();
+        $mockService->shouldAllowMockingProtectedMethods();
+
+        $this->app->instance(CacheRulesService::class, $mockService);
+
+        $this->artisan('roster:cache-rules', ['--list' => true])
+            ->expectsTable(
+                ['No', 'Class', 'Priority', 'Entities', 'Operations'],
+                [
+                    [1, 'Test\RuleOne', 100, 'availability', 'create, update'],
+                    [2, 'Test\RuleTwo', 90, 'schedule', 'delete'],
+                ]
+            )
+            ->assertExitCode(0);
+    }
+
     public function test_command_fails_when_generation_fails(): void
     {
         $mockService = Mockery::mock(CacheRulesService::class);
@@ -148,9 +164,6 @@ final class CacheRulesCommandTest extends TestCase
             ->assertExitCode(1);
     }
 
-    /**
-     * Test failure when cache clearing fails.
-     */
     public function test_command_fails_when_clear_fails(): void
     {
         $mockService = Mockery::mock(CacheRulesService::class);

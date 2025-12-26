@@ -1,27 +1,19 @@
 # Rector Refactoring Report
-*Generated: ven. 26 déc. 2025 23:57:47 WAT*
+*Generated: sam. 27 déc. 2025 00:38:08 WAT*
 
 
-9 files with changes
-====================
+10 files with changes
+=====================
 
-1) /home/andy-kani/pro/sites/packages/laravel-roster/src/Commands/CacheRulesCommand.php:4
+1) /home/andy-kani/pro/sites/packages/laravel-roster/src/Commands/CacheRulesCommand.php:33
 
     ---------- begin diff ----------
-@@ @@
-
- namespace Roster\Commands;
-
-+use Throwable;
- use Illuminate\Console\Command;
- use Roster\Domain\DTOs\CacheStats;
- use Roster\Domain\Services\CacheRulesService;
 @@ @@
      /**
       * Execute the console command.
       *
--     * @param CacheRulesService $service The cache rules service instance
-+     * @param CacheRulesService $cacheRulesService The cache rules service instance
+-     * @param CacheRulesService $service The cache rules service
++     * @param CacheRulesService $cacheRulesService The cache rules service
       * @return int Command exit code (SUCCESS or FAILURE)
       */
 -    public function handle(CacheRulesService $service): int
@@ -33,6 +25,10 @@
 +                $stats = $cacheRulesService->clear(
                      force: (bool) $this->option('force')
                  );
+             } elseif ($this->option('list')) {
+-                $service->displayRulesTable($this);
++                $cacheRulesService->displayRulesTable($this);
+                 return self::SUCCESS;
              } elseif ($this->option('show')) {
 -                $stats = $service->show();
 +                $stats = $cacheRulesService->show();
@@ -46,19 +42,19 @@
              }
 
              return self::SUCCESS;
--        } catch (\Throwable $exception) {
+-        } catch (Throwable $exception) {
 -            $this->error($exception->getMessage());
 +        } catch (Throwable $throwable) {
 +            $this->error($throwable->getMessage());
-
              return self::FAILURE;
          }
+     }
 @@ @@
      /**
-      * Display cache statistics.
+      * Display cache statistics in a formatted way.
       *
--     * @param CacheStats $stats The cache statistics DTO
-+     * @param CacheStats $cacheStats The cache statistics DTO
+-     * @param CacheStats $stats Cache statistics to display
++     * @param CacheStats $cacheStats Cache statistics to display
       */
 -    protected function displayCacheStats(CacheStats $stats): void
 +    protected function displayCacheStats(CacheStats $cacheStats): void
@@ -110,7 +106,64 @@ Applied rules:
  * RenameParamToMatchTypeRector
 
 
-3) /home/andy-kani/pro/sites/packages/laravel-roster/src/Domain/DTOs/CacheStats.php:4
+3) /home/andy-kani/pro/sites/packages/laravel-roster/src/Contracts/Services/ServiceInterface.php:87
+
+    ---------- begin diff ----------
+@@ @@
+      * Set data for operations.
+      *
+      * @param array $data Operation data
+-     * @return self
+      */
+     public function setData(array $data): self;
+
+@@ @@
+      * Replace all filters.
+      *
+      * @param array $filters New filters
+-     * @return self
+      */
+     public function setFilters(array $filters): self;
+
+     /**
+      * Clear all filters.
+-     *
+-     * @return self
+      */
+     public function resetFilters(): self;
+
+@@ @@
+      *
+      * @param string $key Filter key
+      * @param mixed $value Filter value
+-     * @return self
+      */
+     public function setFilter(string $key, mixed $value): self;
+
+@@ @@
+      * Set the schedulable entity context.
+      *
+      * @param Model $model Schedulable entity
+-     * @return self
+      */
+     public function setSchedulable(Model $model): self;
+
+@@ @@
+
+     /**
+      * Clear all contextual data (filters, data, schedulable).
+-     *
+-     * @return self
+      */
+     public function clear(): self;
+ }
+    ----------- end diff -----------
+
+Applied rules:
+ * RemoveUselessReturnTagRector
+
+
+4) /home/andy-kani/pro/sites/packages/laravel-roster/src/Domain/DTOs/CacheStats.php:4
 
     ---------- begin diff ----------
 @@ @@
@@ -154,7 +207,7 @@ Applied rules:
  * PostIncDecToPreIncDecRector
 
 
-4) /home/andy-kani/pro/sites/packages/laravel-roster/src/Domain/Services/CacheRulesService.php:1
+5) /home/andy-kani/pro/sites/packages/laravel-roster/src/Domain/Services/CacheRulesService.php:1
 
     ---------- begin diff ----------
 @@ @@
@@ -165,17 +218,29 @@ Applied rules:
  namespace Roster\Domain\Services;
 
 +use RuntimeException;
+ use Illuminate\Console\Command;
  use Roster\Domain\DTOs\CacheStats;
  use Roster\Validation\Cache\RuleCacheGenerator;
-
 @@ @@
  class CacheRulesService
  {
+     /**
+-     * @param RuleCacheGenerator $generator Service for generating rule cache files
++     * @param RuleCacheGenerator $ruleCacheGenerator Service for generating rule cache files
+      */
      public function __construct(
--        private RuleCacheGenerator $generator,
-+        private RuleCacheGenerator $ruleCacheGenerator,
+-        private RuleCacheGenerator $generator
++        private RuleCacheGenerator $ruleCacheGenerator
      ) {}
 
+     /**
+@@ @@
+      * Generate a new cache file with all validation rules.
+      *
+      * @return CacheStats Statistics about the generated cache
+-     * @throws \RuntimeException When cache generation fails
++     * @throws RuntimeException When cache generation fails
+      */
      public function generate(): CacheStats
      {
 -        if (! $this->generator->generate()) {
@@ -188,6 +253,14 @@ Applied rules:
 +        return CacheStats::fromPath($this->ruleCacheGenerator->getCachePath());
      }
 
+     /**
+@@ @@
+      *
+      * @param bool $force When true, regenerate cache after clearing
+      * @return CacheStats|null Cache statistics if regenerated, null otherwise
+-     * @throws \RuntimeException When cache clearing fails
++     * @throws RuntimeException When cache clearing fails
+      */
      public function clear(bool $force = false): ?CacheStats
      {
 -        if (! $this->generator->clear()) {
@@ -198,7 +271,7 @@ Applied rules:
 
          if ($force) {
 @@ @@
-
+      */
      public function show(): CacheStats
      {
 -        $path = $this->generator->getCachePath();
@@ -206,14 +279,23 @@ Applied rules:
 
          if (! file_exists($path)) {
              return $this->generate();
+@@ @@
+         $cacheFile = config('roster.cache.cache_file');
+
+         if (! file_exists($cacheFile)) {
+-            $command->error("Cache file not found: $cacheFile");
++            $command->error('Cache file not found: ' . $cacheFile);
+             return;
+         }
     ----------- end diff -----------
 
 Applied rules:
+ * EncapsedStringsToSprintfRector
  * RenamePropertyToMatchTypeRector
  * DeclareStrictTypesRector
 
 
-5) /home/andy-kani/pro/sites/packages/laravel-roster/src/Domain/Services/RosterInstallerService.php:1
+6) /home/andy-kani/pro/sites/packages/laravel-roster/src/Domain/Services/RosterInstallerService.php:1
 
     ---------- begin diff ----------
 @@ @@
@@ -230,7 +312,7 @@ Applied rules:
  * DeclareStrictTypesRector
 
 
-6) /home/andy-kani/pro/sites/packages/laravel-roster/src/Models/Availability.php:140
+7) /home/andy-kani/pro/sites/packages/laravel-roster/src/Models/Availability.php:140
 
     ---------- begin diff ----------
 @@ @@
@@ -254,7 +336,7 @@ Applied rules:
  * NewlineAfterStatementRector
 
 
-7) /home/andy-kani/pro/sites/packages/laravel-roster/src/Repositories/AbstractRepository.php:405
+8) /home/andy-kani/pro/sites/packages/laravel-roster/src/Repositories/AbstractRepository.php:405
 
     ---------- begin diff ----------
 @@ @@
@@ -271,7 +353,7 @@ Applied rules:
  * ClassMethodArrayDocblockParamFromLocalCallsRector
 
 
-8) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Commands/CacheRulesCommandTest.php:4
+9) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Commands/CacheRulesCommandTest.php:4
 
     ---------- begin diff ----------
 @@ @@
@@ -284,7 +366,7 @@ Applied rules:
  use Mockery;
  use Roster\Commands\CacheRulesCommand;
 @@ @@
-      */
+
      public function test_command_can_be_instantiated(): void
      {
 -        $command = new CacheRulesCommand;
@@ -299,15 +381,14 @@ Applied rules:
 -        $this->assertTrue($definition->hasOption('clear'));
 -        $this->assertTrue($definition->hasOption('force'));
 -        $this->assertTrue($definition->hasOption('show'));
+-        $this->assertTrue($definition->hasOption('list'));
 +        $inputDefinition = $cacheRulesCommand->getDefinition();
 +        $this->assertTrue($inputDefinition->hasOption('clear'));
 +        $this->assertTrue($inputDefinition->hasOption('force'));
 +        $this->assertTrue($inputDefinition->hasOption('show'));
++        $this->assertTrue($inputDefinition->hasOption('list'));
      }
 
-     /**
-@@ @@
-      */
      public function test_command_generates_cache_successfully(): void
      {
 -        $mockStats = new CacheStats(
@@ -325,7 +406,7 @@ Applied rules:
          $this->app->instance(CacheRulesService::class, $mockService);
 
 @@ @@
-      */
+
      public function test_command_clears_and_regenerates_with_force(): void
      {
 -        $mockStats = new CacheStats(
@@ -343,7 +424,7 @@ Applied rules:
          $this->app->instance(CacheRulesService::class, $mockService);
 
 @@ @@
-      */
+
      public function test_command_shows_cache_successfully(): void
      {
 -        $mockStats = new CacheStats(
@@ -360,6 +441,20 @@ Applied rules:
 
          $this->app->instance(CacheRulesService::class, $mockService);
 
+@@ @@
+
+         File::put($this->cacheFilePath, '<?php return ' . var_export($rules, true) . ';');
+
+-        $mockService = Mockery::mock(CacheRulesService::class)->makePartial();
+-        $mockService->shouldAllowMockingProtectedMethods();
++        $legacyMock = Mockery::mock(CacheRulesService::class)->makePartial();
++        $legacyMock->shouldAllowMockingProtectedMethods();
+
+-        $this->app->instance(CacheRulesService::class, $mockService);
++        $this->app->instance(CacheRulesService::class, $legacyMock);
+
+         $this->artisan('roster:cache-rules', ['--list' => true])
+             ->expectsTable(
 @@ @@
      public function test_command_fails_when_generation_fails(): void
      {
@@ -384,7 +479,7 @@ Applied rules:
  * RenameVariableToMatchNewTypeRector
 
 
-9) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Commands/InstallRosterCommandTest.php:13
+10) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Commands/InstallRosterCommandTest.php:13
 
     ---------- begin diff ----------
 @@ @@
@@ -436,5 +531,5 @@ Applied rules:
  * ClosureReturnTypeRector
 
 
- [OK] 9 files would have been changed (dry-run) by Rector                                                               
+ [OK] 10 files would have been changed (dry-run) by Rector                                                              
 
