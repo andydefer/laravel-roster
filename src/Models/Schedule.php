@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Roster\Models;
 
-use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Carbon;
@@ -19,6 +18,8 @@ use Roster\Traits\BelongsToSchedulable;
  *
  * @property int $id
  * @property int $availability_id
+ * @property int $schedulable_id
+ * @property string $schedulable_type
  * @property string $title
  * @property string|null $description
  * @property Carbon $start_datetime
@@ -33,8 +34,18 @@ class Schedule extends Model
 {
     use BelongsToSchedulable;
 
+    /**
+     * The table associated with the model.
+     *
+     * @var string
+     */
     protected $table = 'roster_schedules';
 
+    /**
+     * The attributes that are mass assignable.
+     *
+     * @var array<int, string>
+     */
     protected $fillable = [
         'availability_id',
         'schedulable_id',
@@ -47,6 +58,11 @@ class Schedule extends Model
         'metadata',
     ];
 
+    /**
+     * The attributes that should be cast.
+     *
+     * @var array<string, string>
+     */
     protected $casts = [
         'start_datetime' => 'datetime',
         'end_datetime' => 'datetime',
@@ -67,9 +83,9 @@ class Schedule extends Model
     /**
      * Get the schedulable entity through the parent availability.
      *
-     * @return Relation|null
+     * @return \Illuminate\Database\Eloquent\Relations\Relation|null
      */
-    public function schedulable()
+    public function schedulable(): ?\Illuminate\Database\Eloquent\Relations\Relation
     {
         return $this->availability?->schedulable();
     }
@@ -87,8 +103,8 @@ class Schedule extends Model
     /**
      * Determine if this schedule overlaps with a given time period.
      *
-     * @param Carbon $start The start of the period to check
-     * @param Carbon $end The end of the period to check
+     * @param Carbon $start Start time of the period to check
+     * @param Carbon $end End time of the period to check
      * @return bool True if the schedule overlaps with the period
      */
     public function overlapsWith(Carbon $start, Carbon $end): bool

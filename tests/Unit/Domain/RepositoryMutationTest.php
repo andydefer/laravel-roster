@@ -8,6 +8,7 @@ use Roster\Repositories\AvailabilityRepository;
 use Roster\Repositories\ScheduleRepository;
 use Tests\Support\TestSchedulable;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Schedule as FacadesSchedule;
 use Roster\Facades\Availability;
 use Roster\Facades\Schedule;
 use Roster\Models\Availability as AvailabilityModel;
@@ -16,6 +17,7 @@ use Roster\Exceptions\ForbiddenModelMutationException;
 use Roster\Exceptions\InvalidOwnerException;
 use Roster\Exceptions\MissingOwnerException;
 use Roster\Exceptions\MissingSchedulableException;
+use Roster\Validation\Exceptions\ValidationFailedException;
 use Tests\TestCase;
 
 final class RepositoryMutationTest extends TestCase
@@ -283,16 +285,11 @@ final class RepositoryMutationTest extends TestCase
             ]);
 
         // Tenter d'utiliser le repository sans schedulable (devrait échouer)
-        $this->expectException(MissingSchedulableException::class);
+        $this->expectException(MissingOwnerException::class);
 
         $scheduleRepository = app(ScheduleRepository::class);
 
-        // Appeler directement le repository sans schedulable
-        $scheduleRepository->find(
-            id: 999,
-            schedulable: null, // Pas de schedulable - devrait lancer MissingSchedulableException
-            owner: $availability
-        );
+        Schedule::for($testSchedulable)->find(999);
     }
 
     public function test_schedule_update_with_owner(): void

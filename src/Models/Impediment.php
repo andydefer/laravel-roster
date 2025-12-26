@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace Roster\Models;
 
 use Illuminate\Database\Eloquent\Casts\Attribute;
-use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Support\Carbon;
 use Roster\Traits\BelongsToSchedulable;
 
@@ -24,7 +24,7 @@ use Roster\Traits\BelongsToSchedulable;
  * @property string $reason
  * @property Carbon $start_datetime
  * @property Carbon $end_datetime
- * @property array $metadata
+ * @property array|null $metadata
  * @property-read float $duration_minutes
  * @property-read Availability $availability
  */
@@ -32,8 +32,18 @@ class Impediment extends Model
 {
     use BelongsToSchedulable;
 
+    /**
+     * The table associated with the model.
+     *
+     * @var string
+     */
     protected $table = 'roster_impediments';
 
+    /**
+     * The attributes that are mass assignable.
+     *
+     * @var array<int, string>
+     */
     protected $fillable = [
         'availability_id',
         'schedulable_id',
@@ -44,21 +54,28 @@ class Impediment extends Model
         'metadata',
     ];
 
+    /**
+     * The attributes that should be cast.
+     *
+     * @var array<string, string>
+     */
     protected $casts = [
         'start_datetime' => 'datetime',
         'end_datetime' => 'datetime',
     ];
 
-
     /**
-     * Accessor & mutator for metadata.
+     * Accessor and mutator for metadata attribute.
+     *
      * Accepts either a JSON string or an array from the user.
+     *
+     * @return Attribute
      */
     protected function metadata(): Attribute
     {
         return Attribute::make(
-            get: fn($value) => is_string($value) ? json_decode($value, true) : $value,
-            set: fn($value) => is_array($value) ? json_encode($value) : $value
+            get: fn($value) => is_string($value) ? json_decode($value, true, 512, JSON_THROW_ON_ERROR) : $value,
+            set: fn($value) => is_array($value) ? json_encode($value, JSON_THROW_ON_ERROR) : $value
         );
     }
 
@@ -77,7 +94,7 @@ class Impediment extends Model
      *
      * @return MorphTo
      */
-    public function schedulable()
+    public function schedulable(): MorphTo
     {
         return $this->morphTo();
     }
@@ -85,8 +102,8 @@ class Impediment extends Model
     /**
      * Determine if this impediment overlaps with a given time period.
      *
-     * @param Carbon $start The start of the period to check
-     * @param Carbon $end The end of the period to check
+     * @param Carbon $start Start time of the period to check
+     * @param Carbon $end End time of the period to check
      * @return bool True if the impediment overlaps with the period
      */
     public function overlapsWith(Carbon $start, Carbon $end): bool

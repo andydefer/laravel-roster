@@ -52,13 +52,15 @@ class Availability extends Model
     protected $casts = [
         'daily_start' => 'datetime:h:i:s',
         'daily_end' => 'datetime:h:i:s',
-        'validity_start' => 'datetime',  // Changé de 'date' à 'datetime'
-        'validity_end' => 'datetime',     // Changé de 'date' à 'datetime'
-        'days' => 'array'
+        'validity_start' => 'datetime',
+        'validity_end' => 'datetime',
+        'days' => 'array',
     ];
 
     /**
      * Get the schedulable resource that owns this availability.
+     *
+     * @return MorphTo
      */
     public function schedulable(): MorphTo
     {
@@ -67,6 +69,8 @@ class Availability extends Model
 
     /**
      * Get the schedules associated with this availability.
+     *
+     * @return HasMany
      */
     public function schedules(): HasMany
     {
@@ -75,6 +79,8 @@ class Availability extends Model
 
     /**
      * Get the impediments associated with this availability.
+     *
+     * @return HasMany
      */
     public function impediments(): HasMany
     {
@@ -93,15 +99,9 @@ class Availability extends Model
      */
     public function isAvailableForSchedule(Carbon $start, Carbon $end): bool
     {
-        if (!$this->isAvailableOnDay($start)) {
-            return false;
-        }
-
-        if (!$this->isWithinDailyWindow($start, $end)) {
-            return false;
-        }
-
-        return $this->isWithinValidityPeriod($start, $end);
+        return $this->isAvailableOnDay($start)
+            && $this->isWithinDailyWindow($start, $end)
+            && $this->isWithinValidityPeriod($start, $end);
     }
 
     /**
@@ -147,7 +147,11 @@ class Availability extends Model
             return false;
         }
 
-        return !($this->validity_end && $end->gt($this->validity_end));
+        if ($this->validity_end && $end->gt($this->validity_end)) {
+            return false;
+        }
+
+        return true;
     }
 
     /**
@@ -166,7 +170,11 @@ class Availability extends Model
             return false;
         }
 
-        return !($this->validity_end && $date->gt($this->validity_end));
+        if ($this->validity_end && $date->gt($this->validity_end)) {
+            return false;
+        }
+
+        return true;
     }
 
     /**
@@ -176,7 +184,7 @@ class Availability extends Model
      */
     public function getDailyDurationMinutes(): int
     {
-        return $this->daily_start->diffInMinutes($this->daily_end);
+        return (int) $this->daily_start->diffInMinutes($this->daily_end);
     }
 
     /**
@@ -190,7 +198,7 @@ class Availability extends Model
             return null;
         }
 
-        return $this->validity_start->diffInDays($this->validity_end);
+        return (int) $this->validity_start->diffInDays($this->validity_end);
     }
 
     /**
@@ -211,13 +219,13 @@ class Availability extends Model
      */
     public function hasValidityStarted(?Carbon $date = null): bool
     {
-        $date = $date ?? Carbon::now();
+        $checkDate = $date ?? Carbon::now();
 
         if ($this->validity_start === null) {
-            return true; // No start date means it's always started
+            return true;
         }
 
-        return $date->gte($this->validity_start);
+        return $checkDate->gte($this->validity_start);
     }
 
     /**
@@ -228,13 +236,13 @@ class Availability extends Model
      */
     public function hasValidityEnded(?Carbon $date = null): bool
     {
-        $date = $date ?? Carbon::now();
+        $checkDate = $date ?? Carbon::now();
 
         if ($this->validity_end === null) {
-            return false; // No end date means it never ends
+            return false;
         }
 
-        return $date->gt($this->validity_end);
+        return $checkDate->gt($this->validity_end);
     }
 
     /**
@@ -245,8 +253,8 @@ class Availability extends Model
      */
     public function isValidityActive(?Carbon $date = null): bool
     {
-        $date = $date ?? Carbon::now();
+        $checkDate = $date ?? Carbon::now();
 
-        return $this->hasValidityStarted($date) && !$this->hasValidityEnded($date);
+        return $this->hasValidityStarted($checkDate) && !$this->hasValidityEnded($checkDate);
     }
 }
