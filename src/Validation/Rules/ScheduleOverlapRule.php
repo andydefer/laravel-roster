@@ -4,9 +4,7 @@ declare(strict_types=1);
 
 namespace Roster\Validation\Rules;
 
-use Roster\Contracts\Repository\ScheduleRepositoryInterface;
-use Roster\Contracts\Repository\ImpedimentRepositoryInterface;
-use Exception;
+use Roster\Domain\Services\TemporalConflictService;
 use Illuminate\Support\Carbon;
 use Roster\Contracts\Validation\ValidationContextInterface;
 use Roster\Validation\Attributes\ValidationRule;
@@ -20,9 +18,12 @@ use Roster\Enums\OperationType;
 )]
 class ScheduleOverlapRule extends AbstractRule
 {
+    public function __construct(
+        private TemporalConflictService $conflictService
+    ) {}
+
     public function validate(ValidationContextInterface $validationContext): void
     {
-
         if (!$validationContext->has('start_datetime') || !$validationContext->has('end_datetime')) {
             return;
         }
@@ -32,57 +33,38 @@ class ScheduleOverlapRule extends AbstractRule
             $end = Carbon::parse($validationContext->get('end_datetime'));
             $availabilityId = $validationContext->get('availability_id');
 
-
             if (!$availabilityId) {
                 return;
             }
 
             $currentEntity = $validationContext->getCurrentEntity();
+            $excludeScheduleId = null;
+            $excludeImpedimentId = null;
 
-            $excludeId = $currentEntity ? ($currentEntity->id ?? null) : null;
-
-
-            // 1. Vérifie chevauchement avec autres schedules
-            $scheduleRepository = app(ScheduleRepositoryInterface::class);
-
-
-            // Vérifiez d'abord SANS exclusion pour voir ce qui existe
-            $allOverlapping = $scheduleRepository->findOverlappingSchedules($availabilityId, $start, $end);
-            if ($allOverlapping->count() > 0) {
-            }
-
-            // Puis vérifiez AVEC exclusion
-            if ($excludeId) {
-                $overlappingExcludingSelf = $scheduleRepository->findOverlappingSchedules($availabilityId, $start, $end, $excludeId);
-                if ($overlappingExcludingSelf->count() > 0) {
+            if ($currentEntity) {
+                if ($validationContext->getEntityType() === EntityType::SCHEDULE) {
+                    $excludeScheduleId = $currentEntity->id ?? null;
+                } elseif ($validationContext->getEntityType() === EntityType::IMPEDIMENT) {
+                    $excludeImpedimentId = $currentEntity->id ?? null;
                 }
             }
 
-            $hasScheduleOverlap = $scheduleRepository->hasOverlappingSchedule($availabilityId, $start, $end, $excludeId);
+            $conflictResult = $this->conflictService->checkAllConflicts(
+                availabilityId: $availabilityId,
+                start: $start,
+                end: $end,
+                excludeScheduleId: $excludeScheduleId,
+                excludeImpedimentId: $excludeImpedimentId
+            );
 
-
-
-            if ($hasScheduleOverlap) {
+            if ($conflictResult->hasConflicts) {
                 $validationContext->setViolation(
                     'overlap',
-                    'Schedule overlaps with an existing schedule'
+                    $conflictResult->message
                 );
-                return;
             }
-
-            // 2. Vérifie chevauchement avec impediments
-            $impedimentRepository = app(ImpedimentRepositoryInterface::class);
-            $hasImpedimentOverlap = $impedimentRepository->hasOverlappingImpediments($availabilityId, $start, $end);
-
-
-            if ($hasImpedimentOverlap) {
-                $validationContext->setViolation(
-                    'overlap',
-                    'Schedule overlaps with an existing impediment'
-                );
-                return;
-            }
-        } catch (Exception $exception) {
+        } catch (\Exception $exception) {
+            report($exception);
         }
     }
 }

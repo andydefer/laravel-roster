@@ -15,12 +15,19 @@ interface RepositoryInterface
      *
      * @param mixed $data
      */
-    public function create(array $data): Model;
+    public function create(array $data, Model $schedulable, ?Model $owner = null): Model;
 
     /**
      * Find an entity by ID.
      */
-    public function find(int $id): mixed;
+    public function find(
+        int $id,
+        ?Model $schedulable = null,
+        ?Model $owner = null,
+        array $filters = []
+    ): ?Model;
+
+
 
     /**
      * Get all entities with applied filters.
@@ -31,21 +38,35 @@ interface RepositoryInterface
      * Get paginated entities with applied filters.
      */
     public function paginate(
+        Model $schedulable,
+        ?Model $owner = null,
+        array $filters = [],
         int $perPage = 15,
         array $columns = ['*'],
         string $pageName = 'page',
         ?int $page = null
     ): LengthAwarePaginator;
 
+
     /**
      * Update an existing entity.
      */
-    public function update(int $id, array $data): bool;
+    public function update(
+        int $id,
+        Model $schedulable,
+        ?Model $owner = null,
+        array $data = []
+    ): bool;
+
 
     /**
      * Delete an entity.
      */
-    public function delete(int $id): bool;
+    public function delete(
+        int $id,
+        Model $schedulable,
+        ?Model $owner = null,
+    ): bool;
 }
 
 

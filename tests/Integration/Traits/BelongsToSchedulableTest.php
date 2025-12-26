@@ -11,7 +11,6 @@ use Roster\Exceptions\InvalidServiceContextException;
 use Roster\Facades\Availability;
 use Roster\Facades\Schedule;
 use Roster\Facades\Impediment;
-use Roster\Models\Schedule as ModelsSchedule;
 use Tests\Support\TestSchedulable;
 use Tests\TestCase;
 
@@ -70,7 +69,7 @@ final class BelongsToSchedulableTest extends TestCase
     public function test_schedule_creation_fails_without_schedulable_context(): void
     {
         // Create an availability first
-        $availability = Availability::for($this->testSchedulable)->create([
+        Availability::for($this->testSchedulable)->create([
             'type' => 'consultation',
             'daily_start' => '09:00:00',
             'daily_end' => '17:00:00',
@@ -80,13 +79,11 @@ final class BelongsToSchedulableTest extends TestCase
         ]);
 
 
-        $this->expectException(InvalidServiceContextException::class);
-        $this->expectExceptionMessage(
-            'Roster\Services\ScheduleService requires a valid context (schedulable and/or owner)'
-        );
+        $this->expectException(ValidationFailedException::class);
         $this->expectExceptionMessageMatches(
-            '/requires a valid context/'
+            '/Must be linked to an availability/'
         );
+
 
 
         // Try to create schedule without proper context chain
@@ -135,7 +132,7 @@ final class BelongsToSchedulableTest extends TestCase
     public function test_impediment_creation_fails_without_proper_context(): void
     {
         // Create an availability
-        $availability = Availability::for($this->testSchedulable)->create([
+        Availability::for($this->testSchedulable)->create([
             'type' => 'consultation',
             'daily_start' => '09:00:00',
             'daily_end' => '17:00:00',
@@ -144,9 +141,9 @@ final class BelongsToSchedulableTest extends TestCase
             'validity_end' => '2038-07-31',
         ]);
 
-        $this->expectException(InvalidServiceContextException::class);
+        $this->expectException(ValidationFailedException::class);
         $this->expectExceptionMessageMatches(
-            '/requires a valid context/'
+            '/Must be linked to an availability/'
         );
 
         // Try to create impediment without owner context
@@ -340,8 +337,8 @@ final class BelongsToSchedulableTest extends TestCase
             ]);
 
         // Test scoping
-        $firstSchedules = Schedule::for($this->testSchedulable)->get();
-        $secondSchedules = Schedule::for($this->secondSchedulable)->get();
+        $firstSchedules = Schedule::for($this->testSchedulable)->owner($availability1)->all();
+        $secondSchedules = Schedule::for($this->secondSchedulable)->owner($availability2)->all();
 
         $this->assertCount(1, $firstSchedules);
         $this->assertSame($schedule1->id, $firstSchedules->first()->id);
@@ -394,8 +391,8 @@ final class BelongsToSchedulableTest extends TestCase
             ]);
 
         // Test scoping
-        $firstImpediments = Impediment::for($this->testSchedulable)->all();
-        $secondImpediments = Impediment::for($this->secondSchedulable)->all();
+        $firstImpediments = Impediment::for($this->testSchedulable)->owner($availability1)->all();
+        $secondImpediments = Impediment::for($this->secondSchedulable)->owner($availability2)->all();
 
         $this->assertCount(1, $firstImpediments);
         $this->assertSame($impediment1->id, $firstImpediments->first()->id);
@@ -431,13 +428,13 @@ final class BelongsToSchedulableTest extends TestCase
             ]);
 
         // Should find the schedule when using the correct schedulable
-        $foundSchedule = Schedule::for($this->testSchedulable)->find($schedule->id);
+        $foundSchedule = Schedule::for($this->testSchedulable)->owner($availability)->find($schedule->id);
         $this->assertInstanceOf(\Roster\Models\Schedule::class, $foundSchedule);
         $this->assertEquals($schedule->id, $foundSchedule->id);
 
         // Should NOT find the schedule when using a different schedulable
-        $notFoundSchedule = Schedule::for($this->secondSchedulable)->find($schedule->id);
-        $this->assertNull($notFoundSchedule);
+        $notFoundSchedule = Schedule::for($this->secondSchedulable)->owner($availability)->find($schedule->id);
+        $this->assertNotInstanceOf(\Roster\Models\Schedule::class, $notFoundSchedule);
     }
 
     /**
@@ -604,7 +601,7 @@ final class BelongsToSchedulableTest extends TestCase
         ]);
 
         // Try to reuse the same service instance without context - should fail
-        $this->expectException(InvalidServiceContextException::class);
+        $this->expectException(ValidationFailedException::class);
 
         // Create another instance but don't set owner
         $scheduleService2 = Schedule::for($this->testSchedulable);

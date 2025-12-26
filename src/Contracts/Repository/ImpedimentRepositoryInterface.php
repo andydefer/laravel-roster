@@ -4,46 +4,34 @@ declare(strict_types=1);
 
 namespace Roster\Contracts\Repository;
 
-use Roster\Models\Impediment;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
-use Roster\Contracts\CrudInterface;
 use Roster\Contracts\RepositoryInterface;
 
-/**
- * Interface for Impediment repository implementations.
- */
 interface ImpedimentRepositoryInterface extends RepositoryInterface
 {
     /**
-     * Check if a time slot has overlapping impediments.
+     * Find impediments for a given availability.
      *
-     * @param int $availabilityId The availability ID
-     * @param Carbon $start Start of time slot
-     * @param Carbon $end End of time slot
-     * @param int|null $excludeId Impediment ID to exclude
-     * @return bool True if overlapping impediments exist
+     * This method only builds a query.
+     * No business logic must be implemented here.
+     *
+     *
      */
-    public function hasOverlappingImpediments(
+    public function findByAvailability(
         int $availabilityId,
-        Carbon $start,
-        Carbon $end,
-        ?int $excludeId = null
-    ): bool;
+        ?Carbon $start = null,
+        ?Carbon $end = null
+    ): Builder;
 
     /**
-     * Find impediments for a time slot.
+     * Get future impediments for a given availability.
      *
-     * @param int $availabilityId The availability ID
-     * @param Carbon $start Start of time slot
-     * @param Carbon $end End of time slot
-     * @return Collection<int, Impediment>
+     *
      */
-    public function findForTimeSlot(int $availabilityId, Carbon $start, Carbon $end): Collection;
-
-    public function getAvailableSlotsFromImpediments(
-        Carbon $start,
-        Carbon $end,
-        Collection $impediments
+    public function getFutureImpediments(
+        int $availabilityId,
+        Carbon $from
     ): Collection;
 }

@@ -12,8 +12,8 @@ use Roster\Commands\InstallRosterCommand;
 use Roster\Contracts\Repository\AvailabilityRepositoryInterface;
 use Roster\Contracts\Repository\ImpedimentRepositoryInterface;
 use Roster\Contracts\Repository\ScheduleRepositoryInterface;
-use Roster\Contracts\Services\SlotFinderInterface;
 use Roster\Contracts\Validation\ValidatorInterface;
+use Roster\Domain\Services\TemporalConflictService;
 use Roster\Models\Availability;
 use Roster\Models\Impediment;
 use Roster\Models\Schedule;
@@ -23,7 +23,6 @@ use Roster\Repositories\ImpedimentRepository;
 use Roster\Repositories\ScheduleRepository;
 use Roster\Services\AvailabilityService;
 use Roster\Services\Core\ResourcePublisherService;
-use Roster\Services\Core\SlotFinderService;
 use Roster\Services\ImpedimentService;
 use Roster\Services\ScheduleService;
 use Roster\Validation\RuleScanner;
@@ -52,10 +51,10 @@ class RosterServiceProvider extends ServiceProvider
         $this->mergeConfigFrom(__DIR__ . '/../config/roster-validation.php', 'roster-validation');
 
         $this->loadHelpers();
-        $this->registerCoreServices();
         $this->registerRepositories();
         $this->registerValidationSystem();
         $this->registerDomainServices();
+
 
         if ($this->app->runningInConsole()) {
             $this->commands([
@@ -72,11 +71,6 @@ class RosterServiceProvider extends ServiceProvider
         }
     }
 
-    protected function registerCoreServices(): void
-    {
-
-        $this->app->bind(SlotFinderInterface::class, SlotFinderService::class);
-    }
 
     protected function registerRepositories(): void
     {
@@ -100,6 +94,15 @@ class RosterServiceProvider extends ServiceProvider
             return new Validator($ruleScanner);
         });
 
+
+        $this->app->singleton(TemporalConflictService::class, function ($app) {
+            return new TemporalConflictService(
+                $app->make(AvailabilityRepositoryInterface::class),
+                $app->make(ScheduleRepositoryInterface::class),
+                $app->make(ImpedimentRepositoryInterface::class)
+            );
+        });
+
         $this->app->singleton(RuleScanner::class, function ($app) use ($useFileCache): RuleScanner {
             return new RuleScanner(
                 array_merge([__DIR__ . '/Validation/Rules'], config('roster-validation.rule_directories', [])),
@@ -116,6 +119,8 @@ class RosterServiceProvider extends ServiceProvider
                 availabilityRepository: $app->make(AvailabilityRepositoryInterface::class),
                 impedimentRepository: $app->make(ImpedimentRepositoryInterface::class),
                 scheduleRepository: $app->make(ScheduleRepositoryInterface::class),
+                conflictService: $app->make(TemporalConflictService::class)
+
             );
         });
 
@@ -125,6 +130,7 @@ class RosterServiceProvider extends ServiceProvider
                 availabilityRepository: $app->make(AvailabilityRepositoryInterface::class),
                 impedimentRepository: $app->make(ImpedimentRepositoryInterface::class),
                 scheduleRepository: $app->make(ScheduleRepositoryInterface::class),
+                conflictService: $app->make(TemporalConflictService::class)
             );
         });
 
@@ -134,6 +140,8 @@ class RosterServiceProvider extends ServiceProvider
                 availabilityRepository: $app->make(AvailabilityRepositoryInterface::class),
                 impedimentRepository: $app->make(ImpedimentRepositoryInterface::class),
                 scheduleRepository: $app->make(ScheduleRepositoryInterface::class),
+                conflictService: $app->make(TemporalConflictService::class)
+
             );
         });
 

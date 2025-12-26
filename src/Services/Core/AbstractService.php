@@ -4,74 +4,237 @@ declare(strict_types=1);
 
 namespace Roster\Services\Core;
 
+use BadMethodCallException;
 use LogicException;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Model;
-use Roster\Contracts\CrudInterface;
 use Roster\Contracts\EntityServiceInterface;
 use Roster\Contracts\Repository\AvailabilityRepositoryInterface;
 use Roster\Contracts\Repository\ImpedimentRepositoryInterface;
 use Roster\Contracts\Repository\ScheduleRepositoryInterface;
 use Roster\Contracts\Validation\ValidatorInterface;
+use Roster\Domain\Services\TemporalConflictService;
 use Roster\Exceptions\InvalidServiceContextException;
+use ReflectionClass;
 
 /**
- * Abstract service providing a CRUD template.
- *
- * This abstract class implements basic CRUD operations.
+ * Abstract service providing a complete CRUD template with dynamic repository resolution.
  */
 abstract class AbstractService implements EntityServiceInterface
 {
-
-    /**
-     * The schedulable model instance.
-     */
     protected ?Model $schedulable = null;
-
     protected ?Model $owner = null;
-
-    /**
-     * Current filters for data operations.
-     *
-     * @var array<string, mixed>
-     */
     protected array $filters = [];
-
-    /**
-     * Current data payload for operations.
-     *
-     * @var array<string, mixed>
-     */
     protected array $data = [];
 
-    /**
-     * Common dependencies for all services.
-     */
-    protected ValidatorInterface $validator;
-
-    protected AvailabilityRepositoryInterface $availabilityRepository;
-
-    protected ImpedimentRepositoryInterface $impedimentRepository;
-
-    protected ScheduleRepositoryInterface $scheduleRepository;
-
     public function __construct(
-        ValidatorInterface $validator,
-        AvailabilityRepositoryInterface $availabilityRepository,
-        ImpedimentRepositoryInterface $impedimentRepository,
-        ScheduleRepositoryInterface $scheduleRepository,
-    ) {
-        $this->validator = $validator;
-        $this->availabilityRepository = $availabilityRepository;
-        $this->impedimentRepository = $impedimentRepository;
-        $this->scheduleRepository = $scheduleRepository;
+        protected ValidatorInterface $validator,
+        protected AvailabilityRepositoryInterface $availabilityRepository,
+        protected ImpedimentRepositoryInterface $impedimentRepository,
+        protected ScheduleRepositoryInterface $scheduleRepository,
+        protected TemporalConflictService $conflictService
+    ) {}
+
+    /**
+     * Create a new entity.
+     */
+    public function create(array $data): mixed
+    {
+        $this->requireContext();
+
+        // Add schedulable info
+        $this->data = array_merge($data, [
+            'schedulable_id' => $this->schedulable->id,
+            'schedulable_type' => get_class($this->schedulable)
+        ]);
+
+        // Add owner info if applicable
+        if ($this->owner instanceof Model && !$this->isAvailabilityService()) {
+            $this->data['availability_id'] = $this->owner->id;
+        }
+
+        // Create DTO
+        $dto = $this->createDTOFromArray($this->data, \Roster\Enums\OperationType::CREATE);
+
+        // Add schedulable info to DTO
+        $dto = $this->addSchedulableInfoToDto($dto);
+
+        // Validate
+        $this->validate($dto->toArray(), \Roster\Enums\OperationType::CREATE);
+
+        // Check conflicts if applicable
+        $this->checkEntityConflicts($dto);
+
+        // Update data with complete DTO
+        $this->data = $dto->toArray();
+
+        // Create entity using repository
+        $model = $this->getCurrentRepository()->create(
+            data: $this->data,
+            schedulable: $this->schedulable,
+            owner: $this->owner
+        );
+
+        // Clear cache
+        $this->clearEntityCache($model->id);
+
+        return $model;
     }
 
+    /**
+     * Update an existing entity.
+     */
+    public function update(int $id, array $data): bool
+    {
+        $this->requireContext();
+        $this->data = $data;
+
+        // Find existing entity
+        $existingEntity = $this->find($id);
+        if (!$existingEntity) {
+            throw \Roster\Validation\Exceptions\ValidationFailedException::fromViolations(
+                ['id' => sprintf('%s with given ID does not exist', $this->getEntityTypeEnum()->displayName())],
+                \Roster\Enums\OperationType::UPDATE,
+                $this->getEntityTypeEnum()
+            );
+        }
+
+        // Add ID for validation
+        $data['id'] = $id;
+
+        // Ensure availability_id is present for non-availability entities
+        if (!$this->isAvailabilityService() && !isset($data['availability_id']) && isset($existingEntity->availability_id)) {
+            $data['availability_id'] = $existingEntity->availability_id;
+        }
+
+        // Create DTO
+        $entityData = $this->createDTOFromArray($data, \Roster\Enums\OperationType::UPDATE);
+
+        // Validate
+        $this->validate($entityData->toArray(), \Roster\Enums\OperationType::UPDATE, $id, $existingEntity);
+
+        // Check conflicts with exclusion
+        $this->checkEntityConflicts($entityData, $id);
+
+        // Update data with complete DTO
+        $this->data = $entityData->toArray();
+
+        // Update entity
+        $result = $this->getCurrentRepository()->update(
+            id: $id,
+            data: $this->data,
+            owner: $this->owner,
+            schedulable: $this->schedulable,
+        );
+
+        // Clear cache if needed
+        if ($result) {
+            $this->clearEntityCache($id);
+        }
+
+        return $result;
+    }
+
+    /**
+     * Delete an entity.
+     */
+    final public function delete(int $id): bool
+    {
+        $this->requireContext();
+        $entity = $this->find($id);
+
+        if (!$entity) {
+            throw \Roster\Validation\Exceptions\ValidationFailedException::fromViolations(
+                ['id' => sprintf('%s with given ID does not exist', $this->getEntityTypeEnum()->displayName())],
+                \Roster\Enums\OperationType::DELETE,
+                $this->getEntityTypeEnum()
+            );
+        }
+
+        // Prepare validation data
+        $deleteData = [
+            'id' => $id,
+            'schedulable_id' => $entity->schedulable_id ?? $this->schedulable->id,
+            'schedulable_type' => $entity->schedulable_type ?? get_class($this->schedulable),
+        ];
+
+        // Add availability_id for non-availability entities
+        if (!$this->isAvailabilityService() && isset($entity->availability_id)) {
+            $deleteData['availability_id'] = $entity->availability_id;
+        }
+
+        // Validate deletion
+        $this->validate($deleteData, \Roster\Enums\OperationType::DELETE, $id);
+
+        // Delete entity
+        $result = $this->getCurrentRepository()->delete(
+            id: $id,
+            schedulable: $this->schedulable,
+            owner: $this->owner
+        );
+
+        // Clear cache if needed
+        if ($result) {
+            $this->clearEntityCache($id);
+        }
+
+        return $result;
+    }
+
+    /**
+     * Find entity by ID.
+     */
+    final public function find(int $id): mixed
+    {
+        $repository = $this->getCurrentRepository();
+
+        // Use repository's find method if it exists
+        if (method_exists($repository, 'find')) {
+            return $repository->find($id, $this->schedulable, $this->owner, $this->filters);
+        }
+
+        // Fallback to direct Eloquent query
+        $modelClass = $this->resolveModelClass();
+        $query = $modelClass::where('schedulable_id', $this->schedulable->id)
+            ->where('schedulable_type', get_class($this->schedulable));
+
+        if ($this->owner instanceof Model && !$this->isAvailabilityService()) {
+            $query->where('availability_id', $this->owner->id);
+        }
+
+        return $query->find($id);
+    }
+
+    /**
+     * Get all entities.
+     */
+    final public function all(): \Illuminate\Support\Collection
+    {
+        return $this->getCurrentRepository()->all($this->schedulable, $this->owner, $this->filters);
+    }
+
+    /**
+     * Paginate entities.
+     */
+    final public function paginate(
+        int $perPage = 15,
+        array $columns = ['*'],
+        string $pageName = 'page',
+        ?int $page = null
+    ): LengthAwarePaginator {
+        return $this->getCurrentRepository()->paginate(
+            schedulable: $this->schedulable,
+            owner: $this->owner,
+            filters: $this->filters,
+            perPage: $perPage,
+            columns: $columns,
+            pageName: $pageName,
+            page: $page
+        );
+    }
 
     /**
      * Vérifie que le contexte du service est complet avant toute action.
-     *
-     * Lance une exception pédagogique si le schedulable ou l'owner est manquant.
      */
     protected function requireContext(): void
     {
@@ -80,93 +243,130 @@ abstract class AbstractService implements EntityServiceInterface
         }
     }
 
-    abstract public function paginate(
-        int $perPage = 15,
-        array $columns = ['*'],
-        string $pageName = 'page',
-        ?int $page = null
-    ): LengthAwarePaginator;
+    /**
+     * Template method for DTO creation from array.
+     */
+    abstract protected function createDTOFromArray(array $data, \Roster\Enums\OperationType $operationType): mixed;
 
     /**
-     * Find entity by ID.
-     *
-     * @param int $id Entity ID
-     * @return mixed Entity or null if not found
+     * Get the entity type as an enum.
      */
-    abstract public function find(int $id): mixed;
+    abstract protected function getEntityTypeEnum(): \Roster\Enums\EntityType;
 
     /**
-     * Get the current data payload.
-     *
-     * @return array<string, mixed> The current data
+     * Add schedulable info to DTO.
      */
+    protected function addSchedulableInfoToDto(mixed $dto): mixed
+    {
+        if (method_exists($dto, 'withSchedulableInfo')) {
+            return $dto->withSchedulableInfo(
+                $this->schedulable->id,
+                get_class($this->schedulable)
+            );
+        }
+        return $dto;
+    }
+
+    /**
+     * Check entity conflicts.
+     */
+    protected function checkEntityConflicts(mixed $dto, ?int $excludeId = null): void
+    {
+        // This method can be overridden by child classes
+        // Default implementation does nothing
+    }
+
+    /**
+     * Validate data.
+     */
+    protected function validate(array $data, \Roster\Enums\OperationType $operationType, ?int $entityId = null, ?object $currentEntity = null): void
+    {
+        $entityType = $this->getEntityTypeEnum();
+
+        if ($currentEntity === null && $entityId !== null) {
+            $currentEntity = $this->find($entityId);
+        }
+
+        $validationContext = new \Roster\Validation\Context\ValidationContext(
+            operationType: $operationType,
+            entityType: $entityType,
+            data: $data,
+            model: $this->schedulable,
+            currentEntity: $currentEntity
+        );
+
+        $validationResult = $this->validator->validate($validationContext);
+
+        if (!$validationResult->isValid()) {
+            throw \Roster\Validation\Exceptions\ValidationFailedException::fromViolations(
+                $validationResult->getViolations(),
+                $operationType,
+                $entityType
+            );
+        }
+    }
+
+    /**
+     * Get current repository dynamically.
+     */
+    protected function getCurrentRepository(): mixed
+    {
+        $serviceClass = static::class;
+
+        return match (true) {
+            str_contains($serviceClass, 'AvailabilityService') => $this->availabilityRepository,
+            str_contains($serviceClass, 'ScheduleService') => $this->scheduleRepository,
+            str_contains($serviceClass, 'ImpedimentService') => $this->impedimentRepository,
+            default => throw new LogicException('Repository not defined for service: ' . $serviceClass)
+        };
+    }
+
+    /**
+     * Resolve model class dynamically.
+     */
+    protected function resolveModelClass(): string
+    {
+        $serviceClass = static::class;
+        $shortName = (new ReflectionClass($serviceClass))->getShortName();
+        $modelName = str_replace('Service', '', $shortName);
+
+        return 'Roster\Models\\' . $modelName;
+    }
+
+    /**
+     * Check if this is an Availability service.
+     */
+    protected function isAvailabilityService(): bool
+    {
+        return str_contains(static::class, 'AvailabilityService');
+    }
+
+    /**
+     * Clear entity cache (to be implemented by child classes if needed).
+     */
+    protected function clearEntityCache(int $entityId): void
+    {
+        // Implementation if caching is needed
+    }
+
+    // Common getters and setters
+
     public function getData(): array
     {
         return $this->data;
     }
 
-    /**
-     * Set the data payload.
-     *
-     * @param array<string, mixed> $data The data to set
-     * @return $this
-     */
     public function setData(array $data): self
     {
         $this->data = $data;
         return $this;
     }
 
-    /**
-     * Get the current filters.
-     *
-     * @return array<string, mixed> The current filters
-     */
     public function getFilters(): array
     {
         return $this->filters;
     }
 
-    /**
-     * Intercepte les appels dynamiques pour les méthodes "whereXyz".
-     *
-     * Exemple :
-     *   $service->whereType('consultation');
-     *   $service->whereReason('holiday');
-     *
-     * @param string $method Nom de la méthode appelée
-     * @param array $arguments Arguments passés à la méthode
-     * @return $this
-     *
-     * @throws \BadMethodCallException Si la méthode ne correspond pas au pattern whereXyz
-     */
-    public function __call(string $method, array $arguments): self
-    {
-        // Vérifie si la méthode commence par "where" (insensible à la casse)
-        if (str_starts_with($method, 'where') && !empty($arguments)) {
-            // Extrait le nom du champ à partir du nom de la méthode
-            // whereType => type, whereReason => reason
-            $field = lcfirst(substr($method, 5)); // enlève 'where' et passe la première lettre en minuscule
-
-            // Définit le filtre avec la valeur fournie
-            $this->setFilter($field, $arguments[0]);
-
-            return $this;
-        }
-
-        throw new \BadMethodCallException(sprintf(
-            'Call to undefined method %s::%s()',
-            static::class,
-            $method
-        ));
-    }
-
-    /**
-     * Set the filters.
-     *
-     * @param array<string, mixed> $filters The filters to set
-     * @return $this
-     */
     public function setFilters(array $filters): self
     {
         $this->filters = $filters;
@@ -179,71 +379,37 @@ abstract class AbstractService implements EntityServiceInterface
         return $this;
     }
 
-    public function setFilter($key, $value): self
+    public function setFilter(string $key, $value): self
     {
         $this->filters[$key] = $value;
         return $this;
     }
 
-    /**
-     * Get the schedulable model instance.
-     *
-     * @return Model|null The schedulable model or null if not set
-     */
     public function getSchedulable(): ?Model
     {
         return $this->schedulable;
     }
 
-    /**
-     * Set the schedulable model instance.
-     *
-     * @param Model $model The schedulable model
-     * @return $this
-     */
     public function setSchedulable(Model $model): self
     {
         $this->schedulable = $model;
         return $this;
     }
 
-    /**
-     * Scope the service to a specific schedulable model.
-     *
-     * @param Model $model The parent model to scope operations to
-     * @return $this
-     */
     final public function for(Model $model): static
     {
         $clone = clone $this;
         $clone->schedulable = $model;
-
         return $clone;
     }
 
-    /**
-     * Définit l'entité "parent" ou "owner" pour ce service.
-     *
-     * @param Model $model La disponibilité ou autre modèle parent
-     * @return static Retourne une nouvelle instance du service avec l'owner défini
-     */
     final public function owner(Model $model): static
     {
-        // Créer un clone pour rester immuable
         $clone = clone $this;
-
-        // Définir l'owner sur le clone
         $clone->owner = $model;
-
         return $clone;
     }
 
-
-    /**
-     * Clear the data and filters.
-     *
-     * @return $this
-     */
     public function clear(): self
     {
         $this->data = [];
@@ -252,55 +418,20 @@ abstract class AbstractService implements EntityServiceInterface
     }
 
     /**
-     * {@inheritDoc}
+     * Intercept dynamic method calls for "whereXyz" methods.
      */
-    protected function getAvailabilityRepository(): AvailabilityRepositoryInterface
+    public function __call(string $method, array $arguments): self
     {
-        return $this->availabilityRepository;
-    }
+        if (str_starts_with($method, 'where') && $arguments !== []) {
+            $field = lcfirst(substr($method, 5));
+            $this->setFilter($field, $arguments[0]);
+            return $this;
+        }
 
-    /**
-     * {@inheritDoc}
-     */
-    protected function getScheduleRepository(): ScheduleRepositoryInterface
-    {
-        return $this->scheduleRepository;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    protected function getImpedimentRepository(): ImpedimentRepositoryInterface
-    {
-        return $this->impedimentRepository;
-    }
-
-    /**
-     * Get the "current" repository for this service.
-     *
-     * The child class must define the protected property $repositoryType
-     * with one of: 'availability', 'schedule', 'impediment'.
-     *
-     * @return AvailabilityRepositoryInterface|ScheduleRepositoryInterface|ImpedimentRepositoryInterface
-     */
-    public function getCurrentRepository(): mixed
-    {
-        $childClass = static::class; // classe de l'enfant qui appelle
-
-        return match (true) {
-            str_contains($childClass, 'Availability') => $this->availabilityRepository,
-            str_contains($childClass, 'Schedule') => $this->scheduleRepository,
-            str_contains($childClass, 'Impediment') => $this->impedimentRepository,
-            default => throw new LogicException('Repository not defined for child class ' . $childClass)
-        };
-    }
-
-
-    /**
-     * Get the validator.
-     */
-    protected function getValidator(): ValidatorInterface
-    {
-        return $this->validator;
+        throw new BadMethodCallException(sprintf(
+            'Call to undefined method %s::%s()',
+            static::class,
+            $method
+        ));
     }
 }

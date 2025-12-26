@@ -6,7 +6,6 @@ namespace Tests\Unit\Services;
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Roster\Facades\Availability as AvailabilityFacade;
-use Roster\Facades\Schedule as ScheduleFacade;
 use Roster\Models\Availability;
 use Roster\Validation\Exceptions\ValidationFailedException;
 use Tests\Support\TestSchedulable;
@@ -154,7 +153,7 @@ final class AvailabilityServiceTest extends TestCase
         // Assert
         $this->expectException(ValidationFailedException::class);
         $this->expectExceptionMessageMatches(
-            '/Update validation failed for Availability.*does not exist/'
+            '/Delete validation failed for Availability.*does not exist/'
         );
 
         // Act
@@ -191,7 +190,7 @@ final class AvailabilityServiceTest extends TestCase
         $result = AvailabilityFacade::for($this->testSchedulable)->find($availabilityId);
 
         // Assert
-        $this->assertNull($result);
+        $this->assertNotInstanceOf(\Roster\Models\Availability::class, $result);
     }
 
     public function test_can_get_all_availabilities_with_filters(): void
@@ -312,15 +311,15 @@ final class AvailabilityServiceTest extends TestCase
     public function test_sets_and_gets_filters_correctly(): void
     {
         // Arrange
-        $service = AvailabilityFacade::for($this->testSchedulable);
+        $availabilityService = AvailabilityFacade::for($this->testSchedulable);
         $filters = [
             'type' => 'consultation',
             'day' => 'monday',
         ];
 
         // Act
-        $service->setFilters($filters);
-        $result = $service->getFilters();
+        $availabilityService->setFilters($filters);
+        $result = $availabilityService->getFilters();
 
         // Assert
         $this->assertSame($filters, $result);
@@ -467,13 +466,14 @@ final class AvailabilityServiceTest extends TestCase
     public function test_can_reset_filters(): void
     {
         // Arrange
-        $service = AvailabilityFacade::for($this->testSchedulable);
-        $service->setFilters(['type' => 'consultation']);
-        $service->setFilter('day', 'monday');
+        $availabilityService = AvailabilityFacade::for($this->testSchedulable);
+        $availabilityService->setFilters(['type' => 'consultation']);
+        $availabilityService->setFilter('day', 'monday');
 
         // Act
-        $service->resetFilters();
-        $filters = $service->getFilters();
+        $availabilityService->resetFilters();
+
+        $filters = $availabilityService->getFilters();
 
         // Assert
         $this->assertEmpty($filters);

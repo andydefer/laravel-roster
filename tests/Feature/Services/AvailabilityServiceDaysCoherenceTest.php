@@ -97,30 +97,39 @@ final class AvailabilityServiceDaysCoherenceTest extends TestCase
 
     public function test_update_removes_days_not_in_new_period(): void
     {
-        $availability = Availability::for($this->testSchedulable)->create([
-            'type' => 'consultation',
-            'daily_start' => '09:00:00',
-            'daily_end' => '17:00:00',
-            'days' => ['monday', 'wednesday', 'friday', 'sunday'],
+        $schedulable = $this->testSchedulable;
+
+        // Crée une availability avec plusieurs jours
+        $availability = Availability::for($schedulable)->create([
+            'type'           => 'consultation',
+            'daily_start'    => '09:00:00',
+            'daily_end'      => '17:00:00',
+            'days'           => ['monday', 'wednesday', 'friday', 'sunday'],
             'validity_start' => '2038-07-05',
-            'validity_end' => '2038-07-18',
+            'validity_end'   => '2038-07-18',
         ]);
 
-        $result = Availability::for($this->testSchedulable)
-            ->owner($availability)
-            ->update($availability->id, [
-                'validity_end' => '2038-07-10',
-            ]);
+        // Mise à jour de la fin de validité
+        $result = Availability::for($schedulable)
+            ->update(
+                id: $availability->id,
+                data: ['validity_end' => '2038-07-10']
+            );
 
         $this->assertTrue($result);
 
+        // Rafraîchir l'entité pour vérifier les jours
         $availability->refresh();
 
+        // Les jours en dehors de la nouvelle période doivent disparaître
         $this->assertNotContains('sunday', $availability->days);
+
+        // Les jours encore valides doivent rester
         $this->assertContains('monday', $availability->days);
         $this->assertContains('wednesday', $availability->days);
         $this->assertContains('friday', $availability->days);
     }
+
 
     public function test_update_does_not_add_new_days_even_if_in_period(): void
     {
@@ -134,7 +143,6 @@ final class AvailabilityServiceDaysCoherenceTest extends TestCase
         ]);
 
         $result = Availability::for($this->testSchedulable)
-            ->owner($availability)
             ->update($availability->id, [
                 'validity_end' => '2038-07-18',
             ]);
@@ -160,7 +168,6 @@ final class AvailabilityServiceDaysCoherenceTest extends TestCase
         $this->expectExceptionMessageMatches("/Day 'saturday' is not within the validity period/");
 
         Availability::for($this->testSchedulable)
-            ->owner($availability)
             ->update($availability->id, [
                 'days' => ['monday', 'saturday'],
                 'validity_end' => '2038-07-09',

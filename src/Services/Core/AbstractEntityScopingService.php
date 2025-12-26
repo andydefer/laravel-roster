@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Roster\Services\Core;
 
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Config;
 
 /**

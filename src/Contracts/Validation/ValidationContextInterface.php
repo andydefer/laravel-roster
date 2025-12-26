@@ -5,8 +5,10 @@ declare(strict_types=1);
 namespace Roster\Contracts\Validation;
 
 use Illuminate\Database\Eloquent\Model;
+use Roster\Contracts\EntityServiceInterface;
 use Roster\Enums\EntityType;
 use Roster\Enums\OperationType;
+use Roster\Services\AvailabilityService;
 
 interface ValidationContextInterface
 {
@@ -22,6 +24,8 @@ interface ValidationContextInterface
     public function getSchedulable(): ?Model;
 
     public function getCurrentEntity(): mixed;
+
+    public function getAvailabilityService(): AvailabilityService;
 
     /* -----------------------------------------------------------------
      | Data access (safe: null = absent)
@@ -80,13 +84,6 @@ interface ValidationContextInterface
 
     public function set(string $key, mixed $value): void;
 
-    /**
-     * Return all raw data (BC helper).
-     *
-     * @return array<string, mixed>
-     */
-    public function all(): array;
-
     /* -----------------------------------------------------------------
      | Violations
      | -----------------------------------------------------------------
@@ -99,6 +96,8 @@ interface ValidationContextInterface
     public function getViolations(): array;
 
     public function hasViolations(): bool;
+
+    public function getCurrentService(): EntityServiceInterface;
 
     /* -----------------------------------------------------------------
      | Flags

@@ -56,6 +56,7 @@ class Availability extends Model
         'validity_end' => 'datetime',     // Changé de 'date' à 'datetime'
         'days' => 'array'
     ];
+
     /**
      * Get the schedulable resource that owns this availability.
      */

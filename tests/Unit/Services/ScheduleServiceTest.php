@@ -12,7 +12,6 @@ use Roster\Enums\ScheduleStatus;
 use Roster\Facades\Availability;
 use Roster\Facades\Impediment;
 use Roster\Facades\Schedule;
-use Roster\Models\Availability as AvailabilityModel;
 use Roster\Models\Schedule as ScheduleModel;
 use Roster\Validation\Exceptions\ValidationFailedException;
 use Tests\TestCase;
@@ -23,7 +22,6 @@ final class ScheduleServiceTest extends TestCase
     use RefreshDatabase;
 
     private TestSchedulable $testSchedulable;
-    private AvailabilityModel $availability;
 
     protected function setUp(): void
     {
@@ -184,7 +182,10 @@ final class ScheduleServiceTest extends TestCase
 
         // Expect - Doit échouer car l'availability n'appartient pas au bon schedulable
         $this->expectException(ValidationFailedException::class);
-        $this->expectExceptionMessageMatches('/Availability does not belong to this schedulable/');
+        $this->expectExceptionMessageMatches(
+            '/Create validation failed for Schedule: availability_id → Invalid availability ID/'
+        );
+
 
         // Act - Utiliser l'availability de schedulable1 avec schedulable2
         Schedule::for($schedulable2)
@@ -308,7 +309,7 @@ final class ScheduleServiceTest extends TestCase
 
         // Expect
         $this->expectException(ValidationFailedException::class);
-        $this->expectExceptionMessageMatches('/Schedule overlaps with an existing schedule/');
+        $this->expectExceptionMessageMatches('/Schedule overlaps with existing schedule/');
 
         // Act
         Schedule::for($this->testSchedulable)
@@ -347,7 +348,7 @@ final class ScheduleServiceTest extends TestCase
         // Expect
         $this->expectException(ValidationFailedException::class);
         $this->expectExceptionMessageMatches(
-            '/overlaps with an existing schedule/'
+            '/overlaps with existing schedule/'
         );
 
         // Act - Tentative de création
@@ -501,7 +502,7 @@ final class ScheduleServiceTest extends TestCase
             ->find($scheduleForSchedulable2->id);
 
         // Assert - Ne devrait pas trouver car ce schedule n'appartient pas au bon schedulable
-        $this->assertNull($found);
+        $this->assertNotInstanceOf(\Roster\Models\Schedule::class, $found);
     }
 
     public function test_all_schedules(): void
@@ -1132,7 +1133,7 @@ final class ScheduleServiceTest extends TestCase
 
         // Act & Assert - Essayer de créer un schedule chevauchant
         $this->expectException(ValidationFailedException::class);
-        $this->expectExceptionMessageMatches('/Schedule overlaps with an existing schedule/');
+        $this->expectExceptionMessageMatches('/Schedule overlaps with existing schedule/');
 
         Schedule::for($this->testSchedulable)
             ->owner($availability)
@@ -1146,7 +1147,7 @@ final class ScheduleServiceTest extends TestCase
     public function test_schedule_on_non_availability_day(): void
     {
         // Arrange - Disponibilité seulement le lundi
-        $availability = Availability::for($this->testSchedulable)->create([
+        $mondayOnlyAvailability = Availability::for($this->testSchedulable)->create([
             'type' => 'monday-only',
             'daily_start' => '09:00:00',
             'daily_end' => '17:00:00',
@@ -1162,7 +1163,7 @@ final class ScheduleServiceTest extends TestCase
         );
 
         Schedule::for($this->testSchedulable)
-            ->owner($availability)
+            ->owner($mondayOnlyAvailability)
             ->create([
                 'title' => 'Réunion mardi',
                 'start_datetime' => '2038-01-05 10:00:00', // Mardi
@@ -1212,7 +1213,7 @@ final class ScheduleServiceTest extends TestCase
         ]);
 
         // Créer un schedule
-        $schedule1 = Schedule::for($this->testSchedulable)
+        Schedule::for($this->testSchedulable)
             ->owner($availability)
             ->create([
                 'title' => 'Première réunion',

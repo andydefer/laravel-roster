@@ -4,19 +4,24 @@ declare(strict_types=1);
 
 namespace Roster\Repositories;
 
-use Roster\Models\Impediment;
-use ReflectionClass;
-use LogicException;
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Collection;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Collection;
+use LogicException;
 use Roster\Contracts\RepositoryInterface;
+use Roster\Exceptions\InvalidOwnerException;
+use Roster\Exceptions\MissingOwnerException;
+use Roster\Exceptions\MissingSchedulableException;
+use Roster\Models\Availability;
+use Roster\Models\Impediment;
 use Roster\Support\RosterMutationContext;
+use ReflectionClass;
 
 /**
  * Abstract base repository providing common CRUD operations for Eloquent models.
+ * Implements the Repository pattern with filter support and mutation context protection.
  *
  * @template TModel of Model
  */
@@ -25,159 +30,340 @@ abstract class AbstractRepository implements RepositoryInterface
     /**
      * The model class managed by the repository.
      *
-     * @var class-string<Model>
+     * @var class-string<TModel>|null
      */
-    protected string $modelClass;
+    protected ?string $modelClass = null;
 
-    private function getModel(): Model
+    /**
+     * Active filters for query operations.
+     *
+     * @var array<string, mixed>
+     */
+    protected array $filters = [];
+
+    /**
+     * Get the model instance managed by this repository.
+     *
+     * @throws LogicException When model class cannot be determined
+     */
+    final protected function getModel(): Model
     {
-        if (isset($this->modelClass)) {
+        if ($this->modelClass !== null) {
             return app()->make($this->modelClass);
         }
 
-        // Déduire le modèle à partir du nom du repository
-        $repositoryClass = static::class; // ex: Roster\Repositories\ImpedimentRepository
-        $shortName = (new ReflectionClass($repositoryClass))->getShortName(); // ex: ImpedimentRepository
-        $modelName = str_replace('Repository', '', $shortName); // ex: Impediment
-        $modelClass = 'Roster\Models\\' . $modelName;
+        $this->modelClass = $this->resolveModelClass();
 
-        if (!class_exists($modelClass)) {
-            throw new LogicException(sprintf('Model class %s not found for repository %s', $modelClass, $repositoryClass));
+        if (!class_exists($this->modelClass)) {
+            throw new LogicException(sprintf(
+                'Model class %s not found for repository %s',
+                $this->modelClass,
+                static::class
+            ));
         }
-
-        $this->modelClass = $modelClass;
 
         return app()->make($this->modelClass);
     }
 
-    final public function create(array $data): Model
+    /**
+     * Get the model class name.
+     */
+    private function getModelClass(): string
     {
-        return RosterMutationContext::allow(function () use ($data) {
-            $model = $this->getModel();
+        return $this->modelClass ?? $this->resolveModelClass();
+    }
 
+    /**
+     * Resolve the model class name from repository class name.
+     */
+    private function resolveModelClass(): string
+    {
+        $repositoryClass = static::class;
+        $shortName = (new ReflectionClass($repositoryClass))->getShortName();
+
+        // Remove 'Repository' suffix and prepend model namespace
+        $modelName = str_replace('Repository', '', $shortName);
+
+        return 'Roster\Models\\' . $modelName;
+    }
+
+    /**
+     * Check if the managed model is an Availability instance.
+     */
+    private function isAvailabilityModel(): bool
+    {
+        $modelClass = $this->getModelClass();
+        return $modelClass === Availability::class || is_subclass_of($modelClass, Availability::class);
+    }
+
+    /**
+     * Validate that schedulable is provided for all operations.
+     *
+     * @throws MissingSchedulableException When schedulable is not provided
+     */
+    private function validateSchedulable(?Model $model): void
+    {
+        if (!$model instanceof Model) {
+            throw MissingSchedulableException::create();
+        }
+    }
+
+    /**
+     * Validate that an owner is not provided for Availability models.
+     *
+     * @throws InvalidOwnerException When owner is provided for Availability model
+     */
+    private function validateOwnerForAvailability(?Model $model): void
+    {
+        if ($model instanceof Model && $this->isAvailabilityModel()) {
+            throw InvalidOwnerException::forAvailability();
+        }
+    }
+
+    /**
+     * Validate that owner is provided for non-Availability models.
+     *
+     * @throws MissingOwnerException When owner is not provided for non-Availability model
+     */
+    private function validateOwnerForNonAvailability(?Model $model): void
+    {
+        if (!$this->isAvailabilityModel() && !$model instanceof Model) {
+            throw MissingOwnerException::create($this->getModelClass());
+        }
+    }
+
+    /**
+     * Validate both schedulable and owner based on model type.
+     */
+    private function validateSchedulableAndOwner(?Model $schedulable, ?Model $owner): void
+    {
+        // Validate schedulable (required for all models)
+        $this->validateSchedulable($schedulable);
+
+        // Validate owner based on model type
+        if ($this->isAvailabilityModel()) {
+            $this->validateOwnerForAvailability($owner);
+        } else {
+            $this->validateOwnerForNonAvailability($owner);
+        }
+    }
+
+    /**
+     * Build base query with schedulable scope.
+     */
+    private function buildBaseQuery(Model $schedulable): Builder
+    {
+        $model = $this->getModel();
+
+        return $model::query()
+            ->where('schedulable_id', $schedulable->id)
+            ->where('schedulable_type', get_class($schedulable));
+    }
+
+    /**
+     * Apply owner constraint to query if applicable.
+     */
+    private function applyOwnerConstraint(Builder $builder, ?Model $model): Builder
+    {
+        if ($model instanceof Model && !$this->isAvailabilityModel()) {
+            $builder->where('availability_id', $model->id);
+        }
+
+        return $builder;
+    }
+
+    /**
+     * Apply owner constraint to data array if applicable.
+     * @param array<string, mixed> $data
+     */
+    private function applyOwnerConstraintToData(array $data, ?Model $model): array
+    {
+        $this->validateOwnerForNonAvailability($model);
+
+        if ($model instanceof Model && !$this->isAvailabilityModel()) {
+            $data['availability_id'] = $model->id;
+        }
+
+        return $data;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    final public function create(array $data, Model $schedulable, ?Model $owner = null): Model
+    {
+        return RosterMutationContext::allow(function () use ($data, $schedulable, $owner): Model {
+            // Validate schedulable and owner
+            $this->validateSchedulableAndOwner($schedulable, $owner);
+
+            // Inject schedulable into data
+            $data['schedulable_id'] = $schedulable->id;
+            $data['schedulable_type'] = get_class($schedulable);
+
+            // Inject owner if required
+            $data = $this->applyOwnerConstraintToData($data, $owner);
+
+            // Create the model
+            $model = $this->getModel();
             return $model::create($data);
         });
     }
 
-    final public function update(int $id, array $data): bool
-    {
-        return RosterMutationContext::allow(function () use ($id, $data): bool {
-            $model = $this->find($id);
-            return $model instanceof Model && $model->update($data);
-        });
-    }
+    /**
+     * {@inheritDoc}
+     */
+    final public function update(
+        int $id,
+        Model $schedulable,
+        ?Model $owner = null,
+        array $data = []
+    ): bool {
+        return RosterMutationContext::allow(function () use ($id, $schedulable, $owner, $data): bool {
+            // Validate schedulable and owner
+            $this->validateSchedulableAndOwner($schedulable, $owner);
 
-    final public function delete(int $id): bool
-    {
-        return RosterMutationContext::allow(function () use ($id) {
-            $model = $this->find($id);
-            return $model instanceof Model ? $model->delete() : false;
+            $query = $this->buildBaseQuery($schedulable)
+                ->whereKey($id);
+
+            $query = $this->applyOwnerConstraint($query, $owner);
+
+            /** @var Model|null $model */
+            $model = $query->first();
+
+            if (!$model) {
+                return false;
+            }
+
+            return $model->update($data);
         });
     }
 
     /**
-     * Find a record by its ID.
-     *
-     * @return TModel|null
+     * {@inheritDoc}
      */
-    final public function find(int $id): ?Model
-    {
-        $model = $this->getModel();
+    final public function delete(
+        int $id,
+        Model $schedulable,
+        ?Model $owner = null
+    ): bool {
+        return RosterMutationContext::allow(function () use ($id, $schedulable, $owner): bool {
+            // Validate schedulable and owner
+            $this->validateSchedulableAndOwner($schedulable, $owner);
 
-        return $model::find($id);
+            $query = $this->buildBaseQuery($schedulable)
+                ->whereKey($id);
+
+            $query = $this->applyOwnerConstraint($query, $owner);
+
+            $model = $query->first();
+
+            return $model instanceof Model && (bool) $model->delete();
+        });
     }
 
-    public function buildQueryWithFilters($schedulable, array $filters): Builder
+    /**
+     * {@inheritDoc}
+     */
+    final public function find(
+        int $id,
+        ?Model $schedulable = null,
+        ?Model $owner = null,
+        array $filters = []
+    ): ?Model {
+        // Validate schedulable and owner
+        $this->validateSchedulableAndOwner($schedulable, $owner);
+
+        $query = $this->buildBaseQuery($schedulable)
+            ->whereKey($id);
+
+        $query = $this->applyOwnerConstraint($query, $owner);
+
+        if ($filters !== []) {
+            $query = $this->applyFilters($query, $filters);
+        }
+
+        return $query->first();
+    }
+
+    /**
+     * Build a query with schedulable scope and applied filters.
+     */
+    public function buildQueryWithFilters(Model $model, array $filters): Builder
     {
-        $model = $this->getModel();
+        // Validate schedulable (owner validation happens at query execution)
+        $this->validateSchedulable($model);
 
-        $builder = $model::query()
-            ->where('schedulable_id', $schedulable->id)
-            ->where('schedulable_type', get_class($schedulable));
-
+        $builder = $this->buildBaseQuery($model);
         return $this->applyFilters($builder, $filters);
     }
 
-
     /**
-     * Get all records.
-     *
-     * @return Collection<int, TModel>
+     * {@inheritDoc}
      */
     final public function all(Model $schedulable, ?Model $owner = null, array $filters = []): Collection
     {
+        // Validate schedulable and owner
+        $this->validateSchedulableAndOwner($schedulable, $owner);
 
-        $model = $this->getModel();
+        $query = $this->buildBaseQuery($schedulable);
+        $query = $this->applyOwnerConstraint($query, $owner);
 
-        $result = $model::query()
-            ->where('schedulable_id', $schedulable->id)
-            ->where('schedulable_type', get_class($schedulable))
-            // Si owner est défini, on filtre par availability_id
-            ->when($owner !== null, fn($query) => $query->where('availability_id', $owner->id))
-            // Appliquer les filtres dynamiques
-            ->when(!empty($filters), function ($query) use ($filters, $model) {
-                foreach ($filters as $field => $value) {
-                    $lowerField = strtolower($field);
-                    if (str_contains($lowerField, 'start')) {
-                        $query->where($field, '>=', $value);
-                    } elseif (str_contains($lowerField, 'end')) {
-                        $query->where($field, '<=', $value);
-                    } else {
-                        $query->where($field, 'LIKE', '%' . $value . '%');
-                    }
-                }
-            })
-            ->get();
+        if ($filters !== []) {
+            $query = $this->applyFilters($query, $filters);
+        }
 
-
-        return $result;
+        return $query->get();
     }
 
-
     /**
-     * Get paginated records.
-     *
-     * @param array<int, string> $columns
+     * {@inheritDoc}
      */
     final public function paginate(
+        Model $schedulable,
+        ?Model $owner = null,
+        array $filters = [],
         int $perPage = 15,
         array $columns = ['*'],
         string $pageName = 'page',
         ?int $page = null
     ): LengthAwarePaginator {
-        $model = $this->getModel();
-        return $model::paginate($perPage, $columns, $pageName, $page);
+        // Validate schedulable and owner
+        $this->validateSchedulableAndOwner($schedulable, $owner);
+
+        $query = $this->buildQueryWithFilters($schedulable, $filters);
+        $query = $this->applyOwnerConstraint($query, $owner);
+
+        return $query->paginate(
+            perPage: $perPage,
+            columns: $columns,
+            pageName: $pageName,
+            page: $page
+        );
     }
 
     /**
-     * Get available slots between impediments.
+     * Calculate available time slots between impediments.
      */
     public function getAvailableSlotsFromImpediments(
         Carbon $start,
         Carbon $end,
         Collection $impediments
     ): Collection {
+        if ($impediments->isEmpty()) {
+            return collect([['start' => $start->copy(), 'end' => $end->copy()]]);
+        }
+
         $availableSlots = collect();
         $currentTime = $start->copy();
 
-        if ($impediments->isEmpty()) {
-            $availableSlots->push([
-                'start' => $start->copy(),
-                'end' => $end->copy(),
-            ]);
-            return $availableSlots;
-        }
-
-        // Trier les impediments par start_datetime
         /** @var Collection<int, Impediment> $sortedImpediments */
         $sortedImpediments = $impediments->sortBy('start_datetime');
-
 
         foreach ($sortedImpediments as $sortedImpediment) {
             $impStart = $sortedImpediment->start_datetime;
             $impEnd = $sortedImpediment->end_datetime;
 
-            // S'il y a un espace avant l'impediment
+            // Check for gap before impediment
             if ($impStart->gt($currentTime)) {
                 $availableSlots->push([
                     'start' => $currentTime->copy(),
@@ -185,11 +371,11 @@ abstract class AbstractRepository implements RepositoryInterface
                 ]);
             }
 
-            // Avancer le temps courant à la fin de l'impediment
+            // Move current time to after impediment
             $currentTime = max($currentTime, $impEnd);
         }
 
-        // S'il reste du temps après le dernier impediment
+        // Check for remaining time after last impediment
         if ($currentTime->lt($end)) {
             $availableSlots->push([
                 'start' => $currentTime->copy(),
@@ -201,20 +387,14 @@ abstract class AbstractRepository implements RepositoryInterface
     }
 
     /**
-     * Find impediments for a time slot.
+     * Find impediments overlapping with a specific time slot.
      *
-     * @param int $availabilityId The availability ID
-     * @param Carbon $start Start of time slot
-     * @param Carbon $end End of time slot
      * @return Collection<int, Impediment>
      */
-    public function findForTimeSlot(
-        int $availabilityId,
-        Carbon $start,
-        Carbon $end
-    ): Collection {
-
+    public function findForTimeSlot(int $availabilityId, Carbon $start, Carbon $end): Collection
+    {
         $model = $this->getModel();
+
         return $model::where('availability_id', $availabilityId)
             ->where('start_datetime', '<', $end)
             ->where('end_datetime', '>', $start)
@@ -223,58 +403,58 @@ abstract class AbstractRepository implements RepositoryInterface
     }
 
     /**
-     * Apply filters to a query builder.
-     *
-     * @param Builder $query
-     * @param array<string, mixed> $filters
+     * Apply filters to query builder.
      */
     protected function applyFilters(Builder $builder, array $filters = []): Builder
     {
         foreach ($filters as $field => $value) {
-            if (is_null($value)) {
+            if ($value === null) {
                 continue;
             }
 
-            if (is_array($value)) {
-                $builder->whereIn($field, $value);
-            } else {
-                $builder->where($field, $value);
-            }
+            $lowerField = strtolower($field);
+
+            match (true) {
+                is_array($value) =>
+                $builder->whereIn($field, $value),
+
+                str_contains($lowerField, 'start') =>
+                $builder->where($field, '>=', $value),
+
+                str_contains($lowerField, 'end') =>
+                $builder->where($field, '<=', $value),
+
+                is_string($value) =>
+                $builder->where($field, 'LIKE', '%' . $value . '%'),
+
+                default =>
+                $builder->where($field, $value),
+            };
         }
 
         return $builder;
     }
 
     /**
-     * Active filters.
-     *
-     * @var array<string, mixed>
-     */
-    protected array $filters = [];
-
-    /**
-     * Add or override a filter.
+     * {@inheritDoc}
      */
     public function setFilter(string $key, mixed $value): self
     {
         $this->filters[$key] = $value;
-
         return $this;
     }
 
     /**
-     * Clear all active filters.
+     * {@inheritDoc}
      */
     public function clearFilters(): self
     {
         $this->filters = [];
-
         return $this;
     }
 
     /**
-     * Get all active filters.
-     *
+     * {@inheritDoc}
      * @return array<string, mixed>
      */
     public function getFilters(): array
@@ -283,7 +463,7 @@ abstract class AbstractRepository implements RepositoryInterface
     }
 
     /**
-     * Check if a specific filter exists.
+     * {@inheritDoc}
      */
     public function hasFilter(string $key): bool
     {

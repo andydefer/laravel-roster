@@ -4,10 +4,8 @@ declare(strict_types=1);
 
 namespace Roster\Services\Core;
 
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Carbon;
-use Illuminate\Support\Collection;
 use Roster\Enums\EntityType;
 use Roster\Enums\OperationType;
 use Roster\Exceptions\InvalidServiceContextException;
@@ -107,18 +105,6 @@ abstract class AbstractAvailabilityValidatingService extends AbstractEntityScopi
             );
         }
     }
-
-
-
-    // Abstract methods
-    abstract protected function executeCreate(): mixed;
-
-    abstract protected function executeUpdate(int $id): bool;
-
-    abstract protected function executeDelete(int $id): bool;
-
-
-
 
     abstract protected function clearEntityCache(int $entityId): void;
 }

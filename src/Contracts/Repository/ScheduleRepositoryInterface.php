@@ -7,62 +7,39 @@ namespace Roster\Contracts\Repository;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
-use Roster\Contracts\CrudInterface;
 use Roster\Contracts\RepositoryInterface;
-use Roster\Models\Schedule;
 
-/**
- * Repository contract for managing schedule records.
- *
- * Provides methods for creating, updating, deleting, and querying schedule data
- * associated with availability slots.
- */
 interface ScheduleRepositoryInterface extends RepositoryInterface
 {
-
+    /**
+     * Find schedules for a given availability.
+     *
+     * This method MUST NOT contain business logic.
+     * It only builds a query.
+     *
+     *
+     */
+    public function findByAvailability(
+        int $availabilityId,
+        ?Carbon $start = null,
+        ?Carbon $end = null
+    ): Builder;
 
     /**
-     * Check if a time slot has overlapping schedules.
+     * Get future schedules for a given availability.
      *
-     * @param  int  $availabilityId  Parent availability ID
-     * @param  Carbon  $start  Start time of the slot
-     * @param  Carbon  $end  End time of the slot
-     * @param  int|null  $excludeId  Optional schedule ID to exclude from check
-     * @return bool True if overlapping schedules exist
-     */
-    public function hasOverlappingSchedule(
-        int $availabilityId,
-        Carbon $start,
-        Carbon $end,
-        ?int $excludeId = null
-    ): bool;
-
-    /**
-     * Find schedules that overlap with the given time range.
      *
-     * @param  int  $availabilityId  Parent availability ID
-     * @param  Carbon  $start  Start time of the range
-     * @param  Carbon  $end  End time of the range
-     * @param  int|null  $excludeId  Optional schedule ID to exclude from search
-     * @return Collection<int, Schedule> Collection of overlapping schedules
      */
-    public function findOverlappingSchedules(
+    public function getFutureSchedules(
         int $availabilityId,
-        Carbon $start,
-        Carbon $end,
-        ?int $excludeId = null
+        Carbon $from
     ): Collection;
 
-
     /**
-     * Get schedules between specific dates for a schedulable resource.
+     * Get schedules for a schedulable within a date range.
      *
-     * @param  int  $schedulableId  ID of the schedulable resource
-     * @param  string  $schedulableType  Type/class of the schedulable resource
-     * @param  Carbon  $start  Start date of the range
-     * @param  Carbon  $end  End date of the range
-     * @param  array<string, mixed>  $filters  Optional query filters
-     * @return Collection<int, Schedule> Collection of schedules in the date range
+     * @param array<string, mixed> $filters
+     *
      */
     public function getForDateRange(
         int $schedulableId,
@@ -71,15 +48,4 @@ interface ScheduleRepositoryInterface extends RepositoryInterface
         Carbon $end,
         array $filters = []
     ): Collection;
-
-    /**
-     * Apply filters to schedule query builder.
-     *
-     * @param  int  $schedulableId  ID of the schedulable resource
-     * @param  string  $schedulableType  Type/class of the schedulable resource
-     * @param  array<string, mixed>  $filters  Query filters
-     * @return Builder Eloquent query builder with filters applied
-     */
-
-    public function buildQueryWithFilters($schedulable, array $filters): Builder;
 }

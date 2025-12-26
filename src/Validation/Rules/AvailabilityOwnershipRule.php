@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Roster\Validation\Rules;
 
+use Roster\Models\Availability;
 use Illuminate\Database\Eloquent\Model;
-use Roster\Contracts\Repository\AvailabilityRepositoryInterface;
 use Roster\Contracts\Validation\ValidationContextInterface;
 use Roster\Validation\Attributes\ValidationRule;
 use Roster\Enums\EntityType;
@@ -34,7 +34,7 @@ class AvailabilityOwnershipRule extends AbstractRule
 
         // Pour UPDATE, on utilise l'entité courante si availability_id n'est pas fourni
         $currentEntity = $validationContext->getCurrentEntity();
-        if ($operationType === OperationType::UPDATE && !$availabilityId && $currentEntity) {
+        if (($operationType === OperationType::UPDATE) && !$availabilityId && $currentEntity) {
             $availabilityId = $currentEntity->availability_id ?? null;
         }
 
@@ -43,21 +43,25 @@ class AvailabilityOwnershipRule extends AbstractRule
             return;
         }
 
+
         $schedulable = $validationContext->getSchedulable();
         if (!$schedulable instanceof Model) {
             return; // SchedulableValidationRule doit déjà gérer ça
         }
 
-        $availabilityRepository = app(AvailabilityRepositoryInterface::class);
-        $availability = $availabilityRepository->find($availabilityId);
+        $validationContext->getCurrentEntity();
 
-        if (!$availability) {
+
+        $availability = $validationContext->getAvailabilityService()->find($availabilityId);
+
+        if (!$availability instanceof Availability) {
             $validationContext->setViolation(
                 'availability_id',
                 'Invalid availability ID'
             );
             return;
         }
+
 
         if (
             $availability->schedulable_id !== $schedulable->id

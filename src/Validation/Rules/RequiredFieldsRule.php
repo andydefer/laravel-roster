@@ -25,12 +25,15 @@ class RequiredFieldsRule extends AbstractRule
         $safeData = $validationContext->safeData();
 
         // Vérifier les champs propriétaires pour CREATE et UPDATE
-        foreach ($ownerFields as $ownerField) {
-            if (array_key_exists($ownerField, $safeData)) {
-                $validationContext->setViolation(
-                    $ownerField,
-                    sprintf("Field '%s' cannot be changed. The owner cannot be modified.", $ownerField)
-                );
+        if ($operationType === OperationType::UPDATE) {
+
+            foreach ($ownerFields as $ownerField) {
+                if (array_key_exists($ownerField, $safeData)) {
+                    $validationContext->setViolation(
+                        $ownerField,
+                        sprintf("Field '%s' cannot be changed. The owner cannot be modified.", $ownerField)
+                    );
+                }
             }
         }
 

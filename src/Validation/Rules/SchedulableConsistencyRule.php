@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Roster\Validation\Rules;
 
+use Roster\Models\Availability;
 use Roster\Contracts\Repository\AvailabilityRepositoryInterface;
 use Roster\Validation\Attributes\ValidationRule;
 use Roster\Enums\EntityType;
@@ -44,10 +45,10 @@ class SchedulableConsistencyRule extends AbstractRule
             return; // AvailabilityOwnershipRule gérera cela
         }
 
-        $availabilityRepository = App::make(AvailabilityRepositoryInterface::class);
-        $availability = $availabilityRepository->find($availabilityId);
+        App::make(AvailabilityRepositoryInterface::class);
+        $availability = $validationContext->getAvailabilityService()->find($availabilityId);
 
-        if (!$availability) {
+        if (!$availability instanceof Availability) {
             return; // AvailabilityOwnershipRule gérera cela
         }
 

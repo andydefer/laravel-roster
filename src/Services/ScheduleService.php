@@ -4,268 +4,79 @@ declare(strict_types=1);
 
 namespace Roster\Services;
 
-use Illuminate\Contracts\Pagination\LengthAwarePaginator;
-use Illuminate\Database\Eloquent\Builder;
+use Roster\Domain\Helpers\TimeSlotHelper;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Roster\Contracts\Repository\AvailabilityRepositoryInterface;
-use Roster\Contracts\Repository\ImpedimentRepositoryInterface;
-use Roster\Contracts\Repository\ScheduleRepositoryInterface;
 use Roster\DTOs\ScheduleData;
 use Roster\Enums\EntityType;
 use Roster\Enums\OperationType;
 use Roster\Models\Availability;
 use Roster\Models\Schedule;
-use Roster\Services\Core\AbstractAvailabilityValidatingService;
+use Roster\Services\Core\AbstractService;
 use Roster\Validation\Exceptions\ValidationFailedException;
 
-/**
- * Service for managing schedules within the roster system.
- */
-class ScheduleService extends AbstractAvailabilityValidatingService
+class ScheduleService extends AbstractService
 {
-
-    /**
-     * {@inheritDoc}
-     */
     protected function createDTOFromArray(array $data, OperationType $operationType): ScheduleData
     {
         return ScheduleData::fromArray($data);
     }
 
-    /**
-     * {@inheritDoc}
-     */
     protected function getEntityTypeEnum(): EntityType
     {
         return EntityType::SCHEDULE;
     }
 
-    /**
-     * Create a new schedule with explicit availability.
-     *
-     * @param Availability $availability The availability to link to
-     * @param array $data Entity data
-     * @return Schedule Created entity
-     */
-    public function create(array $data): Schedule
+    protected function checkEntityConflicts(mixed $dto, ?int $excludeId = null): void
     {
-        $this->requireContext();
-        $this->data = array_merge($data, [
-            'availability_id' => $this->owner->id,
-            'schedulable_id' => $this->schedulable->id,
-            'schedulable_type' => get_class($this->schedulable)
-        ]);
+        if (!isset($dto->availabilityId, $dto->startDatetime, $dto->endDatetime)) {
+            return;
+        }
 
+        $availabilityId = $dto->availabilityId;
+        $start = Carbon::parse($dto->startDatetime);
+        $end = Carbon::parse($dto->endDatetime);
 
-        // Convert to DTO and validate with new system
-        $dto = $this->createDTOFromArray($this->data, OperationType::CREATE);
-
-        // Ajouter les infos schedulable au DTO AVANT validation
-        $dto = $dto->withSchedulableInfo(
-            $this->schedulable->id,
-            get_class($this->schedulable)
+        $conflictResult = $this->conflictService->checkAllConflicts(
+            availabilityId: $availabilityId,
+            start: $start,
+            end: $end,
+            excludeScheduleId: $excludeId
         );
 
-        $this->validate($dto->toArray(), OperationType::CREATE);
+        if ($conflictResult->hasConflicts) {
+            if ($conflictResult->hasScheduleConflicts()) {
+                throw ValidationFailedException::fromViolations(
+                    [
+                        'overlap' => sprintf(
+                            'Schedule would overlap with existing schedule from %s to %s',
+                            $conflictResult->conflictingSchedules[0]->start_datetime->format('Y-m-d H:i'),
+                            $conflictResult->conflictingSchedules[0]->end_datetime->format('Y-m-d H:i')
+                        )
+                    ],
+                    OperationType::CREATE,
+                    EntityType::SCHEDULE
+                );
+            }
 
-        // Mettre à jour les données avec le DTO complet
-        $this->data = $dto->toArray();
-
-        // Create entity
-        $schedule = $this->executeCreate();
-
-        // Clear cache
-        $this->clearEntityCache($schedule->id);
-
-        return $schedule;
-    }
-
-    /**
-     * Update an existing schedule.
-     * @param array<string, mixed> $data
-     */
-    public function update(int $id, array $data): bool
-    {
-        $this->requireContext();
-        $this->data = $data;
-
-        // Récupérer l'entité existante AVANT validation
-        $existingEntity = $this->find($id);
-
-        if (!$existingEntity instanceof Schedule) {
-            throw ValidationFailedException::fromViolations(
-                [
-                    'id' => sprintf(
-                        '%s with given ID does not exist',
-                        EntityType::SCHEDULE->displayName()
-                    ),
-                ],
-                OperationType::UPDATE,
-                EntityType::SCHEDULE
-            );
+            if ($conflictResult->hasImpedimentConflicts()) {
+                throw ValidationFailedException::fromViolations(
+                    [
+                        'overlap' => sprintf(
+                            'Schedule would overlap with existing impediment from %s to %s',
+                            $conflictResult->conflictingImpediments[0]->start_datetime->format('Y-m-d H:i'),
+                            $conflictResult->conflictingImpediments[0]->end_datetime->format('Y-m-d H:i')
+                        )
+                    ],
+                    OperationType::CREATE,
+                    EntityType::SCHEDULE
+                );
+            }
         }
-
-        // Ajouter l'ID et l'entité pour la validation
-        $data['id'] = $id;
-
-        // Assurez-vous que availability_id est présent dans les données
-        if (!isset($data['availability_id']) && $existingEntity->availability_id) {
-            $data['availability_id'] = $existingEntity->availability_id;
-        }
-
-        // Créer le DTO avec les données mises à jour
-        $scheduleData = $this->createDTOFromArray($data, OperationType::UPDATE);
-
-        // Valider avec l'entité courante pour exclusion
-        $this->validate($scheduleData->toArray(), OperationType::UPDATE, $id, $existingEntity);
-
-        // Mettre à jour les données avec le DTO complet
-        $this->data = $scheduleData->toArray();
-
-        // Mettre à jour l'entité
-        $result = $this->executeUpdate($id);
-
-        // Nettoyer le cache si nécessaire
-        if ($result) {
-            $this->clearEntityCache($id);
-        }
-
-        return $result;
     }
 
-    /**
-     * Delete a schedule.
-     */
-    public function delete(int $id): bool
-    {
-        $this->requireContext();
-        $entity = $this->find($id);
-        if (!$entity instanceof Schedule) {
-            throw ValidationFailedException::fromViolations(
-                [
-                    'id' => sprintf(
-                        '%s with given ID does not exist',
-                        EntityType::SCHEDULE->displayName()
-                    ),
-                ],
-                OperationType::UPDATE,
-                EntityType::SCHEDULE
-            );
-        }
-
-        // Préparer les données de validation avec les infos schedulable
-        $deleteData = [
-            'id' => $id,
-            'schedulable_id' => $entity->schedulable_id,
-            'schedulable_type' => $entity->schedulable_type,
-            'availability_id' => $entity->availability_id,
-        ];
-
-        // Valider la suppression
-        $this->validate($deleteData, OperationType::DELETE, $id, $entity);
-
-        // Supprimer l'entité
-        $result = $this->executeDelete($id);
-
-        // Nettoyer le cache si nécessaire
-        if ($result) {
-            $this->clearEntityCache($id);
-        }
-
-        return $result;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    protected function executeCreate(): Schedule
-    {
-        return $this->scheduleRepository->create($this->data);
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    protected function executeUpdate(int $id): bool
-    {
-        return $this->scheduleRepository->update($id, $this->data);
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    protected function executeDelete(int $id): bool
-    {
-        return $this->scheduleRepository->delete($id);
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    protected function clearEntityCache(int $entityId): void
-    {
-        // Implémentation du cache si nécessaire
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public function find(int $id): ?Schedule
-    {
-
-        return Schedule::where('schedulable_id', $this->schedulable->id)
-            ->where('schedulable_type', get_class($this->schedulable))
-            ->find($id);
-    }
-
-    public function all(): Collection
-    {
-        return $this->scheduleRepository->all($this->schedulable, $this->owner, $this->filters);
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public function get(): Collection
-    {
-        return $this->buildQueryWithFilters()->get();
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    protected function buildQueryWithFilters(): Builder
-    {
-        return $this->scheduleRepository->buildQueryWithFilters(
-            $this->schedulable,
-            $this->filters
-        );
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    protected function getAvailabilityRepository(): AvailabilityRepositoryInterface
-    {
-        return $this->availabilityRepository;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    protected function getScheduleRepository(): ScheduleRepositoryInterface
-    {
-        return $this->scheduleRepository;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    protected function getImpedimentRepository(): ImpedimentRepositoryInterface
-    {
-        return $this->impedimentRepository;
-    }
+    // Additional Schedule-specific methods
 
     /**
      * Find the next available time slot from now.
@@ -280,7 +91,6 @@ class ScheduleService extends AbstractAvailabilityValidatingService
         $startFrom = $startFrom ?? Carbon::now();
         $endBefore = $endBefore ?? $startFrom->copy()->addDays(config('roster.durations.max_search_period_days', 30));
 
-        // Chercher dans une fenêtre de temps progressive
         $searchDate = $startFrom->copy()->startOfDay();
 
         while ($searchDate->lt($endBefore)) {
@@ -288,7 +98,6 @@ class ScheduleService extends AbstractAvailabilityValidatingService
                 $searchDate,
                 $durationMinutes,
                 $type,
-                // Pour le premier jour, passer l'heure de début spécifique
                 $searchDate->isSameDay($startFrom) ? $startFrom : null
             );
 
@@ -296,7 +105,6 @@ class ScheduleService extends AbstractAvailabilityValidatingService
                 return $returnStartOnly ? $result['start'] : $result;
             }
 
-            // Passer au jour suivant
             $searchDate->addDay()->startOfDay();
         }
 
@@ -308,144 +116,24 @@ class ScheduleService extends AbstractAvailabilityValidatingService
      */
     public function isTimeSlotAvailable(Carbon $start, Carbon $end, ?string $type = null): bool
     {
-        $availability = $this->availabilityRepository->findForTimeSlotWithConflictInfo(
+        $availability = $this->getAvailabilityRepository()->getAvailabilityForTimeSlot(
             $this->schedulable,
             $start,
             $end,
             $type
         );
 
-        return $availability instanceof Availability
-            && !$availability->has_overlapping_schedules
-            && !$availability->has_overlapping_impediments;
-    }
+        if (!$availability instanceof Availability) {
+            return false;
+        }
 
-    /**
-     * Find available slots in a specific day.
-     */
-    private function findAvailableSlotInDay(
-        Carbon $day,
-        int $durationMinutes,
-        ?string $type = null,
-        ?Carbon $searchStart = null
-    ): ?array {
-        // Récupérer les disponibilités pour ce jour
-        $availabilities = $this->availabilityRepository->getForDate(
-            $this->schedulable,
-            $day,
-            $type
+        $conflictResult = $this->conflictService->checkAllConflicts(
+            availabilityId: $availability->id,
+            start: $start,
+            end: $end
         );
 
-        if ($availabilities->isEmpty()) {
-            return null;
-        }
-
-        // Pour chaque disponibilité, chercher un créneau disponible
-        foreach ($availabilities as $availability) {
-            $slot = $this->findSlotInAvailability(
-                $availability,
-                $day,
-                $durationMinutes,
-                $searchStart
-            );
-
-            if ($slot !== null) {
-                return $slot;
-            }
-        }
-
-        return null;
-    }
-
-    public function paginate(
-        int $perPage = 15,
-        array $columns = ['*'],
-        string $pageName = 'page',
-        ?int $page = null
-    ): LengthAwarePaginator {
-        return $this->buildQueryWithFilters()
-            ->paginate(
-                perPage: $perPage,
-                columns: $columns,
-                pageName: $pageName,
-                page: $page
-            );
-    }
-
-    /**
-     * Find available slot within a specific availability.
-     */
-    private function findSlotInAvailability(
-        Availability $availability,
-        Carbon $day,
-        int $durationMinutes,
-        ?Carbon $searchStart = null
-    ): ?array {
-        // Vérifier que daily_start et daily_end ne sont pas null
-        if (!$availability->daily_start || !$availability->daily_end) {
-            return null;
-        }
-
-        // Vérifier que l'accessibilité est disponible ce jour
-        if (!$availability->isActiveOnDate($day)) {
-            return null;
-        }
-
-        // Convertir le jour en datetime avec les heures de disponibilité
-        $availabilityStart = $day->copy()->setTimeFromTimeString($availability->daily_start->format('H:i:s'));
-        $availabilityEnd = $day->copy()->setTimeFromTimeString($availability->daily_end->format('H:i:s'));
-
-        // Déterminer le point de départ de la recherche
-        $slotStart = $availabilityStart->copy();
-
-        // Si un searchStart est spécifié et qu'il est dans la même journée
-        if ($searchStart instanceof Carbon && $searchStart->isSameDay($day)) {
-            // Si searchStart est avant availabilityStart, commencer à availabilityStart
-            if ($searchStart->lt($availabilityStart)) {
-                $slotStart = $availabilityStart->copy();
-            }
-            // Si searchStart est après availabilityStart mais avant availabilityEnd, commencer à searchStart
-            elseif ($searchStart->lt($availabilityEnd)) {
-                $slotStart = $searchStart->copy();
-            }
-            // Si searchStart est après availabilityEnd, pas de créneau possible ce jour
-            else {
-                return null;
-            }
-        }
-
-        // Arrondir le slotStart à l'intervalle le plus proche
-        $slotInterval = config('roster.durations.default_slot_interval_minutes', 15);
-        if ($slotStart->minute > 0 || $slotStart->second > 0) {
-            $minutes = $slotStart->minute;
-            $roundedMinutes = ceil($minutes / $slotInterval) * $slotInterval;
-            $slotStart->setMinute((int)$roundedMinutes)->setSecond(0);
-        }
-
-        // Vérifier que slotStart + durée ne dépasse pas availabilityEnd
-        if ($slotStart->copy()->addMinutes($durationMinutes)->gt($availabilityEnd)) {
-            return null;
-        }
-
-        // Chercher un créneau par pas de l'intervalle
-        while ($slotStart->copy()->addMinutes($durationMinutes)->lte($availabilityEnd)) {
-            $slotEnd = $slotStart->copy()->addMinutes($durationMinutes);
-
-            // Vérifier que le créneau est disponible
-            if ($this->isTimeSlotAvailable($slotStart, $slotEnd, $availability->type)) {
-                return [
-                    'start' => $slotStart->copy(),
-                    'end' => $slotEnd->copy(),
-                    'availability' => $availability,
-                    'duration_minutes' => $durationMinutes,
-                ];
-            }
-
-            // Avancer de l'intervalle
-            $slotStart->addMinutes($slotInterval);
-        }
-
-        return null;
+        return !$conflictResult->hasConflicts;
     }
 
     /**
@@ -462,11 +150,9 @@ class ScheduleService extends AbstractAvailabilityValidatingService
 
         while ($currentDate->lte($endDate)) {
             $slot = $this->findAvailableSlotInDay($currentDate, $durationMinutes, $type);
-
             if ($slot !== null) {
                 $availableSlots->push($slot);
             }
-
             $currentDate->addDay();
         }
 
@@ -476,13 +162,9 @@ class ScheduleService extends AbstractAvailabilityValidatingService
     /**
      * Check if a time period is completely available.
      */
-    public function isPeriodAvailable(
-        Carbon $start,
-        Carbon $end,
-        ?string $type = null
-    ): bool {
-        // Vérifier s'il y a une disponibilité continue
-        $availability = $this->availabilityRepository->getAvailabilityForTimeSlot(
+    public function isPeriodAvailable(Carbon $start, Carbon $end, ?string $type = null): bool
+    {
+        $availability = $this->getAvailabilityRepository()->getAvailabilityForTimeSlot(
             $this->schedulable,
             $start,
             $end,
@@ -493,24 +175,166 @@ class ScheduleService extends AbstractAvailabilityValidatingService
             return false;
         }
 
-        // Vérifier que la période est dans les limites de l'accessibilité
         if (!$availability->isAvailableForSchedule($start, $end)) {
             return false;
         }
 
-        // Vérifier les conflits
-        $hasScheduleConflict = $this->scheduleRepository->hasOverlappingSchedule(
-            $availability->id,
-            $start,
-            $end
+        $conflictResult = $this->conflictService->checkAllConflicts(
+            availabilityId: $availability->id,
+            start: $start,
+            end: $end
         );
 
-        $hasImpedimentConflict = $this->impedimentRepository->hasOverlappingImpediments(
-            $availability->id,
-            $start,
-            $end
+        return !$conflictResult->hasConflicts;
+    }
+
+    // Helper methods
+
+    private function findAvailableSlotInDay(
+        Carbon $day,
+        int $durationMinutes,
+        ?string $type = null,
+        ?Carbon $searchStart = null
+    ): ?array {
+        /** @var \Illuminate\Support\Collection<\Roster\Models\Availability> $availabilities */
+        $availabilities = $this->getAvailabilityRepository()->getForDate(
+            $this->schedulable,
+            $day,
+            $type
         );
 
-        return !$hasScheduleConflict && !$hasImpedimentConflict;
+        if ($availabilities->isEmpty()) {
+            return null;
+        }
+
+        foreach ($availabilities as $availability) {
+            $slot = $this->findSlotInAvailability($availability, $day, $durationMinutes, $searchStart);
+            if ($slot !== null) {
+                return $slot;
+            }
+        }
+
+        return null;
+    }
+
+    private function findSlotInAvailability(
+        Availability $availability,
+        Carbon $day,
+        int $durationMinutes,
+        ?Carbon $searchStart = null
+    ): ?array {
+        if (!$availability->daily_start || !$availability->daily_end) {
+            return null;
+        }
+
+        if (!$availability->isActiveOnDate($day)) {
+            return null;
+        }
+
+        $availabilityStart = $day->copy()->setTimeFromTimeString($availability->daily_start->format('H:i:s'));
+        $availabilityEnd = $day->copy()->setTimeFromTimeString($availability->daily_end->format('H:i:s'));
+
+        $slotStart = $availabilityStart->copy();
+
+        if ($searchStart instanceof Carbon && $searchStart->isSameDay($day)) {
+            if ($searchStart->lt($availabilityStart)) {
+                $slotStart = $availabilityStart->copy();
+            } elseif ($searchStart->lt($availabilityEnd)) {
+                $slotStart = $searchStart->copy();
+            } else {
+                return null;
+            }
+        }
+
+        $slotInterval = config('roster.durations.default_slot_interval_minutes', 15);
+        if ($slotStart->minute > 0 || $slotStart->second > 0) {
+            $minutes = $slotStart->minute;
+            $roundedMinutes = ceil($minutes / $slotInterval) * $slotInterval;
+            $slotStart->setMinute((int)$roundedMinutes)->setSecond(0);
+        }
+
+        if ($slotStart->copy()->addMinutes($durationMinutes)->gt($availabilityEnd)) {
+            return null;
+        }
+
+        while ($slotStart->copy()->addMinutes($durationMinutes)->lte($availabilityEnd)) {
+            $slotEnd = $slotStart->copy()->addMinutes($durationMinutes);
+
+            if ($this->isTimeSlotAvailable($slotStart, $slotEnd, $availability->type)) {
+                return [
+                    'start' => $slotStart->copy(),
+                    'end' => $slotEnd->copy(),
+                    'availability' => $availability,
+                    'duration_minutes' => $durationMinutes,
+                ];
+            }
+
+            $slotStart->addMinutes($slotInterval);
+        }
+
+        return null;
+    }
+
+    // Compatibility methods
+
+    public function hasOverlappingSchedule(
+        int $availabilityId,
+        Carbon $start,
+        Carbon $end,
+        ?int $excludeId = null
+    ): bool {
+        $conflictResult = $this->conflictService->checkScheduleConflicts(
+            $availabilityId,
+            $start,
+            $end,
+            $excludeId
+        );
+
+        return $conflictResult->hasConflicts;
+    }
+
+    public function findOverlappingSchedules(
+        int $availabilityId,
+        Carbon $start,
+        Carbon $end,
+        ?int $excludeId = null
+    ): Collection {
+        $builder = $this->scheduleRepository->findByAvailability($availabilityId);
+
+        return $builder->get()->filter(function ($schedule) use ($start, $end, $excludeId): bool {
+            if ($excludeId && $schedule->id === $excludeId) {
+                return false;
+            }
+
+            return TimeSlotHelper::overlaps(
+                $start,
+                $end,
+                $schedule->start_datetime,
+                $schedule->end_datetime
+            );
+        });
+    }
+
+    public function hasOverlappingImpediments(
+        int $availabilityId,
+        Carbon $start,
+        Carbon $end,
+        ?int $excludeId = null
+    ): bool {
+        $conflictResult = $this->conflictService->checkImpedimentConflicts(
+            $availabilityId,
+            $start,
+            $end,
+            $excludeId
+        );
+
+        return $conflictResult->hasConflicts;
+    }
+
+    // Repository getters
+
+    protected function getAvailabilityRepository(): AvailabilityRepositoryInterface
+    {
+        return $this->availabilityRepository;
     }
 }

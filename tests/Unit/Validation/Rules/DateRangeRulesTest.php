@@ -13,13 +13,14 @@ use Roster\Validation\Rules\AvailabilityDateRangeRule;
 use Roster\Validation\Rules\TimeSlotDateTimeRule;
 use Tests\Support\TestSchedulable;
 use Tests\TestCase;
-use Roster\Facades\Availability as AvailabilityFacade;
 use Roster\Support\RosterMutationContext;
 
 final class DateRangeRulesTest extends TestCase
 {
     private AvailabilityDateRangeRule $availabilityDateRangeRule;
+
     private TimeSlotDateTimeRule $timeSlotDateTimeRule;
+
     private TestSchedulable $testSchedulable;
 
     protected function setUp(): void

@@ -1,1263 +1,578 @@
 # Rector Refactoring Report
-*Generated: jeu. 25 déc. 2025 17:52:40 WAT*
+*Generated: ven. 26 déc. 2025 11:15:01 WAT*
 
 
-18 files with changes
+12 files with changes
 =====================
 
-1) /home/andy-kani/pro/sites/packages/laravel-roster/src/Contracts/Repository/AvailabilityRepositoryInterface.php:4
+1) /home/andy-kani/pro/sites/packages/laravel-roster/src/Contracts/Repository/AvailabilityRepositoryInterface.php:13
 
     ---------- begin diff ----------
 @@ @@
-
- namespace Roster\Contracts\Repository;
-
--use Illuminate\Database\Eloquent\Builder;
- use Illuminate\Database\Eloquent\Model;
- use Illuminate\Support\Carbon;
- use Illuminate\Support\Collection;
--use Roster\Contracts\CrudInterface;
- use Roster\Contracts\RepositoryInterface;
- use Roster\Models\Availability;
-    ----------- end diff -----------
-
-Applied rules:
-
-
-2) /home/andy-kani/pro/sites/packages/laravel-roster/src/Contracts/Repository/ImpedimentRepositoryInterface.php:7
-
-    ---------- begin diff ----------
-@@ @@
- use Roster\Models\Impediment;
- use Illuminate\Support\Carbon;
- use Illuminate\Support\Collection;
--use Roster\Contracts\CrudInterface;
- use Roster\Contracts\RepositoryInterface;
-
- /**
-    ----------- end diff -----------
-
-Applied rules:
-
-
-3) /home/andy-kani/pro/sites/packages/laravel-roster/src/Contracts/Repository/ScheduleRepositoryInterface.php:7
-
-    ---------- begin diff ----------
-@@ @@
- use Illuminate\Database\Eloquent\Builder;
- use Illuminate\Support\Carbon;
- use Illuminate\Support\Collection;
--use Roster\Contracts\CrudInterface;
- use Roster\Contracts\RepositoryInterface;
- use Roster\Models\Schedule;
-    ----------- end diff -----------
-
-Applied rules:
-
-
-4) /home/andy-kani/pro/sites/packages/laravel-roster/src/Models/Availability.php:56
-
-    ---------- begin diff ----------
-@@ @@
-         'validity_end' => 'datetime',     // Changé de 'date' à 'datetime'
-         'days' => 'array'
-     ];
+ interface AvailabilityRepositoryInterface
+ {
+     public function findForSchedulable(Model $model, ?string $type = null): Builder;
 +
-     /**
-      * Get the schedulable resource that owns this availability.
-      */
+     public function getForDateRange(Model $model, Carbon $start, Carbon $end, ?string $type = null): Collection;
++
+     public function getAvailabilityForTimeSlot(Model $model, Carbon $start, Carbon $end, ?string $type = null): ?Availability;
++
+     public function getForDate(Model $model, Carbon $date, ?string $type = null): Collection;
++
+     public function isAvailableOnDate(Availability $availability, Carbon $date): bool;
++
+     public function findForTimeSlotWithConflictInfo(Model $model, Carbon $start, Carbon $end, ?string $type = null): ?Availability;
+ }
     ----------- end diff -----------
 
 Applied rules:
  * NewlineBetweenClassLikeStmtsRector
 
 
-5) /home/andy-kani/pro/sites/packages/laravel-roster/src/Repositories/AbstractRepository.php:109
+2) /home/andy-kani/pro/sites/packages/laravel-roster/src/Domain/Services/TemporalConflictService.php:24
 
     ---------- begin diff ----------
 @@ @@
+     ) {}
 
-         $model = $this->getModel();
-
--        $result = $model::query()
-+
-+        return $model::query()
-             ->where('schedulable_id', $schedulable->id)
-             ->where('schedulable_type', get_class($schedulable))
-             // Si owner est défini, on filtre par availability_id
--            ->when($owner !== null, fn($query) => $query->where('availability_id', $owner->id))
-+            ->when($owner instanceof Model, fn($query) => $query->where('availability_id', $owner->id))
-             // Appliquer les filtres dynamiques
--            ->when(!empty($filters), function ($query) use ($filters, $model) {
-+            ->when($filters !== [], function ($query) use ($filters): void {
-                 foreach ($filters as $field => $value) {
-                     $lowerField = strtolower($field);
-                     if (str_contains($lowerField, 'start')) {
+     /* -----------------------------------------------------------------
+-     | Chevauchments de disponibilités (Availability vs Availability)
+-     | -----------------------------------------------------------------
+-     */
+-
++       | Chevauchments de disponibilités (Availability vs Availability)
++       | -----------------------------------------------------------------
++       */
+     /**
+      * Check availability conflicts (overlapping availabilities).
++     * @param array<string, mixed> $availabilityData
+      */
+     public function checkAvailabilityConflicts(
+-        Model $schedulable,
++        Model $model,
+         array $availabilityData,
+         ?int $excludeId = null
+     ): ConflictResult {
 @@ @@
-                 }
-             })
-             ->get();
--
--
--        return $result;
-     }
+         $type = $availabilityData['type'] ?? null;
+
+         // Vérifier les conditions minimales
+-        if (!$dailyStart || !$dailyEnd || empty($days)) {
++        if (!$dailyStart instanceof Carbon || !$dailyEnd instanceof Carbon || empty($days)) {
+             return ConflictResult::noConflict();
+         }
+
+         // Récupérer les disponibilités potentielles en conflit
+-        $builder = $this->availabilityRepository->findForSchedulable($schedulable, $type);
++        $builder = $this->availabilityRepository->findForSchedulable($model, $type);
+
+         if ($excludeId !== null) {
+             $builder->where('id', '!=', $excludeId);
     ----------- end diff -----------
 
 Applied rules:
- * SimplifyEmptyCheckOnEmptyArrayRector
- * SimplifyUselessVariableRector
- * FlipTypeControlToUseExclusiveTypeRector
- * RemoveUnusedClosureVariableUseRector
- * AddClosureVoidReturnTypeWhereNoReturnRector
+ * RenameParamToMatchTypeRector
+ * AddParamArrayDocblockFromDimFetchAccessRector
+ * BinaryOpNullableToInstanceofRector
 
 
-6) /home/andy-kani/pro/sites/packages/laravel-roster/src/Services/AvailabilityService.php:7
+3) /home/andy-kani/pro/sites/packages/laravel-roster/src/RosterServiceProvider.php:95
 
     ---------- begin diff ----------
 @@ @@
- use Roster\Contracts\Repository\ImpedimentRepositoryInterface;
- use Roster\Contracts\Repository\ScheduleRepositoryInterface;
- use Illuminate\Contracts\Pagination\LengthAwarePaginator;
--use Illuminate\Database\Eloquent\Builder;
--use Illuminate\Support\Carbon;
- use Illuminate\Support\Collection;
- use Illuminate\Support\Facades\DB;
--use Illuminate\Support\Facades\Log;
- use Roster\Contracts\Repository\AvailabilityRepositoryInterface;
--use Roster\Contracts\RosterDataInterface;
- use Roster\Contracts\Validation\ValidatorInterface;
+         });
+
+
+-        $this->app->singleton(TemporalConflictService::class, function ($app) {
++        $this->app->singleton(TemporalConflictService::class, function ($app): TemporalConflictService {
+             return new TemporalConflictService(
+                 $app->make(AvailabilityRepositoryInterface::class),
+                 $app->make(ScheduleRepositoryInterface::class),
+    ----------- end diff -----------
+
+Applied rules:
+ * ClosureReturnTypeRector
+
+
+4) /home/andy-kani/pro/sites/packages/laravel-roster/src/Services/AvailabilityService.php:4
+
+    ---------- begin diff ----------
+@@ @@
+
+ namespace Roster\Services;
+
++use Roster\Validation\Exceptions\ValidationFailedException;
  use Roster\DTOs\AvailabilityData;
  use Roster\Enums\EntityType;
  use Roster\Enums\OperationType;
--use Roster\Exceptions\MergeConflictException;
- use Roster\Models\Availability;
- use Roster\Services\Core\AbstractValidatingService;
- use Roster\Validation\Exceptions\ValidationFailedException;
+@@ @@
+     {
+         $entity = $this->find($id);
+         if (!$entity instanceof Availability) {
+-            throw \Roster\Validation\Exceptions\ValidationFailedException::fromViolations(
++            throw ValidationFailedException::fromViolations(
+                 [
+                     'id' => sprintf(
+                         '%s with given ID does not exist',
     ----------- end diff -----------
 
 Applied rules:
 
 
-7) /home/andy-kani/pro/sites/packages/laravel-roster/src/Services/Core/AbstractAvailabilityValidatingService.php:4
+5) /home/andy-kani/pro/sites/packages/laravel-roster/src/Services/Core/AbstractService.php:4
 
     ---------- begin diff ----------
 @@ @@
 
  namespace Roster\Services\Core;
 
--use Illuminate\Database\Eloquent\Builder;
- use Illuminate\Database\Eloquent\Model;
- use Illuminate\Support\Carbon;
--use Illuminate\Support\Collection;
- use Roster\Enums\EntityType;
- use Roster\Enums\OperationType;
- use Roster\Exceptions\InvalidServiceContextException;
-    ----------- end diff -----------
-
-Applied rules:
-
-
-8) /home/andy-kani/pro/sites/packages/laravel-roster/src/Services/Core/AbstractEntityScopingService.php:4
-
-    ---------- begin diff ----------
-@@ @@
-
- namespace Roster\Services\Core;
-
--use Illuminate\Database\Eloquent\Builder;
- use Illuminate\Support\Facades\Config;
-
- /**
-    ----------- end diff -----------
-
-Applied rules:
-
-
-9) /home/andy-kani/pro/sites/packages/laravel-roster/src/Services/Core/AbstractService.php:4
-
-    ---------- begin diff ----------
-@@ @@
-
- namespace Roster\Services\Core;
-
-+use BadMethodCallException;
++use Roster\Enums\OperationType;
++use Roster\Validation\Exceptions\ValidationFailedException;
++use Illuminate\Support\Collection;
++use Roster\Enums\EntityType;
++use Roster\Validation\Context\ValidationContext;
+ use BadMethodCallException;
  use LogicException;
  use Illuminate\Contracts\Pagination\LengthAwarePaginator;
- use Illuminate\Database\Eloquent\Model;
--use Roster\Contracts\CrudInterface;
- use Roster\Contracts\EntityServiceInterface;
- use Roster\Contracts\Repository\AvailabilityRepositoryInterface;
- use Roster\Contracts\Repository\ImpedimentRepositoryInterface;
 @@ @@
-      *   $service->whereReason('holiday');
-      *
-      * @param string $method Nom de la méthode appelée
--     * @param array $arguments Arguments passés à la méthode
-+     * @param array<int, mixed> $arguments Arguments passés à la méthode
-      * @return $this
-      *
--     * @throws \BadMethodCallException Si la méthode ne correspond pas au pattern whereXyz
-+     * @throws BadMethodCallException Si la méthode ne correspond pas au pattern whereXyz
+ abstract class AbstractService implements EntityServiceInterface
+ {
+     protected ?Model $schedulable = null;
++
+     protected ?Model $owner = null;
++
+     protected array $filters = [];
++
+     protected array $data = [];
+
+     public function __construct(
+@@ @@
+         }
+
+         // Create DTO
+-        $dto = $this->createDTOFromArray($this->data, \Roster\Enums\OperationType::CREATE);
++        $dto = $this->createDTOFromArray($this->data, OperationType::CREATE);
+
+         // Add schedulable info to DTO
+         $dto = $this->addSchedulableInfoToDto($dto);
+
+         // Validate
+-        $this->validate($dto->toArray(), \Roster\Enums\OperationType::CREATE);
++        $this->validate($dto->toArray(), OperationType::CREATE);
+
+         // Check conflicts if applicable
+         $this->checkEntityConflicts($dto);
+@@ @@
+         // Find existing entity
+         $existingEntity = $this->find($id);
+         if (!$existingEntity) {
+-            throw \Roster\Validation\Exceptions\ValidationFailedException::fromViolations(
++            throw ValidationFailedException::fromViolations(
+                 ['id' => sprintf('%s with given ID does not exist', $this->getEntityTypeEnum()->displayName())],
+-                \Roster\Enums\OperationType::UPDATE,
++                OperationType::UPDATE,
+                 $this->getEntityTypeEnum()
+             );
+         }
+@@ @@
+         }
+
+         // Create DTO
+-        $entityData = $this->createDTOFromArray($data, \Roster\Enums\OperationType::UPDATE);
++        $entityData = $this->createDTOFromArray($data, OperationType::UPDATE);
+
+         // Validate
+-        $this->validate($entityData->toArray(), \Roster\Enums\OperationType::UPDATE, $id, $existingEntity);
++        $this->validate($entityData->toArray(), OperationType::UPDATE, $id, $existingEntity);
+
+         // Check conflicts with exclusion
+         $this->checkEntityConflicts($entityData, $id);
+@@ @@
+         $entity = $this->find($id);
+
+         if (!$entity) {
+-            throw \Roster\Validation\Exceptions\ValidationFailedException::fromViolations(
++            throw ValidationFailedException::fromViolations(
+                 ['id' => sprintf('%s with given ID does not exist', $this->getEntityTypeEnum()->displayName())],
+-                \Roster\Enums\OperationType::DELETE,
++                OperationType::DELETE,
+                 $this->getEntityTypeEnum()
+             );
+         }
+@@ @@
+         }
+
+         // Validate deletion
+-        $this->validate($deleteData, \Roster\Enums\OperationType::DELETE, $id);
++        $this->validate($deleteData, OperationType::DELETE, $id);
+
+         // Delete entity
+         $result = $this->getCurrentRepository()->delete(
+@@ @@
+     /**
+      * Get all entities.
+      */
+-    final public function all(): \Illuminate\Support\Collection
++    final public function all(): Collection
+     {
+         return $this->getCurrentRepository()->all($this->schedulable, $this->owner, $this->filters);
+     }
+@@ @@
+     /**
+      * Template method for DTO creation from array.
+      */
+-    abstract protected function createDTOFromArray(array $data, \Roster\Enums\OperationType $operationType): mixed;
++    abstract protected function createDTOFromArray(array $data, OperationType $operationType): mixed;
+
+     /**
+      * Get the entity type as an enum.
+      */
+-    abstract protected function getEntityTypeEnum(): \Roster\Enums\EntityType;
++    abstract protected function getEntityTypeEnum(): EntityType;
+
+     /**
+      * Add schedulable info to DTO.
+@@ @@
+                 get_class($this->schedulable)
+             );
+         }
++
+         return $dto;
+     }
+
+@@ @@
+     /**
+      * Validate data.
+      */
+-    protected function validate(array $data, \Roster\Enums\OperationType $operationType, ?int $entityId = null, ?object $currentEntity = null): void
++    protected function validate(array $data, OperationType $operationType, ?int $entityId = null, ?object $currentEntity = null): void
+     {
+         $entityType = $this->getEntityTypeEnum();
+
+@@ @@
+             $currentEntity = $this->find($entityId);
+         }
+
+-        $validationContext = new \Roster\Validation\Context\ValidationContext(
++        $validationContext = new ValidationContext(
+             operationType: $operationType,
+             entityType: $entityType,
+             data: $data,
+@@ @@
+         $validationResult = $this->validator->validate($validationContext);
+
+         if (!$validationResult->isValid()) {
+-            throw \Roster\Validation\Exceptions\ValidationFailedException::fromViolations(
++            throw ValidationFailedException::fromViolations(
+                 $validationResult->getViolations(),
+                 $operationType,
+                 $entityType
+@@ @@
+
+     /**
+      * Intercept dynamic method calls for "whereXyz" methods.
++     * @param array<int, mixed> $arguments
       */
      public function __call(string $method, array $arguments): self
      {
-         // Vérifie si la méthode commence par "where" (insensible à la casse)
--        if (str_starts_with($method, 'where') && !empty($arguments)) {
-+        if (str_starts_with($method, 'where') && $arguments !== []) {
-             // Extrait le nom du champ à partir du nom de la méthode
-             // whereType => type, whereReason => reason
-             $field = lcfirst(substr($method, 5)); // enlève 'where' et passe la première lettre en minuscule
-@@ @@
-             return $this;
-         }
-
--        throw new \BadMethodCallException(sprintf(
-+        throw new BadMethodCallException(sprintf(
-             'Call to undefined method %s::%s()',
-             static::class,
-             $method
-@@ @@
-         return $this;
-     }
-
--    public function setFilter($key, $value): self
-+    public function setFilter(string $key, $value): self
-     {
-         $this->filters[$key] = $value;
-         return $this;
     ----------- end diff -----------
 
 Applied rules:
- * SimplifyEmptyCheckOnEmptyArrayRector
+ * NewlineBetweenClassLikeStmtsRector
+ * NewlineAfterStatementRector
  * AddParamArrayDocblockFromDimFetchAccessRector
- * AddParamFromDimFetchKeyUseRector
 
 
-10) /home/andy-kani/pro/sites/packages/laravel-roster/src/Services/Core/AbstractValidatingService.php:4
-
-    ---------- begin diff ----------
-@@ @@
-
- namespace Roster\Services\Core;
-
--use Illuminate\Database\Eloquent\Model;
- use Roster\Enums\EntityType;
- use Roster\Enums\OperationType;
--use Roster\Exceptions\InvalidServiceContextException;
- use Roster\Validation\Context\ValidationContext;
- use Roster\Validation\Exceptions\ValidationFailedException;
-    ----------- end diff -----------
-
-Applied rules:
-
-
-11) /home/andy-kani/pro/sites/packages/laravel-roster/src/Services/ImpedimentService.php:5
+6) /home/andy-kani/pro/sites/packages/laravel-roster/src/Services/ImpedimentService.php:5
 
     ---------- begin diff ----------
 @@ @@
  namespace Roster\Services;
 
- use Illuminate\Contracts\Pagination\LengthAwarePaginator;
--use Illuminate\Database\Eloquent\Builder;
- use Illuminate\Database\Eloquent\Model;
+ use Roster\Domain\Helpers\TimeSlotHelper;
+-use Roster\Domain\Services\TemporalConflictService;
  use Illuminate\Support\Carbon;
  use Illuminate\Support\Collection;
+ use Roster\DTOs\ImpedimentData;
+@@ @@
+ use Roster\Enums\EntityType;
+ use Roster\Enums\OperationType;
+ use Roster\Models\Availability;
+-use Roster\Models\Impediment;
+-use Roster\Contracts\Repository\AvailabilityRepositoryInterface;
+ use Roster\Services\Core\AbstractService;
+ use Roster\Validation\Exceptions\ValidationFailedException;
     ----------- end diff -----------
 
 Applied rules:
 
 
-12) /home/andy-kani/pro/sites/packages/laravel-roster/src/Validation/Rules/AvailabilityOverlapRule.php:80
+7) /home/andy-kani/pro/sites/packages/laravel-roster/src/Services/ScheduleService.php:12
 
     ---------- begin diff ----------
 @@ @@
-                 $firstOverlap = $overlapping->first();
-                 $validationContext->setViolation(
-                     'overlap',
--                    "Availability overlaps with an existing availability {#$firstOverlap->id} -> type : {$firstOverlap->type} {$firstOverlap->validity_start} - {$firstOverlap->validity_end} for {$firstOverlap->daily_start}- {$firstOverlap->daily_end} "
-+                    sprintf('Availability overlaps with an existing availability {#%s} -> type : %s %s - %s for %s- %s ', $firstOverlap->id, $firstOverlap->type, $firstOverlap->validity_start, $firstOverlap->validity_end, $firstOverlap->daily_start, $firstOverlap->daily_end)
+ use Roster\Enums\EntityType;
+ use Roster\Enums\OperationType;
+ use Roster\Models\Availability;
+-use Roster\Models\Schedule;
+ use Roster\Services\Core\AbstractService;
+ use Roster\Validation\Exceptions\ValidationFailedException;
+
+@@ @@
+             if ($slot !== null) {
+                 $availableSlots->push($slot);
+             }
++
+             $currentDate->addDay();
+         }
+
+@@ @@
+         ?string $type = null,
+         ?Carbon $searchStart = null
+     ): ?array {
+-        /** @var \Illuminate\Support\Collection<\Roster\Models\Availability> $availabilities */
++        /** @var Collection<Availability> $availabilities */
+         $availabilities = $this->getAvailabilityRepository()->getForDate(
+             $this->schedulable,
+             $day,
+    ----------- end diff -----------
+
+Applied rules:
+ * NewlineAfterStatementRector
+
+
+8) /home/andy-kani/pro/sites/packages/laravel-roster/src/Validation/Rules/AvailabilityOverlapRule.php:19
+
+    ---------- begin diff ----------
+@@ @@
+ )]
+ class AvailabilityOverlapRule extends AbstractRule
+ {
+-    public function __construct() {}
+-
+     public function validate(ValidationContextInterface $validationContext): void
+     {
+         $operationType = $validationContext->getOperation();
+    ----------- end diff -----------
+
+Applied rules:
+ * RemoveEmptyClassMethodRector
+
+
+9) /home/andy-kani/pro/sites/packages/laravel-roster/src/Validation/Rules/ScheduleOverlapRule.php:4
+
+    ---------- begin diff ----------
+@@ @@
+
+ namespace Roster\Validation\Rules;
+
++use Exception;
+ use Roster\Domain\Services\TemporalConflictService;
+ use Illuminate\Support\Carbon;
+ use Roster\Contracts\Validation\ValidationContextInterface;
+@@ @@
+ class ScheduleOverlapRule extends AbstractRule
+ {
+     public function __construct(
+-        private TemporalConflictService $conflictService
++        private TemporalConflictService $temporalConflictService
+     ) {}
+
+     public function validate(ValidationContextInterface $validationContext): void
+@@ @@
+                 }
+             }
+
+-            $conflictResult = $this->conflictService->checkAllConflicts(
++            $conflictResult = $this->temporalConflictService->checkAllConflicts(
+                 availabilityId: $availabilityId,
+                 start: $start,
+                 end: $end,
+@@ @@
+                     $conflictResult->message
                  );
              }
-         } catch (Exception $exception) {
+-        } catch (\Exception $exception) {
++        } catch (Exception $exception) {
+             report($exception);
+         }
+     }
     ----------- end diff -----------
 
 Applied rules:
- * EncapsedStringsToSprintfRector
+ * RenamePropertyToMatchTypeRector
 
 
-13) /home/andy-kani/pro/sites/packages/laravel-roster/src/Validation/Rules/AvailabilityTimeRangeRule.php:48
+10) /home/andy-kani/pro/sites/packages/laravel-roster/src/Validation/Rules/TimeRangeRule.php:5
 
     ---------- begin diff ----------
 @@ @@
+ namespace Roster\Validation\Rules;
+
+ use Roster\Models\Availability;
+-use Roster\Contracts\Repository\AvailabilityRepositoryInterface;
+ use Exception;
+ use Illuminate\Support\Carbon;
+ use Roster\Contracts\Validation\ValidationContextInterface;
+@@ @@
+ {
+     public function validate(ValidationContextInterface $validationContext): void
+     {
+-        $operation = $validationContext->getOperation();
++        $validationContext->getOperation();
+         $currentEntity = $validationContext->getCurrentEntity();
+
+         try {
+@@ @@
+             $end = $this->getDateTimeValue($validationContext, 'end_datetime', $currentEntity);
+
+             // Si les deux dates sont absentes, pas de validation
+-            if ($start === null && $end === null) {
++            if (!$start instanceof Carbon && !$end instanceof Carbon) {
+                 return;
+             }
+
+@@ @@
+                 return; // AvailabilityOwnershipRule devrait déjà avoir échoué
+             }
+
+-            $this->validateTimeRange($validationContext, $availability, $start, $end, $currentEntity);
++            $this->validateTimeRange($validationContext, $availability, $start, $end);
+         } catch (Exception $exception) {
              // La validation de format est gérée par d'autres règles
          }
-     }
+@@ @@
+             if ($value === null) {
+                 return null;
+             }
 +
-     private function validateTimeRange(
+             try {
+                 return Carbon::parse($value);
+             } catch (Exception $e) {
+@@ @@
+             if ($value === null) {
+                 return null;
+             }
++
+             try {
+                 return $value instanceof Carbon ? $value : Carbon::parse($value);
+             } catch (Exception $e) {
+@@ @@
          ValidationContextInterface $validationContext,
          Availability $availability,
-    ----------- end diff -----------
-
-Applied rules:
- * NewlineBetweenClassLikeStmtsRector
-
-
-14) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Integration/Traits/BelongsToSchedulableTest.php:11
-
-    ---------- begin diff ----------
-@@ @@
- use Roster\Facades\Availability;
- use Roster\Facades\Schedule;
- use Roster\Facades\Impediment;
--use Roster\Models\Schedule as ModelsSchedule;
- use Tests\Support\TestSchedulable;
- use Tests\TestCase;
-
-@@ @@
-     public function test_schedule_creation_fails_without_schedulable_context(): void
-     {
-         // Create an availability first
--        $availability = Availability::for($this->testSchedulable)->create([
-+        Availability::for($this->testSchedulable)->create([
-             'type' => 'consultation',
-             'daily_start' => '09:00:00',
-             'daily_end' => '17:00:00',
-@@ @@
-     public function test_impediment_creation_fails_without_proper_context(): void
-     {
-         // Create an availability
--        $availability = Availability::for($this->testSchedulable)->create([
-+        Availability::for($this->testSchedulable)->create([
-             'type' => 'consultation',
-             'daily_start' => '09:00:00',
-             'daily_end' => '17:00:00',
-@@ @@
-
-         // Should NOT find the schedule when using a different schedulable
-         $notFoundSchedule = Schedule::for($this->secondSchedulable)->find($schedule->id);
--        $this->assertNull($notFoundSchedule);
-+        $this->assertNotInstanceOf(\Roster\Models\Schedule::class, $notFoundSchedule);
-     }
-
-     /**
-    ----------- end diff -----------
-
-Applied rules:
- * RemoveUnusedVariableAssignRector
- * AssertEmptyNullableObjectToAssertInstanceofRector
-
-
-15) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Services/AvailabilityServiceTest.php:6
-
-    ---------- begin diff ----------
-@@ @@
-
- use Illuminate\Foundation\Testing\RefreshDatabase;
- use Roster\Facades\Availability as AvailabilityFacade;
--use Roster\Facades\Schedule as ScheduleFacade;
- use Roster\Models\Availability;
- use Roster\Validation\Exceptions\ValidationFailedException;
- use Tests\Support\TestSchedulable;
-@@ @@
-         $result = AvailabilityFacade::for($this->testSchedulable)->find($availabilityId);
-
-         // Assert
--        $this->assertNull($result);
-+        $this->assertNotInstanceOf(\Roster\Models\Availability::class, $result);
-     }
-
-     public function test_can_get_all_availabilities_with_filters(): void
-@@ @@
-     public function test_sets_and_gets_filters_correctly(): void
-     {
-         // Arrange
--        $service = AvailabilityFacade::for($this->testSchedulable);
-+        $availabilityService = AvailabilityFacade::for($this->testSchedulable);
-         $filters = [
-             'type' => 'consultation',
-             'day' => 'monday',
-@@ @@
-         ];
-
-         // Act
--        $service->setFilters($filters);
--        $result = $service->getFilters();
-+        $availabilityService->setFilters($filters);
-+        $result = $availabilityService->getFilters();
-
-         // Assert
-         $this->assertSame($filters, $result);
-@@ @@
-     public function test_can_reset_filters(): void
-     {
-         // Arrange
--        $service = AvailabilityFacade::for($this->testSchedulable);
--        $service->setFilters(['type' => 'consultation']);
--        $service->setFilter('day', 'monday');
-+        $availabilityService = AvailabilityFacade::for($this->testSchedulable);
-+        $availabilityService->setFilters(['type' => 'consultation']);
-+        $availabilityService->setFilter('day', 'monday');
-
-         // Act
--        $service->resetFilters();
--        $filters = $service->getFilters();
-+        $availabilityService->resetFilters();
-+
-+        $filters = $availabilityService->getFilters();
-
-         // Assert
-         $this->assertEmpty($filters);
-    ----------- end diff -----------
-
-Applied rules:
- * NewlineBeforeNewAssignSetRector
- * RenameVariableToMatchMethodCallReturnTypeRector
- * AssertEmptyNullableObjectToAssertInstanceofRector
-
-
-16) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Services/ImpedimentServiceTest.php:14
-
-    ---------- begin diff ----------
-@@ @@
- use Roster\Facades\Schedule;
- use Roster\Models\Availability as AvailabilityModel;
- use Roster\Models\Impediment as ImpedimentModel;
--use Roster\Models\Schedule as ScheduleModel;
- use Roster\Validation\Exceptions\ValidationFailedException;
- use Tests\TestCase;
- use Tests\Support\TestSchedulable;
-@@ @@
-     use RefreshDatabase;
-
-     private TestSchedulable $testSchedulable;
--    private AvailabilityModel $testAvailability;
-
-+    private AvailabilityModel $availabilityModel;
-+
-     protected function setUp(): void
-     {
-         parent::setUp();
-@@ @@
-         Config::set('roster.durations.max_search_period_days', 30);
-
-         // Créer la disponibilité UNIQUEMENT via la facade
--        $this->testAvailability = Availability::for($this->testSchedulable)->create([
-+        $this->availabilityModel = Availability::for($this->testSchedulable)->create([
-             'type' => 'consultation',
-             'daily_start' => '09:00:00',
-             'daily_end' => '17:00:00',
-@@ @@
-     {
-         // Act
-         $impediment = Impediment::for($this->testSchedulable)
--            ->owner($this->testAvailability)
-+            ->owner($this->availabilityModel)
-             ->create([
-                 'reason' => 'Maintenance système',
-                 'start_datetime' => '2038-01-04 10:00:00', // Lundi
-@@ @@
-         // Assert
-         $this->assertInstanceOf(ImpedimentModel::class, $impediment);
-         $this->assertEquals('Maintenance système', $impediment->reason);
--        $this->assertEquals($this->testAvailability->id, $impediment->availability_id);
-+        $this->assertEquals($this->availabilityModel->id, $impediment->availability_id);
-         $this->assertEquals($this->testSchedulable->id, $impediment->schedulable_id);
-         $this->assertEquals(['priority' => 'high'], $impediment->metadata);
-     }
-@@ @@
-     {
-         // Act
-         $impediment = Impediment::for($this->testSchedulable)
--            ->owner($this->testAvailability)
-+            ->owner($this->availabilityModel)
-             ->create([
-                 'reason' => 'Formation',
-                 'start_datetime' => '2038-01-05 14:00:00', // Mardi
-@@ @@
-
-         // Act
-         Impediment::for($this->testSchedulable)
--            ->owner($this->testAvailability)
-+            ->owner($this->availabilityModel)
-             ->create([
-                 'reason' => 'Test invalide',
-                 'start_datetime' => '2038-01-04 12:00:00',
-@@ @@
-
-         // Act - 5 minutes seulement
-         Impediment::for($this->testSchedulable)
--            ->owner($this->testAvailability)
-+            ->owner($this->availabilityModel)
-             ->create([
-                 'reason' => 'Test trop court',
-                 'start_datetime' => '2038-01-04 10:00:00',
-@@ @@
-     {
-         // Arrange
-         $impediment = Impediment::for($this->testSchedulable)
--            ->owner($this->testAvailability)
-+            ->owner($this->availabilityModel)
-             ->create([
-                 'reason' => 'Raison originale',
-                 'start_datetime' => '2038-01-04 10:00:00',
-@@ @@
-
-         // Act
-         $result = Impediment::for($this->testSchedulable)
--            ->owner($this->testAvailability)
-+            ->owner($this->availabilityModel)
-             ->update($impediment->id, [
-                 'reason' => 'Nouvelle raison',
-                 'metadata' => ['updated' => true],
-@@ @@
-     {
-         // Arrange
-         $impediment = Impediment::for($this->testSchedulable)
--            ->owner($this->testAvailability)
-+            ->owner($this->availabilityModel)
-             ->create([
-                 'reason' => 'Original',
-                 'start_datetime' => '2038-01-04 10:00:00',
-@@ @@
-
-         // Act
-         $result = Impediment::for($this->testSchedulable)
--            ->owner($this->testAvailability)
-+            ->owner($this->availabilityModel)
-             ->update($impediment->id, [
-                 'start_datetime' => '2038-01-04 13:00:00',
-                 'end_datetime' => '2038-01-04 15:00:00',
-@@ @@
-
-         // Act
-         Impediment::for($this->testSchedulable)
--            ->owner($this->testAvailability)
-+            ->owner($this->availabilityModel)
-             ->update(999999, ['reason' => 'test']);
-     }
-
-@@ @@
-     {
-         // Arrange
-         $impediment = Impediment::for($this->testSchedulable)
--            ->owner($this->testAvailability)
-+            ->owner($this->availabilityModel)
-             ->create([
-                 'reason' => 'À supprimer',
-                 'start_datetime' => '2038-01-04 10:00:00',
-@@ @@
-
-         // Act
-         $result = Impediment::for($this->testSchedulable)
--            ->owner($this->testAvailability)
-+            ->owner($this->availabilityModel)
-             ->delete($impediment->id);
-
-         // Assert
-@@ @@
-
-         // Act
-         Impediment::for($this->testSchedulable)
--            ->owner($this->testAvailability)
-+            ->owner($this->availabilityModel)
-             ->delete(999999);
-     }
-
-@@ @@
-     {
-         // Arrange
-         $impediment = Impediment::for($this->testSchedulable)
--            ->owner($this->testAvailability)
-+            ->owner($this->availabilityModel)
-             ->create([
-                 'reason' => 'Test find',
-                 'start_datetime' => '2038-01-04 10:00:00',
-@@ @@
-
-         // Act
-         $found = Impediment::for($this->testSchedulable)
--            ->owner($this->testAvailability)
-+            ->owner($this->availabilityModel)
-             ->find($impediment->id);
-
-         // Assert
-@@ @@
-
-         // Act - Essayer de trouver avec le mauvais schedulable
-         $found = Impediment::for($this->testSchedulable)
--            ->owner($this->testAvailability)
-+            ->owner($this->availabilityModel)
-             ->find($impediment->id);
-
-         // Assert - Ne devrait pas trouver
--        $this->assertNull($found);
-+        $this->assertNotInstanceOf(\Roster\Models\Impediment::class, $found);
-     }
-
-     public function test_get_all_impediments(): void
-@@ @@
-     {
-         // Arrange
-         Impediment::for($this->testSchedulable)
--            ->owner($this->testAvailability)
-+            ->owner($this->availabilityModel)
-             ->create([
-                 'reason' => 'Impediment 1',
-                 'start_datetime' => '2038-01-04 10:00:00',
-@@ @@
-             ]);
-
-         Impediment::for($this->testSchedulable)
--            ->owner($this->testAvailability)
-+            ->owner($this->availabilityModel)
-             ->create([
-                 'reason' => 'Impediment 2',
-                 'start_datetime' => '2038-01-05 14:00:00',
-@@ @@
-
-         // Act
-         $result = Impediment::for($this->testSchedulable)
--            ->owner($this->testAvailability)
-+            ->owner($this->availabilityModel)
-             ->all();
-
-         // Assert
-@@ @@
-     {
-         // Arrange
-         Impediment::for($this->testSchedulable)
--            ->owner($this->testAvailability)
-+            ->owner($this->availabilityModel)
-             ->create([
-                 'reason' => 'Janvier',
-                 'start_datetime' => '2038-01-04 10:00:00',
-@@ @@
-             ]);
-
-         Impediment::for($this->testSchedulable)
--            ->owner($this->testAvailability)
-+            ->owner($this->availabilityModel)
-             ->create([
-                 'reason' => 'Février',
-                 'start_datetime' => '2038-02-04 10:00:00',
-@@ @@
-             ]);
-
-         Impediment::for($this->testSchedulable)
--            ->owner($this->testAvailability)
-+            ->owner($this->availabilityModel)
-             ->create([
-                 'reason' => 'Janvier tardif',
-                 'start_datetime' => '2038-01-25 10:00:00',
-@@ @@
-
-         // Act - Filtrer pour janvier seulement
-         $result = Impediment::for($this->testSchedulable)
--            ->owner($this->testAvailability)
-+            ->owner($this->availabilityModel)
-             ->setFilter('start_datetime', '2038-01-01')
-             ->setFilter('end_datetime', '2038-01-31')
-             ->all();
-@@ @@
-     {
-         // Arrange
-         Impediment::for($this->testSchedulable)
--            ->owner($this->testAvailability)
-+            ->owner($this->availabilityModel)
-             ->create([
-                 'reason' => 'Maintenance système',
-                 'start_datetime' => '2038-01-04 10:00:00',
-@@ @@
-             ]);
-
-         Impediment::for($this->testSchedulable)
--            ->owner($this->testAvailability)
-+            ->owner($this->availabilityModel)
-             ->create([
-                 'reason' => 'Formation sécurité',
-                 'start_datetime' => '2038-01-05 10:00:00',
-@@ @@
-             ]);
-
-         Impediment::for($this->testSchedulable)
--            ->owner($this->testAvailability)
-+            ->owner($this->availabilityModel)
-             ->create([
-                 'reason' => 'Maintenance réseau',
-                 'start_datetime' => '2038-01-06 10:00:00',
-@@ @@
-
-         // Act - Filtrer par raison contenant "Maintenance"
-         $result = Impediment::for($this->testSchedulable)
--            ->owner($this->testAvailability)
-+            ->owner($this->availabilityModel)
-             ->setFilter('reason', 'Maintenance')
-             ->all();
-
-@@ @@
-     {
-         // Arrange - Créer un schedule
-         Schedule::for($this->testSchedulable)
--            ->owner($this->testAvailability)
-+            ->owner($this->availabilityModel)
-             ->create([
-                 'title' => 'Réunion existante',
-                 'start_datetime' => '2038-01-04 11:00:00',
-@@ @@
-
-         // Act - Vérifier chevauchement
-         $wouldOverlap = Impediment::for($this->testSchedulable)
--            ->owner($this->testAvailability)
-+            ->owner($this->availabilityModel)
-             ->wouldOverlapWithSchedule(
--                $this->testAvailability->id,
-+                $this->availabilityModel->id,
-                 Carbon::parse('2038-01-04 10:00:00'),
-                 Carbon::parse('2038-01-04 12:00:00')
-             );
-@@ @@
-     {
-         // Arrange - Créer un schedule
-         Schedule::for($this->testSchedulable)
--            ->owner($this->testAvailability)
-+            ->owner($this->availabilityModel)
-             ->create([
-                 'title' => 'Réunion existante',
-                 'start_datetime' => '2038-01-04 11:00:00',
-@@ @@
-
-         // Act - Vérifier pas de chevauchement
-         $wouldOverlap = Impediment::for($this->testSchedulable)
--            ->owner($this->testAvailability)
-+            ->owner($this->availabilityModel)
-             ->wouldOverlapWithSchedule(
--                $this->testAvailability->id,
-+                $this->availabilityModel->id,
-                 Carbon::parse('2038-01-04 14:00:00'),
-                 Carbon::parse('2038-01-04 15:00:00')
-             );
-@@ @@
-     {
-         // Arrange - Créer un impediment existant
-         $impediment = Impediment::for($this->testSchedulable)
--            ->owner($this->testAvailability)
-+            ->owner($this->availabilityModel)
-             ->create([
-                 'reason' => 'Existant',
-                 'start_datetime' => '2038-01-04 11:00:00',
-@@ @@
-
-         // Act - Vérifier avec exclusion
-         $wouldOverlap = Impediment::for($this->testSchedulable)
--            ->owner($this->testAvailability)
-+            ->owner($this->availabilityModel)
-             ->wouldOverlapWithSchedule(
--                $this->testAvailability->id,
-+                $this->availabilityModel->id,
-                 Carbon::parse('2038-01-04 12:00:00'), // Chevauche l'impediment existant
-                 Carbon::parse('2038-01-04 14:00:00'),
-                 $impediment->id // Exclure cet impediment
-@@ @@
-     {
-         // Arrange - Créer un impediment existant
-         Impediment::for($this->testSchedulable)
--            ->owner($this->testAvailability)
-+            ->owner($this->availabilityModel)
-             ->create([
-                 'reason' => 'Impediment existant',
-                 'start_datetime' => '2038-01-04 11:00:00',
-@@ @@
-
-         // Act - Vérifier chevauchement
-         $wouldOverlap = Impediment::for($this->testSchedulable)
--            ->owner($this->testAvailability)
-+            ->owner($this->availabilityModel)
-             ->wouldOverlapWithOtherImpediment(
--                $this->testAvailability->id,
-+                $this->availabilityModel->id,
-                 Carbon::parse('2038-01-04 10:00:00'),
-                 Carbon::parse('2038-01-04 12:00:00')
-             );
-@@ @@
-     {
-         // Arrange - Créer un impediment existant
-         Impediment::for($this->testSchedulable)
--            ->owner($this->testAvailability)
-+            ->owner($this->availabilityModel)
-             ->create([
-                 'reason' => 'Impediment existant',
-                 'start_datetime' => '2038-01-04 11:00:00',
-@@ @@
-
-         // Act - Vérifier pas de chevauchement
-         $wouldOverlap = Impediment::for($this->testSchedulable)
--            ->owner($this->testAvailability)
-+            ->owner($this->availabilityModel)
-             ->wouldOverlapWithOtherImpediment(
--                $this->testAvailability->id,
-+                $this->availabilityModel->id,
-                 Carbon::parse('2038-01-04 14:00:00'),
-                 Carbon::parse('2038-01-04 15:00:00')
-             );
-@@ @@
-     {
-         // Arrange - Créer un impediment
-         Impediment::for($this->testSchedulable)
--            ->owner($this->testAvailability)
-+            ->owner($this->availabilityModel)
-             ->create([
-                 'reason' => 'Test block',
-                 'start_datetime' => '2038-01-04 10:00:00',
-@@ @@
-
-         // Act - Vérifier créneau chevauchant
-         $isBlocked = Impediment::for($this->testSchedulable)
--            ->owner($this->testAvailability)
-+            ->owner($this->availabilityModel)
-             ->isTimeSlotBlocked(
-                 Carbon::parse('2038-01-04 11:00:00'),
-                 Carbon::parse('2038-01-04 13:00:00')
-@@ @@
-     {
-         // Arrange - Créer un impediment
-         Impediment::for($this->testSchedulable)
--            ->owner($this->testAvailability)
-+            ->owner($this->availabilityModel)
-             ->create([
-                 'reason' => 'Test block',
-                 'start_datetime' => '2038-01-04 10:00:00',
-@@ @@
-
-         // Act - Vérifier créneau non chevauchant
-         $isBlocked = Impediment::for($this->testSchedulable)
--            ->owner($this->testAvailability)
-+            ->owner($this->availabilityModel)
-             ->isTimeSlotBlocked(
-                 Carbon::parse('2038-01-04 14:00:00'),
-                 Carbon::parse('2038-01-04 15:00:00')
-@@ @@
-
-         // Act - Vérifier avec type 'consultation' (différent de 'emergency')
-         $isBlocked = Impediment::for($this->testSchedulable)
--            ->owner($this->testAvailability)
-+            ->owner($this->availabilityModel)
-             ->isTimeSlotBlocked(
-                 Carbon::parse('2038-01-04 20:00:00'),
-                 Carbon::parse('2038-01-04 20:30:00'),
-@@ @@
-     {
-         // Arrange - Créer un impediment
-         Impediment::for($this->testSchedulable)
--            ->owner($this->testAvailability)
-+            ->owner($this->availabilityModel)
-             ->create([
-                 'reason' => 'Meeting',
-                 'start_datetime' => '2038-01-04 10:00:00', // Lundi
-@@ @@
-
-         // Act
-         $slots = Impediment::for($this->testSchedulable)
--            ->owner($this->testAvailability)
-+            ->owner($this->availabilityModel)
-             ->getAvailableTimeSlots(
-                 Carbon::parse('2038-01-04 09:00:00'),
-                 Carbon::parse('2038-01-04 17:00:00')
-@@ @@
-     {
-         // Arrange - Bloquer toute la journée
-         Impediment::for($this->testSchedulable)
--            ->owner($this->testAvailability)
-+            ->owner($this->availabilityModel)
-             ->create([
-                 'reason' => 'Full day meeting',
-                 'start_datetime' => '2038-01-04 09:00:00',
-@@ @@
-
-         // Act
-         $slots = Impediment::for($this->testSchedulable)
--            ->owner($this->testAvailability)
-+            ->owner($this->availabilityModel)
-             ->getAvailableTimeSlots(
-                 Carbon::parse('2038-01-04 09:00:00'),
-                 Carbon::parse('2038-01-04 17:00:00')
-@@ @@
-     {
-         // Arrange - Créer un impediment
-         Impediment::for($this->testSchedulable)
--            ->owner($this->testAvailability)
-+            ->owner($this->availabilityModel)
-             ->create([
-                 'reason' => 'Rendez-vous médical',
-                 'start_datetime' => '2038-01-04 10:00:00',
-@@ @@
-
-         // Act - Essayer de créer un schedule qui chevauche l'impediment
-         Schedule::for($this->testSchedulable)
--            ->owner($this->testAvailability)
-+            ->owner($this->availabilityModel)
-             ->create([
-                 'title' => 'Nouveau rendez-vous',
-                 'start_datetime' => '2038-01-04 11:00:00', // Chevauche l'impediment
-@@ @@
-     {
-         // Arrange - Créer plusieurs impediments
-         Impediment::for($this->testSchedulable)
--            ->owner($this->testAvailability)
-+            ->owner($this->availabilityModel)
-             ->create([
-                 'reason' => 'Réunion matin',
-                 'start_datetime' => '2038-01-04 09:00:00',
-@@ @@
-             ]);
-
-         Impediment::for($this->testSchedulable)
--            ->owner($this->testAvailability)
-+            ->owner($this->availabilityModel)
-             ->create([
-                 'reason' => 'Pause déjeuner',
-                 'start_datetime' => '2038-01-04 12:00:00',
-@@ @@
-             ]);
-
-         Impediment::for($this->testSchedulable)
--            ->owner($this->testAvailability)
-+            ->owner($this->availabilityModel)
-             ->create([
-                 'reason' => 'Formation',
-                 'start_datetime' => '2038-01-04 15:00:00',
-@@ @@
-
-         // Act
-         $allImpediments = Impediment::for($this->testSchedulable)
--            ->owner($this->testAvailability)
-+            ->owner($this->availabilityModel)
-             ->all();
-
-         // Assert
-@@ @@
-
-         // Act
-         $impediment = Impediment::for($this->testSchedulable)
--            ->owner($this->testAvailability)
-+            ->owner($this->availabilityModel)
-             ->create([
-                 'reason' => 'Maintenance complexe',
-                 'start_datetime' => '2038-01-04 10:00:00',
-@@ @@
-     {
-         // Arrange & Act
-         $impediment = Impediment::for($this->testSchedulable)
--            ->owner($this->testAvailability)
-+            ->owner($this->availabilityModel)
-             ->create([
-                 'reason' => 'Test duration',
-                 'start_datetime' => '2038-01-04 10:00:00',
-@@ @@
-     {
-         // Arrange
-         $impediment = Impediment::for($this->testSchedulable)
--            ->owner($this->testAvailability)
-+            ->owner($this->availabilityModel)
-             ->create([
-                 'reason' => 'Exact boundary',
-                 'start_datetime' => '2038-01-04 10:00:00',
-@@ @@
-     public function test_concurrent_impediment_creation_prevents_overlap(): void
-     {
-         // Arrange - Créer un premier impediment
--        $imp1 = Impediment::for($this->testSchedulable)
--            ->owner($this->testAvailability)
-+        Impediment::for($this->testSchedulable)
-+            ->owner($this->availabilityModel)
-             ->create([
-                 'reason' => 'Premier impediment',
-                 'start_datetime' => '2038-01-04 10:00:00',
-@@ @@
-
-
-         // Act - Essayer de créer un deuxième qui chevauche
--        $imp2 = Impediment::for($this->testSchedulable)
--            ->owner($this->testAvailability)
-+        Impediment::for($this->testSchedulable)
-+            ->owner($this->availabilityModel)
-             ->create([
-                 'reason' => 'Deuxième impediment',
-                 'start_datetime' => '2038-01-04 11:00:00', // Chevauche
-@@ @@
-     {
-         // Arrange
-         $impediment1 = Impediment::for($this->testSchedulable)
--            ->owner($this->testAvailability)
-+            ->owner($this->availabilityModel)
-             ->create([
-                 'reason' => 'Premier impediment',
-                 'start_datetime' => '2038-01-04 10:00:00',
-@@ @@
-
-         // Act - Créer un deuxième qui commence exactement à la fin du premier
-         $impediment2 = Impediment::for($this->testSchedulable)
--            ->owner($this->testAvailability)
-+            ->owner($this->availabilityModel)
-             ->create([
-                 'reason' => 'Deuxième impediment',
-                 'start_datetime' => '2038-01-04 11:00:00', // Exactement à la fin du premier
-@@ @@
-     {
-         // Arrange - Créer des impediments adjacents
-         Impediment::for($this->testSchedulable)
--            ->owner($this->testAvailability)
-+            ->owner($this->availabilityModel)
-             ->create([
-                 'reason' => 'Impediment 1',
-                 'start_datetime' => '2038-01-04 10:00:00',
-@@ @@
-             ]);
-
-         Impediment::for($this->testSchedulable)
--            ->owner($this->testAvailability)
-+            ->owner($this->availabilityModel)
-             ->create([
-                 'reason' => 'Impediment 2',
-                 'start_datetime' => '2038-01-04 11:00:00', // Exactement à la fin du premier
-@@ @@
-
-         // Act
-         $slots = Impediment::for($this->testSchedulable)
--            ->owner($this->testAvailability)
-+            ->owner($this->availabilityModel)
-             ->getAvailableTimeSlots(
-                 Carbon::parse('2038-01-04 09:00:00'),
-                 Carbon::parse('2038-01-04 17:00:00')
-@@ @@
-     {
-         // Arrange - Créer plusieurs impediments qui couvrent toute la journée
-         Impediment::for($this->testSchedulable)
--            ->owner($this->testAvailability)
-+            ->owner($this->availabilityModel)
-             ->create([
-                 'reason' => 'Réunion matin',
-                 'start_datetime' => '2038-01-04 09:00:00',
-@@ @@
-             ]);
-
-         Impediment::for($this->testSchedulable)
--            ->owner($this->testAvailability)
-+            ->owner($this->availabilityModel)
-             ->create([
-                 'reason' => 'Pause déjeuner',
-                 'start_datetime' => '2038-01-04 12:00:00',
-@@ @@
-             ]);
-
-         Impediment::for($this->testSchedulable)
--            ->owner($this->testAvailability)
-+            ->owner($this->availabilityModel)
-             ->create([
-                 'reason' => 'Réunion après-midi',
-                 'start_datetime' => '2038-01-04 13:00:00',
-@@ @@
-
-         // Act - Vérifier qu'aucun créneau n'est disponible
-         $isBlocked = Impediment::for($this->testSchedulable)
--            ->owner($this->testAvailability)
-+            ->owner($this->availabilityModel)
-             ->isTimeSlotBlocked(
-                 Carbon::parse('2038-01-04 10:00:00'),
-                 Carbon::parse('2038-01-04 11:00:00')
-@@ @@
-
-         // Act - Chercher créneaux disponibles
-         $slots = Impediment::for($this->testSchedulable)
--            ->owner($this->testAvailability)
-+            ->owner($this->availabilityModel)
-             ->getAvailableTimeSlots(
-                 Carbon::parse('2038-01-04 09:00:00'),
-                 Carbon::parse('2038-01-04 17:00:00')
-@@ @@
-
-         // Act
-         $impediment = Impediment::for($this->testSchedulable)
--            ->owner($this->testAvailability)
-+            ->owner($this->availabilityModel)
-             ->create([
-                 'reason' => 'Maintenance urgente',
-                 'start_datetime' => '2038-01-04 10:00:00',
-@@ @@
-     public function test_paginate_impediments(): void
-     {
-         // Arrange - Créer 25 impediments sur des jours permis (lundi à vendredi)
--        $startDate = \Illuminate\Support\Carbon::parse('2038-01-04'); // lundi
--        for ($i = 0; $i < 25; $i++) {
-+        $startDate = Carbon::parse('2038-01-04'); // lundi
-+        for ($i = 0; $i < 25; ++$i) {
-             // Calcul du jour suivant valide
-             $date = $startDate->copy()->addWeeks(intdiv($i, 5))->addDays($i % 5);
-
-             Impediment::for($this->testSchedulable)
--                ->owner($this->testAvailability)
-+                ->owner($this->availabilityModel)
-                 ->create([
-                     'reason' => "Impediment " . ($i + 1),
-                     'start_datetime' => $date->setTime(10, 0, 0)->toDateTimeString(),
-@@ @@
+         ?Carbon $start,
+-        ?Carbon $end,
+-        ?object $currentEntity
++        ?Carbon $end
+     ): void {
+         /**
+          * 1. Vérifie que les deux dates sont présentes pour certaines validations
+          */
+-        if ($start !== null && $end !== null) {
+-            // Vérification de cohérence start < end
+-            if ($start->gte($end)) {
+-                $validationContext->setViolation(
+-                    'end_datetime',
+-                    'The end datetime must be after the start datetime'
+-                );
+-            }
++        // Vérification de cohérence start < end
++        if ($start instanceof Carbon && $end instanceof Carbon && $start->gte($end)) {
++            $validationContext->setViolation(
++                'end_datetime',
++                'The end datetime must be after the start datetime'
++            );
          }
 
-         // Act - Paginer
--        $paginator = Impediment::for($this->testSchedulable)
--            ->owner($this->testAvailability)
-+        $lengthAwarePaginator = Impediment::for($this->testSchedulable)
-+            ->owner($this->availabilityModel)
-             ->paginate(10);
+         /**
+          * 2. Validation pour la date de début si fournie
+          */
+-        if ($start !== null) {
++        if ($start instanceof Carbon) {
+             $this->validateStartDateTime($validationContext, $availability, $start);
+         }
 
-         // Assert
--        $this->assertEquals(25, $paginator->total());
--        $this->assertEquals(10, $paginator->perPage());
--        $this->assertEquals(3, $paginator->lastPage());
--        $this->assertCount(10, $paginator->items());
-+        $this->assertEquals(25, $lengthAwarePaginator->total());
-+        $this->assertEquals(10, $lengthAwarePaginator->perPage());
-+        $this->assertEquals(3, $lengthAwarePaginator->lastPage());
-+        $this->assertCount(10, $lengthAwarePaginator->items());
+@@ @@
+         /**
+          * 3. Validation pour la date de fin si fournie
+          */
+-        if ($end !== null) {
++        if ($end instanceof Carbon) {
+             $this->validateEndDateTime($validationContext, $availability, $end, $start);
+         }
      }
-
-
 @@ @@
-     {
-         // Arrange
-         Impediment::for($this->testSchedulable)
--            ->owner($this->testAvailability)
-+            ->owner($this->availabilityModel)
-             ->create([
-                 'reason' => 'Test 1',
-                 'start_datetime' => '2038-01-04 10:00:00',
-@@ @@
-             ]);
-
-         Impediment::for($this->testSchedulable)
--            ->owner($this->testAvailability)
-+            ->owner($this->availabilityModel)
-             ->create([
-                 'reason' => 'Test 2',
-                 'start_datetime' => '2038-01-05 10:00:00',
+         /**
+          * 3. Si start est fourni, vérifie que end est le même jour ou après
+          */
+-        if ($start !== null) {
++        if ($start instanceof Carbon) {
+             // Vérifie que end n'est pas avant start
+             if ($end->lte($start)) {
+                 $validationContext->setViolation(
 @@ @@
 
-         // Act - Appliquer un filtre, puis réinitialiser
-         $filtered = Impediment::for($this->testSchedulable)
--            ->owner($this->testAvailability)
-+            ->owner($this->availabilityModel)
-             ->setFilter('start_date', '2038-01-05')
-             ->resetFilters()
-             ->all();
-@@ @@
-     {
-         // Arrange
-         $impediment = Impediment::for($this->testSchedulable)
--            ->owner($this->testAvailability)
-+            ->owner($this->availabilityModel)
-             ->create([
-                 'reason' => 'Test clear',
-                 'start_datetime' => '2038-01-04 10:00:00',
-@@ @@
-             ]);
-
-         // Act - Utiliser clear() sur le service
--        $service = Impediment::for($this->testSchedulable)
--            ->owner($this->testAvailability);
-+        $impedimentService = Impediment::for($this->testSchedulable)
-+            ->owner($this->availabilityModel);
-
--        $service->clear();
-+        $impedimentService->clear();
-
-         // Assert - Le service devrait être vide mais l'impediment existe toujours
--        $this->assertEmpty($service->getFilters());
--        $this->assertEmpty($service->getData());
-+        $this->assertEmpty($impedimentService->getFilters());
-+        $this->assertEmpty($impedimentService->getData());
-
-         // L'impediment devrait toujours exister en base
-         $this->assertNotNull(ImpedimentModel::find($impediment->id));
+             // Vérifie que si start est un jour permis, end ne dépasse pas minuit du jour suivant
+             // (pour empêcher les événements qui traversent minuit)
+-            if (!$start->isSameDay($end) && $availabilityEndTime->format('H:i') === '00:00') {
+-                // Si la disponibilité finit à minuit, vérifier que l'événement ne traverse pas minuit
+-                if ($end->copy()->startOfDay()->gt($start->copy()->startOfDay())) {
+-                    $validationContext->setViolation(
+-                        'end_datetime',
+-                        'Events cannot span across midnight when availability ends at 00:00'
+-                    );
+-                }
++            // Si la disponibilité finit à minuit, vérifier que l'événement ne traverse pas minuit
++            if (!$start->isSameDay($end) && $availabilityEndTime->format('H:i') === '00:00' && $end->copy()->startOfDay()->gt($start->copy()->startOfDay())) {
++                $validationContext->setViolation(
++                    'end_datetime',
++                    'Events cannot span across midnight when availability ends at 00:00'
++                );
+             }
+         }
+     }
     ----------- end diff -----------
 
 Applied rules:
- * NewlineBetweenClassLikeStmtsRector
- * PostIncDecToPreIncDecRector
+ * FlipTypeControlToUseExclusiveTypeRector
+ * CombineIfRector
+ * NewlineAfterStatementRector
  * RemoveUnusedVariableAssignRector
+ * RemoveUnusedPrivateMethodParameterRector
  * RenameVariableToMatchMethodCallReturnTypeRector
- * RenamePropertyToMatchTypeRector
- * AssertEmptyNullableObjectToAssertInstanceofRector
 
 
-17) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Services/ScheduleServiceTest.php:12
+11) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Integration/Traits/BelongsToSchedulableTest.php:7
 
     ---------- begin diff ----------
 @@ @@
- use Roster\Facades\Availability;
- use Roster\Facades\Impediment;
- use Roster\Facades\Schedule;
--use Roster\Models\Availability as AvailabilityModel;
- use Roster\Models\Schedule as ScheduleModel;
  use Roster\Validation\Exceptions\ValidationFailedException;
- use Tests\TestCase;
-@@ @@
-     use RefreshDatabase;
-
-     private TestSchedulable $testSchedulable;
--    private AvailabilityModel $availability;
-
-     protected function setUp(): void
-     {
-@@ @@
-             ->find($scheduleForSchedulable2->id);
-
-         // Assert - Ne devrait pas trouver car ce schedule n'appartient pas au bon schedulable
--        $this->assertNull($found);
-+        $this->assertNotInstanceOf(\Roster\Models\Schedule::class, $found);
-     }
-
-     public function test_all_schedules(): void
-@@ @@
-         ]);
-
-         // Créer un schedule
--        $schedule1 = Schedule::for($this->testSchedulable)
-+        Schedule::for($this->testSchedulable)
-             ->owner($availability)
-             ->create([
-                 'title' => 'Première réunion',
+ use Illuminate\Foundation\Testing\RefreshDatabase;
+ use Roster\Exceptions\ForbiddenModelMutationException;
+-use Roster\Exceptions\InvalidServiceContextException;
+ use Roster\Facades\Availability;
+ use Roster\Facades\Schedule;
+ use Roster\Facades\Impediment;
     ----------- end diff -----------
 
 Applied rules:
- * RemoveUnusedVariableAssignRector
- * RenamePropertyToMatchTypeRector
- * NarrowUnusedSetUpDefinedPropertyRector
- * AssertEmptyNullableObjectToAssertInstanceofRector
 
 
-18) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Validation/Rules/DateRangeRulesTest.php:13
+12) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Domain/RepositoryMutationTest.php:17
 
     ---------- begin diff ----------
 @@ @@
- use Roster\Validation\Rules\TimeSlotDateTimeRule;
- use Tests\Support\TestSchedulable;
+ use Roster\Exceptions\MissingOwnerException;
+ use Roster\Exceptions\MissingSchedulableException;
  use Tests\TestCase;
--use Roster\Facades\Availability as AvailabilityFacade;
- use Roster\Support\RosterMutationContext;
+-use Illuminate\Support\Carbon;
 
- final class DateRangeRulesTest extends TestCase
+ final class RepositoryMutationTest extends TestCase
  {
-     private AvailabilityDateRangeRule $availabilityDateRangeRule;
-+
-     private TimeSlotDateTimeRule $timeSlotDateTimeRule;
-+
-     private TestSchedulable $testSchedulable;
-
-     protected function setUp(): void
     ----------- end diff -----------
 
 Applied rules:
- * NewlineBetweenClassLikeStmtsRector
 
 
- [OK] 18 files would have been changed (dry-run) by Rector                                                              
+ [OK] 12 files would have been changed (dry-run) by Rector                                                              
 
