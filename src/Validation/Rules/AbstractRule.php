@@ -82,12 +82,12 @@ abstract class AbstractRule implements RuleInterface
 
     protected function shouldValidateFutureDates(): bool
     {
-        return config('roster.validate_future_dates.enabled', true);
+        return true;
     }
 
     protected function allowPastDates(): bool
     {
-        return config('roster.validation.allow_past_dates', false);
+        return false;
     }
 
     protected function getDefaultTimezone(): string

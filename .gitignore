@@ -31,6 +31,7 @@ composer.lock
 erl_crash.dump
 diff.txt
 all.txt
+*.php.bak
 
 # Ignore build artifacts
 #art/
@@ -40,5 +41,7 @@ all.txt
 
 # Optional: ignore Rector generated cache
 rector.php.cache
+calendar.sh
+erl_crash.dump
 
 # Routes, config, src, tests, etc. are versioned, so no need to ignore

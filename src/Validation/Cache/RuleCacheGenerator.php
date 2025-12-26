@@ -54,7 +54,7 @@ class RuleCacheGenerator
         }
 
         // Vérifier si le fichier a été généré il y a moins de X heures
-        $maxAge = config('roster.cache_max_age_hours', 24);
+        $maxAge = config('roster.cache.cache_max_age_hours', 24);
         return (Carbon::now()
             ->getTimestamp() - filemtime($this->cachePath)) < ($maxAge * 3600);
     }

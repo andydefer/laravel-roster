@@ -67,7 +67,7 @@ return new class extends Migration
         match ($driver) {
             'mysql' => $this->addMysqlConstraints(),
             'pgsql' => $this->addPgsqlConstraints(),
-            'sqlite' => null, // SQLite doesn't support advanced check constraints
+            'sqlite' => null,
             default => null,
         };
     }

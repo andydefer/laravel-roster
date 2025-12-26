@@ -34,7 +34,7 @@ class RuleScanner
     ) {
         $this->ruleDirectories = $ruleDirectories;
         $this->useCacheFile = $useCacheFile;
-        $this->cacheFile = config('roster.cache_file');
+        $this->cacheFile = config('roster.cache.cache_file');
     }
 
     public function scan(): array

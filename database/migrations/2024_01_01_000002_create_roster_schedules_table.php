@@ -8,10 +8,10 @@ use Illuminate\Support\Facades\Schema;
 use Roster\Enums\ScheduleStatus;
 
 /**
- * Creates the roster_schedules table for storing concrete scheduled events.
+ * Migration for creating the roster_schedules table.
  *
- * This table stores actual bookings (appointments, meetings, etc.) linked
- * to availability rules, including their statuses and metadata.
+ * This table stores concrete scheduled events (appointments, meetings, etc.)
+ * linked to availability rules with their statuses and metadata.
  */
 return new class extends Migration
 {
@@ -22,20 +22,20 @@ return new class extends Migration
     {
         Schema::create('roster_schedules', function (Blueprint $table): void {
             $table->id();
+
             $table->foreignId('availability_id')
                 ->constrained('roster_availabilities')
                 ->onDelete('cascade');
-            $table->morphs('schedulable');
 
-            $table->string('title')->comment('Title of the scheduled event');
-            $table->text('description')->nullable()->comment('Optional description');
-            $table->dateTime('start_datetime')->comment('Start of the scheduled event');
-            $table->dateTime('end_datetime')->comment('End of the scheduled event');
-            $table->json('metadata')->nullable()->comment('Optional additional information');
+            $table->morphs('schedulable');
+            $table->string('title');
+            $table->text('description')->nullable();
+            $table->dateTime('start_datetime');
+            $table->dateTime('end_datetime');
+            $table->json('metadata')->nullable();
 
             $table->enum('status', ScheduleStatus::values())
-                ->default(ScheduleStatus::AVAILABLE->value)
-                ->comment('Current status of the event');
+                ->default(ScheduleStatus::AVAILABLE->value);
 
             $table->timestamps();
 
@@ -46,7 +46,7 @@ return new class extends Migration
     }
 
     /**
-     * Drops the roster_schedules table.
+     * Reverts the migration by dropping the roster_schedules table.
      */
     public function down(): void
     {

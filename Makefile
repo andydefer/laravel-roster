@@ -28,8 +28,8 @@ IGNORED_FILES = CHANGED_FILES.md FILES_CHECKLIST.md psalm.md phpstan.md pint-tes
 
 .PHONY: enable-cache
 enable-cache:
-	@echo "Activation automatique de 'with_cache = true' dans roster-validation.php..."
-	@sed -i.bak -E "s/('with_cache'\s*=>\s*)false/\1true/" config/roster-validation.php
+	@echo "Activation automatique de 'with_cache = true' dans roster.php..."
+	@sed -i.bak -E "s/('with_cache'\s*=>\s*)false/\1true/" config/roster.php
 	@echo "'with_cache' activé ✅"
 
 .PHONY: pre-commit

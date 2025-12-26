@@ -1,12 +1,12 @@
 # Pint Formatting Test Report
-*Generated: ven. 26 déc. 2025 15:09:40 WAT*
+*Generated: ven. 26 déc. 2025 16:02:38 WAT*
 
 
-  ..⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯..⨯⨯⨯⨯⨯⨯⨯...⨯⨯⨯⨯.⨯⨯⨯⨯.⨯⨯.⨯⨯⨯⨯⨯..⨯.....⨯⨯⨯⨯⨯.⨯⨯⨯⨯⨯......⨯....⨯⨯.......⨯......⨯....⨯⨯⨯⨯⨯.........⨯......⨯⨯⨯⨯⨯..⨯......⨯.....⨯....
+  ..⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯..⨯⨯⨯⨯⨯⨯⨯...⨯⨯⨯⨯.⨯⨯⨯⨯.⨯⨯.⨯⨯⨯⨯⨯..⨯.....⨯⨯⨯⨯⨯.⨯⨯⨯⨯⨯......⨯....⨯.......⨯......⨯....⨯⨯⨯⨯⨯.........⨯......⨯⨯⨯⨯⨯..⨯......⨯.....⨯..⨯.
 
   ──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────── Laravel  
-    FAIL   ................................................................................................................................................ 154 files, 77 style issues  
-  ⨯ config/roster-validation.php                                                                                                                                  no_extra_blank_lines  
+    FAIL   ................................................................................................................................................ 153 files, 77 style issues  
+  ⨯ database/migrations/2024_01_01_000001_create_roster_availabilities_table.php         class_definition, no_superfluous_phpdoc_tags, braces_position, phpdoc_trim, no_unused_imports  
   ⨯ src/Commands/CacheRulesCommand.php       increment_style, single_quote, blank_line_after_opening_tag, concat_space, not_operator_with_successor_space, blank_line_before_statement  
   ⨯ src/Commands/InstallRosterCommand.php                                                        unary_operator_spaces, not_operator_with_successor_space, blank_line_before_statement  
   ⨯ src/Contracts/EntityServiceInterface.php                                                                                                        no_extra_blank_lines, phpdoc_align  
