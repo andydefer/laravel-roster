@@ -46,12 +46,12 @@ interface AvailabilityRepositoryInterface extends RepositoryInterface
     /**
      * Get all availabilities for a specific date.
      *
-     * @param Model $model The schedulable resource model
+     * @param Model $schedulable The schedulable resource model
      * @param Carbon $date The date to check
      * @param string|null $type Optional availability type filter
      * @return Collection<int, Availability> Collection of availabilities for the date
      */
-    public function getForDate(Model $model, Carbon $date, ?string $type = null): Collection;
+    public function getForDate(Model $schedulable, Carbon $date, ?string $type = null): Collection;
 
     /**
      * Check if an availability is valid for a specific date.

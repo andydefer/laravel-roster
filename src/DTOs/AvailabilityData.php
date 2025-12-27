@@ -6,8 +6,10 @@ namespace Roster\DTOs;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Carbon;
+use Roster\Domain\Helpers\TimeSlotHelper;
 use Roster\Enums\DaysOfWeek;
 use Roster\Models\Availability;
+use Roster\Support\RosterMutationContext;
 
 /**
  * Data Transfer Object for availability information.
@@ -17,6 +19,8 @@ use Roster\Models\Availability;
  */
 class AvailabilityData extends AbstractData
 {
+    private ?Availability $existingEntity = null;
+
     /**
      * @param int|null $id Unique identifier of the availability
      * @param string|null $type Type/category of the availability
@@ -28,7 +32,7 @@ class AvailabilityData extends AbstractData
      * @param int|null $schedulableId ID of the associated schedulable entity
      * @param string|null $schedulableType Type of the associated schedulable entity
      */
-    public function __construct(
+    private function __construct(
         public readonly ?int $id,
         public readonly ?string $type = null,
         public readonly ?array $days = null,
@@ -38,7 +42,12 @@ class AvailabilityData extends AbstractData
         public readonly ?Carbon $dailyEnd = null,
         public readonly ?int $schedulableId = null,
         public readonly ?string $schedulableType = null
-    ) {}
+    ) {
+        // Si c'est une mise à jour (avec ID), on charge l'entité existante
+        if ($this->id !== null) {
+            $this->loadExistingEntity();
+        }
+    }
 
     /**
      * Creates an AvailabilityData instance from raw array data.
@@ -93,16 +102,19 @@ class AvailabilityData extends AbstractData
     }
 
     /**
-     * Get the array data for this DTO.
+     * Get the array data for this DTO with adjusted days if needed.
      *
      * @return array<string, mixed> Raw array data
      */
     protected function getArrayData(): array
     {
+        // On ajuste automatiquement les jours
+        $adjustedDays = $this->getAdjustedDays();
+
         return [
             'id' => $this->id,
             'type' => $this->type,
-            'days' => $this->days,
+            'days' => $adjustedDays,
             'validity_start' => $this->validityStart?->format('Y-m-d H:i:s'),
             'validity_end' => $this->validityEnd?->format('Y-m-d H:i:s'),
             'daily_start' => $this->dailyStart?->format('H:i:s'),
@@ -126,23 +138,51 @@ class AvailabilityData extends AbstractData
         return static::fromArray($data);
     }
 
+    /**
+     * Get the adjusted days using TimeSlotHelper.
+     *
+     * @return array<int, string> Array of valid days
+     */
+    private function getAdjustedDays(): array
+    {
+        // Déterminer si c'est une mise à jour (entité existante chargée)
+        $isUpdate = $this->existingEntity !== null;
+
+        // Récupérer les données existantes si disponible
+        $existingDays = $this->existingEntity?->days;
+        $existingValidityStart = $this->existingEntity?->validity_start;
+        $existingValidityEnd = $this->existingEntity?->validity_end;
+
+        // Utiliser TimeSlotHelper pour le calcul des jours ajustés
+        return TimeSlotHelper::getAdjustedDays(
+            requestedDays: $this->days,
+            validityStart: $this->validityStart,
+            validityEnd: $this->validityEnd,
+            existingDays: $existingDays,
+            existingValidityStart: $existingValidityStart,
+            existingValidityEnd: $existingValidityEnd,
+            isUpdate: $isUpdate
+        );
+    }
 
     /**
-     * Determines appropriate days based on validity period with automatic adjustment.
-     *
-     * @return array<int, string> Array of valid days for the current validity period
+     * Load the existing entity if this is an update operation.
+     * Utilise RosterMutationContext pour respecter les règles d'accès.
      */
-    public function getAutoAdjustedDays(): array
+    private function loadExistingEntity(): void
     {
-        if ($this->days !== null) {
-            return $this->days;
+        if (!$this->id) {
+            return;
         }
 
-        if (!$this->shouldAutoAdjustDays()) {
-            return DaysOfWeek::values();
+        try {
+            // Utiliser le contexte de mutation pour charger l'entité
+            $this->existingEntity = RosterMutationContext::allow(function () {
+                return Availability::find($this->id);
+            });
+        } catch (\Exception) {
+            $this->existingEntity = null;
         }
-
-        return roster_days_in_period($this->validityStart, $this->validityEnd);
     }
 
     /**
@@ -178,13 +218,22 @@ class AvailabilityData extends AbstractData
     }
 
     /**
-     * Determine if automatic day adjustment should be performed.
+     * Check if this DTO represents an update operation.
      *
-     * @return bool True if days should be auto-adjusted
+     * @return bool True if this is an update (has ID and existing entity was found)
      */
-    private function shouldAutoAdjustDays(): bool
+    public function isUpdateOperation(): bool
     {
-        return $this->hasValidDateRange()
-            && roster_should_auto_adjust_days($this->validityStart, $this->validityEnd);
+        return $this->existingEntity !== null;
+    }
+
+    /**
+     * Get the existing entity if this is an update operation.
+     *
+     * @return Availability|null The existing entity or null
+     */
+    public function getExistingEntity(): ?Availability
+    {
+        return $this->existingEntity;
     }
 }

@@ -261,11 +261,14 @@ class ValidationContext implements ValidationContextInterface
     {
         $data = $this->safeData();
 
+
         if (array_key_exists($key, $data)) {
             return $data[$key];
         }
 
         if ($this->operationType === OperationType::UPDATE && $this->currentEntity instanceof Model) {
+
+
             if (property_exists($this->currentEntity, $key)) {
                 return $this->currentEntity->{$key};
             }

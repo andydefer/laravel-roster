@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Roster\Services;
 
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
-use Illuminate\Database\Eloquent\Model;
 use Roster\Domain\Helpers\TimeSlotHelper;
 use Roster\Domain\Helpers\TimeWindowHelper;
 use Roster\DTOs\ImpedimentData;
@@ -17,30 +17,18 @@ use Roster\Services\Core\AbstractService;
 use Roster\Validation\Exceptions\ValidationFailedException;
 
 /**
- * Service responsible for managing impediments and their interactions with schedules.
+ * Service for managing Impediment entities and their interactions with schedules.
  *
  * Handles creation, validation, conflict detection, and time slot availability
  * calculations involving impediments within availability periods.
  */
 class ImpedimentService extends AbstractService
 {
-    /**
-     * Creates an ImpedimentData DTO from the provided array.
-     *
-     * @param array $data Raw data for the impediment
-     * @param OperationType $operationType The operation being performed
-     *
-     * @return ImpedimentData The created DTO
-     */
-    protected function createDTOFromArray(array $data, OperationType $operationType): ImpedimentData
-    {
-        return ImpedimentData::fromArray($data);
-    }
 
     /**
-     * Returns the entity type enum for impediments.
+     * Returns the entity type for this service.
      *
-     * @return EntityType The impediment entity type
+     * @return EntityType Impediment entity type
      */
     protected function getEntityTypeEnum(): EntityType
     {
@@ -50,9 +38,8 @@ class ImpedimentService extends AbstractService
     /**
      * Checks for scheduling conflicts before creating or updating an impediment.
      *
-     * @param mixed $dto The impediment data transfer object
+     * @param mixed $dto Impediment data transfer object
      * @param int|null $excludeId Impediment ID to exclude from conflict checks
-     *
      * @throws ValidationFailedException When conflicts are detected
      */
     protected function checkEntityConflicts(mixed $dto, ?int $excludeId = null): void
@@ -89,8 +76,7 @@ class ImpedimentService extends AbstractService
      * @param Carbon $start Start time of the slot
      * @param Carbon $end End time of the slot
      * @param string|null $type Optional availability type filter
-     *
-     * @return bool True if the time slot is blocked by an impediment
+     * @return bool True if the time slot is blocked
      */
     public function isTimeSlotBlocked(Carbon $start, Carbon $end, ?string $type = null): bool
     {
@@ -120,8 +106,7 @@ class ImpedimentService extends AbstractService
      * @param Carbon $start Start of the time range to check
      * @param Carbon $end End of the time range to check
      * @param string|null $type Optional availability type filter
-     *
-     * @return Collection<array> Collection of available time slots
+     * @return Collection<array> Available time slots
      */
     public function getAvailableTimeSlots(Carbon $start, Carbon $end, ?string $type = null): Collection
     {
@@ -148,11 +133,10 @@ class ImpedimentService extends AbstractService
     /**
      * Checks if an impediment would overlap with any existing schedule.
      *
-     * @param int $availabilityId ID of the availability
-     * @param Carbon $start Start time of the proposed impediment
-     * @param Carbon $end End time of the proposed impediment
+     * @param int $availabilityId Availability identifier
+     * @param Carbon $start Start time of proposed impediment
+     * @param Carbon $end End time of proposed impediment
      * @param int|null $exceptImpedimentId Impediment ID to exclude from check
-     *
      * @return bool True if overlapping with a schedule
      */
     public function wouldOverlapWithSchedule(int $availabilityId, Carbon $start, Carbon $end, ?int $exceptImpedimentId = null): bool
@@ -169,11 +153,10 @@ class ImpedimentService extends AbstractService
     /**
      * Checks if an impediment would overlap with any other impediment.
      *
-     * @param int $availabilityId ID of the availability
-     * @param Carbon $start Start time of the proposed impediment
-     * @param Carbon $end End time of the proposed impediment
+     * @param int $availabilityId Availability identifier
+     * @param Carbon $start Start time of proposed impediment
+     * @param Carbon $end End time of proposed impediment
      * @param int|null $exceptImpedimentId Impediment ID to exclude from check
-     *
      * @return bool True if overlapping with another impediment
      */
     public function wouldOverlapWithOtherImpediment(int $availabilityId, Carbon $start, Carbon $end, ?int $exceptImpedimentId = null): bool
@@ -191,10 +174,9 @@ class ImpedimentService extends AbstractService
     /**
      * Finds impediments within a specific time slot.
      *
-     * @param int $availabilityId ID of the availability
+     * @param int $availabilityId Availability identifier
      * @param Carbon $start Start time of the slot
      * @param Carbon $end End time of the slot
-     *
      * @return Collection Impediments within the specified time slot
      */
     public function findForTimeSlot(int $availabilityId, Carbon $start, Carbon $end): Collection
@@ -211,11 +193,10 @@ class ImpedimentService extends AbstractService
     /**
      * Finds impediments that overlap with a given time range.
      *
-     * @param int $availabilityId ID of the availability
+     * @param int $availabilityId Availability identifier
      * @param Carbon $start Start time of the range
      * @param Carbon $end End time of the range
      * @param int|null $excludeId Impediment ID to exclude from results
-     *
      * @return Collection Overlapping impediments
      */
     public function findOverlappingImpediments(int $availabilityId, Carbon $start, Carbon $end, ?int $excludeId = null): Collection
@@ -240,9 +221,8 @@ class ImpedimentService extends AbstractService
     /**
      * Retrieves future impediments for an availability starting from a given date.
      *
-     * @param int $availabilityId ID of the availability
+     * @param int $availabilityId Availability identifier
      * @param Carbon $from Start date for filtering future impediments
-     *
      * @return Collection Future impediments
      */
     public function getFutureImpediments(int $availabilityId, Carbon $from): Collection
@@ -254,13 +234,12 @@ class ImpedimentService extends AbstractService
     }
 
     /**
-     * Checks if a time slot has any scheduling conflict (schedule or impediment).
+     * Checks if a time slot has any scheduling conflict.
      *
-     * @param int $availabilityId ID of the availability
+     * @param int $availabilityId Availability identifier
      * @param Carbon $start Start time of the slot
      * @param Carbon $end End time of the slot
      * @param int|null $excludeImpedimentId Impediment ID to exclude from check
-     *
      * @return bool True if any conflict exists
      */
     public function hasAnyConflict(int $availabilityId, Carbon $start, Carbon $end, ?int $excludeImpedimentId = null): bool
@@ -276,12 +255,11 @@ class ImpedimentService extends AbstractService
     }
 
     /**
-     * Retrieves all blocked periods (impediments) for an availability within a time range.
+     * Retrieves all blocked periods for an availability within a time range.
      *
-     * @param int $availabilityId ID of the availability
+     * @param int $availabilityId Availability identifier
      * @param Carbon $start Start time of the range
      * @param Carbon $end End time of the range
-     *
      * @return Collection<array> Blocked periods with metadata
      */
     public function getBlockedPeriods(int $availabilityId, Carbon $start, Carbon $end): Collection
@@ -307,10 +285,9 @@ class ImpedimentService extends AbstractService
     /**
      * Handles conflicts by throwing appropriate validation exceptions.
      *
-     * @param object $conflictResult Result from conflict checking
+     * @param object $conflictResult Conflict checking result
      * @param int|null $excludeId ID to exclude from conflict checks
-     * @param OperationType $operationType The operation being performed
-     *
+     * @param OperationType $operationType Operation being performed
      * @throws ValidationFailedException With appropriate conflict message
      */
     private function handleConflictingEntity(object $conflictResult, ?int $excludeId, OperationType $operationType): void
@@ -333,9 +310,8 @@ class ImpedimentService extends AbstractService
     /**
      * Throws a validation exception for schedule conflicts.
      *
-     * @param object $conflictingSchedule The conflicting schedule
-     * @param OperationType $operationType The operation being performed
-     *
+     * @param object $conflictingSchedule Conflicting schedule
+     * @param OperationType $operationType Operation being performed
      * @throws ValidationFailedException With schedule conflict message
      */
     private function throwScheduleConflictException(object $conflictingSchedule, OperationType $operationType): void
@@ -356,9 +332,8 @@ class ImpedimentService extends AbstractService
     /**
      * Throws a validation exception for impediment conflicts.
      *
-     * @param object $conflictingImpediment The conflicting impediment
-     * @param OperationType $operationType The operation being performed
-     *
+     * @param object $conflictingImpediment Conflicting impediment
+     * @param OperationType $operationType Operation being performed
      * @throws ValidationFailedException With impediment conflict message
      */
     private function throwImpedimentConflictException(object $conflictingImpediment, OperationType $operationType): void

@@ -172,25 +172,88 @@ class TimeSlotHelper
         return $firstTime->gt($secondTime) ? $firstTime : $secondTime;
     }
 
-
     /**
-     * Determine the auto-adjusted days based on existing days and validity period.
+     * Unified method to determine adjusted days for both create and update operations.
      *
-     * @param array<string>|null $days Explicitly provided days, if any
-     * @param Carbon|null $validityStart Start of the validity period
-     * @param Carbon|null $validityEnd End of the validity period
+     * @param array<int, string>|null $requestedDays Days from the request (DTO)
+     * @param Carbon|null $validityStart Validity start date
+     * @param Carbon|null $validityEnd Validity end date
+     * @param array<int, string>|null $existingDays Existing days from entity (for update operations)
+     * @param Carbon|null $existingValidityStart Existing validity start (for update operations)
+     * @param Carbon|null $existingValidityEnd Existing validity end (for update operations)
+     * @param bool $isUpdate Whether this is an update operation
      * @return array<int, string> Adjusted days
      */
-    public static function getAutoAdjustedDays(?array $days, ?Carbon $validityStart, ?Carbon $validityEnd): array
-    {
+    public static function getAdjustedDays(
+        ?array $requestedDays,
+        ?Carbon $validityStart,
+        ?Carbon $validityEnd,
+        ?array $existingDays = null,
+        ?Carbon $existingValidityStart = null,
+        ?Carbon $existingValidityEnd = null,
+        bool $isUpdate = false
+    ): array {
+        // For CREATE operation
+        if (!$isUpdate) {
+            return self::getAutoAdjustedDays($requestedDays, $validityStart, $validityEnd);
+        }
 
+        // For UPDATE operation
+        // 1️⃣ If DTO already has days, keep them
+        if ($requestedDays !== null) {
+            return $requestedDays;
+        }
 
-        // Return all days if dates are invalid or auto-adjustment is disabled
-        if (!self::shouldAutoAdjustDays($validityStart, $validityEnd)) {
+        // 2️⃣ Determine effective validity range
+        $start = $validityStart ?? $existingValidityStart;
+        $end = $validityEnd ?? $existingValidityEnd;
+
+        // 3️⃣ Detect if dates changed
+        $datesChanged = $validityStart instanceof Carbon || $validityEnd instanceof Carbon;
+
+        // 4️⃣ If date range invalid or unchanged, return existing days
+        if (!$start instanceof Carbon || !$end instanceof Carbon || $start->gt($end) || !$datesChanged) {
+            return $existingDays ?? [];
+        }
+
+        // 5️⃣ Filter days based on new period
+        return roster_get_valid_days_in_period($existingDays ?? [], $start, $end);
+    }
+
+    /**
+     * Determine the auto-adjusted days based on provided days and validity period.
+     *
+     * Rules:
+     * - If days are explicitly provided, they are returned as-is
+     * - If validity dates are invalid or auto-adjustment is disabled, all days are returned
+     * - Otherwise, days are calculated from the validity period
+     *
+     * @param array<int, string>|null $days Explicitly provided days
+     * @param Carbon|null $validityStart Validity start date
+     * @param Carbon|null $validityEnd Validity end date
+     * @return array<int, string> Adjusted days
+     */
+    private static function getAutoAdjustedDays(
+        ?array $days,
+        ?Carbon $validityStart,
+        ?Carbon $validityEnd
+    ): array {
+        // 1️⃣ Explicit days always win
+        if ($days !== null) {
+            return $days;
+        }
+
+        // 2️⃣ Invalid range or auto-adjust disabled → all days
+        if (
+            !$validityStart instanceof Carbon ||
+            !$validityEnd instanceof Carbon ||
+            $validityStart->gt($validityEnd) ||
+            !roster_should_auto_adjust_days($validityStart, $validityEnd)
+        ) {
             return DaysOfWeek::values();
         }
 
-        // Otherwise, calculate days in period
+        // 3️⃣ Auto-adjust days from period
         return roster_days_in_period($validityStart, $validityEnd);
     }
 
@@ -203,49 +266,8 @@ class TimeSlotHelper
      */
     private static function shouldAutoAdjustDays(?Carbon $start, ?Carbon $end): bool
     {
-
         return $start instanceof Carbon
             && $end instanceof Carbon
             && roster_should_auto_adjust_days($start, $end);
-    }
-
-    /**
-     * Calculate the valid days after updating validity period.
-     *
-     * @param array<int, string> $existingDays Current days
-     * @param ?Carbon $existingValidityStart Current entity validity start
-     * @param ?Carbon $existingValidityEnd Current entity validity end
-     * @param ?array<int, string> $currentDays Current DTO days, if set
-     * @param ?Carbon $dtoValidityStart DTO validity start
-     * @param ?Carbon $dtoValidityEnd DTO validity end
-     * @return array<int, string> Adjusted days
-     */
-    public static function getFilteredDaysForUpdate(
-        array $existingDays,
-        ?Carbon $existingValidityStart,
-        ?Carbon $existingValidityEnd,
-        ?array $currentDays = null,
-        ?Carbon $dtoValidityStart = null,
-        ?Carbon $dtoValidityEnd = null
-    ): array {
-        // 1️⃣ If DTO already has days, keep them
-        if ($currentDays !== null) {
-            return $currentDays;
-        }
-
-        // 2️⃣ Determine effective validity range
-        $start = $dtoValidityStart ?? $existingValidityStart;
-        $end   = $dtoValidityEnd ?? $existingValidityEnd;
-
-        // 3️⃣ Detect if dates changed
-        $datesChanged = $dtoValidityStart instanceof Carbon || $dtoValidityEnd instanceof Carbon;
-
-        // 4️⃣ If date range invalid or unchanged, return existing days
-        if (!$start instanceof Carbon || !$end instanceof Carbon || $start->gt($end) || !$datesChanged) {
-            return $existingDays;
-        }
-
-        // 5️⃣ Filter days based on new period
-        return roster_get_valid_days_in_period($existingDays, $start, $end);
     }
 }

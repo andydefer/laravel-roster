@@ -21,29 +21,16 @@ class DaysValidationRule extends AbstractRule
     {
         $operationType = $validationContext->getOperation();
 
+        // Valider uniquement lors de la création
         if ($operationType === OperationType::CREATE) {
             $this->validateForCreate($validationContext);
-        } else {
-            $this->validateForUpdate($validationContext);
         }
     }
 
     private function validateForCreate(ValidationContextInterface $validationContext): void
     {
-        // Pour CREATE, on valide seulement si days est fourni
-        // Si non fourni, le DTO appliquera la valeur par défaut
+        // Si days n'est pas fourni, le DTO appliquera la valeur par défaut
         if (!$validationContext->has('days')) {
-            return; // Valeur par défaut sera appliquée par le DTO
-        }
-
-        $days = $validationContext->get('days');
-        $this->validateDaysArray($days, $validationContext);
-    }
-
-    private function validateForUpdate(ValidationContextInterface $validationContext): void
-    {
-        if (!$validationContext->has('days')) {
-            // Pour UPDATE, si days n'est pas fourni, on ne change rien
             return;
         }
 

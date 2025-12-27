@@ -26,7 +26,7 @@ class ImpedimentData extends AbstractData
      * @param int|null $schedulableId ID of the schedulable entity (e.g., User, Resource)
      * @param string|null $schedulableType Type of the schedulable entity (e.g., App\Models\User)
      */
-    public function __construct(
+    private function __construct(
         public readonly ?int $id,
         public readonly ?int $availabilityId = null,
         public readonly ?Carbon $startDatetime = null,

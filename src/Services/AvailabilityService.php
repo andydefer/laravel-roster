@@ -4,60 +4,33 @@ declare(strict_types=1);
 
 namespace Roster\Services;
 
-use Roster\Domain\Helpers\TimeSlotHelper;
-use Roster\Validation\Exceptions\ValidationFailedException;
 use Roster\DTOs\AvailabilityData;
 use Roster\Enums\EntityType;
 use Roster\Enums\OperationType;
 use Roster\Models\Availability;
 use Roster\Services\Core\AbstractService;
+use Roster\Validation\Exceptions\ValidationFailedException;
 
+/**
+ * Service for managing Availability entities.
+ *
+ * Handles creation, updating, and validation of availability periods
+ * with automatic day adjustment based on validity periods.
+ */
 class AvailabilityService extends AbstractService
 {
+    /**
+     * Entity awaiting deletion (for cascade operations).
+     */
     protected ?Availability $pendingDeletion = null;
 
-
-    protected function createDTOFromArray(array $data, OperationType $operationType): AvailabilityData
-    {
-        $dto = AvailabilityData::fromArray($data);
-
-        // Handle days automatically
-        if ($operationType === OperationType::CREATE) {
-            $adjustedDays = $dto->getAutoAdjustedDays();
-            $dto = $dto->withDays($adjustedDays);
-        } elseif ($operationType === OperationType::UPDATE && isset($data['id'])) {
-            $entity = $this->find($data['id']);
-            if ($entity instanceof Availability) {
-                if (array_key_exists('days', $data)) {
-                    $dto = $dto->withDays($data['days']);
-                } else {
-                    $adjustedDays = TimeSlotHelper::getFilteredDaysForUpdate(
-                        $entity->days,
-                        $entity->validity_start,
-                        $entity->validity_end,
-                        $dto->days,
-                        $dto->validityStart,
-                        $dto->validityEnd
-                    );
-
-                    $dto = $dto->withDays($adjustedDays);
-                }
-            }
-        }
-
-
-        return $dto;
-    }
-
-
-    protected function getEntityTypeEnum(): EntityType
-    {
-        return EntityType::AVAILABILITY;
-    }
-
-
-
-    // Override create to add auto-adjusted days
+    /**
+     * Creates a new availability with automatic schedulable context.
+     *
+     * @param array $data Availability data
+     * @return mixed Created availability entity
+     * @throws ValidationFailedException If validation fails
+     */
     public function create(array $data = []): mixed
     {
         $this->requireContext();
@@ -70,26 +43,58 @@ class AvailabilityService extends AbstractService
         return parent::create($data);
     }
 
-    // Override update to handle days properly
+    /**
+     * Updates an existing availability.
+     *
+     * @param int $id Availability identifier
+     * @param array $data Update data
+     * @return bool True if update successful
+     * @throws ValidationFailedException If validation fails or entity not found
+     */
     public function update(int $id, array $data): bool
     {
         $entity = $this->find($id);
-        if (!$entity instanceof Availability) {
-            throw ValidationFailedException::fromViolations(
-                [
-                    'id' => sprintf(
-                        '%s with given ID does not exist',
-                        EntityType::AVAILABILITY->displayName()
-                    ),
-                ],
-                OperationType::UPDATE,
-                EntityType::AVAILABILITY
-            );
-        }
+        $this->assertAvailabilityExists($entity, OperationType::UPDATE);
 
         $this->data = $data;
         $data['id'] = $id;
 
         return parent::update($id, $data);
+    }
+
+    /**
+     * Returns the entity type for this service.
+     *
+     * @return EntityType Availability entity type
+     */
+    protected function getEntityTypeEnum(): EntityType
+    {
+        return EntityType::AVAILABILITY;
+    }
+
+    /**
+     * Validates that an availability entity exists.
+     *
+     * @param mixed $entity Entity to validate
+     * @param OperationType $operationType Current operation
+     * @return Availability Validated availability entity
+     * @throws ValidationFailedException If entity does not exist
+     */
+    protected function assertAvailabilityExists(mixed $entity, OperationType $operationType): Availability
+    {
+        if ($entity instanceof Availability) {
+            return $entity;
+        }
+
+        throw ValidationFailedException::fromViolations(
+            [
+                'id' => sprintf(
+                    '%s with given ID does not exist',
+                    EntityType::AVAILABILITY->displayName()
+                ),
+            ],
+            $operationType,
+            EntityType::AVAILABILITY
+        );
     }
 }

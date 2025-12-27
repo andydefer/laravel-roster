@@ -292,23 +292,6 @@ class TemporalConflictService
         });
     }
 
-    /**
-     * Check if a time slot has overlapping impediments (compatibility method).
-     *
-     * @param int $availabilityId The availability to check within
-     * @param Carbon $start Start of the time slot
-     * @param Carbon $end End of the time slot
-     * @param int|null $excludeId Impediment ID to exclude from conflict check
-     * @return bool True if overlapping impediments exist
-     */
-    public function hasOverlappingImpediments(
-        int $availabilityId,
-        Carbon $start,
-        Carbon $end,
-        ?int $excludeId = null
-    ): bool {
-        return $this->checkImpedimentConflicts($availabilityId, $start, $end, $excludeId)->hasConflicts;
-    }
 
     /**
      * Apply date overlap filter to query builder.
