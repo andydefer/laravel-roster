@@ -80,8 +80,11 @@ abstract class AbstractService implements ServiceInterface
         // Create DTO
         $dto = $this->createDTOFromArray($this->data, OperationType::CREATE);
 
+
+
         // Add schedulable info to DTO
-        $dto = $this->addSchedulableInfoToDto($dto);
+
+
 
         // Validate
         $this->validate($dto->toArray(), OperationType::CREATE);
@@ -91,6 +94,8 @@ abstract class AbstractService implements ServiceInterface
 
         // Update data with complete DTO
         $this->data = $dto->toArray();
+
+
 
         // Create entity using repository
         $model = $this->getCurrentRepository()->create(
@@ -277,20 +282,6 @@ abstract class AbstractService implements ServiceInterface
      */
     abstract protected function getEntityTypeEnum(): EntityType;
 
-    /**
-     * Add schedulable info to DTO.
-     */
-    protected function addSchedulableInfoToDto(mixed $dto): mixed
-    {
-        if (method_exists($dto, 'withSchedulableInfo')) {
-            return $dto->withSchedulableInfo(
-                $this->schedulable->id,
-                get_class($this->schedulable)
-            );
-        }
-
-        return $dto;
-    }
 
     /**
      * Check entity conflicts.

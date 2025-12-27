@@ -4,94 +4,94 @@
 
   ..⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯...⨯.⨯⨯⨯..⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯..⨯....⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯.....⨯...⨯⨯⨯⨯.............⨯....⨯⨯⨯.........⨯......⨯⨯...⨯......⨯.....⨯....
 
-  ──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────── Laravel  
-    FAIL   ................................................................................................................................................ 144 files, 72 style issues  
-  ⨯ config/roster-validation.php                                                                                                                                  no_extra_blank_lines  
+  ──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────── Laravel
+    FAIL   ................................................................................................................................................ 144 files, 72 style issues
+  ⨯ config/roster-validation.php                                                                                                                                  no_extra_blank_lines
   @@ -75,6 +75,4 @@
            'always_cache_in_production' => true,
        ],
-   
+
   -
   -
    ];
-  
-  ⨯ config/roster.php                                                                                                                                             no_extra_blank_lines  
+
+  ⨯ config/roster.php                                                                                                                                             no_extra_blank_lines
   @@ -24,7 +24,6 @@
            'validation_field' => 'start_datetime',
        ],
-   
+
   -
        // Duration constraints
        'durations' => [
            // Minimum durations in minutes
   @@ -112,6 +111,5 @@
-   
+
            'use_tags' => env('ROSTER_CACHE_USE_TAGS', true),
        ],
   -
-   
+
    ];
-  
-  ⨯ src/Commands/CacheRulesCommand.php                        single_quote, blank_line_after_opening_tag, concat_space, not_operator_with_successor_space, blank_line_before_statement  
+
+  ⨯ src/Commands/CacheRulesCommand.php                        single_quote, blank_line_after_opening_tag, concat_space, not_operator_with_successor_space, blank_line_before_statement
   @@ -1,4 +1,5 @@
    <?php
   +
    // src/Commands/CacheRulesCommand.php
-   
+
    declare(strict_types=1);
   @@ -41,7 +42,7 @@
-   
+
            if ($generator->generate()) {
                $duration = round((microtime(true) - $start) * 1000, 2);
   -            $this->info("✅ Cache generated successfully at: " . $generator->getCachePath());
   +            $this->info('✅ Cache generated successfully at: '.$generator->getCachePath());
                $this->info("⏱️  Duration: {$duration}ms");
-   
+
                // Afficher des stats
   @@ -51,6 +52,7 @@
            }
-   
+
            $this->error('Failed to generate cache');
   +
            return self::FAILURE;
        }
-   
+
   @@ -68,6 +70,7 @@
            }
-   
+
            $this->error('Failed to clear cache');
   +
            return self::FAILURE;
        }
-   
+
   @@ -75,19 +78,19 @@
        {
            $cacheFile = $generator->getCachePath();
-   
+
   -        if (!file_exists($cacheFile)) {
   -            $this->warn('Cache file does not exist: ' . $cacheFile);
   +        if (! file_exists($cacheFile)) {
   +            $this->warn('Cache file does not exist: '.$cacheFile);
                $this->info('Generating cache automatically...');
-   
+
                // Générer le cache automatiquement
                $generator->generate();
-   
+
   -            $this->info("✅ Cache generated successfully at: " . $cacheFile);
   +            $this->info('✅ Cache generated successfully at: '.$cacheFile);
            }
-   
+
            // Maintenant on est sûr que le fichier existe, on peut l'afficher
            $rules = require $cacheFile;
   -        $this->info('Rules count: ' . count($rules));
   +        $this->info('Rules count: '.count($rules));
-   
+
            // Préparer les lignes du tableau avec index
            $rows = [];
   @@ -118,10 +121,10 @@
                $size = filesize($cacheFile);
                $rules = require $cacheFile;
-   
+
   -            $this->line("📊 Cache stats:");
   -            $this->line("   Size: " . $this->formatBytes($size));
   -            $this->line("   Rules: " . count($rules));
@@ -102,27 +102,27 @@
   +            $this->line('   Path: '.$cacheFile);
            }
        }
-   
+
   @@ -135,6 +138,6 @@
                $i++;
            }
-   
+
   -        return round($bytes, 2) . ' ' . $units[$i];
   +        return round($bytes, 2).' '.$units[$i];
        }
    }
-  
-  ⨯ src/Commands/InstallRosterCommand.php                                                        unary_operator_spaces, not_operator_with_successor_space, blank_line_before_statement  
+
+  ⨯ src/Commands/InstallRosterCommand.php                                                        unary_operator_spaces, not_operator_with_successor_space, blank_line_before_statement
   @@ -43,6 +43,7 @@
-   
+
                if (! $this->confirm('Continue?', true)) {
                    $this->info('Installation cancelled.');
   +
                    return self::SUCCESS;
                }
            }
-  
-  ⨯ src/Contracts/Repository/AvailabilityRepositoryInterface.php                                                                                                          phpdoc_align  
+
+  ⨯ src/Contracts/Repository/AvailabilityRepositoryInterface.php                                                                                                          phpdoc_align
   @@ -38,8 +38,8 @@
        /**
         * Find availabilities for a specific schedulable entity.
@@ -134,8 +134,8 @@
         * @return Collection<int, Availability> Collection of availabilities for the schedulable
         */
        public function findForSchedulable(Model $model, ?string $type = null): Collection;
-  
-  ⨯ src/Contracts/Repository/ImpedimentRepositoryInterface.php                                                                                                            phpdoc_align  
+
+  ⨯ src/Contracts/Repository/ImpedimentRepositoryInterface.php                                                                                                            phpdoc_align
   @@ -16,7 +16,7 @@
        /**
         * Create a new impediment.
@@ -144,7 +144,7 @@
   +     * @param  array<string, mixed>  $data
         */
        public function create(array $data): Impediment;
-   
+
   @@ -23,7 +23,7 @@
        /**
         * Update an existing impediment.
@@ -153,7 +153,7 @@
   +     * @param  array<string, mixed>  $data
         */
        public function update(int $id, array $data): bool;
-   
+
   @@ -47,9 +47,9 @@
        /**
         * Find impediments for a specific time slot.
@@ -197,18 +197,18 @@
         * @return Collection<int, Impediment>
         */
        public function findOverlappingImpediments(
-  
-  ⨯ src/Contracts/Services/AvailabilityValidatorInterface.php                                                                                              class_attributes_separation  
+
+  ⨯ src/Contracts/Services/AvailabilityValidatorInterface.php                                                                                              class_attributes_separation
   @@ -19,7 +19,6 @@
         */
        public function validateBasicData(array $data): void;
-   
+
   -
        /**
         * Check if two time ranges overlap within a single day.
         *
-  
-  ⨯ src/Contracts/Services/ConfigurableInterface.php                                                                                         class_attributes_separation, phpdoc_align  
+
+  ⨯ src/Contracts/Services/ConfigurableInterface.php                                                                                         class_attributes_separation, phpdoc_align
   @@ -10,7 +10,6 @@
     */
    interface ConfigurableInterface
@@ -226,10 +226,10 @@
         * @return array<string> List of date/time field names
         */
        public function getDateTimeFields(string $entityType): array;
-  
-  ⨯ src/Contracts/Services/SlotFinderInterface.php                                                                                                         class_attributes_separation  
+
+  ⨯ src/Contracts/Services/SlotFinderInterface.php                                                                                                         class_attributes_separation
   @@ -10,7 +10,6 @@
-   
+
    interface SlotFinderInterface
    {
   -
@@ -241,14 +241,14 @@
            ?string $type = null
        ): bool;
   -
-   
+
        /**
         * Calculate available time slots between impediments.
-  
-  ⨯ src/DTOs/AvailabilityData.php class_attributes_separation, function_declaration, braces_position, cast_spaces, not_operator_with_successor_space, single_line_empty_body, phpdoc_a  
+
+  ⨯ src/DTOs/AvailabilityData.php class_attributes_separation, function_declaration, braces_position, cast_spaces, not_operator_with_successor_space, single_line_empty_body, phpdoc_a
   @@ -23,7 +23,7 @@
        ) {}
-   
+
        /**
   -     * @param array<string, mixed> $data
   +     * @param  array<string, mixed>  $data
@@ -271,53 +271,53 @@
   -        ], static fn(int|string|array|null $value): bool => $value !== null);
   +        ], static fn (int|string|array|null $value): bool => $value !== null);
        }
-   
+
   -
-       public function withSchedulableInfo(?int $schedulableId, ?string $schedulableType): self
+       public function withSchedulable(?int $schedulableId, ?string $schedulableType): self
        {
            return new self(
   @@ -138,7 +137,7 @@
            $newValidityEnd = $this->validityEnd ?? $existingValidityEnd;
-   
+
            // Si aucune date de validité n'est fournie ou si les dates n'ont pas changé, retourner tel quel
   -        if (!$newValidityStart instanceof Carbon || !$newValidityEnd instanceof Carbon) {
   +        if (! $newValidityStart instanceof Carbon || ! $newValidityEnd instanceof Carbon) {
                return $this->withDaysInfo($existingDays);
            }
-   
+
   @@ -148,7 +147,7 @@
            $datesChanged = $startChanged || $endChanged;
-   
+
            // Si les dates n'ont pas changé, retourner les jours existants
   -        if (!$datesChanged) {
   +        if (! $datesChanged) {
                return $this->withDaysInfo($existingDays);
            }
-   
+
   @@ -169,12 +168,12 @@
            }
-   
+
            // Si pas de dates de validité, utiliser tous les jours
   -        if (!$this->validityStart instanceof Carbon || !$this->validityEnd instanceof Carbon) {
   +        if (! $this->validityStart instanceof Carbon || ! $this->validityEnd instanceof Carbon) {
                return DaysOfWeek::values();
            }
-   
+
            // Utiliser le helper pour déterminer si on doit ajuster
   -        if (!roster_should_auto_adjust_days($this->validityStart, $this->validityEnd)) {
   +        if (! roster_should_auto_adjust_days($this->validityStart, $this->validityEnd)) {
                return DaysOfWeek::values();
            }
-   
+
   @@ -189,7 +188,7 @@
        {
            $daysToFilter = $existingDays ?? $this->days ?? [];
-   
+
   -        if ($daysToFilter === [] || !$this->validityStart instanceof Carbon || !$this->validityEnd instanceof Carbon) {
   +        if ($daysToFilter === [] || ! $this->validityStart instanceof Carbon || ! $this->validityEnd instanceof Carbon) {
                return $daysToFilter;
            }
-   
+
   @@ -202,13 +201,13 @@
         */
        public function hasValidDays(): bool
@@ -326,7 +326,7 @@
   +        if (! is_array($this->days) || $this->days === []) {
                return false;
            }
-   
+
            $validDays = DaysOfWeek::values();
            foreach ($this->days as $day) {
   -            if (!in_array($day, $validDays, true)) {
@@ -342,7 +342,7 @@
   +        if (! $this->validityStart instanceof Carbon || ! $this->validityEnd instanceof Carbon) {
                return false;
            }
-   
+
   @@ -245,7 +244,7 @@
         */
        public function getPeriodDurationInDays(): ?int
@@ -351,12 +351,12 @@
   +        if (! $this->validityStart instanceof Carbon || ! $this->validityEnd instanceof Carbon) {
                return null;
            }
-   
-  
-  ⨯ src/DTOs/ImpedimentData.php                                                                            function_declaration, braces_position, single_line_empty_body, phpdoc_align  
+
+
+  ⨯ src/DTOs/ImpedimentData.php                                                                            function_declaration, braces_position, single_line_empty_body, phpdoc_align
   @@ -21,7 +21,7 @@
        ) {}
-   
+
        /**
   -     * @param array<string, mixed> $data
   +     * @param  array<string, mixed>  $data
@@ -370,13 +370,13 @@
   -        ], static fn(int|string|array|null $value): bool => $value !== null);
   +        ], static fn (int|string|array|null $value): bool => $value !== null);
        }
-   
-       public function withSchedulableInfo(?int $schedulableId, ?string $schedulableType): self
-  
-  ⨯ src/DTOs/ScheduleData.php                                                                                    function_declaration, not_operator_with_successor_space, phpdoc_align  
+
+       public function withSchedulable(?int $schedulableId, ?string $schedulableType): self
+
+  ⨯ src/DTOs/ScheduleData.php                                                                                    function_declaration, not_operator_with_successor_space, phpdoc_align
   @@ -31,7 +31,7 @@
        }
-   
+
        /**
   -     * @param array<string, mixed> $data
   +     * @param  array<string, mixed>  $data
@@ -385,13 +385,13 @@
        {
   @@ -49,7 +49,7 @@
            }
-   
+
            // Si c'est déjà un enum, le garder tel quel
   -        if (!$status instanceof ScheduleStatus && !is_string($status)) {
   +        if (! $status instanceof ScheduleStatus && ! is_string($status)) {
                $status = ScheduleStatus::AVAILABLE;
            }
-   
+
   @@ -109,7 +109,7 @@
                'status' => $status,
                'schedulable_id' => $this->schedulableId,
@@ -399,10 +399,10 @@
   -        ], static fn($value) => $value !== null);
   +        ], static fn ($value) => $value !== null);
        }
-   
-       public function withSchedulableInfo(?int $schedulableId, ?string $schedulableType): self
-  
-  ⨯ src/Enums/EntityType.php                                                                                                                                              concat_space  
+
+       public function withSchedulable(?int $schedulableId, ?string $schedulableType): self
+
+  ⨯ src/Enums/EntityType.php                                                                                                                                              concat_space
   @@ -38,7 +38,7 @@
                'availability' => self::AVAILABILITY,
                'schedule' => self::SCHEDULE,
@@ -412,8 +412,8 @@
            };
        }
    }
-  
-  ⨯ src/Exceptions/Messages/ErrorMessageFactory.php                                                                                                         concat_space, phpdoc_align  
+
+  ⨯ src/Exceptions/Messages/ErrorMessageFactory.php                                                                                                         concat_space, phpdoc_align
   @@ -12,8 +12,8 @@
        /**
         * Create error message for date/time values in the past.
@@ -458,7 +458,7 @@
   -        return ucfirst($entity) . ' not found';
   +        return ucfirst($entity).' not found';
        }
-   
+
        /**
         * Create error message for required field.
         *
@@ -481,8 +481,8 @@
   +        return 'Invalid timezone: '.$timezone;
        }
    }
-  
-  ⨯ src/Exceptions/NotFoundException.php                                                                                        cast_spaces, blank_line_before_statement, phpdoc_align  
+
+  ⨯ src/Exceptions/NotFoundException.php                                                                                        cast_spaces, blank_line_before_statement, phpdoc_align
   @@ -24,9 +24,9 @@
        /**
         * Create a new NotFoundException instance.
@@ -511,7 +511,7 @@
        {
   -        $message = sprintf('%s with ID %s not found', $entityType, (string)$identifier);
   +        $message = sprintf('%s with ID %s not found', $entityType, (string) $identifier);
-   
+
            return new self($message, 404, $exception);
        }
   @@ -58,10 +58,10 @@
@@ -586,7 +586,7 @@
   +
            return new self($message);
        }
-   
+
   @@ -172,7 +173,7 @@
        /**
         * Check if the exception is for a specific entity type.
@@ -598,15 +598,15 @@
        {
   @@ -206,7 +207,7 @@
            $message = $this->getMessage();
-   
+
            if (preg_match('/ID (\d+)/', $message, $matches)) {
   -            return (int)$matches[1];
   +            return (int) $matches[1];
            }
-   
+
            return null;
-  
-  ⨯ src/Exceptions/RosterException.php                                                                                                                                    phpdoc_align  
+
+  ⨯ src/Exceptions/RosterException.php                                                                                                                                    phpdoc_align
   @@ -18,11 +18,11 @@
        /**
         * Create a new RosterException instance.
@@ -624,8 +624,8 @@
         */
        public function __construct(
            protected string $type,
-  
-  ⨯ src/Models/Availability.php                                                                           trailing_comma_in_multiline, not_operator_with_successor_space, phpdoc_align  
+
+  ⨯ src/Models/Availability.php                                                                           trailing_comma_in_multiline, not_operator_with_successor_space, phpdoc_align
   @@ -54,7 +54,7 @@
            'daily_end' => 'datetime:H:i',
            'validity_start' => 'date',
@@ -633,7 +633,7 @@
   -        'days' => 'array'
   +        'days' => 'array',
        ];
-   
+
        /**
   @@ -87,17 +87,17 @@
         * Checks if the given time period falls within this availability's
@@ -651,12 +651,12 @@
   +        if (! $this->isAvailableOnDay($start)) {
                return false;
            }
-   
+
   -        if (!$this->isWithinDailyWindow($start, $end)) {
   +        if (! $this->isWithinDailyWindow($start, $end)) {
                return false;
            }
-   
+
   @@ -107,7 +107,7 @@
        /**
         * Check if the availability includes the given day of week.
@@ -691,11 +691,11 @@
   @@ -147,18 +147,18 @@
                return false;
            }
-   
+
   -        return !($this->validity_end && $end->gt($this->validity_end));
   +        return ! ($this->validity_end && $end->gt($this->validity_end));
        }
-   
+
        /**
         * Check if the availability is active on a specific date.
         *
@@ -709,15 +709,15 @@
   +        if (! $this->isAvailableOnDay($date)) {
                return false;
            }
-   
+
   @@ -166,7 +166,7 @@
                return false;
            }
-   
+
   -        return !($this->validity_end && $date->gt($this->validity_end));
   +        return ! ($this->validity_end && $date->gt($this->validity_end));
        }
-   
+
        /**
   @@ -186,7 +186,7 @@
         */
@@ -727,7 +727,7 @@
   +        if (! $this->validity_start || ! $this->validity_end) {
                return null;
            }
-   
+
   @@ -206,7 +206,7 @@
        /**
         * Check if the validity period has started.
@@ -758,16 +758,16 @@
   @@ -247,6 +247,6 @@
        {
            $date = $date ?? Carbon::now();
-   
+
   -        return $this->hasValidityStarted($date) && !$this->hasValidityEnded($date);
   +        return $this->hasValidityStarted($date) && ! $this->hasValidityEnded($date);
        }
    }
-  
-  ⨯ src/Models/Impediment.php                                                                         class_attributes_separation, function_declaration, ordered_imports, phpdoc_align  
+
+  ⨯ src/Models/Impediment.php                                                                         class_attributes_separation, function_declaration, ordered_imports, phpdoc_align
   @@ -5,9 +5,9 @@
    namespace Roster\Models;
-   
+
    use Illuminate\Database\Eloquent\Casts\Attribute;
   -use Illuminate\Database\Eloquent\Relations\MorphTo;
    use Illuminate\Database\Eloquent\Model;
@@ -775,11 +775,11 @@
   +use Illuminate\Database\Eloquent\Relations\MorphTo;
    use Illuminate\Support\Carbon;
    use Roster\Traits\BelongsToSchedulable;
-   
+
   @@ -49,7 +49,6 @@
            'end_datetime' => 'datetime',
        ];
-   
+
   -
        /**
         * Accessor & mutator for metadata.
@@ -794,7 +794,7 @@
   +            set: fn ($value) => is_array($value) ? json_encode($value) : $value
            );
        }
-   
+
   @@ -85,8 +84,8 @@
        /**
         * Determine if this impediment overlaps with a given time period.
@@ -806,12 +806,12 @@
         * @return bool True if the impediment overlaps with the period
         */
        public function overlapsWith(Carbon $start, Carbon $end): bool
-  
-  ⨯ src/Models/Schedule.php                                                                                                                              ordered_imports, phpdoc_align  
+
+  ⨯ src/Models/Schedule.php                                                                                                                              ordered_imports, phpdoc_align
   @@ -4,9 +4,9 @@
-   
+
    namespace Roster\Models;
-   
+
   -use Illuminate\Database\Eloquent\Relations\Relation;
    use Illuminate\Database\Eloquent\Model;
    use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -830,8 +830,8 @@
         * @return bool True if the schedule overlaps with the period
         */
        public function overlapsWith(Carbon $start, Carbon $end): bool
-  
-  ⨯ src/Observers/SchedulableObserver.php                                                                                                                                 phpdoc_align  
+
+  ⨯ src/Observers/SchedulableObserver.php                                                                                                                                 phpdoc_align
   @@ -12,7 +12,7 @@
        /**
         * Ensure schedulable entity is set before creating the model.
@@ -841,8 +841,8 @@
         *
         * @throws MissingSchedulableException If schedulable_id or schedulable_type are empty
         */
-  
-  ⨯ src/Repositories/AbstractRepository.php                                                                                                                               phpdoc_align  
+
+  ⨯ src/Repositories/AbstractRepository.php                                                                                                                               phpdoc_align
   @@ -17,7 +17,7 @@
        /**
         * Create a new record.
@@ -861,12 +861,12 @@
         * @return bool True if update was successful
         */
        abstract public function update(int $id, array $data): bool;
-  
-  ⨯ src/Repositories/AvailabilityRepository.php function_declaration, no_multiline_whitespace_around_double_arrow, trailing_comma_in_multiline, phpdoc_separation, not_operator_with_s  
+
+  ⨯ src/Repositories/AvailabilityRepository.php function_declaration, no_multiline_whitespace_around_double_arrow, trailing_comma_in_multiline, phpdoc_separation, not_operator_with_s
   @@ -4,11 +4,11 @@
-   
+
    namespace Roster\Repositories;
-   
+
   -use InvalidArgumentException;
    use Illuminate\Database\Eloquent\Builder;
    use Illuminate\Database\Eloquent\Model;
@@ -1045,21 +1045,21 @@
        public function buildQueryWithFilters(Model $model, array $filters = []): Builder
   @@ -380,15 +383,12 @@
            $builder = $this->buildBaseQuery($model);
-   
+
            match (true) {
   -            isset($filters['type']) && isset($filters['day']) =>
   -            $builder->where('type', $filters['type'])
   +            isset($filters['type']) && isset($filters['day']) => $builder->where('type', $filters['type'])
                    ->whereJsonContains('days', strtolower($filters['day'])),
-   
+
   -            isset($filters['type']) =>
   -            $builder->where('type', $filters['type']),
   +            isset($filters['type']) => $builder->where('type', $filters['type']),
-   
+
   -            isset($filters['day']) =>
   -            $builder->whereJsonContains('days', strtolower($filters['day'])),
   +            isset($filters['day']) => $builder->whereJsonContains('days', strtolower($filters['day'])),
-   
+
                default => null,
            };
   @@ -399,8 +399,8 @@
@@ -1076,20 +1076,20 @@
   @@ -407,7 +407,7 @@
        {
            $dayOfWeek = strtolower($date->englishDayOfWeek);
-   
+
   -        if (!in_array($dayOfWeek, $availability->days)) {
   +        if (! in_array($dayOfWeek, $availability->days)) {
                return false;
            }
-   
+
   @@ -414,16 +414,16 @@
            $isBeforeValidityStart = $availability->validity_start !== null && $date->lt($availability->validity_start);
            $isAfterValidityEnd = $availability->validity_end !== null && $date->gt($availability->validity_end);
-   
+
   -        return !$isBeforeValidityStart && !$isAfterValidityEnd;
   +        return ! $isBeforeValidityStart && ! $isAfterValidityEnd;
        }
-   
+
        /**
         * Load availabilities with pre-loaded schedule and impediment conflicts.
         *
@@ -1121,7 +1121,7 @@
   +            fn (Availability $availability): bool => $this->isAvailableOnDate($availability, $date)
            );
        }
-   
+
   @@ -454,7 +454,7 @@
        /**
         * Build base query for availabilities of a schedulable entity.
@@ -1211,21 +1211,21 @@
   -                $query->where('validity_start', '<=', $endDate)
   +                $startDate instanceof Carbon && $endDate instanceof Carbon => $query->where('validity_start', '<=', $endDate)
                        ->where('validity_end', '>=', $startDate),
-   
+
   -                $startDate instanceof Carbon =>
   -                $query->where(function ($subQuery) use ($startDate): void {
   +                $startDate instanceof Carbon => $query->where(function ($subQuery) use ($startDate): void {
                        $subQuery->where('validity_end', '>=', $startDate)
                            ->orWhereNull('validity_end');
                    }),
-   
+
   -                $endDate instanceof Carbon =>
   -                $query->where(function ($subQuery) use ($endDate): void {
   +                $endDate instanceof Carbon => $query->where(function ($subQuery) use ($endDate): void {
                        $subQuery->where('validity_start', '<=', $endDate)
                            ->orWhereNull('validity_start');
                    }),
-   
+
   -                default =>
   -                $query->where(function ($subQuery): void {
   +                default => $query->where(function ($subQuery): void {
@@ -1265,8 +1265,8 @@
                    $q->whereBetween('start_datetime', [$startDate, $endDate])
                        ->orWhereBetween('end_datetime', [$startDate, $endDate])
                        ->orWhere(function ($subQuery) use ($startDate, $endDate): void {
-  
-  ⨯ src/Repositories/ImpedimentRepository.php                                                                                    no_unused_imports, no_extra_blank_lines, phpdoc_align  
+
+  ⨯ src/Repositories/ImpedimentRepository.php                                                                                    no_unused_imports, no_extra_blank_lines, phpdoc_align
   @@ -7,7 +7,6 @@
    use Illuminate\Database\Eloquent\Builder;
    use Illuminate\Support\Carbon;
@@ -1274,7 +1274,7 @@
   -use Illuminate\Support\Facades\Log;
    use Roster\Contracts\Repository\ImpedimentRepositoryInterface;
    use Roster\Models\Impediment;
-   
+
   @@ -67,9 +66,9 @@
        /**
         * Find impediments for a time slot.
@@ -1306,12 +1306,12 @@
   @@ -107,8 +106,6 @@
                $query->where('id', '!=', $excludeId);
            }
-   
+
   -
   -
            return $query->exists();
        }
-   
+
   @@ -115,10 +112,10 @@
        /**
         * Find overlapping impediments with time range.
@@ -1327,8 +1327,8 @@
         * @return Collection<int, Impediment>
         */
        public function findOverlappingImpediments(
-  
-  ⨯ src/Repositories/ScheduleRepository.php                                                                                                         no_extra_blank_lines, phpdoc_align  
+
+  ⨯ src/Repositories/ScheduleRepository.php                                                                                                         no_extra_blank_lines, phpdoc_align
   @@ -75,9 +75,9 @@
        /**
         * Find schedules for a time slot.
@@ -1360,16 +1360,16 @@
   @@ -119,12 +119,8 @@
            $sql = $query->toSql();
            $bindings = $query->getBindings();
-   
+
   -
   -
            $result = $query->exists();
-   
+
   -
   -
            return $result;
        }
-   
+
   @@ -131,10 +127,10 @@
        /**
         * Find overlapping schedules with time range.
@@ -1439,21 +1439,21 @@
         */
        private function applyCommonFilters(Builder $builder, array $filters): void
        {
-  
-  ⨯ src/RosterServiceProvider.php                                                                                                                   new_with_parentheses, concat_space  
+
+  ⨯ src/RosterServiceProvider.php                                                                                                                   new_with_parentheses, concat_space
   @@ -49,8 +49,8 @@
-   
+
        public function register(): void
        {
   -        $this->mergeConfigFrom(__DIR__ . '/../config/roster.php', 'roster');
   -        $this->mergeConfigFrom(__DIR__ . '/../config/roster-validation.php', 'roster-validation');
   +        $this->mergeConfigFrom(__DIR__.'/../config/roster.php', 'roster');
   +        $this->mergeConfigFrom(__DIR__.'/../config/roster-validation.php', 'roster-validation');
-   
+
            $this->loadHelpers();
            $this->registerCoreServices();
   @@ -67,7 +67,7 @@
-   
+
        protected function loadHelpers(): void
        {
   -        $helpersFile = __DIR__ . '/helpers.php';
@@ -1462,16 +1462,16 @@
                require_once $helpersFile;
            }
   @@ -92,7 +92,7 @@
-   
+
            $this->app->singleton(ValidatorInterface::class, function ($app) use ($useFileCache): Validator {
                $directories = array_merge(
   -                [__DIR__ . '/Validation/Rules'],
   +                [__DIR__.'/Validation/Rules'],
                    config('roster-validation.rule_directories', [])
                );
-   
+
   @@ -103,7 +103,7 @@
-   
+
            $this->app->singleton(RuleScanner::class, function ($app) use ($useFileCache): RuleScanner {
                return new RuleScanner(
   -                array_merge([__DIR__ . '/Validation/Rules'], config('roster-validation.rule_directories', [])),
@@ -1495,13 +1495,13 @@
   -            __DIR__ . '/../config/roster-validation.php' => config_path('roster-validation.php'),
   +            __DIR__.'/../config/roster-validation.php' => config_path('roster-validation.php'),
            ], 'roster-validation-config');
-   
+
            // Configuration principale
            $this->publishes([
   -            __DIR__ . '/../config/roster.php' => config_path('roster.php'),
   +            __DIR__.'/../config/roster.php' => config_path('roster.php'),
            ], 'roster-config');
-   
+
            // Migrations
            $this->publishes([
   -            __DIR__ . '/../database/migrations/' => database_path('migrations'),
@@ -1509,12 +1509,12 @@
            ], 'roster-migrations');
        }
    }
-  
-  ⨯ src/Services/AvailabilityService.php        function_declaration, trailing_comma_in_multiline, phpdoc_separation, not_operator_with_successor_space, ordered_imports, phpdoc_align  
+
+  ⨯ src/Services/AvailabilityService.php        function_declaration, trailing_comma_in_multiline, phpdoc_separation, not_operator_with_successor_space, ordered_imports, phpdoc_align
   @@ -4,8 +4,8 @@
-   
+
    namespace Roster\Services;
-   
+
   +use Illuminate\Database\Eloquent\Builder;
    use Illuminate\Database\Eloquent\Model;
   -use Illuminate\Database\Eloquent\Builder;
@@ -1531,7 +1531,7 @@
         */
        public function create(array $data): Availability
   @@ -85,7 +85,8 @@
-   
+
        /**
         * Update an existing availability.
   -     * @param array<string, mixed> $data
@@ -1543,7 +1543,7 @@
   @@ -92,7 +93,7 @@
            parent::update($id, $data);
            $entity = $this->find($id);
-   
+
   -        if (!$entity instanceof Availability) {
   +        if (! $entity instanceof Availability) {
                throw ValidationFailedException::fromViolations(
@@ -1572,7 +1572,7 @@
   +        if (! $this->schedulable instanceof Model) {
                return $data;
            }
-   
+
   @@ -251,8 +252,8 @@
         * Two availabilities are adjacent if they share common properties
         * and their time ranges touch exactly.
@@ -1622,28 +1622,28 @@
   -            Carbon::parse($newData['daily_end'])
   +            Carbon::parse($newData['daily_end']),
            ];
-   
+
            $mergedStartTime = min($startTimes[0]->timestamp, $startTimes[1]->timestamp);
   @@ -343,11 +344,11 @@
-   
+
            $mergedValidityStart = $startDates === []
                ? null
   -            : Carbon::createFromTimestamp(min(array_map(fn($date) => $date->timestamp, $startDates)));
   +            : Carbon::createFromTimestamp(min(array_map(fn ($date) => $date->timestamp, $startDates)));
-   
+
            $mergedValidityEnd = $endDates === []
                ? null
   -            : Carbon::createFromTimestamp(max(array_map(fn($date) => $date->timestamp, $endDates)));
   +            : Carbon::createFromTimestamp(max(array_map(fn ($date) => $date->timestamp, $endDates)));
-   
+
            return [
                'type' => $availability->type,
-  
-  ⨯ src/Services/Core/AbstractAvailabilityValidatingService.php                                                                        not_operator_with_successor_space, phpdoc_align  
+
+  ⨯ src/Services/Core/AbstractAvailabilityValidatingService.php                                                                        not_operator_with_successor_space, phpdoc_align
   @@ -53,7 +53,7 @@
-   
+
            $validationResult = $this->validator->validate($validationContext);
-   
+
   -        if (!$validationResult->isValid()) {
   +        if (! $validationResult->isValid()) {
                throw ValidationFailedException::fromViolations(
@@ -1661,16 +1661,16 @@
         */
        public function between(Carbon $start, Carbon $end): Collection
   @@ -111,7 +111,7 @@
-   
+
            $validationResult = $this->validator->validate($validationContext);
-   
+
   -        if (!$validationResult->isValid()) {
   +        if (! $validationResult->isValid()) {
                throw ValidationFailedException::fromViolations(
                    $validationResult->getViolations(),
                    OperationType::CREATE,
-  
-  ⨯ src/Services/Core/AbstractEntityScopingService.php class_attributes_separation, unary_operator_spaces, not_operator_with_successor_space, blank_line_before_statement, phpdoc_alig  
+
+  ⨯ src/Services/Core/AbstractEntityScopingService.php class_attributes_separation, unary_operator_spaces, not_operator_with_successor_space, blank_line_before_statement, phpdoc_alig
   @@ -26,12 +26,13 @@
        /**
         * Set multiple filters at once.
@@ -1685,7 +1685,7 @@
   +
            return $this;
        }
-   
+
   @@ -38,12 +39,13 @@
        /**
         * Filter by entity type.
@@ -1700,7 +1700,7 @@
   +
            return $this;
        }
-   
+
   @@ -55,6 +57,7 @@
        final public function resetFilters(): static
        {
@@ -1708,11 +1708,11 @@
   +
            return $this;
        }
-   
+
   @@ -68,12 +71,10 @@
            return $this->get();
        }
-   
+
   -
   -
        /**
@@ -1748,18 +1748,18 @@
   +
            return strtolower(str_replace('Service', '', $className));
        }
-   
+
   @@ -132,8 +134,6 @@
        {
            return ucfirst($this->getEntityType());
        }
   -
   -
-   
+
        // Abstract methods that must be implemented by child classes
        abstract protected function buildQueryWithFilters(): Builder;
-  
-  ⨯ src/Services/Core/AbstractService.php                                                                       class_attributes_separation, blank_line_before_statement, phpdoc_align  
+
+  ⨯ src/Services/Core/AbstractService.php                                                                       class_attributes_separation, blank_line_before_statement, phpdoc_align
   @@ -46,7 +46,7 @@
        /**
         * Find entity by ID.
@@ -1783,7 +1783,7 @@
   +
            return $this;
        }
-   
+
   @@ -86,12 +87,13 @@
        /**
         * Set the filters.
@@ -1798,7 +1798,7 @@
   +
            return $this;
        }
-   
+
   @@ -108,12 +110,13 @@
        /**
         * Set the schedulable model instance.
@@ -1813,15 +1813,15 @@
   +
            return $this;
        }
-   
+
   @@ -122,19 +125,20 @@
-   
+
            // Supprime les clés spécifiées si elles existent
            $data = array_diff_key($data, array_flip(['schedulable_id', 'schedulable_type', 'availability_id']));
   +
            return true;
        }
-   
+
   -
        /**
         * Scope the service to a specific schedulable model.
@@ -1836,7 +1836,7 @@
   +
            return $this;
        }
-   
+
   @@ -141,13 +145,14 @@
        /**
         * Set a single filter.
@@ -1853,7 +1853,7 @@
   +
            return $this;
        }
-   
+
   @@ -160,6 +165,7 @@
        {
            $this->data = [];
@@ -1862,8 +1862,8 @@
            return $this;
        }
    }
-  
-  ⨯ src/Services/Core/AbstractValidatingService.php                                                              not_operator_with_successor_space, no_extra_blank_lines, phpdoc_align  
+
+  ⨯ src/Services/Core/AbstractValidatingService.php                                                              not_operator_with_successor_space, no_extra_blank_lines, phpdoc_align
   @@ -26,8 +26,8 @@
        /**
         * Validate data against rules.
@@ -1876,9 +1876,9 @@
        protected function validate(
            array $data,
   @@ -47,9 +47,8 @@
-   
+
            $validationResult = $this->validator->validate($validationContext);
-   
+
   -
            // End date must be after start date
   -        if (!$validationResult->isValid()) {
@@ -1886,19 +1886,19 @@
                throw ValidationFailedException::fromViolations(
                    $validationResult->getViolations(),
                    $operationType,
-  
-  ⨯ src/Services/Core/AvailabilityChecker.php                                                braces_position, phpdoc_separation, single_line_empty_body, ordered_imports, phpdoc_align  
+
+  ⨯ src/Services/Core/AvailabilityChecker.php                                                braces_position, phpdoc_separation, single_line_empty_body, ordered_imports, phpdoc_align
   @@ -4,9 +4,9 @@
-   
+
    namespace Roster\Services\Core;
-   
+
   -use InvalidArgumentException;
    use Illuminate\Database\Eloquent\Model;
    use Illuminate\Support\Carbon;
   +use InvalidArgumentException;
    use Roster\Contracts\Repository\AvailabilityRepositoryInterface;
    use Roster\Models\Availability;
-   
+
   @@ -19,8 +19,8 @@
        /**
         * Check if the schedulable resource is available at a specific datetime.
@@ -1927,8 +1927,8 @@
         * @throws InvalidArgumentException If the time range is invalid
         */
        public function isAvailableForPeriod(
-  
-  ⨯ src/Services/Core/ResourcePublisherService.php             increment_style, concat_space, braces_position, not_operator_with_successor_space, single_line_empty_body, phpdoc_align  
+
+  ⨯ src/Services/Core/ResourcePublisherService.php             increment_style, concat_space, braces_position, not_operator_with_successor_space, single_line_empty_body, phpdoc_align
   @@ -16,8 +16,8 @@
        /**
         * Create a new ResourcePublisherService instance.
@@ -1956,12 +1956,12 @@
   @@ -70,7 +70,7 @@
        ): bool {
            $resources = $this->getPublishableResources();
-   
+
   -        if (!array_key_exists($resourceType, $resources)) {
   +        if (! array_key_exists($resourceType, $resources)) {
                return false;
            }
-   
+
   @@ -96,7 +96,7 @@
        /**
         * Check if a resource type has already been published.
@@ -1974,12 +1974,12 @@
   @@ -103,7 +103,7 @@
        {
            $resources = $this->getPublishableResources();
-   
+
   -        if (!array_key_exists($resourceType, $resources)) {
   +        if (! array_key_exists($resourceType, $resources)) {
                return false;
            }
-   
+
   @@ -120,7 +120,7 @@
        /**
         * Determine if a source path should be treated as a directory.
@@ -2012,20 +2012,20 @@
   +        if (! $this->filesystem->exists($source)) {
                return false;
            }
-   
+
   @@ -152,15 +152,15 @@
-   
+
            foreach ($files as $file) {
                $relativePath = $file->getRelativePathname();
   -            $targetPath = $destination . '/' . $relativePath;
   +            $targetPath = $destination.'/'.$relativePath;
-   
+
                if ($this->shouldCopyFile(targetPath: $targetPath, force: $force)) {
                    $this->filesystem->ensureDirectoryExists(dirname($targetPath));
                    $this->filesystem->copy($file->getPathname(), $targetPath);
   -                ++$publishedCount;
   +                $publishedCount++;
-   
+
                    if ($output instanceof OutputInterface) {
   -                    $output->writeln('Published: ' . $relativePath);
   +                    $output->writeln('Published: '.$relativePath);
@@ -2055,15 +2055,15 @@
   +        if (! $this->filesystem->exists($source)) {
                return false;
            }
-   
+
   @@ -192,7 +192,7 @@
                $this->filesystem->copy($source, $destination);
-   
+
                if ($output instanceof OutputInterface) {
   -                $output->writeln('Published: ' . basename($destination));
   +                $output->writeln('Published: '.basename($destination));
                }
-   
+
                return true;
   @@ -204,8 +204,8 @@
        /**
@@ -2079,17 +2079,17 @@
   @@ -214,6 +214,6 @@
                return true;
            }
-   
+
   -        return !$this->filesystem->exists($targetPath);
   +        return ! $this->filesystem->exists($targetPath);
        }
    }
-  
-  ⨯ src/Services/Core/SlotFinderService.php class_attributes_separation, function_declaration, unary_operator_spaces, braces_position, not_operator_with_successor_space, single_line_  
+
+  ⨯ src/Services/Core/SlotFinderService.php class_attributes_separation, function_declaration, unary_operator_spaces, braces_position, not_operator_with_successor_space, single_line_
   @@ -21,14 +21,13 @@
            private readonly AvailabilityRepositoryInterface $availabilityRepository,
        ) {}
-   
+
   -
        /**
         * Check if an entire time period is available without interruptions.
@@ -2108,7 +2108,7 @@
   @@ -75,14 +74,12 @@
            return true;
        }
-   
+
   -
   -
        /**
@@ -2122,11 +2122,11 @@
   +     * @param  Collection  $impediments  Collection of impediments
         * @return Collection<int, array<string, mixed>> Available time slots
         */
-       public function getAvailableSlotsFromImpediments(
+       public function calculateAvailableSlotsExcludingImpediments(
   @@ -122,14 +119,12 @@
            return $availableSlots;
        }
-   
+
   -
   -
        /**
@@ -2148,15 +2148,15 @@
   -            fn($schedule): bool => $schedule->overlapsWith($start, $end)
   +            fn ($schedule): bool => $schedule->overlapsWith($start, $end)
            );
-   
+
            $hasOverlappingImpediments = $availability->impediments->contains(
   -            fn($impediment): bool => $impediment->overlapsWith($start, $end)
   +            fn ($impediment): bool => $impediment->overlapsWith($start, $end)
            );
-   
+
            return ! $hasOverlappingSchedule && ! $hasOverlappingImpediments;
-  
-  ⨯ src/Services/ImpedimentService.php                           trailing_comma_in_multiline, phpdoc_separation, not_operator_with_successor_space, no_extra_blank_lines, phpdoc_align  
+
+  ⨯ src/Services/ImpedimentService.php                           trailing_comma_in_multiline, phpdoc_separation, not_operator_with_successor_space, no_extra_blank_lines, phpdoc_align
   @@ -66,8 +66,8 @@
        /**
         * Create a new impediment with explicit availability.
@@ -2175,10 +2175,10 @@
   -            'schedulable_type' => get_class($this->schedulable)
   +            'schedulable_type' => get_class($this->schedulable),
            ]);
-   
+
            // Convert to DTO and validate with new system
   @@ -104,7 +104,8 @@
-   
+
        /**
         * Update an existing impediment.
   -     * @param array<string, mixed> $data
@@ -2188,7 +2188,7 @@
        public function update(int $id, array $data): bool
        {
   @@ -113,7 +114,7 @@
-   
+
            // Trouver l'impediment existant
            $existingImpediment = $this->find($id);
   -        if (!$existingImpediment instanceof Impediment) {
@@ -2199,11 +2199,11 @@
   @@ -132,7 +133,6 @@
            // Créer le DTO initial
            $impedimentData = $this->createDTOFromArray($data, OperationType::UPDATE);
-   
+
   -
            // Valider le DTO avec les infos schedulable
            $this->validate($impedimentData->toArray(), OperationType::UPDATE, $id);
-   
+
   @@ -156,7 +156,7 @@
        public function delete(int $id): bool
        {
@@ -2216,27 +2216,27 @@
   @@ -292,7 +292,7 @@
        {
            $availability = $this->availabilityRepository->findForTimeSlot($this->schedulable, $start, $end, $type);
-   
+
   -        if (!$availability instanceof Availability) {
   +        if (! $availability instanceof Availability) {
                return false;
            }
-   
+
   @@ -306,7 +306,7 @@
        {
            $availability = $this->availabilityRepository->findForTimeSlot($this->schedulable, $start, $end, $type);
-   
+
   -        if (!$availability instanceof Availability) {
   +        if (! $availability instanceof Availability) {
                return collect();
            }
-   
-  
-  ⨯ src/Services/ScheduleService.php trailing_comma_in_multiline, phpdoc_separation, cast_spaces, not_operator_with_successor_space, blank_line_before_statement, ordered_imports, php  
+
+
+  ⨯ src/Services/ScheduleService.php trailing_comma_in_multiline, phpdoc_separation, cast_spaces, not_operator_with_successor_space, blank_line_before_statement, ordered_imports, php
   @@ -4,7 +4,6 @@
-   
+
    namespace Roster\Services;
-   
+
   -use Roster\Models\Impediment;
    use Illuminate\Database\Eloquent\Builder;
    use Illuminate\Support\Carbon;
@@ -2267,10 +2267,10 @@
   -            'schedulable_type' => get_class($this->schedulable)
   +            'schedulable_type' => get_class($this->schedulable),
            ]);
-   
+
            // Convert to DTO and validate with new system
   @@ -99,7 +99,8 @@
-   
+
        /**
         * Update an existing schedule.
   -     * @param array<string, mixed> $data
@@ -2282,7 +2282,7 @@
   @@ -108,7 +109,7 @@
            // Récupérer l'entité existante AVANT validation
            $existingEntity = $this->find($id);
-   
+
   -        if (!$existingEntity instanceof Schedule) {
   +        if (! $existingEntity instanceof Schedule) {
                throw ValidationFailedException::fromViolations(
@@ -2290,13 +2290,13 @@
                        'id' => sprintf(
   @@ -125,7 +126,7 @@
            $data['id'] = $id;
-   
+
            // Assurez-vous que availability_id est présent dans les données
   -        if (!isset($data['availability_id']) && $existingEntity->availability_id) {
   +        if (! isset($data['availability_id']) && $existingEntity->availability_id) {
                $data['availability_id'] = $existingEntity->availability_id;
            }
-   
+
   @@ -155,7 +156,7 @@
        public function delete(int $id): bool
        {
@@ -2308,14 +2308,14 @@
                        'id' => sprintf(
   @@ -325,8 +326,8 @@
            );
-   
+
            return $availability instanceof Availability
   -            && !$availability->has_overlapping_schedules
   -            && !$availability->has_overlapping_impediments;
   +            && ! $availability->has_overlapping_schedules
   +            && ! $availability->has_overlapping_impediments;
        }
-   
+
        /**
   @@ -376,12 +377,12 @@
            ?Carbon $searchStart = null
@@ -2325,13 +2325,13 @@
   +        if (! $availability->daily_start || ! $availability->daily_end) {
                return null;
            }
-   
+
            // Vérifier que l'accessibilité est disponible ce jour
   -        if (!$availability->isActiveOnDate($day)) {
   +        if (! $availability->isActiveOnDate($day)) {
                return null;
            }
-   
+
   @@ -413,7 +414,7 @@
            if ($slotStart->minute > 0 || $slotStart->second > 0) {
                $minutes = $slotStart->minute;
@@ -2339,31 +2339,31 @@
   -            $slotStart->setMinute((int)$roundedMinutes)->setSecond(0);
   +            $slotStart->setMinute((int) $roundedMinutes)->setSecond(0);
            }
-   
+
            // Vérifier que slotStart + durée ne dépasse pas availabilityEnd
   @@ -483,12 +484,12 @@
                $type
            );
-   
+
   -        if (!$availability instanceof Availability) {
   +        if (! $availability instanceof Availability) {
                return false;
            }
-   
+
            // Vérifier que la période est dans les limites de l'accessibilité
   -        if (!$availability->isAvailableForSchedule($start, $end)) {
   +        if (! $availability->isAvailableForSchedule($start, $end)) {
                return false;
            }
-   
+
   @@ -505,7 +506,7 @@
                $end
            );
-   
+
   -        return !$hasScheduleConflict && !$hasImpedimentConflict;
   +        return ! $hasScheduleConflict && ! $hasImpedimentConflict;
        }
-   
+
        /**
   @@ -524,6 +525,7 @@
                    'start' => $start->copy(),
@@ -2372,22 +2372,22 @@
   +
                return $availableSlots;
            }
-   
-  
-  ⨯ src/Traits/BelongsToSchedulable.php                                                                                                                                ordered_imports  
+
+
+  ⨯ src/Traits/BelongsToSchedulable.php                                                                                                                                ordered_imports
   @@ -4,9 +4,9 @@
-   
+
    namespace Roster\Traits;
-   
+
   -use Illuminate\Database\Eloquent\Relations\MorphTo;
    use Illuminate\Database\Eloquent\Builder;
    use Illuminate\Database\Eloquent\Model;
   +use Illuminate\Database\Eloquent\Relations\MorphTo;
    use Roster\Exceptions\MissingSchedulableException;
-   
+
    /**
-  
-  ⨯ src/Traits/DateRangeOverlapTrait.php                                                     unary_operator_spaces, phpdoc_separation, not_operator_with_successor_space, phpdoc_align  
+
+  ⨯ src/Traits/DateRangeOverlapTrait.php                                                     unary_operator_spaces, phpdoc_separation, not_operator_with_successor_space, phpdoc_align
   @@ -18,11 +18,10 @@
         * - Null start becomes year 0001-01-01
         * - Null end becomes year 9999-12-31
@@ -2404,8 +2404,8 @@
         * @return bool True if ranges overlap, false otherwise
         */
        public function dateRangesOverlap(
-  
-  ⨯ src/Traits/FilterableTrait.php                                             concat_space, unary_operator_spaces, phpdoc_separation, not_operator_with_successor_space, phpdoc_align  
+
+  ⨯ src/Traits/FilterableTrait.php                                             concat_space, unary_operator_spaces, phpdoc_separation, not_operator_with_successor_space, phpdoc_align
   @@ -29,10 +29,9 @@
        /**
         * Applies date range filters to a query builder.
@@ -2467,7 +2467,7 @@
   -            $builder->where('reason', 'like', '%' . $this->filters['reason'] . '%');
   +            $builder->where('reason', 'like', '%'.$this->filters['reason'].'%');
            }
-   
+
            return $builder;
   @@ -129,8 +124,7 @@
        /**
@@ -2546,8 +2546,8 @@
         * @return bool True if the filter is set, false otherwise
         */
        public function hasFilter(string $key): bool
-  
-  ⨯ src/Validation/Attributes/ValidationRule.php                                                                                 braces_position, single_line_empty_body, phpdoc_align  
+
+  ⨯ src/Validation/Attributes/ValidationRule.php                                                                                 braces_position, single_line_empty_body, phpdoc_align
   @@ -12,9 +12,9 @@
    class ValidationRule
    {
@@ -2561,34 +2561,34 @@
         */
        public function __construct(
            public ?int $priority = 50,
-  
-  ⨯ src/Validation/Cache/RuleCacheGenerator.php function_declaration, blank_line_after_opening_tag, concat_space, no_unused_imports, not_operator_with_successor_space, blank_line_bef  
+
+  ⨯ src/Validation/Cache/RuleCacheGenerator.php function_declaration, blank_line_after_opening_tag, concat_space, no_unused_imports, not_operator_with_successor_space, blank_line_bef
   @@ -1,4 +1,5 @@
    <?php
   +
    // src/Validation/Cache/RuleCacheGenerator.php
-   
+
    declare(strict_types=1);
   @@ -5,9 +6,8 @@
-   
+
    namespace Roster\Validation\Cache;
-   
+
   +use Roster\Validation\Attributes\ValidationRule;
    use Roster\Validation\RuleScanner;
   -use Roster\Validation\Attributes\ValidationRule;
   -use ReflectionClass;
-   
+
    class RuleCacheGenerator
    {
   @@ -27,12 +27,12 @@
-   
+
            // Créer le répertoire si nécessaire
            $directory = dirname($this->cachePath);
   -        if (!is_dir($directory)) {
   +        if (! is_dir($directory)) {
                mkdir($directory, 0755, true);
            }
-   
+
            // Écrire le fichier atomiquement
   -        $tempFile = $this->cachePath . '.tmp';
   +        $tempFile = $this->cachePath.'.tmp';
@@ -2596,29 +2596,29 @@
                return false;
            }
   @@ -47,12 +47,13 @@
-   
+
        public function isCacheFresh(): bool
        {
   -        if (!file_exists($this->cachePath)) {
   +        if (! file_exists($this->cachePath)) {
                return false;
            }
-   
+
            // Vérifier si le fichier a été généré il y a moins de X heures
            $maxAge = config('roster-validation.cache_max_age_hours', 24);
   +
            return (time() - filemtime($this->cachePath)) < ($maxAge * 3600);
        }
-   
+
   @@ -96,16 +97,16 @@
-   
+
        private function buildRuleEntry(string $className, ValidationRule $attribute): string
        {
   -        $entities = array_map(fn($e) => $e->value, $attribute->entities);
   -        $operations = array_map(fn($o) => $o->value, $attribute->operations);
   +        $entities = array_map(fn ($e) => $e->value, $attribute->entities);
   +        $operations = array_map(fn ($o) => $o->value, $attribute->operations);
-   
+
            $indent = '    ';
   -        $entry = $indent . "'" . addslashes($className) . "' => [\n";
   -        $entry .= $indent . $indent . "'priority' => " . $attribute->priority . ",\n";
@@ -2632,11 +2632,11 @@
   +        $entry .= $indent.$indent."'operations' => [".implode(', ', array_map(fn ($o) => "'$o'", $operations))."],\n";
   +        $entry .= $indent.$indent."'class' => '".addslashes($className)."',\n";
   +        $entry .= $indent."],\n";
-   
+
            return $entry;
        }
-  
-  ⨯ src/Validation/Context/ValidationContext.php                                                       function_declaration, not_operator_with_successor_space, binary_operator_spaces  
+
+  ⨯ src/Validation/Context/ValidationContext.php                                                       function_declaration, not_operator_with_successor_space, binary_operator_spaces
   @@ -43,11 +43,11 @@
            ?Model $model = null,
            mixed $currentEntity = null
@@ -2652,7 +2652,7 @@
   +        $this->model = $model;
   +        $this->currentEntity = $currentEntity;
        }
-   
+
        /* -----------------------------------------------------------------
   @@ -97,7 +97,7 @@
        {
@@ -2662,43 +2662,43 @@
   +            static fn ($value): bool => $value !== null
            );
        }
-   
+
   @@ -162,7 +162,7 @@
-   
+
        public function addViolation(string $field, string $message): void
        {
   -        if (!isset($this->violations[$field])) {
   +        if (! isset($this->violations[$field])) {
                $this->violations[$field] = [];
            }
-   
-  
-  ⨯ src/Validation/Exceptions/ValidationFailedException.php                                                                                              concat_space, ordered_imports  
+
+
+  ⨯ src/Validation/Exceptions/ValidationFailedException.php                                                                                              concat_space, ordered_imports
   @@ -4,10 +4,10 @@
-   
+
    namespace Roster\Validation\Exceptions;
-   
+
   -use Throwable;
   +use InvalidArgumentException;
    use Roster\Enums\EntityType;
    use Roster\Enums\OperationType;
   -use InvalidArgumentException;
   +use Throwable;
-   
+
    class ValidationFailedException extends InvalidArgumentException
    {
   @@ -122,6 +122,6 @@
                }
            }
-   
+
   -        return $base . ': ' . implode(' ; ', $formattedViolations);
   +        return $base.': '.implode(' ; ', $formattedViolations);
        }
    }
-  
-  ⨯ src/Validation/RuleScanner.php class_attributes_separation, new_with_parentheses, function_declaration, concat_space, trailing_comma_in_multiline, not_operator_with_successor_spa  
+
+  ⨯ src/Validation/RuleScanner.php class_attributes_separation, new_with_parentheses, function_declaration, concat_space, trailing_comma_in_multiline, not_operator_with_successor_spa
   @@ -6,11 +6,11 @@
-   
+
    use Illuminate\Support\Facades\Log;
    use ReflectionClass;
   -use Throwable;
@@ -2707,19 +2707,19 @@
    use Roster\Validation\Cache\RuleCacheGenerator;
    use Symfony\Component\Finder\Finder;
   +use Throwable;
-   
+
    class RuleScanner
    {
   @@ -24,6 +24,7 @@
        private ?array $cachedRules = null;
-   
+
        private bool $useCacheFile;
   +
        private ?string $cacheFile;
-   
+
        public function __construct(
   @@ -43,9 +44,10 @@
-   
+
            return $this->doScan();
        }
   +
@@ -2729,24 +2729,24 @@
   +        if (! $this->cacheFile || ! file_exists($this->cacheFile)) {
                return false;
            }
-   
+
   @@ -56,6 +58,7 @@
-   
+
            // En développement, vérifier si le cache est frais
            $cacheGenerator = new RuleCacheGenerator($this);
   +
            return $cacheGenerator->isCacheFresh();
        }
-   
+
   @@ -65,7 +68,7 @@
                $rules = require $this->cacheFile;
-   
+
                // Valider la structure du cache
   -            if (!is_array($rules)) {
   +            if (! is_array($rules)) {
                    throw new \RuntimeException('Invalid cache file structure');
                }
-   
+
   @@ -75,11 +78,11 @@
                    $result[$className] = new Attributes\ValidationRule(
                        priority: $data['priority'],
@@ -2768,42 +2768,42 @@
   -                'error' => $e->getMessage()
   +                'error' => $e->getMessage(),
                ]);
-   
+
                return $this->regenerateCache();
   @@ -106,7 +109,6 @@
            return $rules;
        }
-   
+
   -
        private function doScan(): array
        {
-   
+
   @@ -118,11 +120,11 @@
            $rules = [];
-   
+
            foreach ($this->ruleDirectories as $ruleDirectory) {
   -            if (!is_dir($ruleDirectory)) {
   +            if (! is_dir($ruleDirectory)) {
                    continue;
                }
-   
+
   -            $finder = new Finder();
   +            $finder = new Finder;
                $finder->files()->in($ruleDirectory)->name('*Rule.php');
-   
+
                foreach ($finder as $file) {
   @@ -149,9 +151,10 @@
                }
            }
-   
+
   -        uasort($rules, fn($a, $b): int => $b->priority <=> $a->priority);
   +        uasort($rules, fn ($a, $b): int => $b->priority <=> $a->priority);
-   
+
            $this->cachedRules = $rules;
   +
            return $rules;
        }
-   
+
   @@ -162,7 +165,7 @@
                try {
                    $rules[] = app()->make($className);
@@ -2812,7 +2812,7 @@
   +                $rules[] = new $className;
                }
            }
-   
+
   @@ -175,7 +178,7 @@
            if (preg_match('/namespace\s+([^;]+);/', $content, $namespaceMatches)) {
                $namespace = $namespaceMatches[1];
@@ -2821,19 +2821,19 @@
   +                return $namespace.'\\'.$classMatches[1];
                }
            }
-   
-  
-  ⨯ src/Validation/Rules/AbstractRule.php                                                                                                                  blank_line_before_statement  
+
+
+  ⨯ src/Validation/Rules/AbstractRule.php                                                                                                                  blank_line_before_statement
   @@ -20,6 +20,7 @@
-   
+
            if ($attributes !== []) {
                $attribute = $attributes[0]->newInstance();
   +
                return $attribute->priority ?? 50;
            }
-   
-  
-  ⨯ src/Validation/Rules/AvailabilityDateRangeRule.php                                                  single_quote, concat_space, not_operator_with_successor_space, ordered_imports  
+
+
+  ⨯ src/Validation/Rules/AvailabilityDateRangeRule.php                                                  single_quote, concat_space, not_operator_with_successor_space, ordered_imports
   @@ -7,9 +7,9 @@
    use Exception;
    use Illuminate\Support\Carbon;
@@ -2842,27 +2842,27 @@
    use Roster\Enums\EntityType;
    use Roster\Enums\OperationType;
   +use Roster\Validation\Attributes\ValidationRule;
-   
+
    #[ValidationRule(
        priority: 60,
   @@ -32,7 +32,7 @@
            if ($operationType === OperationType::CREATE) {
                // CREATE : les deux dates doivent être fournies dans le contexte
-   
+
   -            if (!$validationContext->has('validity_start') || !$validationContext->has('validity_end')) {
   +            if (! $validationContext->has('validity_start') || ! $validationContext->has('validity_end')) {
                    return; // Validation des champs requis gérée par une autre règle
                }
-   
+
   @@ -46,7 +46,7 @@
                $hasEnd = $validationContext->has('validity_end');
-   
+
                // Si aucune des deux dates n'est modifiée, on ne valide pas
   -            if (!$hasStart && !$hasEnd) {
   +            if (! $hasStart && ! $hasEnd) {
                    return;
                }
-   
+
   @@ -68,7 +68,7 @@
        {
            if ($operationType === OperationType::CREATE) {
@@ -2871,19 +2871,19 @@
   +            if (! $validationContext->has('daily_start') || ! $validationContext->has('daily_end')) {
                    return; // Validation des champs requis gérée par une autre règle
                }
-   
+
   @@ -82,7 +82,7 @@
                $hasEnd = $validationContext->has('daily_end');
-   
+
                // Si aucune des deux heures n'est modifiée, on ne valide pas
   -            if (!$hasStart && !$hasEnd) {
   +            if (! $hasStart && ! $hasEnd) {
                    return;
                }
-   
+
   @@ -134,7 +134,7 @@
                        $validationContext->setViolation(
-   
+
                            'max_duration',
   -                        sprintf("Availability period cannot exceed %d days", $maxDays)
   +                        sprintf('Availability period cannot exceed %d days', $maxDays)
@@ -2892,7 +2892,7 @@
                }
   @@ -142,7 +142,7 @@
                $validationContext->setViolation(
-   
+
                    'date_format',
   -                "Invalid date format: " . $exception->getMessage()
   +                'Invalid date format: '.$exception->getMessage()
@@ -2901,7 +2901,7 @@
        }
   @@ -176,7 +176,7 @@
                    $validationContext->setViolation(
-   
+
                        'min_duration',
   -                    "Minimum duration must be at least 15 minutes"
   +                    'Minimum duration must be at least 15 minutes'
@@ -2910,15 +2910,15 @@
            } catch (Exception $exception) {
   @@ -183,7 +183,7 @@
                $validationContext->setViolation(
-   
+
                    'time_format',
   -                "Invalid time format: " . $exception->getMessage()
   +                'Invalid time format: '.$exception->getMessage()
                );
            }
        }
-  
-  ⨯ src/Validation/Rules/AvailabilityDaysCoherenceRule.php                                             not_operator_with_successor_space, blank_line_before_statement, ordered_imports  
+
+  ⨯ src/Validation/Rules/AvailabilityDaysCoherenceRule.php                                             not_operator_with_successor_space, blank_line_before_statement, ordered_imports
   @@ -7,10 +7,10 @@
    use Exception;
    use Illuminate\Support\Carbon;
@@ -2929,7 +2929,7 @@
    use Roster\Enums\OperationType;
   -use Roster\Enums\DaysOfWeek;
   +use Roster\Validation\Attributes\ValidationRule;
-   
+
    #[ValidationRule(
        priority: 85,
   @@ -22,7 +22,7 @@
@@ -2940,10 +2940,10 @@
   +        if (! $validationContext->has('days')) {
                return;
            }
-   
+
   @@ -34,11 +34,12 @@
            }
-   
+
            // Vérification du type avant traitement métier
   -        if (!is_array($days)) {
   +        if (! is_array($days)) {
@@ -2954,10 +2954,10 @@
   +
                return;
            }
-   
+
   @@ -52,11 +53,12 @@
            $validDays = DaysOfWeek::values();
-   
+
            foreach ($days as $day) {
   -            if (!in_array($day, $validDays, true)) {
   +            if (! in_array($day, $validDays, true)) {
@@ -2970,20 +2970,20 @@
                }
            }
   @@ -92,7 +94,7 @@
-   
+
            // Vérifier chaque jour fourni
            foreach ($days as $day) {
   -            if (!in_array($day, $daysInPeriod, true)) {
   +            if (! in_array($day, $daysInPeriod, true)) {
                    $periodDescription = roster_format_period_days_for_display($daysInPeriod);
-   
+
                    $validationContext->setViolation(
-  
-  ⨯ src/Validation/Rules/AvailabilityOverlapRule.php                                                                                not_operator_with_successor_space, ordered_imports  
+
+  ⨯ src/Validation/Rules/AvailabilityOverlapRule.php                                                                                not_operator_with_successor_space, ordered_imports
   @@ -4,13 +4,13 @@
-   
+
    namespace Roster\Validation\Rules;
-   
+
   +use Exception;
    use Illuminate\Database\Eloquent\Model;
    use Roster\Contracts\Repository\AvailabilityRepositoryInterface;
@@ -2993,21 +2993,21 @@
    use Roster\Enums\EntityType;
    use Roster\Enums\OperationType;
   +use Roster\Validation\Attributes\ValidationRule;
-   
+
    #[ValidationRule(
        priority: 80,
   @@ -25,7 +25,7 @@
            $currentEntity = $validationContext->getCurrentEntity();
-   
+
            // Pour UPDATE, si l'entité n'existe pas, on ne peut pas valider les chevauchements
   -        if ($operationType === OperationType::UPDATE && !$currentEntity) {
   +        if ($operationType === OperationType::UPDATE && ! $currentEntity) {
                return;
            }
-   
+
   @@ -33,7 +33,7 @@
            $requiredFields = ['daily_start', 'daily_end', 'days', 'validity_start', 'validity_end'];
-   
+
            foreach ($requiredFields as $requiredField) {
   -            if (!$validationContext->has($requiredField)) {
   +            if (! $validationContext->has($requiredField)) {
@@ -3015,16 +3015,16 @@
                    if ($operationType === OperationType::UPDATE && $currentEntity) {
                        // On peut continuer car la valeur sera récupérée depuis l'entité existante
   @@ -47,7 +47,7 @@
-   
+
            try {
                $schedulable = $validationContext->getSchedulable();
   -            if (!$schedulable instanceof Model) {
   +            if (! $schedulable instanceof Model) {
                    return;
                }
-   
-  
-  ⨯ src/Validation/Rules/AvailabilityOwnershipRule.php                                                 not_operator_with_successor_space, blank_line_before_statement, ordered_imports  
+
+
+  ⨯ src/Validation/Rules/AvailabilityOwnershipRule.php                                                 not_operator_with_successor_space, blank_line_before_statement, ordered_imports
   @@ -7,9 +7,9 @@
    use Illuminate\Database\Eloquent\Model;
    use Roster\Contracts\Repository\AvailabilityRepositoryInterface;
@@ -3033,12 +3033,12 @@
    use Roster\Enums\EntityType;
    use Roster\Enums\OperationType;
   +use Roster\Validation\Attributes\ValidationRule;
-   
+
    #[ValidationRule(
        priority: 90,
   @@ -24,27 +24,28 @@
            $availabilityId = $validationContext->get('availability_id');
-   
+
            // Si CREATE, availability_id doit être présent
   -        if ($operationType === OperationType::CREATE && !$availabilityId) {
   +        if ($operationType === OperationType::CREATE && ! $availabilityId) {
@@ -3049,30 +3049,30 @@
   +
                return;
            }
-   
+
            // Pour UPDATE, on utilise l'entité courante si availability_id n'est pas fourni
            $currentEntity = $validationContext->getCurrentEntity();
   -        if ($operationType === OperationType::UPDATE && !$availabilityId && $currentEntity) {
   +        if ($operationType === OperationType::UPDATE && ! $availabilityId && $currentEntity) {
                $availabilityId = $currentEntity->availability_id ?? null;
            }
-   
+
   -        if (!$availabilityId) {
   +        if (! $availabilityId) {
                // Rien à vérifier si aucun availability_id
                return;
            }
-   
+
            $schedulable = $validationContext->getSchedulable();
   -        if (!$schedulable instanceof Model) {
   +        if (! $schedulable instanceof Model) {
                return; // SchedulableValidationRule doit déjà gérer ça
            }
-   
+
   @@ -51,11 +52,12 @@
            $availabilityRepository = app(AvailabilityRepositoryInterface::class);
            $availability = $availabilityRepository->find($availabilityId);
-   
+
   -        if (!$availability) {
   +        if (! $availability) {
                $validationContext->setViolation(
@@ -3082,13 +3082,13 @@
   +
                return;
            }
-   
-  
-  ⨯ src/Validation/Rules/AvailabilityTimeRangeRule.php                                                                              not_operator_with_successor_space, ordered_imports  
+
+
+  ⨯ src/Validation/Rules/AvailabilityTimeRangeRule.php                                                                              not_operator_with_successor_space, ordered_imports
   @@ -4,14 +4,14 @@
-   
+
    namespace Roster\Validation\Rules;
-   
+
   -use Roster\Models\Availability;
   -use Roster\Contracts\Repository\AvailabilityRepositoryInterface;
    use Exception;
@@ -3100,7 +3100,7 @@
    use Roster\Enums\OperationType;
   +use Roster\Models\Availability;
   +use Roster\Validation\Attributes\ValidationRule;
-   
+
    #[ValidationRule(
        priority: 85,
   @@ -22,7 +22,7 @@
@@ -3111,25 +3111,25 @@
   +        if (! $validationContext->has('start_datetime') || ! $validationContext->has('end_datetime')) {
                return;
            }
-   
+
   @@ -31,7 +31,7 @@
                $end = Carbon::parse($validationContext->get('end_datetime'));
                $availabilityId = $validationContext->get('availability_id');
-   
+
   -            if (!$availabilityId) {
   +            if (! $availabilityId) {
                    return; // AvailabilityOwnershipRule devrait déjà avoir échoué
                }
-   
+
   @@ -39,7 +39,7 @@
                $availabilityRepository = app(AvailabilityRepositoryInterface::class);
                $availability = $availabilityRepository->find($availabilityId);
-   
+
   -            if (!$availability) {
   +            if (! $availability) {
                    return; // AvailabilityOwnershipRule devrait déjà avoir échoué
                }
-   
+
   @@ -57,7 +57,7 @@
        ): void {
            // 1. Vérifie le jour de la semaine
@@ -3139,17 +3139,17 @@
                $validationContext->setViolation(
                    'start_datetime',
                    sprintf('Day %s is not available in this availability', $dayOfWeek)
-  
-  ⨯ src/Validation/Rules/AvailabilityTypeRule.php                                                             not_operator_with_successor_space, no_extra_blank_lines, ordered_imports  
+
+  ⨯ src/Validation/Rules/AvailabilityTypeRule.php                                                             not_operator_with_successor_space, no_extra_blank_lines, ordered_imports
   @@ -5,9 +5,9 @@
    namespace Roster\Validation\Rules;
-   
+
    use Roster\Contracts\Validation\ValidationContextInterface;
   -use Roster\Validation\Attributes\ValidationRule;
    use Roster\Enums\EntityType;
    use Roster\Enums\OperationType;
   +use Roster\Validation\Attributes\ValidationRule;
-   
+
    #[ValidationRule(
        priority: 80,
   @@ -19,7 +19,7 @@
@@ -3160,11 +3160,11 @@
   +        if (! $validationContext->has('type')) {
                return;
            }
-   
+
   @@ -38,9 +38,8 @@
                return;
            }
-   
+
   -
            // Validation stricte
   -        if (!in_array($type, $allowedTypes, true)) {
@@ -3172,17 +3172,17 @@
                $validationContext->setViolation(
                    'type',
                    sprintf("Invalid type '%s'", $type)
-  
-  ⨯ src/Validation/Rules/DaysValidationRule.php                                                        not_operator_with_successor_space, blank_line_before_statement, ordered_imports  
+
+  ⨯ src/Validation/Rules/DaysValidationRule.php                                                        not_operator_with_successor_space, blank_line_before_statement, ordered_imports
   @@ -6,9 +6,9 @@
-   
+
    use Roster\Contracts\Validation\ValidationContextInterface;
    use Roster\Enums\DaysOfWeek;
   -use Roster\Validation\Attributes\ValidationRule;
    use Roster\Enums\EntityType;
    use Roster\Enums\OperationType;
   +use Roster\Validation\Attributes\ValidationRule;
-   
+
    #[ValidationRule(
        priority: 90,
   @@ -32,7 +32,7 @@
@@ -3193,9 +3193,9 @@
   +        if (! $validationContext->has('days')) {
                return; // Valeur par défaut sera appliquée par le DTO
            }
-   
+
   @@ -42,7 +42,7 @@
-   
+
        private function validateForUpdate(ValidationContextInterface $validationContext): void
        {
   -        if (!$validationContext->has('days')) {
@@ -3204,7 +3204,7 @@
                return;
            }
   @@ -53,11 +53,12 @@
-   
+
        private function validateDaysArray(mixed $days, ValidationContextInterface $validationContext): void
        {
   -        if (!is_array($days)) {
@@ -3216,7 +3216,7 @@
   +
                return;
            }
-   
+
   @@ -66,6 +67,7 @@
                    'days',
                    'Days array cannot be empty'
@@ -3224,7 +3224,7 @@
   +
                return;
            }
-   
+
   @@ -72,11 +74,12 @@
            // Valider que chaque jour est valide
            $validDays = DaysOfWeek::values();
@@ -3239,8 +3239,8 @@
                    return;
                }
            }
-  
-  ⨯ src/Validation/Rules/DurationRule.php                                                 single_quote, concat_space, not_operator_with_successor_space, ordered_imports, phpdoc_align  
+
+  ⨯ src/Validation/Rules/DurationRule.php                                                 single_quote, concat_space, not_operator_with_successor_space, ordered_imports, phpdoc_align
   @@ -7,9 +7,9 @@
    use Exception;
    use Illuminate\Support\Carbon;
@@ -3249,12 +3249,12 @@
    use Roster\Enums\EntityType;
    use Roster\Enums\OperationType;
   +use Roster\Validation\Attributes\ValidationRule;
-   
+
    #[ValidationRule(
        priority: 70,
   @@ -31,17 +31,17 @@
        }
-   
+
        /**
   -     * @param array<string, mixed> $data
   +     * @param  array<string, mixed>  $data
@@ -3266,22 +3266,22 @@
   +        if ($operationType === OperationType::CREATE && (! isset($data['start_time']) || ! isset($data['end_time']))) {
                return;
            }
-   
+
            // UPDATE : ne vérifier que si l'un des deux champs est fourni
   -        if ($operationType === OperationType::UPDATE && !isset($data['start_time']) && !isset($data['end_time'])) {
   +        if ($operationType === OperationType::UPDATE && ! isset($data['start_time']) && ! isset($data['end_time'])) {
                return;
            }
-   
+
   @@ -49,7 +49,7 @@
                $start = isset($data['start_time']) ? Carbon::parse($data['start_time']) : null;
                $end = isset($data['end_time']) ? Carbon::parse($data['end_time']) : null;
-   
+
   -            if (!$start instanceof Carbon || !$end instanceof Carbon) {
   +            if (! $start instanceof Carbon || ! $end instanceof Carbon) {
                    return; // on ne peut pas calculer la durée
                }
-   
+
   @@ -59,7 +59,7 @@
                    $validationContext->setViolation(
                        'duration',
@@ -3299,7 +3299,7 @@
   +            $validationContext->setViolation('time_format', 'Invalid time format: '.$exception->getMessage());
            }
        }
-   
+
        /**
   -     * @param array<string, mixed> $data
   +     * @param  array<string, mixed>  $data
@@ -3311,22 +3311,22 @@
   +        if ($operationType === OperationType::CREATE && (! isset($data['start_datetime']) || ! isset($data['end_datetime']))) {
                return;
            }
-   
+
            // UPDATE : ne vérifier que si l'un des deux champs est fourni
   -        if ($operationType === OperationType::UPDATE && !isset($data['start_datetime']) && !isset($data['end_datetime'])) {
   +        if ($operationType === OperationType::UPDATE && ! isset($data['start_datetime']) && ! isset($data['end_datetime'])) {
                return;
            }
-   
+
   @@ -89,7 +89,7 @@
                $start = isset($data['start_datetime']) ? Carbon::parse($data['start_datetime']) : null;
                $end = isset($data['end_datetime']) ? Carbon::parse($data['end_datetime']) : null;
-   
+
   -            if (!$start instanceof Carbon || !$end instanceof Carbon) {
   +            if (! $start instanceof Carbon || ! $end instanceof Carbon) {
                    return; // on ne peut pas calculer la durée
                }
-   
+
   @@ -100,7 +100,7 @@
                    $validationContext->setViolation(
                        'duration',
@@ -3345,8 +3345,8 @@
            }
        }
    }
-  
-  ⨯ src/Validation/Rules/FutureDateRule.php                                                                                         not_operator_with_successor_space, ordered_imports  
+
+  ⨯ src/Validation/Rules/FutureDateRule.php                                                                                         not_operator_with_successor_space, ordered_imports
   @@ -7,9 +7,9 @@
    use Exception;
    use Illuminate\Support\Carbon;
@@ -3355,7 +3355,7 @@
    use Roster\Enums\EntityType;
    use Roster\Enums\OperationType;
   +use Roster\Validation\Attributes\ValidationRule;
-   
+
    #[ValidationRule(
        priority: 40,
   @@ -20,7 +20,7 @@
@@ -3366,36 +3366,36 @@
   +        if (! $this->shouldValidateFutureDates()) {
                return;
            }
-   
+
   @@ -39,7 +39,7 @@
-   
+
        private function validateFutureAvailability(ValidationContextInterface $validationContext): void
        {
   -        if (!$validationContext->has('start_date')) {
   +        if (! $validationContext->has('start_date')) {
                return;
            }
-   
+
   @@ -59,7 +59,7 @@
-   
+
        private function validateFutureDateTime(ValidationContextInterface $validationContext): void
        {
   -        if (!$validationContext->has('start_datetime')) {
   +        if (! $validationContext->has('start_datetime')) {
                return;
            }
-   
-  
-  ⨯ src/Validation/Rules/RequiredFieldsRule.php                                                                                     not_operator_with_successor_space, ordered_imports  
+
+
+  ⨯ src/Validation/Rules/RequiredFieldsRule.php                                                                                     not_operator_with_successor_space, ordered_imports
   @@ -5,9 +5,9 @@
    namespace Roster\Validation\Rules;
-   
+
    use Roster\Contracts\Validation\ValidationContextInterface;
   -use Roster\Validation\Attributes\ValidationRule;
    use Roster\Enums\EntityType;
    use Roster\Enums\OperationType;
   +use Roster\Validation\Attributes\ValidationRule;
-   
+
    #[ValidationRule(
        priority: 100,
   @@ -42,7 +42,7 @@
@@ -3407,12 +3407,12 @@
                    $validationContext->setViolation(
                        $requiredField,
                        sprintf("Field '%s' is required", $requiredField)
-  
-  ⨯ src/Validation/Rules/SchedulableConsistencyRule.php                                                not_operator_with_successor_space, blank_line_before_statement, ordered_imports  
+
+  ⨯ src/Validation/Rules/SchedulableConsistencyRule.php                                                not_operator_with_successor_space, blank_line_before_statement, ordered_imports
   @@ -4,12 +4,12 @@
-   
+
    namespace Roster\Validation\Rules;
-   
+
   +use Illuminate\Support\Facades\App;
    use Roster\Contracts\Repository\AvailabilityRepositoryInterface;
   -use Roster\Validation\Attributes\ValidationRule;
@@ -3422,18 +3422,18 @@
   -use Illuminate\Support\Facades\App;
   -use Roster\Contracts\Validation\ValidationContextInterface;
   +use Roster\Validation\Attributes\ValidationRule;
-   
+
    #[ValidationRule(
        priority: 95,
   @@ -22,16 +22,17 @@
        {
            $entityType = $validationContext->getEntityType();
-   
+
   -        if (!in_array($entityType, [EntityType::SCHEDULE, EntityType::IMPEDIMENT])) {
   +        if (! in_array($entityType, [EntityType::SCHEDULE, EntityType::IMPEDIMENT])) {
                return;
            }
-   
+
            // Vérifier que schedulable_id et schedulable_type sont présents
   -        if (!$validationContext->has('schedulable_id') || !$validationContext->has('schedulable_type')) {
   +        if (! $validationContext->has('schedulable_id') || ! $validationContext->has('schedulable_type')) {
@@ -3444,42 +3444,42 @@
   +
                return;
            }
-   
+
   @@ -40,7 +41,7 @@
-   
+
            // Vérifier que l'availability appartient au même schedulable
            $availabilityId = $validationContext->get('availability_id');
   -        if (!$availabilityId) {
   +        if (! $availabilityId) {
                return; // AvailabilityOwnershipRule gérera cela
            }
-   
+
   @@ -47,7 +48,7 @@
            $availabilityRepository = App::make(AvailabilityRepositoryInterface::class);
            $availability = $availabilityRepository->find($availabilityId);
-   
+
   -        if (!$availability) {
   +        if (! $availability) {
                return; // AvailabilityOwnershipRule gérera cela
            }
-   
-  
-  ⨯ src/Validation/Rules/SchedulableValidationRule.php                                                 not_operator_with_successor_space, blank_line_before_statement, ordered_imports  
+
+
+  ⨯ src/Validation/Rules/SchedulableValidationRule.php                                                 not_operator_with_successor_space, blank_line_before_statement, ordered_imports
   @@ -6,9 +6,9 @@
-   
+
    use Illuminate\Database\Eloquent\Model;
    use Roster\Contracts\Validation\ValidationContextInterface;
   -use Roster\Validation\Attributes\ValidationRule;
    use Roster\Enums\EntityType;
    use Roster\Enums\OperationType;
   +use Roster\Validation\Attributes\ValidationRule;
-   
+
    #[ValidationRule(
        priority: 110,
   @@ -25,11 +25,12 @@
            $ownerFields = ['schedulable_id', 'schedulable_type'];
            $safeData = $validationContext->safeData();
-   
+
   -        if (!$schedulable instanceof Model) {
   +        if (! $schedulable instanceof Model) {
                $validationContext->setViolation(
@@ -3489,11 +3489,11 @@
   +
                return;
            }
-   
+
   @@ -64,11 +65,12 @@
            $schedulableId = $validationContext->get('schedulable_id');
            $schedulableType = $validationContext->get('schedulable_type');
-   
+
   -        if (!$schedulableId || !$schedulableType) {
   +        if (! $schedulableId || ! $schedulableType) {
                $validationContext->setViolation(
@@ -3503,13 +3503,13 @@
   +
                return;
            }
-   
-  
-  ⨯ src/Validation/Rules/ScheduleOverlapRule.php                                 not_operator_with_successor_space, no_extra_blank_lines, blank_line_before_statement, ordered_imports  
+
+
+  ⨯ src/Validation/Rules/ScheduleOverlapRule.php                                 not_operator_with_successor_space, no_extra_blank_lines, blank_line_before_statement, ordered_imports
   @@ -4,14 +4,14 @@
-   
+
    namespace Roster\Validation\Rules;
-   
+
   -use Roster\Contracts\Repository\ScheduleRepositoryInterface;
   -use Roster\Contracts\Repository\ImpedimentRepositoryInterface;
    use Exception;
@@ -3521,48 +3521,48 @@
    use Roster\Enums\EntityType;
    use Roster\Enums\OperationType;
   +use Roster\Validation\Attributes\ValidationRule;
-   
+
    #[ValidationRule(
        priority: 80,
   @@ -23,7 +23,7 @@
        public function validate(ValidationContextInterface $validationContext): void
        {
-   
+
   -        if (!$validationContext->has('start_datetime') || !$validationContext->has('end_datetime')) {
   +        if (! $validationContext->has('start_datetime') || ! $validationContext->has('end_datetime')) {
                return;
            }
-   
+
   @@ -32,24 +32,20 @@
                $end = Carbon::parse($validationContext->get('end_datetime'));
                $availabilityId = $validationContext->get('availability_id');
-   
+
   -
   -            if (!$availabilityId) {
   +            if (! $availabilityId) {
                    return;
                }
-   
+
                $currentEntity = $validationContext->getCurrentEntity();
-   
+
   -
                if ($currentEntity) {
                }
-   
+
                $excludeId = $currentEntity ? ($currentEntity->id ?? null) : null;
-   
+
   -
                // 1. Vérifie chevauchement avec autres schedules
                $scheduleRepository = app(ScheduleRepositoryInterface::class);
-   
+
   -
                // Vérifiez d'abord SANS exclusion pour voir ce qui existe
                $allOverlapping = $scheduleRepository->findOverlappingSchedules($availabilityId, $start, $end);
                if ($allOverlapping->count() > 0) {
   @@ -68,13 +64,12 @@
-   
+
                $hasScheduleOverlap = $scheduleRepository->hasOverlappingSchedule($availabilityId, $start, $end, $excludeId);
-   
+
   -
   -
                if ($hasScheduleOverlap) {
@@ -3573,11 +3573,11 @@
   +
                    return;
                }
-   
+
   @@ -82,12 +77,12 @@
                $impedimentRepository = app(ImpedimentRepositoryInterface::class);
                $hasImpedimentOverlap = $impedimentRepository->hasOverlappingImpediments($availabilityId, $start, $end);
-   
+
   -
                if ($hasImpedimentOverlap) {
                    $validationContext->setViolation(
@@ -3588,8 +3588,8 @@
                    return;
                }
            } catch (Exception $exception) {
-  
-  ⨯ src/Validation/Rules/TimeSlotDateTimeRule.php                                                       single_quote, concat_space, not_operator_with_successor_space, ordered_imports  
+
+  ⨯ src/Validation/Rules/TimeSlotDateTimeRule.php                                                       single_quote, concat_space, not_operator_with_successor_space, ordered_imports
   @@ -7,9 +7,9 @@
    use Exception;
    use Illuminate\Support\Carbon;
@@ -3598,7 +3598,7 @@
    use Roster\Enums\EntityType;
    use Roster\Enums\OperationType;
   +use Roster\Validation\Attributes\ValidationRule;
-   
+
    #[ValidationRule(
        priority: 60,
   @@ -33,7 +33,7 @@
@@ -3609,16 +3609,16 @@
   +        if (! $validationContext->has('start_datetime') || ! $validationContext->has('end_datetime')) {
                return; // Validation des champs requis gérée par une autre règle
            }
-   
+
   @@ -50,7 +50,7 @@
            $hasEnd = $validationContext->has('end_datetime');
-   
+
            // Si aucune des deux datetime n'est modifiée, on ne valide pas
   -        if (!$hasStart && !$hasEnd) {
   +        if (! $hasStart && ! $hasEnd) {
                return;
            }
-   
+
   @@ -88,7 +88,7 @@
                    );
                }
@@ -3628,12 +3628,12 @@
            }
        }
    }
-  
-  ⨯ src/Validation/Validator.php function_declaration, no_multiline_whitespace_around_double_arrow, concat_space, not_operator_with_successor_space, blank_line_before_statement, orde  
+
+  ⨯ src/Validation/Validator.php function_declaration, no_multiline_whitespace_around_double_arrow, concat_space, not_operator_with_successor_space, blank_line_before_statement, orde
   @@ -4,14 +4,14 @@
-   
+
    namespace Roster\Validation;
-   
+
   -use Throwable;
    use ReflectionClass;
   -use Roster\Validation\Attributes\ValidationRule;
@@ -3644,7 +3644,7 @@
    use Roster\Enums\OperationType;
   +use Roster\Validation\Attributes\ValidationRule;
   +use Throwable;
-   
+
    class Validator implements ValidatorInterface
    {
   @@ -30,7 +30,7 @@
@@ -3655,7 +3655,7 @@
   +            __DIR__.'/Rules',
                // Ajoutez d'autres répertoires si nécessaire
            ]);
-   
+
   @@ -63,8 +63,7 @@
            // Tri par priorité (plus haut = exécuté en premier)
            usort(
@@ -3664,17 +3664,17 @@
   -            $b->getPriority() <=> $a->getPriority()
   +            fn (RuleInterface $a, RuleInterface $b): int => $b->getPriority() <=> $a->getPriority()
            );
-   
+
            foreach ($applicableRules as $applicableRule) {
   @@ -72,12 +71,12 @@
                    $applicableRule->validate($validationContext);
                } catch (Throwable $e) {
-   
+
   -                $validationContext->setViolation('_system', sprintf('Validation rule %s failed: ', $applicableRule->getName()) . $e->getMessage());
   +                $validationContext->setViolation('_system', sprintf('Validation rule %s failed: ', $applicableRule->getName()).$e->getMessage());
                }
            }
-   
+
            return new ValidationResult(
   -            !$validationContext->hasViolations(),
   +            ! $validationContext->hasViolations(),
@@ -3683,35 +3683,35 @@
        }
   @@ -94,18 +93,18 @@
                $attribute = $attributes[0]->newInstance();
-   
+
                foreach ($attribute->entities as $entity) {
   -                if (!$entity instanceof EntityType) {
   +                if (! $entity instanceof EntityType) {
                        continue;
                    }
-   
+
                    foreach ($attribute->operations as $operation) {
   -                    if (!$operation instanceof OperationType) {
   +                    if (! $operation instanceof OperationType) {
                            continue;
                        }
-   
+
                        $key = $this->getCacheKey($operation, $entity);
-   
+
   -                    if (!isset($this->rulesByEntityOperation[$key])) {
   +                    if (! isset($this->rulesByEntityOperation[$key])) {
                            $this->rulesByEntityOperation[$key] = [];
                        }
-   
+
   @@ -119,7 +118,7 @@
                        if ($rule->supports($operation, $entity)) {
                            $key = $this->getCacheKey($operation, $entity);
-   
+
   -                        if (!isset($this->rulesByEntityOperation[$key])) {
   +                        if (! isset($this->rulesByEntityOperation[$key])) {
                                $this->rulesByEntityOperation[$key] = [];
                            }
-   
+
   @@ -133,6 +132,7 @@
        public function getRulesFor(OperationType $operationType, EntityType $entityType): array
        {
@@ -3719,15 +3719,15 @@
   +
            return $this->rulesByEntityOperation[$key] ?? [];
        }
-   
+
   @@ -143,7 +143,7 @@
-   
+
        private function getCacheKey(OperationType $operationType, EntityType $entityType): string
        {
   -        return $operationType->value . ':' . $entityType->value;
   +        return $operationType->value.':'.$entityType->value;
        }
-   
+
        /**
   @@ -184,7 +184,8 @@
        public function getRulesSortedByPriority(): array
@@ -3738,9 +3738,9 @@
   +
            return $sortedRules;
        }
-   
-  
-  ⨯ src/helpers.php                 function_declaration, increment_style, concat_space, not_operator_with_successor_space, blank_line_before_statement, ordered_imports, phpdoc_align  
+
+
+  ⨯ src/helpers.php                 function_declaration, increment_style, concat_space, not_operator_with_successor_space, blank_line_before_statement, ordered_imports, phpdoc_align
   @@ -5,15 +5,15 @@
     *
     * Collection of helper functions for the Roster package.
@@ -3749,7 +3749,7 @@
    use Carbon\WeekDay;
   -use Carbon\Month;
    use Illuminate\Support\Carbon;
-   
+
   -if (!function_exists('roster_day_of_week')) {
   +if (! function_exists('roster_day_of_week')) {
        /**
@@ -3763,7 +3763,7 @@
   @@ -28,12 +28,12 @@
        }
    }
-   
+
   -if (!function_exists('roster_days_in_period')) {
   +if (! function_exists('roster_days_in_period')) {
        /**
@@ -3779,7 +3779,7 @@
   @@ -58,12 +58,12 @@
        }
    }
-   
+
   -if (!function_exists('roster_format_period_days_for_display')) {
   +if (! function_exists('roster_format_period_days_for_display')) {
        /**
@@ -3792,17 +3792,17 @@
         */
        function roster_format_period_days_for_display(array $days): string
   @@ -85,9 +85,9 @@
-   
+
            // Vérifier si c'est une séquence continue
            $isContinuous = true;
   -        $dayIndices = array_map(fn($day): false|int => array_search($day, $dayOrder, true), $days);
   +        $dayIndices = array_map(fn ($day): false|int => array_search($day, $dayOrder, true), $days);
-   
+
   -        for ($i = 0; $i < count($dayIndices) - 1; ++$i) {
   +        for ($i = 0; $i < count($dayIndices) - 1; $i++) {
                $current = $dayIndices[$i];
                $next = $dayIndices[$i + 1];
-   
+
   @@ -94,7 +94,7 @@
                // Deux jours sont consécutifs si :
                // 1. next = current + 1 (cas normal)
@@ -3815,7 +3815,7 @@
   @@ -121,11 +121,11 @@
        }
    }
-   
+
   -if (!function_exists('roster_format_days_for_display')) {
   +if (! function_exists('roster_format_days_for_display')) {
        /**
@@ -3828,19 +3828,19 @@
        function roster_format_days_for_display(array $days): string
   @@ -141,30 +141,31 @@
            }
-   
+
            if (count($capitalized) === 2) {
   -            return $capitalized[0] . ' and ' . $capitalized[1];
   +            return $capitalized[0].' and '.$capitalized[1];
            }
-   
+
            $last = array_pop($capitalized);
   -        return implode(', ', $capitalized) . ' and ' . $last;
   +
   +        return implode(', ', $capitalized).' and '.$last;
        }
    }
-   
+
   -if (!function_exists('roster_period_duration_in_days')) {
   +if (! function_exists('roster_period_duration_in_days')) {
        /**
@@ -3859,16 +3859,16 @@
   +            if (! $startDate instanceof DateTimeInterface) {
                    $startDate = new DateTime($startDate);
                }
-   
+
   -            if (!$endDate instanceof DateTimeInterface) {
   +            if (! $endDate instanceof DateTimeInterface) {
                    $endDate = new DateTime($endDate);
                }
-   
+
   @@ -176,28 +177,29 @@
        }
    }
-   
+
   -if (!function_exists('roster_is_day_in_period')) {
   +if (! function_exists('roster_is_day_in_period')) {
        /**
@@ -3888,7 +3888,7 @@
            return in_array($day, $daysInPeriod, true);
        }
    }
-   
+
   -if (!function_exists('roster_get_valid_days_in_period')) {
   +if (! function_exists('roster_get_valid_days_in_period')) {
        /**
@@ -3906,7 +3906,7 @@
   @@ -215,12 +217,12 @@
        }
    }
-   
+
   -if (!function_exists('roster_should_auto_adjust_days')) {
   +if (! function_exists('roster_should_auto_adjust_days')) {
        /**
@@ -3920,19 +3920,19 @@
        function roster_should_auto_adjust_days($startDate, $endDate): bool
        {
   @@ -231,6 +233,7 @@
-   
+
            try {
                $duration = roster_period_duration_in_days($startDate, $endDate);
   +
                return $duration !== null && $duration < 7;
            } catch (Exception $exception) {
                return false;
-  
-  ⨯ tests/Feature/Services/AvailabilityServiceDaysCoherenceTest.php                                                                                                    ordered_imports  
+
+  ⨯ tests/Feature/Services/AvailabilityServiceDaysCoherenceTest.php                                                                                                    ordered_imports
   @@ -4,11 +4,11 @@
-   
+
    namespace Tests\Feature\Services;
-   
+
   +use Illuminate\Foundation\Testing\RefreshDatabase;
    use Roster\Enums\DaysOfWeek;
   +use Roster\Models\Availability;
@@ -3942,47 +3942,47 @@
   -use Roster\Models\Availability;
    use Tests\Support\TestSchedulable;
    use Tests\TestCase;
-   
-  
-  ⨯ tests/Support/TestSchedulable.php                                                                                                                      class_attributes_separation  
+
+
+  ⨯ tests/Support/TestSchedulable.php                                                                                                                      class_attributes_separation
   @@ -10,6 +10,7 @@
    class TestSchedulable extends Model
    {
        use HasRoster;
   +
        protected $table = 'test_schedulables';
-   
+
        public $timestamps = false;
-  
-  ⨯ tests/TestCase.php                                                                                                                                   concat_space, ordered_imports  
+
+  ⨯ tests/TestCase.php                                                                                                                                   concat_space, ordered_imports
   @@ -4,9 +4,9 @@
-   
+
    namespace Tests;
-   
+
   +use Illuminate\Support\Facades\Config;
    use Orchestra\Testbench\TestCase as OrchestraTestCase;
    use Roster\RosterServiceProvider;
   -use Illuminate\Support\Facades\Config;
-   
+
    abstract class TestCase extends OrchestraTestCase
    {
   @@ -15,10 +15,10 @@
            parent::setUp();
-   
+
            // Charger les migrations du package
   -        $this->loadMigrationsFrom(__DIR__ . '/../database/migrations');
   +        $this->loadMigrationsFrom(__DIR__.'/../database/migrations');
-   
+
            // Charger les migrations de test
   -        $this->loadMigrationsFrom(__DIR__ . '/database/migrations');
   +        $this->loadMigrationsFrom(__DIR__.'/database/migrations');
-   
+
            // Utiliser le cache en mémoire pour les tests
            Config::set('cache.default', 'array');
-  
-  ⨯ tests/Unit/HelpersTest.php                                                                                                                             class_attributes_separation  
+
+  ⨯ tests/Unit/HelpersTest.php                                                                                                                             class_attributes_separation
   @@ -9,7 +9,6 @@
-   
+
    final class HelpersTest extends TestCase
    {
   -
@@ -3992,7 +3992,7 @@
   @@ -82,7 +81,6 @@
            $this->assertSame([], roster_days_in_period('invalid', '2038-07-01'));
        }
-   
+
   -
        public function test_roster_format_days_for_display(): void
        {
@@ -4000,7 +4000,7 @@
   @@ -92,7 +90,6 @@
            $this->assertSame('', roster_format_days_for_display([]));
        }
-   
+
   -
        public function test_roster_period_duration_in_days(): void
        {
@@ -4008,7 +4008,7 @@
   @@ -102,7 +99,6 @@
            $this->assertNull(roster_period_duration_in_days('invalid', '2038-07-01'));
        }
-   
+
   -
        public function test_roster_is_day_in_period(): void
        {
@@ -4016,7 +4016,7 @@
   @@ -119,7 +115,6 @@
            $this->assertFalse(roster_is_day_in_period('friday', '2038-07-01', '2038-07-01'));
        }
-   
+
   -
        public function test_roster_get_valid_days_in_period(): void
        {
@@ -4026,21 +4026,21 @@
            $this->assertSame($expected, $validDays);
        }
   -
-   
+
        public function test_roster_should_auto_adjust_days(): void
        {
-  
-  ⨯ tests/Unit/Models/ScheduleTest.php                                                                            class_attributes_separation, no_unused_imports, no_extra_blank_lines  
+
+  ⨯ tests/Unit/Models/ScheduleTest.php                                                                            class_attributes_separation, no_unused_imports, no_extra_blank_lines
   @@ -4,25 +4,20 @@
-   
+
    namespace Unit\Models;
-   
+
   -use Illuminate\Support\Carbon;
   -use Rector\Carbon\NodeFactory\CarbonCallFactory;
   -use Roster\Models\Availability;
   -use Tests\Support\TestSchedulable;
    use Tests\TestCase;
-   
+
    final class ScheduleTest extends TestCase
    {
   -
@@ -4055,15 +4055,15 @@
        public function test_validate_basic_data_with_valid_data(): void
        {
   -
-   
+
            // Arrange
-   
-  
-  ⨯ tests/Unit/Services/AvailabilityServiceTest.php                                                                   class_attributes_separation, method_argument_space, single_quote  
+
+
+  ⨯ tests/Unit/Services/AvailabilityServiceTest.php                                                                   class_attributes_separation, method_argument_space, single_quote
   @@ -166,7 +166,6 @@
            $this->availabilityService->update($availabilityId, $updateData);
        }
-   
+
   -
        public function test_can_delete_an_availability(): void
        {
@@ -4071,30 +4071,30 @@
   @@ -206,7 +205,6 @@
            $this->availabilityService->delete($availabilityId);
        }
-   
+
   -
        public function test_can_find_an_availability_by_id(): void
        {
            // Arrange - Créer une disponibilité
   @@ -485,7 +483,7 @@
-   
+
            // Expect exception
            $this->expectException(ValidationFailedException::class);
   -        $this->expectExceptionMessageMatches("/cannot be changed/");
   +        $this->expectExceptionMessageMatches('/cannot be changed/');
-   
+
            // Act
            $this->availabilityService->update($availability->id, $updateData);
   @@ -635,7 +633,6 @@
            ]);
        }
-   
+
   -
        public function test_validate_invalid_day_value(): void
        {
            // Arrange - Jour invalide
   @@ -658,13 +655,13 @@
-   
+
        public function test_validate_invalid_type(): void
        {
   -        config()->set('roster-validation.availability_types',  [
@@ -4106,15 +4106,15 @@
                'support',
   -        ],);
   +        ], );
-   
+
            // Arrange - Type invalide
            $availabilityData = [
-  
-  ⨯ tests/Unit/Services/ImpedimentServiceTest.php                                                                   class_attributes_separation, no_extra_blank_lines, ordered_imports  
+
+  ⨯ tests/Unit/Services/ImpedimentServiceTest.php                                                                   class_attributes_separation, no_extra_blank_lines, ordered_imports
   @@ -4,14 +4,14 @@
-   
+
    namespace Tests\Feature\Services;
-   
+
   -use Roster\Contracts\Validation\ValidatorInterface;
   +use Illuminate\Support\Carbon;
    use Illuminate\Support\Collection;
@@ -4135,7 +4135,7 @@
   +use Tests\Support\TestSchedulable;
    use Tests\TestCase;
   -use Tests\Support\TestSchedulable;
-   
+
    final class ImpedimentServiceTest extends TestCase
    {
   @@ -188,6 +188,7 @@
@@ -4149,21 +4149,21 @@
   @@ -210,7 +211,6 @@
                'end_datetime' => '2038-01-04 12:00:00',
            ]);
-   
+
   -
            // Act
            $result = $this->impedimentService->for($this->testSchedulable)->delete($impediment->id);
-   
+
   @@ -687,7 +687,6 @@
                'end_datetime' => '2038-01-04 13:00:00',
                'status' => ScheduleStatus::BOOKED,
            ];
   -
-   
+
            $this->scheduleService->for($this->testSchedulable)->create($this->testAvailability, $scheduleData);
-   
-  
-  ⨯ tests/Unit/Services/ScheduleServiceTest.php                                                  class_attributes_separation, no_unused_imports, no_extra_blank_lines, ordered_imports  
+
+
+  ⨯ tests/Unit/Services/ScheduleServiceTest.php                                                  class_attributes_separation, no_unused_imports, no_extra_blank_lines, ordered_imports
   @@ -7,13 +7,6 @@
    use Illuminate\Support\Carbon;
    use Illuminate\Support\Collection;
@@ -4185,7 +4185,7 @@
   +use Tests\Support\TestSchedulable;
    use Tests\TestCase;
   -use Tests\Support\TestSchedulable;
-   
+
    final class ScheduleServiceTest extends TestCase
    {
        private ScheduleService $scheduleService;
@@ -4195,12 +4195,12 @@
        private Availability $testAvailability;
   +
        private array $baseScheduleData;
-   
+
        protected function setUp(): void
   @@ -233,7 +229,6 @@
                'end_datetime' => '2038-01-04 11:00:00',
            ]);
-   
+
   -
            $schedule2 = $this->scheduleService->create($this->testAvailability, [
                'title' => 'Schedule 2',
@@ -4208,7 +4208,7 @@
   @@ -240,7 +235,6 @@
                'end_datetime' => '2038-01-04 13:00:00',
            ]);
-   
+
   -
            // Essayer de déplacer schedule1 pour qu'il chevauche schedule2
            $updateData = [
@@ -4216,12 +4216,12 @@
   @@ -247,12 +241,10 @@
                'end_datetime' => '2038-01-04 13:30:00',
            ];
-   
+
   -
            // Expect
            $this->expectException(ValidationFailedException::class);
            $this->expectExceptionMessageMatches('/Schedule overlaps with an existing schedule/');
-   
+
   -
            // Act
            $this->scheduleService->update($schedule1->id, $updateData);
@@ -4232,22 +4232,22 @@
            ]);
   -
   -
-   
+
            // Act - Chercher un créneau le mardi
            $slot = $this->scheduleService->for($this->testSchedulable)->findNextSlot(
-  
-  ⨯ tests/Unit/Validation/Rules/AvailabilityDaysCoherenceRuleTest.php                                                                            new_with_parentheses, ordered_imports  
+
+  ⨯ tests/Unit/Validation/Rules/AvailabilityDaysCoherenceRuleTest.php                                                                            new_with_parentheses, ordered_imports
   @@ -4,10 +4,10 @@
-   
+
    namespace Tests\Unit\Validation\Rules;
-   
+
   -use Roster\Validation\Rules\AvailabilityDaysCoherenceRule;
    use Roster\Contracts\Validation\ValidationContextInterface;
    use Roster\Enums\EntityType;
    use Roster\Enums\OperationType;
   +use Roster\Validation\Rules\AvailabilityDaysCoherenceRule;
    use Tests\TestCase;
-   
+
    final class AvailabilityDaysCoherenceRuleTest extends TestCase
   @@ -17,7 +17,7 @@
        protected function setUp(): void
@@ -4256,10 +4256,10 @@
   -        $this->availabilityDaysCoherenceRule = new AvailabilityDaysCoherenceRule();
   +        $this->availabilityDaysCoherenceRule = new AvailabilityDaysCoherenceRule;
        }
-   
+
        public function test_passes_when_days_provided_and_within_period(): void
-  
-  ⨯ tests/Unit/Validation/Rules/AvailabilityRulesTest.php                                             class_attributes_separation, new_with_parentheses, single_quote, ordered_imports  
+
+  ⨯ tests/Unit/Validation/Rules/AvailabilityRulesTest.php                                             class_attributes_separation, new_with_parentheses, single_quote, ordered_imports
   @@ -7,8 +7,8 @@
    use Roster\Enums\EntityType;
    use Roster\Enums\OperationType;
@@ -4269,18 +4269,18 @@
   -use Roster\Validation\Rules\AvailabilityOverlapRule;
    use Tests\Support\TestSchedulable;
    use Tests\TestCase;
-   
+
   @@ -24,12 +24,11 @@
        {
            parent::setUp();
-   
+
   -        $this->requiredFieldsRule = new RequiredFieldsRule();
   -        $this->availabilityOverlapRule = new AvailabilityOverlapRule();
   +        $this->requiredFieldsRule = new RequiredFieldsRule;
   +        $this->availabilityOverlapRule = new AvailabilityOverlapRule;
            $this->testSchedulable = TestSchedulable::create();
        }
-   
+
   -
        public function test_required_fields_rule_valid_for_availability_create(): void
        {
@@ -4294,12 +4294,12 @@
                'start_datetime' => '2038-07-01 10:00:00',
                'end_datetime' => '2038-07-01 11:00:00',
            ];
-  
-  ⨯ tests/Unit/Validation/Rules/DateRangeRulesTest.php                                                                                           new_with_parentheses, ordered_imports  
+
+  ⨯ tests/Unit/Validation/Rules/DateRangeRulesTest.php                                                                                           new_with_parentheses, ordered_imports
   @@ -4,7 +4,6 @@
-   
+
    namespace Tests\Unit\Validation\Rules;
-   
+
   -use stdClass;
    use Roster\Enums\EntityType;
    use Roster\Enums\OperationType;
@@ -4311,18 +4311,18 @@
   +use stdClass;
    use Tests\Support\TestSchedulable;
    use Tests\TestCase;
-   
+
   @@ -26,8 +26,8 @@
        {
            parent::setUp();
-   
+
   -        $this->availabilityDateRangeRule = new AvailabilityDateRangeRule();
   -        $this->timeSlotDateTimeRule = new TimeSlotDateTimeRule();
   +        $this->availabilityDateRangeRule = new AvailabilityDateRangeRule;
   +        $this->timeSlotDateTimeRule = new TimeSlotDateTimeRule;
            $this->testSchedulable = TestSchedulable::create();
        }
-   
+
   @@ -282,7 +282,7 @@
        public function test_schedule_validate_update_partial(): void
        {
@@ -4331,7 +4331,7 @@
   +        $schedule = new stdClass;
            $schedule->start_datetime = '2038-07-01 10:00:00';
            $schedule->end_datetime = '2038-07-01 11:00:00';
-   
+
   @@ -307,7 +307,7 @@
        public function test_schedule_validate_update_partial_fails(): void
        {
@@ -4340,7 +4340,7 @@
   +        $schedule = new stdClass;
            $schedule->start_datetime = '2038-07-01 10:00:00';
            $schedule->end_datetime = '2038-07-01 11:00:00';
-   
+
   @@ -333,7 +333,7 @@
        public function test_schedule_validate_update_skip_when_no_datetimes_changed(): void
        {
@@ -4349,16 +4349,16 @@
   +        $schedule = new stdClass;
            $schedule->start_datetime = '2038-07-01 10:00:00';
            $schedule->end_datetime = '2038-07-01 11:00:00';
-   
-  
-  ⨯ tests/bootstrap.php                                                   phpdoc_no_package, concat_space, phpdoc_trim, not_operator_with_successor_space, no_blank_lines_after_phpdoc  
+
+
+  ⨯ tests/bootstrap.php                                                   phpdoc_no_package, concat_space, phpdoc_trim, not_operator_with_successor_space, no_blank_lines_after_phpdoc
   @@ -2,7 +2,7 @@
-   
+
    declare(strict_types=1);
-   
+
   -require __DIR__ . '/../vendor/autoload.php';
   +require __DIR__.'/../vendor/autoload.php';
-   
+
    /**
     * Bootstrap file for testing environment.
   @@ -10,10 +10,7 @@
@@ -4373,5 +4373,5 @@
   +if (! defined('TESTING')) {
        define('TESTING', true);
    }
-  
+
 

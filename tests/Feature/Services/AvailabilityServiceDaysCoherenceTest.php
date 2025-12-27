@@ -174,6 +174,7 @@ final class AvailabilityServiceDaysCoherenceTest extends TestCase
             data: ['validity_end' => $newValidityEnd]
         );
 
+
         // Assert
         $this->assertTrue($result);
 

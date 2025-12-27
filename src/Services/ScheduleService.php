@@ -275,24 +275,6 @@ class ScheduleService extends AbstractService
         return null;
     }
 
-    // Compatibility methods
-
-    public function hasOverlappingSchedule(
-        int $availabilityId,
-        Carbon $start,
-        Carbon $end,
-        ?int $excludeId = null
-    ): bool {
-        $conflictResult = $this->conflictService->checkScheduleConflicts(
-            $availabilityId,
-            $start,
-            $end,
-            $excludeId
-        );
-
-        return $conflictResult->hasConflicts;
-    }
-
     public function findOverlappingSchedules(
         int $availabilityId,
         Carbon $start,

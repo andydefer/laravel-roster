@@ -4,12 +4,30 @@ declare(strict_types=1);
 
 namespace Roster\DTOs;
 
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Carbon;
 use Roster\Enums\DaysOfWeek;
 use Roster\Models\Availability;
 
-class AvailabilityData
+/**
+ * Data Transfer Object for availability information.
+ *
+ * Provides structured, immutable access to availability data with validation,
+ * transformation, and business logic methods for availability management.
+ */
+class AvailabilityData extends AbstractData
 {
+    /**
+     * @param int|null $id Unique identifier of the availability
+     * @param string|null $type Type/category of the availability
+     * @param array|null $days Array of days when availability is active (e.g., ['monday', 'tuesday'])
+     * @param Carbon|null $validityStart Start date of availability validity period
+     * @param Carbon|null $validityEnd End date of availability validity period
+     * @param Carbon|null $dailyStart Daily start time of availability
+     * @param Carbon|null $dailyEnd Daily end time of availability
+     * @param int|null $schedulableId ID of the associated schedulable entity
+     * @param string|null $schedulableType Type of the associated schedulable entity
+     */
     public function __construct(
         public readonly ?int $id,
         public readonly ?string $type = null,
@@ -23,24 +41,43 @@ class AvailabilityData
     ) {}
 
     /**
-     * @param array<string, mixed> $data
+     * Creates an AvailabilityData instance from raw array data.
+     *
+     * @param array{
+     *     id?: int|null,
+     *     type?: string|null,
+     *     days?: array|string|null,
+     *     validity_start?: string|null,
+     *     validity_end?: string|null,
+     *     daily_start?: string|null,
+     *     daily_end?: string|null,
+     *     schedulable_id?: int|null,
+     *     schedulable_type?: string|null
+     * } $data Raw availability data
+     * @return self New immutable AvailabilityData instance
      */
     public static function fromArray(array $data): self
     {
         return new self(
             id: $data['id'] ?? null,
             type: $data['type'] ?? null,
-            days: isset($data['days']) ? (array)$data['days'] : null,
-            validityStart: isset($data['validity_start']) ? Carbon::parse($data['validity_start']) : null,
-            validityEnd: isset($data['validity_end']) ? Carbon::parse($data['validity_end']) : null,
-            dailyStart: isset($data['daily_start']) ? Carbon::parse($data['daily_start']) : null,
-            dailyEnd: isset($data['daily_end']) ? Carbon::parse($data['daily_end']) : null,
+            days: isset($data['days']) ? (array) $data['days'] : null,
+            validityStart: self::parseDateTime($data['validity_start'] ?? null),
+            validityEnd: self::parseDateTime($data['validity_end'] ?? null),
+            dailyStart: self::parseTime($data['daily_start'] ?? null),
+            dailyEnd: self::parseTime($data['daily_end'] ?? null),
             schedulableId: $data['schedulable_id'] ?? null,
             schedulableType: $data['schedulable_type'] ?? null
         );
     }
 
-    public static function fromModel(Availability $availability): self
+    /**
+     * Creates an AvailabilityData instance from an Availability Eloquent model.
+     *
+     * @param Availability $availability Eloquent model instance
+     * @return self New immutable AvailabilityData instance
+     */
+    public static function fromModel(Model $availability): self
     {
         return new self(
             id: $availability->id,
@@ -56,11 +93,13 @@ class AvailabilityData
     }
 
     /**
-     * @return array<string, int|string|mixed[]|null>
+     * Get the array data for this DTO.
+     *
+     * @return array<string, mixed> Raw array data
      */
-    public function toArray(): array
+    protected function getArrayData(): array
     {
-        return array_filter([
+        return [
             'id' => $this->id,
             'type' => $this->type,
             'days' => $this->days,
@@ -70,188 +109,82 @@ class AvailabilityData
             'daily_end' => $this->dailyEnd?->format('H:i:s'),
             'schedulable_id' => $this->schedulableId,
             'schedulable_type' => $this->schedulableType,
-        ], static fn(int|string|array|null $value): bool => $value !== null);
-    }
-
-
-    public function withSchedulableInfo(?int $schedulableId, ?string $schedulableType): self
-    {
-        return new self(
-            id: $this->id,
-            type: $this->type,
-            days: $this->days,
-            validityStart: $this->validityStart,
-            validityEnd: $this->validityEnd,
-            dailyStart: $this->dailyStart,
-            dailyEnd: $this->dailyEnd,
-            schedulableId: $schedulableId,
-            schedulableType: $schedulableType
-        );
-    }
-
-    public function withDaysInfo(?array $days): self
-    {
-        return new self(
-            id: $this->id,
-            type: $this->type,
-            days: $days ?? $this->days,
-            validityStart: $this->validityStart,
-            validityEnd: $this->validityEnd,
-            dailyStart: $this->dailyStart,
-            dailyEnd: $this->dailyEnd,
-            schedulableId: $this->schedulableId,
-            schedulableType: $this->schedulableType
-        );
-    }
-
-    public function withAvailabilityId(?int $availabilityId): self
-    {
-        return new self(
-            id: $availabilityId,
-            type: $this->type,
-            days: $this->days,
-            validityStart: $this->validityStart,
-            validityEnd: $this->validityEnd,
-            dailyStart: $this->dailyStart,
-            dailyEnd: $this->dailyEnd,
-            schedulableId: $this->schedulableId,
-            schedulableType: $this->schedulableType
-        );
+        ];
     }
 
     /**
-     * Filtre automatiquement les jours existants en fonction des nouvelles dates de validité
-     * Utilisé pour les mises à jour où l'utilisateur ne fournit pas explicitement de jours
+     * Creates a new instance with updated days configuration.
+     *
+     * @param array|null $days New array of days when availability is active
+     * @return self New instance with updated days
      */
-    public function withAutoFilteredDaysForUpdate(
-        array $existingDays,
-        ?Carbon $existingValidityStart,
-        ?Carbon $existingValidityEnd
-    ): self {
-        // Si l'utilisateur fournit explicitement des jours, on ne fait rien
-        if ($this->days !== null) {
-            return $this;
-        }
+    public function withDays(?array $days): self
+    {
+        $data = $this->toArray();
+        $data['days'] = $days;
 
-        // Déterminer les dates de validité à utiliser après mise à jour
-        $newValidityStart = $this->validityStart ?? $existingValidityStart;
-        $newValidityEnd = $this->validityEnd ?? $existingValidityEnd;
-
-        // Si aucune date de validité n'est fournie ou si les dates n'ont pas changé, retourner tel quel
-        if (!$newValidityStart instanceof Carbon || !$newValidityEnd instanceof Carbon) {
-            return $this->withDaysInfo($existingDays);
-        }
-
-        // Vérifier si les dates ont changé
-        $startChanged = $this->validityStart instanceof Carbon;
-        $endChanged = $this->validityEnd instanceof Carbon;
-        $datesChanged = $startChanged || $endChanged;
-
-        // Si les dates n'ont pas changé, retourner les jours existants
-        if (!$datesChanged) {
-            return $this->withDaysInfo($existingDays);
-        }
-
-        // Filtrer les jours existants pour ne garder que ceux dans la nouvelle période
-        $filteredDays = roster_get_valid_days_in_period($existingDays, $newValidityStart, $newValidityEnd);
-
-        return $this->withDaysInfo($filteredDays);
+        return static::fromArray($data);
     }
 
+
     /**
-     * Détermine les jours automatiquement basés sur la période de validité
+     * Determines appropriate days based on validity period with automatic adjustment.
+     *
+     * @return array<int, string> Array of valid days for the current validity period
      */
     public function getAutoAdjustedDays(): array
     {
-        // Si les jours sont déjà fournis, les utiliser
         if ($this->days !== null) {
             return $this->days;
         }
 
-
-        // Si pas de dates de validité, utiliser tous les jours
-        if (!$this->validityStart instanceof Carbon || !$this->validityEnd instanceof Carbon) {
+        if (!$this->shouldAutoAdjustDays()) {
             return DaysOfWeek::values();
         }
 
-
-
-        // Utiliser le helper pour déterminer si on doit ajuster
-        if (!roster_should_auto_adjust_days($this->validityStart, $this->validityEnd)) {
-            return DaysOfWeek::values();
-        }
-
-        // Utiliser le helper pour obtenir les jours dans la période
         return roster_days_in_period($this->validityStart, $this->validityEnd);
     }
 
     /**
-     * Filtre les jours pour ne garder que ceux dans la période actuelle
+     * Check if the availability has complete daily time information.
+     *
+     * @return bool True if both daily start and end times are set
      */
-    public function filterDaysByCurrentPeriod(?array $existingDays = null): array
+    public function hasDailyTimes(): bool
     {
-        $daysToFilter = $existingDays ?? $this->days ?? [];
-
-        if ($daysToFilter === [] || !$this->validityStart instanceof Carbon || !$this->validityEnd instanceof Carbon) {
-            return $daysToFilter;
-        }
-
-        // Utiliser le helper pour filtrer les jours
-        return roster_get_valid_days_in_period($daysToFilter, $this->validityStart, $this->validityEnd);
+        return $this->dailyStart instanceof Carbon && $this->dailyEnd instanceof Carbon;
     }
 
     /**
-     * Vérifie si les jours sont valides
+     * Check if the availability has a valid date range.
+     *
+     * @return bool True if validity dates form a valid range
      */
-    public function hasValidDays(): bool
+    public function hasValidDateRange(): bool
     {
-        if (!is_array($this->days) || $this->days === []) {
-            return false;
-        }
-
-        $validDays = DaysOfWeek::values();
-        foreach ($this->days as $day) {
-            if (!in_array($day, $validDays, true)) {
-                return false;
-            }
-        }
-
-        return true;
+        return $this->isValidDateRange($this->validityStart, $this->validityEnd);
     }
 
     /**
-     * Retourne les jours ou la valeur par défaut ajustée
+     * Check if a date range is valid.
+     *
+     * @param Carbon|null $start Start date
+     * @param Carbon|null $end End date
+     * @return bool True if both dates exist and form a valid range
      */
-    public function getDaysOrDefault(): array
+    private function isValidDateRange(?Carbon $start, ?Carbon $end): bool
     {
-        if ($this->days !== null) {
-            return $this->days;
-        }
-
-        return $this->getAutoAdjustedDays();
+        return $start instanceof Carbon && $end instanceof Carbon && $start->lte($end);
     }
 
     /**
-     * Vérifie si un jour spécifique est dans la période
+     * Determine if automatic day adjustment should be performed.
+     *
+     * @return bool True if days should be auto-adjusted
      */
-    public function isDayInPeriod(string $day): bool
+    private function shouldAutoAdjustDays(): bool
     {
-        if (!$this->validityStart instanceof Carbon || !$this->validityEnd instanceof Carbon) {
-            return false;
-        }
-
-        return roster_is_day_in_period($day, $this->validityStart, $this->validityEnd);
-    }
-
-    /**
-     * Calcule la durée de la période en jours
-     */
-    public function getPeriodDurationInDays(): ?int
-    {
-        if (!$this->validityStart instanceof Carbon || !$this->validityEnd instanceof Carbon) {
-            return null;
-        }
-
-        return roster_period_duration_in_days($this->validityStart, $this->validityEnd);
+        return $this->hasValidDateRange()
+            && roster_should_auto_adjust_days($this->validityStart, $this->validityEnd);
     }
 }

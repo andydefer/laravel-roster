@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Roster\Services;
 
+use Roster\Domain\Helpers\TimeSlotHelper;
 use Roster\Validation\Exceptions\ValidationFailedException;
 use Roster\DTOs\AvailabilityData;
 use Roster\Enums\EntityType;
@@ -15,6 +16,7 @@ class AvailabilityService extends AbstractService
 {
     protected ?Availability $pendingDeletion = null;
 
+
     protected function createDTOFromArray(array $data, OperationType $operationType): AvailabilityData
     {
         $dto = AvailabilityData::fromArray($data);
@@ -22,47 +24,38 @@ class AvailabilityService extends AbstractService
         // Handle days automatically
         if ($operationType === OperationType::CREATE) {
             $adjustedDays = $dto->getAutoAdjustedDays();
-            $dto = $dto->withDaysInfo($adjustedDays);
+            $dto = $dto->withDays($adjustedDays);
         } elseif ($operationType === OperationType::UPDATE && isset($data['id'])) {
             $entity = $this->find($data['id']);
             if ($entity instanceof Availability) {
                 if (array_key_exists('days', $data)) {
-                    $dto = $dto->withDaysInfo($data['days']);
+                    $dto = $dto->withDays($data['days']);
                 } else {
-                    $dto = $dto->withAutoFilteredDaysForUpdate(
+                    $adjustedDays = TimeSlotHelper::getFilteredDaysForUpdate(
                         $entity->days,
                         $entity->validity_start,
-                        $entity->validity_end
+                        $entity->validity_end,
+                        $dto->days,
+                        $dto->validityStart,
+                        $dto->validityEnd
                     );
+
+                    $dto = $dto->withDays($adjustedDays);
                 }
             }
         }
 
+
         return $dto;
     }
+
 
     protected function getEntityTypeEnum(): EntityType
     {
         return EntityType::AVAILABILITY;
     }
 
-    protected function addSchedulableInfoToDto(mixed $dto): mixed
-    {
-        if (method_exists($dto, 'withSchedulableInfo')) {
-            $dto = $dto->withSchedulableInfo(
-                $this->schedulable->id,
-                get_class($this->schedulable)
-            );
-        }
 
-        // Auto-adjust days for creation
-        if ($dto instanceof AvailabilityData) {
-            $adjustedDays = $dto->getAutoAdjustedDays();
-            $dto = $dto->withDaysInfo($adjustedDays);
-        }
-
-        return $dto;
-    }
 
     // Override create to add auto-adjusted days
     public function create(array $data = []): mixed

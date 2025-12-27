@@ -15,90 +15,75 @@ use Roster\Contracts\Repository\ScheduleRepositoryInterface;
 use Roster\Contracts\Repository\ImpedimentRepositoryInterface;
 use Roster\Models\Availability;
 
+/**
+ * Service for detecting and managing temporal conflicts in schedules, availabilities, and impediments.
+ */
 class TemporalConflictService
 {
+    /**
+     * @param AvailabilityRepositoryInterface $availabilityRepository Repository for availability data access
+     * @param ScheduleRepositoryInterface $scheduleRepository Repository for schedule data access
+     * @param ImpedimentRepositoryInterface $impedimentRepository Repository for impediment data access
+     */
     public function __construct(
         private AvailabilityRepositoryInterface $availabilityRepository,
         private ScheduleRepositoryInterface $scheduleRepository,
         private ImpedimentRepositoryInterface $impedimentRepository
     ) {}
 
-    /* -----------------------------------------------------------------
-       | Chevauchments de disponibilités (Availability vs Availability)
-       | -----------------------------------------------------------------
-       */
     /**
-     * Check availability conflicts (overlapping availabilities).
-     * @param array<string, mixed> $availabilityData
+     * Check for overlapping availability conflicts.
+     *
+     * @param Model $model The schedulable model (e.g., User, Resource)
+     * @param array<string, mixed> $availabilityData New availability data to validate
+     * @param int|null $excludeId ID of existing availability to exclude (for updates)
+     * @return ConflictResult Result containing conflict status and details
      */
     public function checkAvailabilityConflicts(
         Model $model,
         array $availabilityData,
         ?int $excludeId = null
     ): ConflictResult {
-        // Récupérer les champs de la disponibilité
-        $dailyStart = isset($availabilityData['daily_start']) ? Carbon::parse($availabilityData['daily_start']) : null;
-        $dailyEnd = isset($availabilityData['daily_end']) ? Carbon::parse($availabilityData['daily_end']) : null;
-        $days = $availabilityData['days'] ?? [];
-        $validityStart = isset($availabilityData['validity_start']) ? Carbon::parse($availabilityData['validity_start']) : null;
-        $validityEnd = isset($availabilityData['validity_end']) ? Carbon::parse($availabilityData['validity_end']) : null;
-        $type = $availabilityData['type'] ?? null;
+        $availabilityPeriod = $this->extractAvailabilityPeriod($availabilityData);
 
-        // Vérifier les conditions minimales
-        if (!$dailyStart instanceof Carbon || !$dailyEnd instanceof Carbon || empty($days)) {
+        if (!$this->isValidAvailabilityPeriod($availabilityPeriod)) {
             return ConflictResult::noConflict();
         }
 
-        // Récupérer les disponibilités potentielles en conflit
-        $builder = $this->availabilityRepository->findForSchedulable($model, $type);
+        $conflictingAvailabilities = $this->findConflictingAvailabilities(
+            model: $model,
+            period: $availabilityPeriod,
+            excludeId: $excludeId
+        );
 
-        if ($excludeId !== null) {
-            $builder->where('id', '!=', $excludeId);
-        }
-
-        // Filtrer par jours
-        if (!empty($days)) {
-            $builder->where(function ($query) use ($days): void {
-                foreach ($days as $day) {
-                    $query->orWhereJsonContains('days', $day);
-                }
-            });
-        }
-
-        // Filtrer par chevauchement temporel quotidien
-        $builder->where(function ($query) use ($dailyStart, $dailyEnd): void {
-            $query->where('daily_start', '<', $dailyEnd->format('H:i:s'))
-                ->where('daily_end', '>', $dailyStart->format('H:i:s'));
-        });
-
-        // Filtrer par chevauchement de période de validité
-        $this->applyDateOverlapFilter($builder, $validityStart, $validityEnd);
-
-        $overlappingAvailabilities = $builder->get();
-
-        if ($overlappingAvailabilities->isEmpty()) {
+        if ($conflictingAvailabilities->isEmpty()) {
             return ConflictResult::noConflict();
         }
 
-        $firstOverlap = $overlappingAvailabilities->first();
+        $firstConflict = $conflictingAvailabilities->first();
         return new ConflictResult(
             hasConflicts: true,
             conflictingSchedules: [],
             conflictingImpediments: [],
-            message: $this->generateAvailabilityConflictMessage($firstOverlap)
+            message: $this->generateAvailabilityConflictMessage($firstConflict)
         );
     }
 
     /**
      * Check if two date ranges overlap.
+     *
+     * @param Carbon|null $startA Start of first period (null for open start)
+     * @param Carbon|null $endA End of first period (null for open end)
+     * @param Carbon|null $startB Start of second period (null for open start)
+     * @param Carbon|null $endB End of second period (null for open end)
+     * @return bool True if periods overlap
      */
-    public function dateRangesOverlap(
+    public function isDateRangeOverlapping(
         ?Carbon $startA,
         ?Carbon $endA,
         ?Carbon $startB,
         ?Carbon $endB
     ): bool {
-        // Convert nulls to open-ended ranges
         $effectiveStartA = $startA ?? Carbon::create(1, 1, 1);
         $effectiveEndA = $endA ?? Carbon::create(9999, 12, 31);
         $effectiveStartB = $startB ?? Carbon::create(1, 1, 1);
@@ -107,13 +92,15 @@ class TemporalConflictService
         return $effectiveStartB->lte($effectiveEndA) && $effectiveEndB->gte($effectiveStartA);
     }
 
-    /* -----------------------------------------------------------------
-     | Chevauchments de créneaux (Schedule/Impediment vs Schedule/Impediment)
-     | -----------------------------------------------------------------
-     */
-
     /**
      * Check all possible conflicts for a time slot.
+     *
+     * @param int $availabilityId The availability to check within
+     * @param Carbon $start Start of the time slot
+     * @param Carbon $end End of the time slot
+     * @param int|null $excludeScheduleId Schedule ID to exclude from conflict check
+     * @param int|null $excludeImpedimentId Impediment ID to exclude from conflict check
+     * @return ConflictResult Result containing all detected conflicts
      */
     public function checkAllConflicts(
         int $availabilityId,
@@ -122,28 +109,26 @@ class TemporalConflictService
         ?int $excludeScheduleId = null,
         ?int $excludeImpedimentId = null
     ): ConflictResult {
-        // Check schedule conflicts
-        $conflictResult = $this->checkScheduleConflicts(
-            $availabilityId,
-            $start,
-            $end,
-            $excludeScheduleId
+        $scheduleConflict = $this->checkScheduleConflicts(
+            availabilityId: $availabilityId,
+            start: $start,
+            end: $end,
+            excludeScheduleId: $excludeScheduleId
         );
 
-        if ($conflictResult->hasConflicts) {
-            return $conflictResult;
+        if ($scheduleConflict->hasConflicts) {
+            return $scheduleConflict;
         }
 
-        // Check impediment conflicts
-        $impedimentConflicts = $this->checkImpedimentConflicts(
-            $availabilityId,
-            $start,
-            $end,
-            $excludeImpedimentId
+        $impedimentConflict = $this->checkImpedimentConflicts(
+            availabilityId: $availabilityId,
+            start: $start,
+            end: $end,
+            excludeImpedimentId: $excludeImpedimentId
         );
 
-        if ($impedimentConflicts->hasConflicts) {
-            return $impedimentConflicts;
+        if ($impedimentConflict->hasConflicts) {
+            return $impedimentConflict;
         }
 
         return ConflictResult::noConflict();
@@ -151,6 +136,12 @@ class TemporalConflictService
 
     /**
      * Check conflicts with existing schedules.
+     *
+     * @param int $availabilityId The availability to check within
+     * @param Carbon $start Start of the time slot
+     * @param Carbon $end End of the time slot
+     * @param int|null $excludeScheduleId Schedule ID to exclude from conflict check
+     * @return ConflictResult Result containing schedule conflicts
      */
     public function checkScheduleConflicts(
         int $availabilityId,
@@ -158,20 +149,12 @@ class TemporalConflictService
         Carbon $end,
         ?int $excludeScheduleId = null
     ): ConflictResult {
-        $builder = $this->scheduleRepository->findByAvailability($availabilityId);
-
-        $conflictingSchedules = $builder->get()->filter(function ($schedule) use ($start, $end, $excludeScheduleId): bool {
-            if ($excludeScheduleId && $schedule->id === $excludeScheduleId) {
-                return false;
-            }
-
-            return TimeSlotHelper::overlaps(
-                $start,
-                $end,
-                $schedule->start_datetime,
-                $schedule->end_datetime
-            );
-        });
+        $conflictingSchedules = $this->findOverlappingSchedules(
+            availabilityId: $availabilityId,
+            start: $start,
+            end: $end,
+            excludeId: $excludeScheduleId
+        );
 
         if ($conflictingSchedules->isEmpty()) {
             return ConflictResult::noConflict();
@@ -185,6 +168,12 @@ class TemporalConflictService
 
     /**
      * Check conflicts with existing impediments.
+     *
+     * @param int $availabilityId The availability to check within
+     * @param Carbon $start Start of the time slot
+     * @param Carbon $end End of the time slot
+     * @param int|null $excludeImpedimentId Impediment ID to exclude from conflict check
+     * @return ConflictResult Result containing impediment conflicts
      */
     public function checkImpedimentConflicts(
         int $availabilityId,
@@ -192,20 +181,12 @@ class TemporalConflictService
         Carbon $end,
         ?int $excludeImpedimentId = null
     ): ConflictResult {
-        $builder = $this->impedimentRepository->findByAvailability($availabilityId);
-
-        $conflictingImpediments = $builder->get()->filter(function ($impediment) use ($start, $end, $excludeImpedimentId): bool {
-            if ($excludeImpedimentId && $impediment->id === $excludeImpedimentId) {
-                return false;
-            }
-
-            return TimeSlotHelper::overlaps(
-                $start,
-                $end,
-                $impediment->start_datetime,
-                $impediment->end_datetime
-            );
-        });
+        $conflictingImpediments = $this->findOverlappingImpediments(
+            availabilityId: $availabilityId,
+            start: $start,
+            end: $end,
+            excludeId: $excludeImpedimentId
+        );
 
         if ($conflictingImpediments->isEmpty()) {
             return ConflictResult::noConflict();
@@ -217,53 +198,37 @@ class TemporalConflictService
         );
     }
 
-    /* -----------------------------------------------------------------
-     | Utilitaires pour slots disponibles
-     | -----------------------------------------------------------------
-     */
-
     /**
-     * Find available slots within a time range.
+     * Find available time slots within a given range.
+     *
+     * @param int $availabilityId The availability to search within
+     * @param Carbon $rangeStart Start of the search range
+     * @param Carbon $rangeEnd End of the search range
+     * @return array<array{start: Carbon, end: Carbon}> Array of available time slots
      */
     public function findAvailableSlots(
         int $availabilityId,
         Carbon $rangeStart,
         Carbon $rangeEnd
     ): array {
-        // Get all scheduled items in range
-        $schedules = $this->scheduleRepository
-            ->findByAvailability($availabilityId)
-            ->whereBetween('start_datetime', [$rangeStart, $rangeEnd])
-            ->get()
-            ->map(fn($s): array => [
-                'start' => $s->start_datetime,
-                'end' => $s->end_datetime,
-                'type' => 'schedule'
-            ])
-            ->all();
-
-        // Get all impediments in range
-        $impediments = $this->impedimentRepository
-            ->findByAvailability($availabilityId)
-            ->whereBetween('start_datetime', [$rangeStart, $rangeEnd])
-            ->get()
-            ->map(fn($i): array => [
-                'start' => $i->start_datetime,
-                'end' => $i->end_datetime,
-                'type' => 'impediment'
-            ])
-            ->all();
-
-        // Combine all blocked periods
-        $blockedPeriods = array_merge($schedules, $impediments);
+        $blockedPeriods = $this->getBlockedPeriodsInRange(
+            availabilityId: $availabilityId,
+            rangeStart: $rangeStart,
+            rangeEnd: $rangeEnd
+        );
 
         return TimeSlotHelper::calculateAvailableSlots($rangeStart, $rangeEnd, $blockedPeriods);
     }
 
     /**
-     * Calculate available slots by removing impediments.
+     * Calculate available slots by removing impediments from a time range.
+     *
+     * @param Carbon $start Start of the time range
+     * @param Carbon $end End of the time range
+     * @param Collection<int, object> $impediments Collection of impediments to consider
+     * @return Collection<int, array{start: Carbon, end: Carbon}> Collection of available slots
      */
-    public function getAvailableSlotsFromImpediments(Carbon $start, Carbon $end, Collection $impediments): Collection
+    public function calculateAvailableSlotsExcludingImpediments(Carbon $start, Carbon $end, Collection $impediments): Collection
     {
         $blockedPeriods = $impediments->map(function ($impediment): array {
             return [
@@ -278,13 +243,14 @@ class TemporalConflictService
         return collect($availableSlots);
     }
 
-    /* -----------------------------------------------------------------
-     | Méthodes helper pour compatibilité
-     | -----------------------------------------------------------------
-     */
-
     /**
      * Check if a time slot has overlapping schedules (compatibility method).
+     *
+     * @param int $availabilityId The availability to check within
+     * @param Carbon $start Start of the time slot
+     * @param Carbon $end End of the time slot
+     * @param int|null $excludeId Schedule ID to exclude from conflict check
+     * @return bool True if overlapping schedules exist
      */
     public function hasOverlappingSchedule(
         int $availabilityId,
@@ -297,6 +263,12 @@ class TemporalConflictService
 
     /**
      * Find overlapping schedules (compatibility method).
+     *
+     * @param int $availabilityId The availability to check within
+     * @param Carbon $start Start of the time slot
+     * @param Carbon $end End of the time slot
+     * @param int|null $excludeId Schedule ID to exclude from conflict check
+     * @return Collection<int, object> Collection of overlapping schedules
      */
     public function findOverlappingSchedules(
         int $availabilityId,
@@ -322,6 +294,12 @@ class TemporalConflictService
 
     /**
      * Check if a time slot has overlapping impediments (compatibility method).
+     *
+     * @param int $availabilityId The availability to check within
+     * @param Carbon $start Start of the time slot
+     * @param Carbon $end End of the time slot
+     * @param int|null $excludeId Impediment ID to exclude from conflict check
+     * @return bool True if overlapping impediments exist
      */
     public function hasOverlappingImpediments(
         int $availabilityId,
@@ -332,13 +310,12 @@ class TemporalConflictService
         return $this->checkImpedimentConflicts($availabilityId, $start, $end, $excludeId)->hasConflicts;
     }
 
-    /* -----------------------------------------------------------------
-     | Méthodes privées
-     | -----------------------------------------------------------------
-     */
-
     /**
      * Apply date overlap filter to query builder.
+     *
+     * @param Builder $builder Query builder to apply filter to
+     * @param Carbon|null $startDate Start date for overlap check (null for open start)
+     * @param Carbon|null $endDate End date for overlap check (null for open end)
      */
     private function applyDateOverlapFilter(Builder $builder, ?Carbon $startDate, ?Carbon $endDate): void
     {
@@ -371,6 +348,9 @@ class TemporalConflictService
 
     /**
      * Generate user-friendly availability conflict message.
+     *
+     * @param Availability $availability The conflicting availability
+     * @return string Formatted conflict message
      */
     private function generateAvailabilityConflictMessage(Availability $availability): string
     {
@@ -387,6 +367,9 @@ class TemporalConflictService
 
     /**
      * Generate user-friendly schedule conflict message.
+     *
+     * @param object $schedule The conflicting schedule
+     * @return string Formatted conflict message
      */
     private function generateScheduleConflictMessage(object $schedule): string
     {
@@ -399,6 +382,9 @@ class TemporalConflictService
 
     /**
      * Generate user-friendly impediment conflict message.
+     *
+     * @param object $impediment The conflicting impediment
+     * @return string Formatted conflict message
      */
     private function generateImpedimentConflictMessage(object $impediment): string
     {
@@ -407,5 +393,175 @@ class TemporalConflictService
             $impediment->start_datetime->format('Y-m-d H:i'),
             $impediment->end_datetime->format('Y-m-d H:i')
         );
+    }
+
+    /**
+     * Extract availability period from raw data.
+     *
+     * @param array<string, mixed> $availabilityData
+     * @return array{
+     *     dailyStart: Carbon|null,
+     *     dailyEnd: Carbon|null,
+     *     days: array,
+     *     validityStart: Carbon|null,
+     *     validityEnd: Carbon|null,
+     *     type: string|null
+     * }
+     */
+    private function extractAvailabilityPeriod(array $availabilityData): array
+    {
+        return [
+            'dailyStart' => isset($availabilityData['daily_start'])
+                ? Carbon::parse($availabilityData['daily_start'])
+                : null,
+            'dailyEnd' => isset($availabilityData['daily_end'])
+                ? Carbon::parse($availabilityData['daily_end'])
+                : null,
+            'days' => $availabilityData['days'] ?? [],
+            'validityStart' => isset($availabilityData['validity_start'])
+                ? Carbon::parse($availabilityData['validity_start'])
+                : null,
+            'validityEnd' => isset($availabilityData['validity_end'])
+                ? Carbon::parse($availabilityData['validity_end'])
+                : null,
+            'type' => $availabilityData['type'] ?? null,
+        ];
+    }
+
+    /**
+     * Validate if an availability period has required data.
+     *
+     * @param array{
+     *     dailyStart: Carbon|null,
+     *     dailyEnd: Carbon|null,
+     *     days: array,
+     *     validityStart: Carbon|null,
+     *     validityEnd: Carbon|null,
+     *     type: string|null
+     * } $period
+     * @return bool
+     */
+    private function isValidAvailabilityPeriod(array $period): bool
+    {
+        return $period['dailyStart'] instanceof Carbon
+            && $period['dailyEnd'] instanceof Carbon
+            && !empty($period['days']);
+    }
+
+    /**
+     * Find availabilities that conflict with the given period.
+     *
+     * @param Model $model The schedulable model
+     * @param array{
+     *     dailyStart: Carbon|null,
+     *     dailyEnd: Carbon|null,
+     *     days: array,
+     *     validityStart: Carbon|null,
+     *     validityEnd: Carbon|null,
+     *     type: string|null
+     * } $period Availability period to check
+     * @param int|null $excludeId ID to exclude from search
+     * @return Collection<int, Availability>
+     */
+    private function findConflictingAvailabilities(
+        Model $model,
+        array $period,
+        ?int $excludeId
+    ): Collection {
+        $builder = $this->availabilityRepository->findForSchedulable($model, $period['type']);
+
+        if ($excludeId !== null) {
+            $builder->where('id', '!=', $excludeId);
+        }
+
+        if (!empty($period['days'])) {
+            $builder->where(function ($query) use ($period): void {
+                foreach ($period['days'] as $day) {
+                    $query->orWhereJsonContains('days', $day);
+                }
+            });
+        }
+
+        $builder->where(function ($query) use ($period): void {
+            $query->where('daily_start', '<', $period['dailyEnd']->format('H:i:s'))
+                ->where('daily_end', '>', $period['dailyStart']->format('H:i:s'));
+        });
+
+        $this->applyDateOverlapFilter(
+            builder: $builder,
+            startDate: $period['validityStart'],
+            endDate: $period['validityEnd']
+        );
+
+        return $builder->get();
+    }
+
+    /**
+     * Find overlapping impediments within a time range.
+     *
+     * @param int $availabilityId The availability to check within
+     * @param Carbon $start Start of the time slot
+     * @param Carbon $end End of the time slot
+     * @param int|null $excludeId Impediment ID to exclude
+     * @return Collection<int, object>
+     */
+    private function findOverlappingImpediments(
+        int $availabilityId,
+        Carbon $start,
+        Carbon $end,
+        ?int $excludeId
+    ): Collection {
+        $builder = $this->impedimentRepository->findByAvailability($availabilityId);
+
+        return $builder->get()->filter(function ($impediment) use ($start, $end, $excludeId): bool {
+            if ($excludeId && $impediment->id === $excludeId) {
+                return false;
+            }
+
+            return TimeSlotHelper::overlaps(
+                $start,
+                $end,
+                $impediment->start_datetime,
+                $impediment->end_datetime
+            );
+        });
+    }
+
+    /**
+     * Get all blocked periods (schedules and impediments) within a range.
+     *
+     * @param int $availabilityId The availability to search within
+     * @param Carbon $rangeStart Start of the search range
+     * @param Carbon $rangeEnd End of the search range
+     * @return array<array{start: Carbon, end: Carbon, type: string}>
+     */
+    private function getBlockedPeriodsInRange(
+        int $availabilityId,
+        Carbon $rangeStart,
+        Carbon $rangeEnd
+    ): array {
+        $schedules = $this->scheduleRepository
+            ->findByAvailability($availabilityId)
+            ->whereBetween('start_datetime', [$rangeStart, $rangeEnd])
+            ->get()
+            ->map(fn($schedule): array => [
+                'start' => $schedule->start_datetime,
+                'end' => $schedule->end_datetime,
+                'type' => 'schedule'
+            ])
+            ->all();
+
+        $impediments = $this->impedimentRepository
+            ->findByAvailability($availabilityId)
+            ->whereBetween('start_datetime', [$rangeStart, $rangeEnd])
+            ->get()
+            ->map(fn($impediment): array => [
+                'start' => $impediment->start_datetime,
+                'end' => $impediment->end_datetime,
+                'type' => 'impediment'
+            ])
+            ->all();
+
+        return array_merge($schedules, $impediments);
     }
 }

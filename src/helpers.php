@@ -231,6 +231,7 @@ if (!function_exists('roster_should_auto_adjust_days')) {
             $duration = roster_period_duration_in_days($startDate, $endDate);
             return $duration !== null && $duration < 7;
         } catch (Exception $exception) {
+
             return false;
         }
     }

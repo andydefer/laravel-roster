@@ -4,11 +4,28 @@ declare(strict_types=1);
 
 namespace Roster\DTOs;
 
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Carbon;
 use Roster\Models\Impediment;
 
-class ImpedimentData
+/**
+ * Data Transfer Object for impediment information.
+ *
+ * Provides an immutable, structured representation of impediment data with
+ * validation, transformation, and business logic methods for impediment management.
+ */
+class ImpedimentData extends AbstractData
 {
+    /**
+     * @param int|null $id Impediment unique identifier
+     * @param int|null $availabilityId Associated availability ID
+     * @param Carbon|null $startDatetime Impediment start date and time
+     * @param Carbon|null $endDatetime Impediment end date and time
+     * @param string|null $reason Reason for the impediment
+     * @param array<string, mixed>|null $metadata Additional metadata as key-value pairs
+     * @param int|null $schedulableId ID of the schedulable entity (e.g., User, Resource)
+     * @param string|null $schedulableType Type of the schedulable entity (e.g., App\Models\User)
+     */
     public function __construct(
         public readonly ?int $id,
         public readonly ?int $availabilityId = null,
@@ -21,36 +38,47 @@ class ImpedimentData
     ) {}
 
     /**
-     * @param array<string, mixed> $data
+     * Create an ImpedimentData instance from raw array data.
+     *
+     * @param array{
+     *     id?: int|null,
+     *     availability_id?: int|null,
+     *     start_datetime?: string|Carbon|null,
+     *     end_datetime?: string|Carbon|null,
+     *     reason?: string|null,
+     *     metadata?: array<string, mixed>|null,
+     *     schedulable_id?: int|null,
+     *     schedulable_type?: string|null
+     * } $data Raw impediment data
+     * @return self New immutable ImpedimentData instance
      */
     public static function fromArray(array $data): self
     {
-        // Traitement des metadata
-        $metadata = $data['metadata'] ?? [];
-        if (is_string($metadata)) {
-            $decoded = json_decode($metadata, true);
-            $metadata = is_array($decoded) ? $decoded : [];
-        }
-
         return new self(
             id: $data['id'] ?? null,
             availabilityId: $data['availability_id'] ?? null,
-            startDatetime: isset($data['start_datetime']) ? Carbon::parse($data['start_datetime']) : null,
-            endDatetime: isset($data['end_datetime']) ? Carbon::parse($data['end_datetime']) : null,
+            startDatetime: self::parseDateTime($data['start_datetime'] ?? null),
+            endDatetime: self::parseDateTime($data['end_datetime'] ?? null),
             reason: $data['reason'] ?? null,
-            metadata: $metadata,
+            metadata: $data['metadata'] ?? [],
             schedulableId: $data['schedulable_id'] ?? null,
             schedulableType: $data['schedulable_type'] ?? null
         );
     }
 
-    public static function fromModel(Impediment $impediment): self
+    /**
+     * Create an ImpedimentData instance from an Impediment Eloquent model.
+     *
+     * @param Impediment $impediment Eloquent model instance
+     * @return self New immutable ImpedimentData instance
+     */
+    public static function fromModel(Model $impediment): self
     {
         return new self(
             id: $impediment->id,
             availabilityId: $impediment->availability_id,
-            startDatetime: $impediment->start_datetime ? Carbon::parse($impediment->start_datetime) : null,
-            endDatetime: $impediment->end_datetime ? Carbon::parse($impediment->end_datetime) : null,
+            startDatetime: self::parseDateTime($impediment->start_datetime),
+            endDatetime: self::parseDateTime($impediment->end_datetime),
             reason: $impediment->reason,
             metadata: $impediment->metadata ?? [],
             schedulableId: $impediment->schedulable_id,
@@ -59,11 +87,13 @@ class ImpedimentData
     }
 
     /**
-     * @return array<string, int|string|mixed[]|null>
+     * Get the array data for this DTO.
+     *
+     * @return array<string, mixed> Raw array data
      */
-    public function toArray(): array
+    protected function getArrayData(): array
     {
-        return array_filter([
+        return [
             'id' => $this->id,
             'availability_id' => $this->availabilityId,
             'start_datetime' => $this->startDatetime?->format('Y-m-d H:i:s'),
@@ -72,34 +102,6 @@ class ImpedimentData
             'metadata' => $this->metadata,
             'schedulable_id' => $this->schedulableId,
             'schedulable_type' => $this->schedulableType,
-        ], static fn(int|string|array|null $value): bool => $value !== null);
-    }
-
-    public function withSchedulableInfo(?int $schedulableId, ?string $schedulableType): self
-    {
-        return new self(
-            id: $this->id,
-            availabilityId: $this->availabilityId,
-            startDatetime: $this->startDatetime,
-            endDatetime: $this->endDatetime,
-            reason: $this->reason,
-            metadata: $this->metadata,
-            schedulableId: $schedulableId,
-            schedulableType: $schedulableType
-        );
-    }
-
-    public function withAvailabilityId(?int $availabilityId): self
-    {
-        return new self(
-            id: $this->id,
-            availabilityId: $availabilityId,
-            startDatetime: $this->startDatetime,
-            endDatetime: $this->endDatetime,
-            reason: $this->reason,
-            metadata: $this->metadata,
-            schedulableId: $this->schedulableId,
-            schedulableType: $this->schedulableType
-        );
+        ];
     }
 }

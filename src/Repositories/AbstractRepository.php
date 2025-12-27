@@ -341,51 +341,6 @@ abstract class AbstractRepository implements RepositoryInterface
     }
 
     /**
-     * Calculate available time slots by subtracting impediments from a time range.
-     *
-     * @param Collection<int, Impediment> $impediments
-     * @return Collection<int, array{start: Carbon, end: Carbon}>
-     */
-    public function getAvailableSlotsFromImpediments(
-        Carbon $start,
-        Carbon $end,
-        Collection $impediments
-    ): Collection {
-        if ($impediments->isEmpty()) {
-            return collect([['start' => $start->copy(), 'end' => $end->copy()]]);
-        }
-
-        $availableSlots = collect();
-        $currentTime = $start->copy();
-
-        /** @var Collection<int, Impediment> $sortedImpediments */
-        $sortedImpediments = $impediments->sortBy('start_datetime');
-
-        foreach ($sortedImpediments as $impediment) {
-            $impedimentStart = $impediment->start_datetime;
-            $impedimentEnd = $impediment->end_datetime;
-
-            if ($impedimentStart->gt($currentTime)) {
-                $availableSlots->push([
-                    'start' => $currentTime->copy(),
-                    'end' => $impedimentStart->copy(),
-                ]);
-            }
-
-            $currentTime = max($currentTime, $impedimentEnd);
-        }
-
-        if ($currentTime->lt($end)) {
-            $availableSlots->push([
-                'start' => $currentTime->copy(),
-                'end' => $end->copy(),
-            ]);
-        }
-
-        return $availableSlots;
-    }
-
-    /**
      * Find impediments overlapping with a specific time slot.
      *
      * @return Collection<int, Impediment>

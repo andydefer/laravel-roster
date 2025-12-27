@@ -209,34 +209,6 @@ class ImpedimentService extends AbstractService
     }
 
     /**
-     * Calculates available slots by removing impediments from a time range.
-     *
-     * @param Carbon $start Start of the time range
-     * @param Carbon $end End of the time range
-     * @param Collection $impediments Collection of impediments to consider
-     *
-     * @return Collection<array> Available time slots after removing impediments
-     */
-    public function getAvailableSlotsFromImpediments(Carbon $start, Carbon $end, Collection $impediments): Collection
-    {
-        $blockedPeriods = $impediments->map(function ($impediment): array {
-            return [
-                'start' => $impediment->start_datetime,
-                'end' => $impediment->end_datetime,
-                'type' => 'impediment'
-            ];
-        })->all();
-
-        $availableSlots = TimeSlotHelper::calculateAvailableSlots(
-            rangeStart: $start,
-            rangeEnd: $end,
-            blockedPeriods: $blockedPeriods
-        );
-
-        return collect($availableSlots);
-    }
-
-    /**
      * Finds impediments that overlap with a given time range.
      *
      * @param int $availabilityId ID of the availability

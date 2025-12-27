@@ -5,16 +5,14 @@ declare(strict_types=1);
 namespace Roster\Validation\Context;
 
 use RuntimeException;
-use Roster\Facades\Availability;
-use Roster\Facades\Schedule;
-use Roster\Facades\Impediment;
 use Exception;
-use Roster\Services\AvailabilityService;
 use Illuminate\Database\Eloquent\Model;
 use Roster\Contracts\Services\ServiceInterface;
 use Roster\Contracts\Validation\ValidationContextInterface;
 use Roster\Enums\EntityType;
 use Roster\Enums\OperationType;
+use Roster\Models\Availability as AvailabilityModel;
+use Roster\Services\AvailabilityService;
 
 /**
  * Context container for validation operations across different entity types.
@@ -25,6 +23,7 @@ use Roster\Enums\OperationType;
 class ValidationContext implements ValidationContextInterface
 {
     private OperationType $operationType;
+
     private EntityType $entityType;
 
     /**
@@ -35,6 +34,7 @@ class ValidationContext implements ValidationContextInterface
     private array $data;
 
     private ?Model $schedulable;
+
     private mixed $currentEntity;
 
     /**
@@ -60,11 +60,6 @@ class ValidationContext implements ValidationContextInterface
         $this->schedulable = $schedulable;
         $this->currentEntity = $currentEntity;
     }
-
-    /* -----------------------------------------------------------------
-     | Context metadata
-     | -----------------------------------------------------------------
-     */
 
     /**
      * Get the type of operation being validated.
@@ -108,11 +103,13 @@ class ValidationContext implements ValidationContextInterface
         $schedulable = $this->getSchedulable();
 
         if (!$schedulable instanceof Model) {
-            throw new RuntimeException('Cannot get service: schedulable is not set in validation context');
+            throw new RuntimeException(
+                'Cannot get service: schedulable is not set in validation context'
+            );
         }
 
         return match ($this->getEntityType()) {
-            EntityType::AVAILABILITY => Availability::for($schedulable),
+            EntityType::AVAILABILITY => availability_for($schedulable),
             EntityType::SCHEDULE => $this->buildScheduleService($schedulable),
             EntityType::IMPEDIMENT => $this->buildImpedimentService($schedulable),
         };
@@ -132,10 +129,12 @@ class ValidationContext implements ValidationContextInterface
         $owner = $this->resolveOwner();
 
         if (!$owner instanceof Model) {
-            throw new RuntimeException('Cannot get Schedule service: owner is required but not available in validation context');
+            throw new RuntimeException(
+                'Cannot get Schedule service: owner is required but not available in validation context'
+            );
         }
 
-        return Schedule::for($schedulable)->owner($owner);
+        return schedule_for($owner);
     }
 
     /**
@@ -152,10 +151,12 @@ class ValidationContext implements ValidationContextInterface
         $owner = $this->resolveOwner();
 
         if (!$owner instanceof Model) {
-            throw new RuntimeException('Cannot get Impediment service: owner is required but not available in validation context');
+            throw new RuntimeException(
+                'Cannot get Impediment service: owner is required but not available in validation context'
+            );
         }
 
-        return Impediment::for($schedulable)->owner($owner);
+        return impediment_for($owner);
     }
 
     /**
@@ -167,8 +168,8 @@ class ValidationContext implements ValidationContextInterface
     {
         if (isset($this->data['availability_id']) && $this->schedulable instanceof Model) {
             try {
-                return \Roster\Models\Availability::find($this->data['availability_id']);
-            } catch (Exception $e) {
+                return AvailabilityModel::find($this->data['availability_id']);
+            } catch (Exception $exception) {
                 // Continue to other resolution methods if not found
             }
         }
@@ -178,7 +179,7 @@ class ValidationContext implements ValidationContextInterface
                 return $this->currentEntity->availability;
             }
 
-            if ($this->currentEntity instanceof \Roster\Models\Availability) {
+            if ($this->currentEntity instanceof AvailabilityModel) {
                 return $this->currentEntity;
             }
         }
@@ -205,10 +206,12 @@ class ValidationContext implements ValidationContextInterface
         $schedulable = $this->getSchedulable();
 
         if (!$schedulable instanceof Model) {
-            throw new RuntimeException('Cannot get Availability service: schedulable is not set in validation context');
+            throw new RuntimeException(
+                'Cannot get Availability service: schedulable is not set in validation context'
+            );
         }
 
-        return Availability::for($schedulable);
+        return availability_for($schedulable);
     }
 
     /**
@@ -220,11 +223,6 @@ class ValidationContext implements ValidationContextInterface
     {
         return $this->currentEntity;
     }
-
-    /* -----------------------------------------------------------------
-     | Safe data access (null = absent)
-     | -----------------------------------------------------------------
-     */
 
     /**
      * Check if a key exists in the data and is not null.
@@ -281,11 +279,6 @@ class ValidationContext implements ValidationContextInterface
         return $default;
     }
 
-    /* -----------------------------------------------------------------
-     | Raw data access (includes nulls)
-     | -----------------------------------------------------------------
-     */
-
     /**
      * Get raw data value including null values.
      *
@@ -331,11 +324,6 @@ class ValidationContext implements ValidationContextInterface
         return $this->data;
     }
 
-    /* -----------------------------------------------------------------
-     | Mutation
-     | -----------------------------------------------------------------
-     */
-
     /**
      * Set a value in the data array.
      *
@@ -346,11 +334,6 @@ class ValidationContext implements ValidationContextInterface
     {
         $this->data[$key] = $value;
     }
-
-    /* -----------------------------------------------------------------
-     | Violations
-     | -----------------------------------------------------------------
-     */
 
     /**
      * Add a validation violation for a specific field.
@@ -382,11 +365,6 @@ class ValidationContext implements ValidationContextInterface
     {
         return $this->violations !== [];
     }
-
-    /* -----------------------------------------------------------------
-     | Flags
-     | -----------------------------------------------------------------
-     */
 
     /**
      * Set a flag with an optional value.

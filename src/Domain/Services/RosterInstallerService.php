@@ -117,6 +117,17 @@ class RosterInstallerService
     }
 
     /**
+     * Generate validation rules cache after installation.
+     *
+     * @param Command $command Console command instance
+     */
+    private function generateValidationRulesCache(Command $command): void
+    {
+        $command->info('🔄 Generating validation rules cache...');
+        $command->call('roster:cache-rules', ['--force' => true]);
+    }
+
+    /**
      * Display installation success message with next steps.
      *
      * @param Command $command Console command instance
@@ -128,17 +139,6 @@ class RosterInstallerService
         $command->line('📝 Next steps:');
         $command->line('   1. Review config/roster.php for configuration options');
         $command->line('   2. Add the HasRoster trait to your models');
-        $command->line('   3. Use the facades: Availability::for($model)->create([...])');
-    }
-
-    /**
-     * Generate validation rules cache after installation.
-     *
-     * @param Command $command Console command instance
-     */
-    private function generateValidationRulesCache(Command $command): void
-    {
-        $command->info('🔄 Generating validation rules cache...');
-        $command->call('roster:cache-rules', ['--force' => true]);
+        $command->line('   3. Use the helpers: availability_for($model)->create([...])');
     }
 }

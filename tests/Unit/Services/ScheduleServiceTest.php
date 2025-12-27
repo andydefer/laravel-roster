@@ -61,7 +61,7 @@ final class ScheduleServiceTest extends TestCase
             'description' => 'Test description',
             'start_datetime' => '2038-01-04 10:00:00',
             'end_datetime' => '2038-01-04 11:00:00',
-            'status' => ScheduleStatus::BOOKED->value,
+            'status' => ScheduleStatus::BOOKED,
             'metadata' => ['priority' => 'high'],
         ];
 
@@ -551,26 +551,26 @@ final class ScheduleServiceTest extends TestCase
             'title' => 'Available',
             'start_datetime' => '2038-01-04 10:00:00',
             'end_datetime' => '2038-01-04 11:00:00',
-            'status' => ScheduleStatus::AVAILABLE->value,
+            'status' => ScheduleStatus::AVAILABLE,
         ]);
 
         schedule_for($availability)->create([
             'title' => 'Booked',
             'start_datetime' => '2038-01-05 10:00:00',
             'end_datetime' => '2038-01-05 11:00:00',
-            'status' => ScheduleStatus::BOOKED->value,
+            'status' => ScheduleStatus::BOOKED,
         ]);
 
         schedule_for($availability)->create([
             'title' => 'Available 2',
             'start_datetime' => '2038-01-11 10:00:00',
             'end_datetime' => '2038-01-11 11:00:00',
-            'status' => ScheduleStatus::AVAILABLE->value,
+            'status' => ScheduleStatus::AVAILABLE,
         ]);
 
         // Act
         $result = schedule_for($availability)
-            ->setFilter('status', ScheduleStatus::AVAILABLE->value)
+            ->setFilter('status', ScheduleStatus::AVAILABLE)
             ->all();
 
         // Assert

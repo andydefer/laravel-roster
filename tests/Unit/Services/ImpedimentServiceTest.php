@@ -990,11 +990,11 @@ final class ImpedimentServiceTest extends TestCase
     public function test_impediment_with_json_string_metadata(): void
     {
         // Arrange
-        $jsonMetadata = json_encode([
+        $jsonMetadata = [
             'client' => 'ABC Corp',
             'priority' => 'urgent',
             'notify' => true,
-        ]);
+        ];
 
         // Act
         $impediment = impediment_for($this->availabilityModel)->create([

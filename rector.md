@@ -1,8 +1,8 @@
 # Rector Refactoring Report
-*Generated: sam. 27 déc. 2025 05:54:43 WAT*
+*Generated: sam. 27 déc. 2025 09:54:05 WAT*
 
 
-29 files with changes
+36 files with changes
 =====================
 
 1) /home/andy-kani/pro/sites/packages/laravel-roster/src/Commands/CacheRulesCommand.php:33
@@ -163,7 +163,190 @@ Applied rules:
  * RemoveUselessReturnTagRector
 
 
-4) /home/andy-kani/pro/sites/packages/laravel-roster/src/Domain/DTOs/CacheStats.php:4
+4) /home/andy-kani/pro/sites/packages/laravel-roster/src/DTOs/AbstractData.php:4
+
+    ---------- begin diff ----------
+@@ @@
+
+ namespace Roster\DTOs;
+
+-use Illuminate\Database\Eloquent\Model;
++use InvalidArgumentException;
+ use Illuminate\Support\Carbon;
+
+ /**
+@@ @@
+      * @param string|Carbon|null $datetime Datetime input to parse
+      * @return Carbon|null Parsed Carbon instance or null
+      *
+-     * @throws \InvalidArgumentException If the input is not null, string, or Carbon
++     * @throws InvalidArgumentException If the input is not null, string, or Carbon
+      */
+     final protected static function parseDateTime(string|Carbon|null $datetime): ?Carbon
+     {
+@@ @@
+             $datetime === null => null,
+             $datetime instanceof Carbon => $datetime,
+             is_string($datetime) => Carbon::parse($datetime),
+-            default => throw new \InvalidArgumentException(
++            default => throw new InvalidArgumentException(
+                 'Datetime must be null, string or instance of Carbon'
+             ),
+         };
+    ----------- end diff -----------
+
+Applied rules:
+
+
+5) /home/andy-kani/pro/sites/packages/laravel-roster/src/DTOs/AvailabilityData.php:74
+
+    ---------- begin diff ----------
+@@ @@
+     /**
+      * Creates an AvailabilityData instance from an Availability Eloquent model.
+      *
+-     * @param Availability $availability Eloquent model instance
++     * @param Availability $model Eloquent model instance
+      * @return self New immutable AvailabilityData instance
+      */
+-    public static function fromModel(Model $availability): self
++    public static function fromModel(Model $model): self
+     {
+         return new self(
+-            id: $availability->id,
+-            type: $availability->type,
+-            days: $availability->days,
+-            validityStart: $availability->validity_start,
+-            validityEnd: $availability->validity_end,
+-            dailyStart: $availability->daily_start,
+-            dailyEnd: $availability->daily_end,
+-            schedulableId: $availability->schedulable_id,
+-            schedulableType: $availability->schedulable_type
++            id: $model->id,
++            type: $model->type,
++            days: $model->days,
++            validityStart: $model->validity_start,
++            validityEnd: $model->validity_end,
++            dailyStart: $model->daily_start,
++            dailyEnd: $model->daily_end,
++            schedulableId: $model->schedulable_id,
++            schedulableType: $model->schedulable_type
+         );
+     }
+
+@@ @@
+         $data = $this->toArray();
+         $data['days'] = $days;
+
+-        return static::fromArray($data);
++        return self::fromArray($data);
+     }
+    ----------- end diff -----------
+
+Applied rules:
+ * ConvertStaticToSelfRector
+ * RenameParamToMatchTypeRector
+
+
+6) /home/andy-kani/pro/sites/packages/laravel-roster/src/DTOs/DataInterface.php:5
+
+    ---------- begin diff ----------
+@@ @@
+ namespace Roster\DTOs;
+
+ use Illuminate\Database\Eloquent\Model;
+-use Illuminate\Support\Carbon;
+
+ /**
+  * Interface for all Data Transfer Objects.
+    ----------- end diff -----------
+
+Applied rules:
+
+
+7) /home/andy-kani/pro/sites/packages/laravel-roster/src/DTOs/ImpedimentData.php:69
+
+    ---------- begin diff ----------
+@@ @@
+     /**
+      * Create an ImpedimentData instance from an Impediment Eloquent model.
+      *
+-     * @param Impediment $impediment Eloquent model instance
++     * @param Impediment $model Eloquent model instance
+      * @return self New immutable ImpedimentData instance
+      */
+-    public static function fromModel(Model $impediment): self
++    public static function fromModel(Model $model): self
+     {
+         return new self(
+-            id: $impediment->id,
+-            availabilityId: $impediment->availability_id,
+-            startDatetime: self::parseDateTime($impediment->start_datetime),
+-            endDatetime: self::parseDateTime($impediment->end_datetime),
+-            reason: $impediment->reason,
+-            metadata: $impediment->metadata ?? [],
+-            schedulableId: $impediment->schedulable_id,
+-            schedulableType: $impediment->schedulable_type
++            id: $model->id,
++            availabilityId: $model->availability_id,
++            startDatetime: self::parseDateTime($model->start_datetime),
++            endDatetime: self::parseDateTime($model->end_datetime),
++            reason: $model->reason,
++            metadata: $model->metadata ?? [],
++            schedulableId: $model->schedulable_id,
++            schedulableType: $model->schedulable_type
+         );
+     }
+    ----------- end diff -----------
+
+Applied rules:
+ * RenameParamToMatchTypeRector
+
+
+8) /home/andy-kani/pro/sites/packages/laravel-roster/src/DTOs/ScheduleData.php:78
+
+    ---------- begin diff ----------
+@@ @@
+     /**
+      * Create a ScheduleData instance from a Schedule Eloquent model.
+      *
+-     * @param Schedule $schedule Eloquent model instance
++     * @param Schedule $model Eloquent model instance
+      * @return self New immutable ScheduleData instance
+      */
+-    public static function fromModel(Model $schedule): self
++    public static function fromModel(Model $model): self
+     {
+         return new self(
+-            id: $schedule->id,
+-            availabilityId: $schedule->availability_id,
+-            title: $schedule->title,
+-            description: $schedule->description,
+-            startDatetime: self::parseDateTime($schedule->start_datetime),
+-            endDatetime: self::parseDateTime($schedule->end_datetime),
+-            metadata: $schedule->metadata ?? [],
+-            status: $schedule->status,
+-            schedulableId: $schedule->schedulable_id,
+-            schedulableType: $schedule->schedulable_type
++            id: $model->id,
++            availabilityId: $model->availability_id,
++            title: $model->title,
++            description: $model->description,
++            startDatetime: self::parseDateTime($model->start_datetime),
++            endDatetime: self::parseDateTime($model->end_datetime),
++            metadata: $model->metadata ?? [],
++            status: $model->status,
++            schedulableId: $model->schedulable_id,
++            schedulableType: $model->schedulable_type
+         );
+     }
+    ----------- end diff -----------
+
+Applied rules:
+ * RenameParamToMatchTypeRector
+
+
+9) /home/andy-kani/pro/sites/packages/laravel-roster/src/Domain/DTOs/CacheStats.php:4
 
     ---------- begin diff ----------
 @@ @@
@@ -218,7 +401,7 @@ Applied rules:
  * RemoveUselessReturnTagRector
 
 
-5) /home/andy-kani/pro/sites/packages/laravel-roster/src/Domain/DTOs/ConflictResult.php:95
+10) /home/andy-kani/pro/sites/packages/laravel-roster/src/Domain/DTOs/ConflictResult.php:95
 
     ---------- begin diff ----------
 @@ @@
@@ -245,7 +428,7 @@ Applied rules:
  * SimplifyEmptyCheckOnEmptyArrayRector
 
 
-6) /home/andy-kani/pro/sites/packages/laravel-roster/src/Domain/Services/CacheRulesService.php:1
+11) /home/andy-kani/pro/sites/packages/laravel-roster/src/Domain/Services/CacheRulesService.php:1
 
     ---------- begin diff ----------
 @@ @@
@@ -333,7 +516,7 @@ Applied rules:
  * DeclareStrictTypesRector
 
 
-7) /home/andy-kani/pro/sites/packages/laravel-roster/src/Domain/Services/RosterInstallerService.php:1
+12) /home/andy-kani/pro/sites/packages/laravel-roster/src/Domain/Services/RosterInstallerService.php:1
 
     ---------- begin diff ----------
 @@ @@
@@ -350,7 +533,60 @@ Applied rules:
  * DeclareStrictTypesRector
 
 
-8) /home/andy-kani/pro/sites/packages/laravel-roster/src/Exceptions/DirectServiceUsageException.php:4
+13) /home/andy-kani/pro/sites/packages/laravel-roster/src/Domain/Services/TemporalConflictService.php:60
+
+    ---------- begin diff ----------
+@@ @@
+             return ConflictResult::noConflict();
+         }
+
+-        $firstConflict = $conflictingAvailabilities->first();
++        $availability = $conflictingAvailabilities->first();
+         return new ConflictResult(
+             hasConflicts: true,
+             conflictingSchedules: [],
+             conflictingImpediments: [],
+-            message: $this->generateAvailabilityConflictMessage($firstConflict)
++            message: $this->generateAvailabilityConflictMessage($availability)
+         );
+     }
+
+@@ @@
+         ?int $excludeScheduleId = null,
+         ?int $excludeImpedimentId = null
+     ): ConflictResult {
+-        $scheduleConflict = $this->checkScheduleConflicts(
++        $conflictResult = $this->checkScheduleConflicts(
+             availabilityId: $availabilityId,
+             start: $start,
+             end: $end,
+@@ @@
+             excludeScheduleId: $excludeScheduleId
+         );
+
+-        if ($scheduleConflict->hasConflicts) {
+-            return $scheduleConflict;
++        if ($conflictResult->hasConflicts) {
++            return $conflictResult;
+         }
+
+         $impedimentConflict = $this->checkImpedimentConflicts(
+@@ @@
+      *     validityEnd: Carbon|null,
+      *     type: string|null
+      * } $period
+-     * @return bool
+      */
+     private function isValidAvailabilityPeriod(array $period): bool
+     {
+    ----------- end diff -----------
+
+Applied rules:
+ * RemoveUselessReturnTagRector
+ * RenameVariableToMatchMethodCallReturnTypeRector
+
+
+14) /home/andy-kani/pro/sites/packages/laravel-roster/src/Exceptions/DirectServiceUsageException.php:4
 
     ---------- begin diff ----------
 @@ @@
@@ -372,7 +608,49 @@ Applied rules:
 Applied rules:
 
 
-9) /home/andy-kani/pro/sites/packages/laravel-roster/src/Models/Availability.php:60
+15) /home/andy-kani/pro/sites/packages/laravel-roster/src/Exceptions/InvalidServiceContextException.php:20
+
+    ---------- begin diff ----------
+@@ @@
+
+         $message = match (true) {
+             str_contains($serviceClass, 'AvailabilityService') =>
+-            "{$serviceName} requires a valid schedulable context.\n\n" .
++            $serviceName . ' requires a valid schedulable context.
++
++' .
+                 "This usually happens because you are calling the service without providing a schedulable model.\n\n" .
+                 "How to fix:\n" .
+                 "- Always use the availability_for() helper with a schedulable model.\n" .
+@@ @@
+                 "availability_for(\$schedulable)->create([...]);",
+
+             str_contains($serviceClass, 'ScheduleService') || str_contains($serviceClass, 'ImpedimentService') =>
+-            "{$serviceName} requires both schedulable and owner context.\n\n" .
++            $serviceName . ' requires both schedulable and owner context.
++
++' .
+                 "This usually happens because:\n" .
+                 "1. You are calling the service without providing an availability as owner.\n" .
+                 "2. You are using the wrong helper function.\n\n" .
+@@ @@
+                 "impediment_for(\$availability)->create([...]);",
+
+             default =>
+-            "{$serviceName} requires a valid context.\n\n" .
++            $serviceName . ' requires a valid context.
++
++' .
+                 "This usually happens because you are using the service incorrectly.\n\n" .
+                 "How to fix:\n" .
+                 "- Use the appropriate helper function instead of instantiating the service directly.\n" .
+    ----------- end diff -----------
+
+Applied rules:
+ * EncapsedStringsToSprintfRector
+
+
+16) /home/andy-kani/pro/sites/packages/laravel-roster/src/Models/Availability.php:60
 
     ---------- begin diff ----------
 @@ @@
@@ -408,7 +686,7 @@ Applied rules:
  * RemoveUselessReturnTagRector
 
 
-10) /home/andy-kani/pro/sites/packages/laravel-roster/src/Repositories/AbstractRepository.php:105
+17) /home/andy-kani/pro/sites/packages/laravel-roster/src/Repositories/AbstractRepository.php:105
 
     ---------- begin diff ----------
 @@ @@
@@ -494,19 +772,6 @@ Applied rules:
      }
 
 @@ @@
-         /** @var Collection<int, Impediment> $sortedImpediments */
-         $sortedImpediments = $impediments->sortBy('start_datetime');
-
--        foreach ($sortedImpediments as $impediment) {
--            $impedimentStart = $impediment->start_datetime;
--            $impedimentEnd = $impediment->end_datetime;
-+        foreach ($sortedImpediments as $sortedImpediment) {
-+            $impedimentStart = $sortedImpediment->start_datetime;
-+            $impedimentEnd = $sortedImpediment->end_datetime;
-
-             if ($impedimentStart->gt($currentTime)) {
-                 $availableSlots->push([
-@@ @@
       * - Fields containing 'end': WHERE <= value
       * - String values: WHERE LIKE pattern
       * - Other values: WHERE = value
@@ -526,12 +791,11 @@ Applied rules:
 
 Applied rules:
  * RenameParamToMatchTypeRector
- * RenameForeachValueVariableToMatchExprVariableRector
  * DocblockGetterReturnArrayFromPropertyDocblockVarRector
  * ClassMethodArrayDocblockParamFromLocalCallsRector
 
 
-11) /home/andy-kani/pro/sites/packages/laravel-roster/src/Repositories/AvailabilityRepository.php:23
+18) /home/andy-kani/pro/sites/packages/laravel-roster/src/Repositories/AvailabilityRepository.php:23
 
     ---------- begin diff ----------
 @@ @@
@@ -650,7 +914,7 @@ Applied rules:
  * RenameParamToMatchTypeRector
 
 
-12) /home/andy-kani/pro/sites/packages/laravel-roster/src/RosterServiceProvider.php:36
+19) /home/andy-kani/pro/sites/packages/laravel-roster/src/RosterServiceProvider.php:36
 
     ---------- begin diff ----------
 @@ @@
@@ -731,7 +995,7 @@ Applied rules:
  * RemoveUselessReturnTagRector
 
 
-13) /home/andy-kani/pro/sites/packages/laravel-roster/src/Services/ImpedimentService.php:6
+20) /home/andy-kani/pro/sites/packages/laravel-roster/src/Services/ImpedimentService.php:6
 
     ---------- begin diff ----------
 @@ @@
@@ -747,27 +1011,18 @@ Applied rules:
 Applied rules:
 
 
-14) /home/andy-kani/pro/sites/packages/laravel-roster/src/Validation/Context/ValidationContext.php:25
+21) /home/andy-kani/pro/sites/packages/laravel-roster/src/Validation/Context/ValidationContext.php:33
 
     ---------- begin diff ----------
-@@ @@
- class ValidationContext implements ValidationContextInterface
- {
-     private OperationType $operationType;
-+
-     private EntityType $entityType;
-
-     /**
 @@ @@
       */
      private array $data;
 
 -    private ?Model $schedulable;
 +    private ?Model $model;
-+
+
      private mixed $currentEntity;
 
-     /**
 @@ @@
          OperationType $operationType,
          EntityType $entityType,
@@ -794,53 +1049,64 @@ Applied rules:
 
      /**
 @@ @@
+
+         return match ($this->getEntityType()) {
+             EntityType::AVAILABILITY => availability_for($schedulable),
+-            EntityType::SCHEDULE => $this->buildScheduleService($schedulable),
+-            EntityType::IMPEDIMENT => $this->buildImpedimentService($schedulable),
++            EntityType::SCHEDULE => $this->buildScheduleService(),
++            EntityType::IMPEDIMENT => $this->buildImpedimentService(),
+         };
+     }
+
+@@ @@
      /**
       * Build Schedule service with the appropriate context.
       *
 -     * @param Model $schedulable The schedulable entity
-+     * @param Model $model The schedulable entity
       *
       * @return ServiceInterface Configured Schedule service
-      *
+-     *
       * @throws RuntimeException When owner is required but not available
       */
 -    private function buildScheduleService(Model $schedulable): ServiceInterface
-+    private function buildScheduleService(Model $model): ServiceInterface
++    private function buildScheduleService(): ServiceInterface
      {
          $owner = $this->resolveOwner();
-
-@@ @@
-             throw new RuntimeException('Cannot get Schedule service: owner is required but not available in validation context');
+-
+         if (!$owner instanceof Model) {
+             throw new RuntimeException(
+                 'Cannot get Schedule service: owner is required but not available in validation context'
+             );
          }
-
--        return Schedule::for($schedulable)->owner($owner);
-+        return Schedule::for($model)->owner($owner);
+-
+         return schedule_for($owner);
      }
 
+@@ @@
      /**
       * Build Impediment service with the appropriate context.
       *
 -     * @param Model $schedulable The schedulable entity
-+     * @param Model $model The schedulable entity
       *
       * @return ServiceInterface Configured Impediment service
-      *
+-     *
       * @throws RuntimeException When owner is required but not available
       */
 -    private function buildImpedimentService(Model $schedulable): ServiceInterface
-+    private function buildImpedimentService(Model $model): ServiceInterface
++    private function buildImpedimentService(): ServiceInterface
      {
          $owner = $this->resolveOwner();
-
-@@ @@
-             throw new RuntimeException('Cannot get Impediment service: owner is required but not available in validation context');
+-
+         if (!$owner instanceof Model) {
+             throw new RuntimeException(
+                 'Cannot get Impediment service: owner is required but not available in validation context'
+             );
          }
-
--        return Impediment::for($schedulable)->owner($owner);
-+        return Impediment::for($model)->owner($owner);
+-
+         return impediment_for($owner);
      }
 
-     /**
 @@ @@
       */
      private function resolveOwner(): ?Model
@@ -848,17 +1114,17 @@ Applied rules:
 -        if (isset($this->data['availability_id']) && $this->schedulable instanceof Model) {
 +        if (isset($this->data['availability_id']) && $this->model instanceof Model) {
              try {
-                 return \Roster\Models\Availability::find($this->data['availability_id']);
-             } catch (Exception $e) {
+                 return AvailabilityModel::find($this->data['availability_id']);
+             } catch (Exception $exception) {
     ----------- end diff -----------
 
 Applied rules:
- * NewlineBetweenClassLikeStmtsRector
+ * RemoveUnusedPrivateMethodParameterRector
  * RenameParamToMatchTypeRector
  * RenamePropertyToMatchTypeRector
 
 
-15) /home/andy-kani/pro/sites/packages/laravel-roster/src/Validation/RuleScanner.php:180
+22) /home/andy-kani/pro/sites/packages/laravel-roster/src/Validation/RuleScanner.php:180
 
     ---------- begin diff ----------
 @@ @@
@@ -925,7 +1191,7 @@ Applied rules:
  * RenameForeachValueVariableToMatchExprVariableRector
 
 
-16) /home/andy-kani/pro/sites/packages/laravel-roster/src/Validation/Rules/AvailabilityDateRangeRule.php:43
+23) /home/andy-kani/pro/sites/packages/laravel-roster/src/Validation/Rules/AvailabilityDateRangeRule.php:43
 
     ---------- begin diff ----------
 @@ @@
@@ -1034,7 +1300,7 @@ Applied rules:
  * RenameParamToMatchTypeRector
 
 
-17) /home/andy-kani/pro/sites/packages/laravel-roster/src/Validation/Validator.php:77
+24) /home/andy-kani/pro/sites/packages/laravel-roster/src/Validation/Validator.php:77
 
     ---------- begin diff ----------
 @@ @@
@@ -1136,7 +1402,7 @@ Applied rules:
  * RenameForeachValueVariableToMatchExprVariableRector
 
 
-18) /home/andy-kani/pro/sites/packages/laravel-roster/src/helpers.php:6
+25) /home/andy-kani/pro/sites/packages/laravel-roster/src/helpers.php:6
 
     ---------- begin diff ----------
 @@ @@
@@ -1276,7 +1542,7 @@ Applied rules:
  * RenameParamToMatchTypeRector
 
 
-19) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Feature/Services/AvailabilityServiceDaysCoherenceTest.php:6
+26) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Feature/Services/AvailabilityServiceDaysCoherenceTest.php:6
 
     ---------- begin diff ----------
 @@ @@
@@ -1457,7 +1723,7 @@ Applied rules:
  * RenamePropertyToMatchTypeRector
 
 
-20) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Commands/CacheRulesCommandTest.php:4
+27) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Commands/CacheRulesCommandTest.php:4
 
     ---------- begin diff ----------
 @@ @@
@@ -1583,7 +1849,7 @@ Applied rules:
  * RenameVariableToMatchNewTypeRector
 
 
-21) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Commands/InstallRosterCommandTest.php:13
+28) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Commands/InstallRosterCommandTest.php:13
 
     ---------- begin diff ----------
 @@ @@
@@ -1635,7 +1901,7 @@ Applied rules:
  * ClosureReturnTypeRector
 
 
-22) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Domain/RepositoryMutationTest.php:6
+29) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Domain/RepositoryMutationTest.php:6
 
     ---------- begin diff ----------
 @@ @@
@@ -1863,7 +2129,7 @@ Applied rules:
  * RenamePropertyToMatchTypeRector
 
 
-23) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Models/AvailabilityTest.php:19
+30) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Models/AvailabilityTest.php:19
 
     ---------- begin diff ----------
 @@ @@
@@ -1953,7 +2219,7 @@ Applied rules:
  * RenamePropertyToMatchTypeRector
 
 
-24) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Models/ImpedimentTest.php:24
+31) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Models/ImpedimentTest.php:24
 
     ---------- begin diff ----------
 @@ @@
@@ -2007,7 +2273,7 @@ Applied rules:
  * RenamePropertyToMatchTypeRector
 
 
-25) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Services/AvailabilityServiceTest.php:21
+32) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Services/AvailabilityServiceTest.php:21
 
     ---------- begin diff ----------
 @@ @@
@@ -2444,7 +2710,7 @@ Applied rules:
  * RenamePropertyToMatchTypeRector
 
 
-26) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Services/ImpedimentServiceTest.php:25
+33) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Services/ImpedimentServiceTest.php:25
 
     ---------- begin diff ----------
 @@ @@
@@ -2554,7 +2820,7 @@ Applied rules:
  * AssertEqualsOrAssertSameFloatParameterToSpecificMethodsTypeRector
 
 
-27) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Services/ScheduleServiceTest.php:11
+34) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Services/ScheduleServiceTest.php:11
 
     ---------- begin diff ----------
 @@ @@
@@ -2968,7 +3234,7 @@ Applied rules:
  * AssertEqualsOrAssertSameFloatParameterToSpecificMethodsTypeRector
 
 
-28) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Validation/Rules/AvailabilityTemporalCoherenceRuleTest.php:20
+35) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Validation/Rules/AvailabilityTemporalCoherenceRuleTest.php:20
 
     ---------- begin diff ----------
 @@ @@
@@ -3121,7 +3387,7 @@ Applied rules:
  * RenamePropertyToMatchTypeRector
 
 
-29) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Validation/Rules/ImpedimentScheduleDaysCoherenceRuleTest.php:20
+36) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Validation/Rules/ImpedimentScheduleDaysCoherenceRuleTest.php:20
 
     ---------- begin diff ----------
 @@ @@
@@ -3175,5 +3441,5 @@ Applied rules:
  * RenamePropertyToMatchTypeRector
 
 
- [OK] 29 files would have been changed (dry-run) by Rector                                                              
+ [OK] 36 files would have been changed (dry-run) by Rector                                                              
 

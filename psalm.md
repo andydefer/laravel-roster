@@ -1952,7 +1952,7 @@ INFO: UndefinedMagicPropertyFetch - ]8;;file:///home/andy-kani/pro/sites/packag
                         [30;47m$availability->end_time[0m->format('H:i') >= $slotEnd->format('H:i');
 
 
-[0;31mERROR[0m: MissingOverrideAttribute - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/Core/SlotFinderService.php#L88\src/Services/Core/[1;31mSlotFinderService.php:88:5[0m]8;;\ - Method Roster\Services\Core\SlotFinderService::getavailableslotsfromimpediments should have the "Override" attribute (see https://psalm.dev/358)
+[0;31mERROR[0m: MissingOverrideAttribute - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/Core/SlotFinderService.php#L88\src/Services/Core/[1;31mSlotFinderService.php:88:5[0m]8;;\ - Method Roster\Services\Core\SlotFinderService::calculateAvailableSlotsExcludingImpediments should have the "Override" attribute (see https://psalm.dev/358)
     /**
      * Calculate available time slots by removing impediments from a time range.
      *
@@ -1961,7 +1961,7 @@ INFO: UndefinedMagicPropertyFetch - ]8;;file:///home/andy-kani/pro/sites/packag
      * @param Collection $impediments Collection of impediments
      * @return Collection<int, array<string, mixed>> Available time slots
      */
-    [97;41mpublic function getAvailableSlotsFromImpediments([0m
+    [97;41mpublic function calculateAvailableSlotsExcludingImpediments([0m
 
 
 INFO: InvalidArgument - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/Core/SlotFinderService.php#L106\src/Services/Core/[1;31mSlotFinderService.php:106:39[0m]8;;\ - Argument 1 of Illuminate\Support\Collection::push expects never, but array{end: Illuminate\Support\Carbon&static, start: Illuminate\Support\Carbon&static} provided (see https://psalm.dev/004)
@@ -2186,8 +2186,8 @@ INFO: UndefinedMagicPropertyFetch - ]8;;file:///home/andy-kani/pro/sites/packag
         $impediments = $this->impedimentRepository->findForTimeSlot([30;47m$availability->id[0m, $start, $end);
 
 
-INFO: InvalidArgument - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/ImpedimentService.php#L315\src/Services/[1;31mImpedimentService.php:315:82[0m]8;;\ - Argument 3 of Roster\Contracts\Services\SlotFinderInterface::getAvailableSlotsFromImpediments expects Illuminate\Support\Collection<array-key, mixed>, but Illuminate\Support\Collection<int, Roster\Models\Impediment> provided (see https://psalm.dev/004)
-        return $this->slotFinder->getAvailableSlotsFromImpediments($start, $end, [30;47m$impediments[0m);
+INFO: InvalidArgument - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/ImpedimentService.php#L315\src/Services/[1;31mImpedimentService.php:315:82[0m]8;;\ - Argument 3 of Roster\Contracts\Services\SlotFinderInterface::calculateAvailableSlotsExcludingImpediments expects Illuminate\Support\Collection<array-key, mixed>, but Illuminate\Support\Collection<int, Roster\Models\Impediment> provided (see https://psalm.dev/004)
+        return $this->slotFinder->calculateAvailableSlotsExcludingImpediments($start, $end, [30;47m$impediments[0m);
 
 
 [0;31mERROR[0m: PossiblyUnusedMethod - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/ImpedimentService.php#L321\src/Services/[1;31mImpedimentService.php:321:21[0m]8;;\ - Cannot find any calls to method Roster\Services\ImpedimentService::wouldOverlapWithSchedule (see https://psalm.dev/087)
@@ -2426,8 +2426,8 @@ INFO: UndefinedMagicPropertyFetch - ]8;;file:///home/andy-kani/pro/sites/packag
             [30;47m$availability->id[0m,
 
 
-[0;31mERROR[0m: PossiblyUnusedMethod - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/ScheduleService.php#L514\src/Services/[1;31mScheduleService.php:514:21[0m]8;;\ - Cannot find any calls to method Roster\Services\ScheduleService::getAvailableSlotsFromImpediments (see https://psalm.dev/087)
-    public function [97;41mgetAvailableSlotsFromImpediments[0m(
+[0;31mERROR[0m: PossiblyUnusedMethod - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/ScheduleService.php#L514\src/Services/[1;31mScheduleService.php:514:21[0m]8;;\ - Cannot find any calls to method Roster\Services\ScheduleService::calculateAvailableSlotsExcludingImpediments (see https://psalm.dev/087)
+    public function [97;41mcalculateAvailableSlotsExcludingImpediments[0m(
 
 
 INFO: InvalidArgument - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Services/ScheduleService.php#L523\src/Services/[1;31mScheduleService.php:523:35[0m]8;;\ - Argument 1 of Illuminate\Support\Collection::push expects never, but array{end: Illuminate\Support\Carbon&static, start: Illuminate\Support\Carbon&static} provided (see https://psalm.dev/004)

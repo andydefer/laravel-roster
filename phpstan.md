@@ -52,7 +52,7 @@
  ------ -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
   Line   src/Contracts/Services/SlotFinderInterface.php
  ------ -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-  42     Method Roster\Contracts\Services\SlotFinderInterface::getAvailableSlotsFromImpediments() has parameter $impediments with generic class Illuminate\Support\Collection but does
+  42     Method Roster\Contracts\Services\SlotFinderInterface::calculateAvailableSlotsExcludingImpediments() has parameter $impediments with generic class Illuminate\Support\Collection but does
          not specify its types: TKey, TValue
          🪪  missingType.generics
  ------ -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -838,11 +838,11 @@
          🪪  assign.propertyType
   64     Cannot access property $id on Illuminate\Database\Eloquent\Model|null.
          🪪  property.nonObject
-  64     Parameter #1 $schedulableId of method Roster\DTOs\AvailabilityData::withSchedulableInfo() expects int|null, mixed given.
+  64     Parameter #1 $schedulableId of method Roster\DTOs\AvailabilityData::withSchedulable() expects int|null, mixed given.
          🪪  argument.type
   65     Parameter #1 $object of function get_class expects object, Illuminate\Database\Eloquent\Model|null given.
          🪪  argument.type
-  65     Parameter #2 $schedulableType of method Roster\DTOs\AvailabilityData::withSchedulableInfo() expects string|null, class-string<Illuminate\Database\Eloquent\Model>|false given
+  65     Parameter #2 $schedulableType of method Roster\DTOs\AvailabilityData::withSchedulable() expects string|null, class-string<Illuminate\Database\Eloquent\Model>|false given
          .
          🪪  argument.type
   81     Access to an undefined property Roster\Models\Availability::$id.
@@ -1022,7 +1022,7 @@
          💡  Learn more: https://phpstan.org/blog/solving-phpstan-access-to-undefined-property
   64     Cannot call method format() on mixed.
          🪪  method.nonObject
-  88     Method Roster\Services\Core\SlotFinderService::getAvailableSlotsFromImpediments() has parameter $impediments with generic class Illuminate\Support\Collection but does not
+  88     Method Roster\Services\Core\SlotFinderService::calculateAvailableSlotsExcludingImpediments() has parameter $impediments with generic class Illuminate\Support\Collection but does not
          specify its types: TKey, TValue
          🪪  missingType.generics
   140    Access to an undefined property Roster\Models\Availability::$schedules.
@@ -1067,11 +1067,11 @@
          🪪  argument.type
   86     Cannot access property $id on Illuminate\Database\Eloquent\Model|null.
          🪪  property.nonObject
-  86     Parameter #1 $schedulableId of method Roster\DTOs\ImpedimentData::withSchedulableInfo() expects int|null, mixed given.
+  86     Parameter #1 $schedulableId of method Roster\DTOs\ImpedimentData::withSchedulable() expects int|null, mixed given.
          🪪  argument.type
   87     Parameter #1 $object of function get_class expects object, Illuminate\Database\Eloquent\Model|null given.
          🪪  argument.type
-  87     Parameter #2 $schedulableType of method Roster\DTOs\ImpedimentData::withSchedulableInfo() expects string|null, class-string<Illuminate\Database\Eloquent\Model>|false given.
+  87     Parameter #2 $schedulableType of method Roster\DTOs\ImpedimentData::withSchedulable() expects string|null, class-string<Illuminate\Database\Eloquent\Model>|false given.
          🪪  argument.type
   236    Call to an undefined static method Roster\Models\Impediment::where().
          🪪  staticMethod.notFound
@@ -1145,11 +1145,11 @@
          🪪  argument.type
   82     Cannot access property $id on Illuminate\Database\Eloquent\Model|null.
          🪪  property.nonObject
-  82     Parameter #1 $schedulableId of method Roster\DTOs\ScheduleData::withSchedulableInfo() expects int|null, mixed given.
+  82     Parameter #1 $schedulableId of method Roster\DTOs\ScheduleData::withSchedulable() expects int|null, mixed given.
          🪪  argument.type
   83     Parameter #1 $object of function get_class expects object, Illuminate\Database\Eloquent\Model|null given.
          🪪  argument.type
-  83     Parameter #2 $schedulableType of method Roster\DTOs\ScheduleData::withSchedulableInfo() expects string|null, class-string<Illuminate\Database\Eloquent\Model>|false given.
+  83     Parameter #2 $schedulableType of method Roster\DTOs\ScheduleData::withSchedulable() expects string|null, class-string<Illuminate\Database\Eloquent\Model>|false given.
          🪪  argument.type
   174    Access to an undefined property Roster\Models\Schedule::$schedulable_id.
          🪪  property.notFound
@@ -1245,10 +1245,10 @@
          💡  Learn more: https://phpstan.org/blog/solving-phpstan-access-to-undefined-property
   503    Parameter #1 $availabilityId of method Roster\Contracts\Repository\ImpedimentRepositoryInterface::hasOverlappingImpediments() expects int, mixed given.
          🪪  argument.type
-  514    Method Roster\Services\ScheduleService::getAvailableSlotsFromImpediments() has parameter $impediments with generic class Illuminate\Support\Collection but does not specify
+  514    Method Roster\Services\ScheduleService::calculateAvailableSlotsExcludingImpediments() has parameter $impediments with generic class Illuminate\Support\Collection but does not specify
          its types: TKey, TValue
          🪪  missingType.generics
-  514    Method Roster\Services\ScheduleService::getAvailableSlotsFromImpediments() return type with generic class Illuminate\Support\Collection does not specify its types: TKey,
+  514    Method Roster\Services\ScheduleService::calculateAvailableSlotsExcludingImpediments() return type with generic class Illuminate\Support\Collection does not specify its types: TKey,
          TValue
          🪪  missingType.generics
  ------ -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
