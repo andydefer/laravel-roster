@@ -1,8 +1,8 @@
 # Rector Refactoring Report
-*Generated: sam. 27 déc. 2025 03:42:59 WAT*
+*Generated: sam. 27 déc. 2025 05:54:43 WAT*
 
 
-18 files with changes
+29 files with changes
 =====================
 
 1) /home/andy-kani/pro/sites/packages/laravel-roster/src/Commands/CacheRulesCommand.php:33
@@ -350,7 +350,29 @@ Applied rules:
  * DeclareStrictTypesRector
 
 
-8) /home/andy-kani/pro/sites/packages/laravel-roster/src/Models/Availability.php:60
+8) /home/andy-kani/pro/sites/packages/laravel-roster/src/Exceptions/DirectServiceUsageException.php:4
+
+    ---------- begin diff ----------
+@@ @@
+
+ namespace Roster\Exceptions;
+
++use RuntimeException;
++
+ /**
+  * Exception lancée lorsqu'un service est utilisé directement sans passer par un helper.
+  */
+-final class DirectServiceUsageException extends \RuntimeException
++final class DirectServiceUsageException extends RuntimeException
+ {
+     public static function create(string $serviceClass): self
+     {
+    ----------- end diff -----------
+
+Applied rules:
+
+
+9) /home/andy-kani/pro/sites/packages/laravel-roster/src/Models/Availability.php:60
 
     ---------- begin diff ----------
 @@ @@
@@ -386,7 +408,7 @@ Applied rules:
  * RemoveUselessReturnTagRector
 
 
-9) /home/andy-kani/pro/sites/packages/laravel-roster/src/Repositories/AbstractRepository.php:105
+10) /home/andy-kani/pro/sites/packages/laravel-roster/src/Repositories/AbstractRepository.php:105
 
     ---------- begin diff ----------
 @@ @@
@@ -509,7 +531,7 @@ Applied rules:
  * ClassMethodArrayDocblockParamFromLocalCallsRector
 
 
-10) /home/andy-kani/pro/sites/packages/laravel-roster/src/Repositories/AvailabilityRepository.php:23
+11) /home/andy-kani/pro/sites/packages/laravel-roster/src/Repositories/AvailabilityRepository.php:23
 
     ---------- begin diff ----------
 @@ @@
@@ -628,7 +650,7 @@ Applied rules:
  * RenameParamToMatchTypeRector
 
 
-11) /home/andy-kani/pro/sites/packages/laravel-roster/src/RosterServiceProvider.php:36
+12) /home/andy-kani/pro/sites/packages/laravel-roster/src/RosterServiceProvider.php:36
 
     ---------- begin diff ----------
 @@ @@
@@ -709,7 +731,7 @@ Applied rules:
  * RemoveUselessReturnTagRector
 
 
-12) /home/andy-kani/pro/sites/packages/laravel-roster/src/Services/ImpedimentService.php:6
+13) /home/andy-kani/pro/sites/packages/laravel-roster/src/Services/ImpedimentService.php:6
 
     ---------- begin diff ----------
 @@ @@
@@ -725,7 +747,7 @@ Applied rules:
 Applied rules:
 
 
-13) /home/andy-kani/pro/sites/packages/laravel-roster/src/Validation/Context/ValidationContext.php:25
+14) /home/andy-kani/pro/sites/packages/laravel-roster/src/Validation/Context/ValidationContext.php:25
 
     ---------- begin diff ----------
 @@ @@
@@ -836,7 +858,7 @@ Applied rules:
  * RenamePropertyToMatchTypeRector
 
 
-14) /home/andy-kani/pro/sites/packages/laravel-roster/src/Validation/RuleScanner.php:180
+15) /home/andy-kani/pro/sites/packages/laravel-roster/src/Validation/RuleScanner.php:180
 
     ---------- begin diff ----------
 @@ @@
@@ -903,7 +925,7 @@ Applied rules:
  * RenameForeachValueVariableToMatchExprVariableRector
 
 
-15) /home/andy-kani/pro/sites/packages/laravel-roster/src/Validation/Rules/AvailabilityDateRangeRule.php:43
+16) /home/andy-kani/pro/sites/packages/laravel-roster/src/Validation/Rules/AvailabilityDateRangeRule.php:43
 
     ---------- begin diff ----------
 @@ @@
@@ -1012,7 +1034,7 @@ Applied rules:
  * RenameParamToMatchTypeRector
 
 
-16) /home/andy-kani/pro/sites/packages/laravel-roster/src/Validation/Validator.php:77
+17) /home/andy-kani/pro/sites/packages/laravel-roster/src/Validation/Validator.php:77
 
     ---------- begin diff ----------
 @@ @@
@@ -1114,7 +1136,328 @@ Applied rules:
  * RenameForeachValueVariableToMatchExprVariableRector
 
 
-17) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Commands/CacheRulesCommandTest.php:4
+18) /home/andy-kani/pro/sites/packages/laravel-roster/src/helpers.php:6
+
+    ---------- begin diff ----------
+@@ @@
+  * Collection of helper functions for the Roster package.
+  * Provides date and day-related utilities and service instantiation helpers.
+  */
+-
++use Roster\Services\AvailabilityService;
++use Roster\Services\ImpedimentService;
++use Roster\Services\ScheduleService;
+ use Carbon\Carbon;
+ use Carbon\WeekDay;
+ use Carbon\Month;
+@@ @@
+      */
+     function roster_format_period_days_for_display(array $days): string
+     {
+-        if (empty($days)) {
++        if ($days === []) {
+             return '';
+         }
+
+@@ @@
+         $dayIndices = array_map(fn($day): false|int => array_search($day, $dayOrder, true), $days);
+
+         $isContinuousSequence = true;
+-        for ($i = 0; $i < count($dayIndices) - 1; $i++) {
++        for ($i = 0; $i < count($dayIndices) - 1; ++$i) {
+             $currentIndex = $dayIndices[$i];
+             $nextIndex = $dayIndices[$i + 1];
+
+@@ @@
+      */
+     function roster_format_days_for_display(array $days): string
+     {
+-        if (empty($days)) {
++        if ($days === []) {
+             return '';
+         }
+
+@@ @@
+     /**
+      * Creates an Availability service instance for a given schedulable model.
+      *
+-     * @param Model $schedulable The schedulable model instance
+-     * @return \Roster\Services\AvailabilityService
++     * @param Model $model The schedulable model instance
+      * @throws BindingResolutionException If the service cannot be resolved from the container
+      */
+-    function availability_for(Model $schedulable): \Roster\Services\AvailabilityService
++    function availability_for(Model $model): AvailabilityService
+     {
+-        return RosterServiceContext::allowViaHelper(function () use ($schedulable) {
+-            /** @var \Roster\Services\AvailabilityService $service */
++        return RosterServiceContext::allowViaHelper(function () use ($model) {
++            /** @var AvailabilityService $service */
+             $service = app('roster.availability');
+-            return $service->for($schedulable);
++            return $service->for($model);
+         });
+     }
+ }
+@@ @@
+      * Creates an Impediment service instance for a given availability.
+      * Automatically extracts the schedulable from the availability's polymorphic relationship.
+      *
+-     * @param ModelsAvailability $availability The availability model instance
+-     * @return \Roster\Services\ImpedimentService
+-     * @throws \InvalidArgumentException If the availability has no schedulable relationship
++     * @param ModelsAvailability $modelsAvailability The availability model instance
++     * @throws InvalidArgumentException If the availability has no schedulable relationship
+      * @throws BindingResolutionException If the service cannot be resolved from the container
+      */
+-    function impediment_for(ModelsAvailability $availability): \Roster\Services\ImpedimentService
++    function impediment_for(ModelsAvailability $modelsAvailability): ImpedimentService
+     {
+-        return RosterServiceContext::allowViaHelper(function () use ($availability) {
+-            $schedulable = $availability->schedulable;
++        return RosterServiceContext::allowViaHelper(function () use ($modelsAvailability) {
++            $schedulable = $modelsAvailability->schedulable;
+
+             if (!$schedulable) {
+-                throw new \InvalidArgumentException(
++                throw new InvalidArgumentException(
+                     'The provided availability does not have a schedulable relationship.'
+                 );
+             }
+
+-            /** @var \Roster\Services\ImpedimentService $service */
++            /** @var ImpedimentService $service */
+             $service = app('roster.impediment');
+-            return $service->for($schedulable)->owner($availability);
++            return $service->for($schedulable)->owner($modelsAvailability);
+         });
+     }
+ }
+@@ @@
+      * Creates a Schedule service instance for a given availability.
+      * Automatically extracts the schedulable from the availability's polymorphic relationship.
+      *
+-     * @param ModelsAvailability $availability The availability model instance
+-     * @return \Roster\Services\ScheduleService
+-     * @throws \InvalidArgumentException If the availability has no schedulable relationship
++     * @param ModelsAvailability $modelsAvailability The availability model instance
++     * @throws InvalidArgumentException If the availability has no schedulable relationship
+      * @throws BindingResolutionException If the service cannot be resolved from the container
+      */
+-    function schedule_for(ModelsAvailability $availability): \Roster\Services\ScheduleService
++    function schedule_for(ModelsAvailability $modelsAvailability): ScheduleService
+     {
+-        return RosterServiceContext::allowViaHelper(function () use ($availability) {
+-            $schedulable = $availability->schedulable;
++        return RosterServiceContext::allowViaHelper(function () use ($modelsAvailability) {
++            $schedulable = $modelsAvailability->schedulable;
+
+             if (!$schedulable) {
+-                throw new \InvalidArgumentException(
++                throw new InvalidArgumentException(
+                     'The provided availability does not have a schedulable relationship.'
+                 );
+             }
+
+-            /** @var \Roster\Services\ScheduleService $service */
++            /** @var ScheduleService $service */
+             $service = app('roster.schedule');
+-            return $service->for($schedulable)->owner($availability);
++            return $service->for($schedulable)->owner($modelsAvailability);
+         });
+     }
+ }
+    ----------- end diff -----------
+
+Applied rules:
+ * SimplifyEmptyCheckOnEmptyArrayRector
+ * PostIncDecToPreIncDecRector
+ * RemoveUselessReturnTagRector
+ * RenameParamToMatchTypeRector
+
+
+19) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Feature/Services/AvailabilityServiceDaysCoherenceTest.php:6
+
+    ---------- begin diff ----------
+@@ @@
+
+ use Illuminate\Database\Eloquent\Model;
+ use Illuminate\Foundation\Testing\RefreshDatabase;
+-use Illuminate\Support\Carbon;
+ use Roster\Enums\DaysOfWeek;
+-use Roster\Models\Availability as AvailabilityModel;
+ use Roster\Validation\Exceptions\ValidationFailedException;
+ use Tests\Support\TestSchedulable;
+ use Tests\TestCase;
+@@ @@
+ {
+     use RefreshDatabase;
+
+-    private Model $testSchedulable;
++    private Model $model;
+
+     /**
+      * Set up test environment.
+@@ @@
+     {
+         parent::setUp();
+
+-        $this->testSchedulable = TestSchedulable::create();
++        $this->model = TestSchedulable::create();
+     }
+
+     /**
+@@ @@
+         $validityEnd = '2038-07-04';
+
+         // Act
+-        $availability = availability_for($this->testSchedulable)->create([
++        $availability = availability_for($this->model)->create([
+             'type' => 'consultation',
+             'daily_start' => '09:00:00',
+             'daily_end' => '17:00:00',
+@@ @@
+         $providedDays = ['thursday', 'friday'];
+
+         // Act
+-        $availability = availability_for($this->testSchedulable)->create([
++        $availability = availability_for($this->model)->create([
+             'type' => 'consultation',
+             'daily_start' => '09:00:00',
+             'daily_end' => '17:00:00',
+@@ @@
+         $this->expectExceptionMessageMatches("/Day 'monday' is not within the validity period/");
+
+         // Act
+-        availability_for($this->testSchedulable)->create([
++        availability_for($this->model)->create([
+             'type' => 'consultation',
+             'daily_start' => '09:00:00',
+             'daily_end' => '17:00:00',
+@@ @@
+         $validityEnd = '2038-07-07';
+
+         // Act
+-        $availability = availability_for($this->testSchedulable)->create([
++        $availability = availability_for($this->model)->create([
+             'type' => 'consultation',
+             'daily_start' => '09:00:00',
+             'daily_end' => '17:00:00',
+@@ @@
+         $validityEnd = '2038-07-15';
+
+         // Act
+-        $availability = availability_for($this->testSchedulable)->create([
++        $availability = availability_for($this->model)->create([
+             'type' => 'consultation',
+             'daily_start' => '09:00:00',
+             'daily_end' => '17:00:00',
+@@ @@
+         $originalValidityEnd = '2038-07-18';
+         $newValidityEnd = '2038-07-10';
+
+-        $availability = availability_for($this->testSchedulable)->create([
++        $availability = availability_for($this->model)->create([
+             'type' => 'consultation',
+             'daily_start' => '09:00:00',
+             'daily_end' => '17:00:00',
+@@ @@
+         ]);
+
+         // Act
+-        $result = availability_for($this->testSchedulable)->update(
++        $result = availability_for($this->model)->update(
+             id: $availability->id,
+             data: ['validity_end' => $newValidityEnd]
+         );
+@@ @@
+         $originalValidityEnd = '2038-07-11';
+         $newValidityEnd = '2038-07-18';
+
+-        $availability = availability_for($this->testSchedulable)->create([
++        $availability = availability_for($this->model)->create([
+             'type' => 'consultation',
+             'daily_start' => '09:00:00',
+             'daily_end' => '17:00:00',
+@@ @@
+         ]);
+
+         // Act
+-        $result = availability_for($this->testSchedulable)->update(
++        $result = availability_for($this->model)->update(
+             id: $availability->id,
+             data: ['validity_end' => $newValidityEnd]
+         );
+@@ @@
+         $originalValidityEnd = '2038-07-18';
+         $newValidityEnd = '2038-07-09';
+
+-        $availability = availability_for($this->testSchedulable)->create([
++        $availability = availability_for($this->model)->create([
+             'type' => 'consultation',
+             'daily_start' => '09:00:00',
+             'daily_end' => '17:00:00',
+@@ @@
+         $this->expectExceptionMessageMatches("/Day 'saturday' is not within the validity period/");
+
+         // Act
+-        availability_for($this->testSchedulable)->update(
++        availability_for($this->model)->update(
+             id: $availability->id,
+             data: [
+                 'days' => $invalidNewDays,
+@@ @@
+         $validityEnd = '2038-07-01';
+
+         // Act
+-        $availability = availability_for($this->testSchedulable)->create([
++        $availability = availability_for($this->model)->create([
+             'type' => 'consultation',
+             'daily_start' => '09:00:00',
+             'daily_end' => '17:00:00',
+@@ @@
+         $explicitDays = ['thursday', 'friday'];
+
+         // Act
+-        $availability = availability_for($this->testSchedulable)->create([
++        $availability = availability_for($this->model)->create([
+             'type' => 'consultation',
+             'daily_start' => '09:00:00',
+             'daily_end' => '17:00:00',
+@@ @@
+         $originalDays = ['monday', 'wednesday', 'friday'];
+         $newDays = ['tuesday', 'thursday'];
+
+-        $availability = availability_for($this->testSchedulable)->create([
++        $availability = availability_for($this->model)->create([
+             'type' => 'consultation',
+             'daily_start' => '09:00:00',
+             'daily_end' => '17:00:00',
+@@ @@
+         ]);
+
+         // Act
+-        $result = availability_for($this->testSchedulable)->update(
++        $result = availability_for($this->model)->update(
+             id: $availability->id,
+             data: ['days' => $newDays]
+         );
+@@ @@
+         $validityEnd = '2038-07-10';
+
+         // Act
+-        $availability = availability_for($this->testSchedulable)->create([
++        $availability = availability_for($this->model)->create([
+             'type' => 'consultation',
+             'daily_start' => '09:00:00',
+             'daily_end' => '17:00:00',
+    ----------- end diff -----------
+
+Applied rules:
+ * RenamePropertyToMatchTypeRector
+
+
+20) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Commands/CacheRulesCommandTest.php:4
 
     ---------- begin diff ----------
 @@ @@
@@ -1240,7 +1583,7 @@ Applied rules:
  * RenameVariableToMatchNewTypeRector
 
 
-18) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Commands/InstallRosterCommandTest.php:13
+21) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Commands/InstallRosterCommandTest.php:13
 
     ---------- begin diff ----------
 @@ @@
@@ -1292,5 +1635,1545 @@ Applied rules:
  * ClosureReturnTypeRector
 
 
- [OK] 18 files would have been changed (dry-run) by Rector                                                              
+22) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Domain/RepositoryMutationTest.php:6
+
+    ---------- begin diff ----------
+@@ @@
+
+ use Illuminate\Database\Eloquent\Model;
+ use Illuminate\Foundation\Testing\RefreshDatabase;
+-use Illuminate\Support\Carbon;
+ use Roster\Exceptions\ForbiddenModelMutationException;
+ use Roster\Exceptions\InvalidOwnerException;
+ use Roster\Exceptions\MissingOwnerException;
+@@ @@
+ {
+     use RefreshDatabase;
+
+-    private Model $testSchedulable;
++    private Model $model;
+
+     /**
+      * Set up test environment.
+@@ @@
+     protected function setUp(): void
+     {
+         parent::setUp();
+-        $this->testSchedulable = TestSchedulable::create();
++        $this->model = TestSchedulable::create();
+     }
+
+     /**
+@@ @@
+         ];
+
+         // Act
+-        $availability = availability_for($this->testSchedulable)->create($availabilityData);
++        $availability = availability_for($this->model)->create($availabilityData);
+
+         // Assert
+         $this->assertInstanceOf(AvailabilityModel::class, $availability);
+-        $this->assertSame($this->testSchedulable->id, $availability->schedulable_id);
++        $this->assertSame($this->model->id, $availability->schedulable_id);
+         $this->assertSame(TestSchedulable::class, $availability->schedulable_type);
+     }
+
+@@ @@
+         $endDate = now()->addDays(30)->startOfDay();
+         $day = strtolower($startDate->format('l'));
+
+-        $availability = availability_for($this->testSchedulable)->create([
++        $availability = availability_for($this->model)->create([
+             'type' => 'consultation',
+             'daily_start' => '09:00:00',
+             'daily_end' => '17:00:00',
+@@ @@
+         ]);
+
+         // Act
+-        $updated = availability_for($this->testSchedulable)->update($availability->id, [
++        $updated = availability_for($this->model)->update($availability->id, [
+             'daily_start' => '10:00:00',
+         ]);
+
+@@ @@
+         $endDate = now()->addDays(30)->startOfDay();
+         $day = strtolower($startDate->format('l'));
+
+-        $availability = availability_for($this->testSchedulable)->create([
++        $availability = availability_for($this->model)->create([
+             'type' => 'consultation',
+             'daily_start' => '09:00:00',
+             'daily_end' => '17:00:00',
+@@ @@
+         ]);
+
+         // Act
+-        $deleted = availability_for($this->testSchedulable)->delete($availability->id);
++        $deleted = availability_for($this->model)->delete($availability->id);
+
+         // Assert
+         $this->assertTrue($deleted);
+@@ @@
+         $endDate = now()->addDays(30)->startOfDay();
+         $day = strtolower($startDate->format('l'));
+
+-        $availability = availability_for($this->testSchedulable)->create([
++        $availability = availability_for($this->model)->create([
+             'type' => 'consultation',
+             'daily_start' => '09:00:00',
+             'daily_end' => '17:00:00',
+@@ @@
+         $endDate1 = now()->addDays(30)->startOfDay();
+         $day1 = strtolower($startDate1->format('l'));
+
+-        availability_for($this->testSchedulable)->create([
++        availability_for($this->model)->create([
+             'type' => 'consultation',
+             'daily_start' => '09:00:00',
+             'daily_end' => '17:00:00',
+@@ @@
+         $endDate2 = now()->addDays(32)->startOfDay();
+         $day2 = strtolower($startDate2->format('l'));
+
+-        $availability2 = availability_for($this->testSchedulable)->create([
++        $availability2 = availability_for($this->model)->create([
+             'type' => 'consultation',
+             'daily_start' => '08:00:00',
+             'daily_end' => '18:00:00',
+@@ @@
+
+         // Act
+         $availabilityRepository->all(
+-            schedulable: $this->testSchedulable,
++            schedulable: $this->model,
+             owner: $availability2
+         );
+     }
+@@ @@
+         $endDate = now()->addDays(30)->startOfDay();
+         $day = strtolower($startDate->format('l'));
+
+-        availability_for($this->testSchedulable)->create([
++        availability_for($this->model)->create([
+             'type' => 'consultation',
+             'daily_start' => '09:00:00',
+             'daily_end' => '17:00:00',
+@@ @@
+                 'start_datetime' => $startDate->copy()->setTime(10, 0),
+                 'end_datetime' => $startDate->copy()->setTime(11, 0),
+             ],
+-            schedulable: $this->testSchedulable
++            schedulable: $this->model
+         );
+     }
+
+@@ @@
+         $endDate = now()->addDays(30)->startOfDay();
+         $day = strtolower($startDate->format('l'));
+
+-        $availability = availability_for($this->testSchedulable)->create([
++        $availability = availability_for($this->model)->create([
+             'type' => 'consultation',
+             'daily_start' => '09:00:00',
+             'daily_end' => '17:00:00',
+@@ @@
+         // Assert
+         $this->assertInstanceOf(ScheduleModel::class, $schedule);
+         $this->assertSame($availability->id, $schedule->availability_id);
+-        $this->assertSame($this->testSchedulable->id, $schedule->schedulable_id);
++        $this->assertSame($this->model->id, $schedule->schedulable_id);
+     }
+
+     /**
+@@ @@
+         $endDate = now()->addDays(30)->startOfDay();
+         $day = strtolower($startDate->format('l'));
+
+-        $availability = availability_for($this->testSchedulable)->create([
++        $availability = availability_for($this->model)->create([
+             'type' => 'consultation',
+             'daily_start' => '09:00:00',
+             'daily_end' => '17:00:00',
+@@ @@
+         $endDate = now()->addDays(30)->startOfDay();
+         $day = strtolower($startDate->format('l'));
+
+-        $availability = availability_for($this->testSchedulable)->create([
++        $availability = availability_for($this->model)->create([
+             'type' => 'consultation',
+             'daily_start' => '09:00:00',
+             'daily_end' => '17:00:00',
+@@ @@
+         $endDate = now()->addDays(30)->startOfDay();
+         $day = strtolower($startDate->format('l'));
+
+-        $availability = availability_for($this->testSchedulable)->create([
++        $availability = availability_for($this->model)->create([
+             'type' => 'consultation',
+             'daily_start' => '09:00:00',
+             'daily_end' => '17:00:00',
+@@ @@
+         // Act
+         $scheduleRepository->find(
+             id: $schedule->id,
+-            schedulable: $this->testSchedulable
++            schedulable: $this->model
+         );
+     }
+
+@@ @@
+         $endDate = now()->addDays(30)->startOfDay();
+         $day = strtolower($startDate->format('l'));
+
+-        $availability = availability_for($this->testSchedulable)->create([
++        $availability = availability_for($this->model)->create([
+             'type' => 'consultation',
+             'daily_start' => '09:00:00',
+             'daily_end' => '17:00:00',
+@@ @@
+         // Act
+         $foundSchedule = $scheduleRepository->find(
+             id: $schedule->id,
+-            schedulable: $this->testSchedulable,
++            schedulable: $this->model,
+             owner: $availability
+         );
+
+@@ @@
+         $endDate = now()->addDays(30)->startOfDay();
+         $day = strtolower($startDate->format('l'));
+
+-        availability_for($this->testSchedulable)->create([
++        availability_for($this->model)->create([
+             'type' => 'consultation',
+             'daily_start' => '09:00:00',
+             'daily_end' => '17:00:00',
+@@ @@
+         $this->expectException(MissingOwnerException::class);
+
+         // Act
+-        $scheduleRepository->all(schedulable: $this->testSchedulable);
++        $scheduleRepository->all(schedulable: $this->model);
+     }
+ }
+    ----------- end diff -----------
+
+Applied rules:
+ * RenamePropertyToMatchTypeRector
+
+
+23) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Models/AvailabilityTest.php:19
+
+    ---------- begin diff ----------
+@@ @@
+ {
+     use RefreshDatabase;
+
+-    private Model $testSchedulable;
++    private Model $model;
+
+     /**
+      * Set up the test environment.
+@@ @@
+     {
+         parent::setUp();
+
+-        $this->testSchedulable = TestSchedulable::create();
++        $this->model = TestSchedulable::create();
+     }
+
+     /**
+@@ @@
+             'validity_end' => '2038-07-31 23:59:59',
+         ];
+
+-        return availability_for($this->testSchedulable)
++        return availability_for($this->model)
+             ->create(array_merge($defaultAttributes, $attributes));
+     }
+
+@@ @@
+
+         // Assert
+         $this->assertInstanceOf(AvailabilityModel::class, $availability);
+-        $this->assertSame($this->testSchedulable->id, $availability->schedulable_id);
++        $this->assertSame($this->model->id, $availability->schedulable_id);
+         $this->assertSame(TestSchedulable::class, $availability->schedulable_type);
+         $this->assertSame('training', $availability->type);
+         $this->assertSame(['monday', 'wednesday', 'friday'], $availability->days);
+@@ @@
+     {
+         // Arrange
+         $availability = new AvailabilityModel([
+-            'schedulable_id' => $this->testSchedulable->id,
++            'schedulable_id' => $this->model->id,
+             'schedulable_type' => TestSchedulable::class,
+             'type' => 'consultation',
+             'daily_start' => '09:00:00',
+@@ @@
+     {
+         // Arrange
+         $availability = new AvailabilityModel([
+-            'schedulable_id' => $this->testSchedulable->id,
++            'schedulable_id' => $this->model->id,
+             'schedulable_type' => TestSchedulable::class,
+             'type' => 'consultation',
+             'daily_start' => '09:00:00',
+@@ @@
+     {
+         // Arrange
+         $availability = new AvailabilityModel([
+-            'schedulable_id' => $this->testSchedulable->id,
++            'schedulable_id' => $this->model->id,
+             'schedulable_type' => TestSchedulable::class,
+             'type' => 'consultation',
+             'daily_start' => '09:00:00',
+@@ @@
+     {
+         // Arrange
+         $availability = new AvailabilityModel([
+-            'schedulable_id' => $this->testSchedulable->id,
++            'schedulable_id' => $this->model->id,
+             'schedulable_type' => TestSchedulable::class,
+             'type' => 'consultation',
+             'daily_start' => '09:00:00',
+@@ @@
+
+         // Act & Assert
+         $this->assertInstanceOf(TestSchedulable::class, $availability->schedulable);
+-        $this->assertSame($this->testSchedulable->id, $availability->schedulable->id);
++        $this->assertSame($this->model->id, $availability->schedulable->id);
+     }
+
+     /**
+    ----------- end diff -----------
+
+Applied rules:
+ * RenamePropertyToMatchTypeRector
+
+
+24) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Models/ImpedimentTest.php:24
+
+    ---------- begin diff ----------
+@@ @@
+     /**
+      * Test schedulable instance.
+      */
+-    private Model $testSchedulable;
++    private Model $model;
+
+     /**
+      * Test availability instance.
+@@ @@
+     {
+         parent::setUp();
+
+-        $this->testSchedulable = TestSchedulable::create();
++        $this->model = TestSchedulable::create();
+         $this->availability = $this->createAvailability();
+     }
+
+@@ @@
+      */
+     private function createAvailability(): Availability
+     {
+-        return availability_for($this->testSchedulable)->create([
++        return availability_for($this->model)->create([
+             'type' => 'consultation',
+             'daily_start' => '09:00:00',
+             'daily_end' => '17:00:00',
+@@ @@
+
+         // Assert
+         $this->assertInstanceOf(ImpedimentModel::class, $impediment);
+-        $this->assertSame($this->testSchedulable->id, $impediment->schedulable_id);
++        $this->assertSame($this->model->id, $impediment->schedulable_id);
+         $this->assertSame(TestSchedulable::class, $impediment->schedulable_type);
+         $this->assertSame($this->availability->id, $impediment->availability_id);
+         $this->assertSame('Vacation', $impediment->reason);
+@@ @@
+
+         // Assert
+         $this->assertInstanceOf(TestSchedulable::class, $schedulable);
+-        $this->assertSame($this->testSchedulable->id, $schedulable->id);
++        $this->assertSame($this->model->id, $schedulable->id);
+     }
+
+     /**
+    ----------- end diff -----------
+
+Applied rules:
+ * RenamePropertyToMatchTypeRector
+
+
+25) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Services/AvailabilityServiceTest.php:21
+
+    ---------- begin diff ----------
+@@ @@
+ {
+     use RefreshDatabase;
+
+-    private Model $testSchedulable;
++    private Model $model;
+
+     /**
+      * Set up test environment.
+@@ @@
+     {
+         parent::setUp();
+
+-        $this->testSchedulable = TestSchedulable::create();
++        $this->model = TestSchedulable::create();
+     }
+
+     /**
+@@ @@
+         ];
+
+         // Act
+-        $availability = availability_for($this->testSchedulable)->create($availabilityData);
++        $availability = availability_for($this->model)->create($availabilityData);
+
+         // Assert
+         $this->assertInstanceOf(AvailabilityModel::class, $availability);
+@@ @@
+         $this->assertDatabaseHas('roster_availabilities', [
+             'id' => $availability->id,
+             'type' => 'consultation',
+-            'schedulable_id' => $this->testSchedulable->id,
++            'schedulable_id' => $this->model->id,
+             'schedulable_type' => TestSchedulable::class,
+         ]);
+
+         $this->assertSame('consultation', $availability->type);
+         $this->assertSame(['monday', 'wednesday', 'friday'], $availability->days);
+-        $this->assertSame($this->testSchedulable->id, $availability->schedulable_id);
++        $this->assertSame($this->model->id, $availability->schedulable_id);
+         $this->assertSame(TestSchedulable::class, $availability->schedulable_type);
+     }
+
+@@ @@
+         ];
+
+         // Act
+-        $availability = availability_for($this->testSchedulable)->create($availabilityData);
++        $availability = availability_for($this->model)->create($availabilityData);
+
+         // Assert
+         $this->assertNotEmpty($availability->days);
+@@ @@
+     public function test_can_update_an_existing_availability(): void
+     {
+         // Arrange
+-        $availability = availability_for($this->testSchedulable)->create([
++        $availability = availability_for($this->model)->create([
+             'type' => 'consultation',
+             'daily_start' => '09:00:00',
+             'daily_end' => '17:00:00',
+@@ @@
+         ];
+
+         // Act
+-        $result = availability_for($this->testSchedulable)->update($availability->id, $updateData);
++        $result = availability_for($this->model)->update($availability->id, $updateData);
+
+         // Assert
+         $this->assertTrue($result);
+@@ @@
+         );
+
+         // Act
+-        availability_for($this->testSchedulable)->update($availabilityId, $updateData);
++        availability_for($this->model)->update($availabilityId, $updateData);
+     }
+
+     /**
+@@ @@
+     public function test_can_delete_an_availability(): void
+     {
+         // Arrange
+-        $availability = availability_for($this->testSchedulable)->create([
++        $availability = availability_for($this->model)->create([
+             'type' => 'consultation',
+             'daily_start' => '09:00:00',
+             'daily_end' => '17:00:00',
+@@ @@
+         ]);
+
+         // Act
+-        $result = availability_for($this->testSchedulable)->delete($availability->id);
++        $result = availability_for($this->model)->delete($availability->id);
+
+         // Assert
+         $this->assertTrue($result);
+@@ @@
+         );
+
+         // Act
+-        availability_for($this->testSchedulable)->delete($availabilityId);
++        availability_for($this->model)->delete($availabilityId);
+     }
+
+     /**
+@@ @@
+     public function test_can_find_an_availability_by_id(): void
+     {
+         // Arrange
+-        $availability = availability_for($this->testSchedulable)->create([
++        $availability = availability_for($this->model)->create([
+             'type' => 'consultation',
+             'daily_start' => '09:00:00',
+             'daily_end' => '17:00:00',
+@@ @@
+         ]);
+
+         // Act
+-        $result = availability_for($this->testSchedulable)->find($availability->id);
++        $result = availability_for($this->model)->find($availability->id);
+
+         // Assert
+         $this->assertInstanceOf(AvailabilityModel::class, $result);
+@@ @@
+         $availabilityId = 999;
+
+         // Act
+-        $result = availability_for($this->testSchedulable)->find($availabilityId);
++        $result = availability_for($this->model)->find($availabilityId);
+
+         // Assert
+         $this->assertNull($result);
+@@ @@
+     public function test_can_get_all_availabilities_with_filters(): void
+     {
+         // Arrange
+-        availability_for($this->testSchedulable)->create([
++        availability_for($this->model)->create([
+             'type' => 'consultation',
+             'daily_start' => '09:00:00',
+             'daily_end' => '12:00:00',
+@@ @@
+             'validity_end' => '2038-07-31',
+         ]);
+
+-        availability_for($this->testSchedulable)->create([
++        availability_for($this->model)->create([
+             'type' => 'training',
+             'daily_start' => '14:00:00',
+             'daily_end' => '17:00:00',
+@@ @@
+         ]);
+
+         // Act
+-        $result = availability_for($this->testSchedulable)
++        $result = availability_for($this->model)
+             ->whereType('consultation')
+             ->all();
+
+@@ @@
+         $this->expectException(ValidationFailedException::class);
+
+         // Act
+-        availability_for($this->testSchedulable)->create($availabilityData);
++        availability_for($this->model)->create($availabilityData);
+     }
+
+     /**
+@@ @@
+     public function test_handles_validation_failure_during_update(): void
+     {
+         // Arrange
+-        $availability = availability_for($this->testSchedulable)->create([
++        $availability = availability_for($this->model)->create([
+             'type' => 'consultation',
+             'daily_start' => '09:00:00',
+             'daily_end' => '17:00:00',
+@@ @@
+         $this->expectException(ValidationFailedException::class);
+
+         // Act
+-        availability_for($this->testSchedulable)->update($availability->id, $updateData);
++        availability_for($this->model)->update($availability->id, $updateData);
+     }
+
+     /**
+@@ @@
+     public function test_validate_partial_date_update_fails_when_end_before_existing_start(): void
+     {
+         // Arrange
+-        $availability = availability_for($this->testSchedulable)->create([
++        $availability = availability_for($this->model)->create([
+             'type' => 'consultation',
+             'daily_start' => '09:00:00',
+             'daily_end' => '17:00:00',
+@@ @@
+         $this->expectException(ValidationFailedException::class);
+
+         // Act
+-        availability_for($this->testSchedulable)->update($availability->id, $updateData);
++        availability_for($this->model)->update($availability->id, $updateData);
+     }
+
+     /**
+@@ @@
+         $this->expectException(ValidationFailedException::class);
+
+         // Act
+-        availability_for($this->testSchedulable)->create($availabilityData);
++        availability_for($this->model)->create($availabilityData);
+     }
+
+     /**
+@@ @@
+     public function test_sets_and_gets_filters_correctly(): void
+     {
+         // Arrange
+-        $availabilityService = availability_for($this->testSchedulable);
++        $availabilityService = availability_for($this->model);
+         $filters = [
+             'type' => 'consultation',
+             'day' => 'monday',
+@@ @@
+     public function test_does_not_merge_non_adjacent_availabilities(): void
+     {
+         // Arrange
+-        $existingAvailability = availability_for($this->testSchedulable)->create([
++        $existingAvailability = availability_for($this->model)->create([
+             'type' => 'consultation',
+             'daily_start' => '09:00:00',
+             'daily_end' => '12:00:00',
+@@ @@
+         ];
+
+         // Act
+-        $availability = availability_for($this->testSchedulable)->create($newData);
++        $availability = availability_for($this->model)->create($newData);
+
+         // Assert
+         $this->assertDatabaseHas('roster_availabilities', [
+@@ @@
+         $this->expectExceptionMessageMatches('/Minimum duration/');
+
+         // Act
+-        availability_for($this->testSchedulable)->create($availabilityData);
++        availability_for($this->model)->create($availabilityData);
+     }
+
+     /**
+@@ @@
+         $this->expectException(ValidationFailedException::class);
+
+         // Act
+-        availability_for($this->testSchedulable)->create($availabilityData);
++        availability_for($this->model)->create($availabilityData);
+     }
+
+     /**
+@@ @@
+     public function test_cannot_update_schedulable_fields(): void
+     {
+         // Arrange
+-        $availability = availability_for($this->testSchedulable)->create([
++        $availability = availability_for($this->model)->create([
+             'type' => 'consultation',
+             'daily_start' => '09:00:00',
+             'daily_end' => '17:00:00',
+@@ @@
+         $this->expectExceptionMessageMatches("/cannot be changed/");
+
+         // Act
+-        availability_for($this->testSchedulable)->update($availability->id, $updateData);
++        availability_for($this->model)->update($availability->id, $updateData);
+     }
+
+     /**
+@@ @@
+     public function test_can_get_availabilities_by_type_filter(): void
+     {
+         // Arrange
+-        availability_for($this->testSchedulable)->create([
++        availability_for($this->model)->create([
+             'type' => 'consultation',
+             'daily_start' => '09:00:00',
+             'daily_end' => '12:00:00',
+@@ @@
+             'validity_end' => '2038-07-31',
+         ]);
+
+-        availability_for($this->testSchedulable)->create([
++        availability_for($this->model)->create([
+             'type' => 'training',
+             'daily_start' => '14:00:00',
+             'daily_end' => '17:00:00',
+@@ @@
+         ]);
+
+         // Act
+-        $result = availability_for($this->testSchedulable)
++        $result = availability_for($this->model)
+             ->whereType('consultation')
+             ->all();
+
+@@ @@
+     public function test_can_reset_filters(): void
+     {
+         // Arrange
+-        $availabilityService = availability_for($this->testSchedulable);
++        $availabilityService = availability_for($this->model);
+         $availabilityService->setFilters(['type' => 'consultation']);
+         $availabilityService->setFilter('day', 'monday');
+
+         // Act
+         $availabilityService->resetFilters();
++
+         $filters = $availabilityService->getFilters();
+
+         // Assert
+@@ @@
+     public function test_can_filter_by_availability_id(): void
+     {
+         // Arrange
+-        $availability = availability_for($this->testSchedulable)->create([
++        $availability = availability_for($this->model)->create([
+             'type' => 'consultation',
+             'daily_start' => '09:00:00',
+             'daily_end' => '17:00:00',
+@@ @@
+         ]);
+
+         // Act
+-        $result = availability_for($this->testSchedulable)->find($availability->id);
++        $result = availability_for($this->model)->find($availability->id);
+
+         // Assert
+         $this->assertSame($availability->id, $result->id);
+@@ @@
+         $this->expectExceptionMessage("Day 'not-an-array' is not a valid day of week");
+
+         // Act
+-        availability_for($this->testSchedulable)->create($availabilityData);
++        availability_for($this->model)->create($availabilityData);
+     }
+
+     /**
+@@ @@
+         $this->expectExceptionMessage('Days array cannot be empty');
+
+         // Act
+-        availability_for($this->testSchedulable)->create($availabilityData);
++        availability_for($this->model)->create($availabilityData);
+     }
+
+     /**
+@@ @@
+     public function test_partial_update_allowed(): void
+     {
+         // Arrange
+-        $availability = availability_for($this->testSchedulable)->create([
++        $availability = availability_for($this->model)->create([
+             'type' => 'consultation',
+             'daily_start' => '09:00:00',
+             'daily_end' => '17:00:00',
+@@ @@
+         ];
+
+         // Act
+-        $result = availability_for($this->testSchedulable)->update($availability->id, $updateData);
++        $result = availability_for($this->model)->update($availability->id, $updateData);
+
+         // Assert
+         $this->assertTrue($result);
+@@ @@
+         $this->expectExceptionMessage("Day 'invalid-day' is not a valid day of week");
+
+         // Act
+-        availability_for($this->testSchedulable)->create($availabilityData);
++        availability_for($this->model)->create($availabilityData);
+     }
+
+     /**
+@@ @@
+         $this->expectExceptionMessageMatches("/Invalid type 'invalid-type'/");
+
+         // Act
+-        availability_for($this->testSchedulable)->create($availabilityData);
++        availability_for($this->model)->create($availabilityData);
+     }
+
+     /**
+@@ @@
+         config()->set('roster.allowed_types', []);
+
+         // Act
+-        $availability = availability_for($this->testSchedulable)->create([
++        $availability = availability_for($this->model)->create([
+             'type' => 'anything',
+             'daily_start' => '09:00:00',
+             'daily_end' => '17:00:00',
+@@ @@
+     public function test_update_does_not_trigger_merge(): void
+     {
+         // Arrange
+-        $availability1 = availability_for($this->testSchedulable)->create([
++        $availability1 = availability_for($this->model)->create([
+             'type' => 'consultation',
+             'daily_start' => '09:00:00',
+             'daily_end' => '12:00:00',
+@@ @@
+             'validity_end' => '2038-07-31',
+         ]);
+
+-        $availability2 = availability_for($this->testSchedulable)->create([
++        $availability2 = availability_for($this->model)->create([
+             'type' => 'consultation',
+             'daily_start' => '14:00:00',
+             'daily_end' => '17:00:00',
+@@ @@
+         ];
+
+         // Act
+-        $result = availability_for($this->testSchedulable)->update($availability2->id, $updateData);
++        $result = availability_for($this->model)->update($availability2->id, $updateData);
+
+         // Assert
+         $this->assertTrue($result);
+    ----------- end diff -----------
+
+Applied rules:
+ * NewlineBeforeNewAssignSetRector
+ * RenamePropertyToMatchTypeRector
+
+
+26) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Services/ImpedimentServiceTest.php:25
+
+    ---------- begin diff ----------
+@@ @@
+ {
+     use RefreshDatabase;
+
+-    private Model $testSchedulable;
++    private Model $model;
++
+     private AvailabilityModel $availabilityModel;
+
+     /**
+@@ @@
+     {
+         parent::setUp();
+
+-        $this->testSchedulable = TestSchedulable::create();
++        $this->model = TestSchedulable::create();
+
+         Config::set('roster.durations.default_slot_interval_minutes', 15);
+         Config::set('roster.durations.max_search_period_days', 30);
+
+-        $this->availabilityModel = availability_for($this->testSchedulable)->create([
++        $this->availabilityModel = availability_for($this->model)->create([
+             'type' => 'consultation',
+             'daily_start' => '09:00:00',
+             'daily_end' => '17:00:00',
+@@ @@
+         $this->assertInstanceOf(ImpedimentModel::class, $impediment);
+         $this->assertSame('System maintenance', $impediment->reason);
+         $this->assertSame($this->availabilityModel->id, $impediment->availability_id);
+-        $this->assertSame($this->testSchedulable->id, $impediment->schedulable_id);
++        $this->assertSame($this->model->id, $impediment->schedulable_id);
+         $this->assertSame(['priority' => 'high'], $impediment->metadata);
+     }
+
+@@ @@
+     public function test_is_time_slot_blocked_with_type_filter(): void
+     {
+         // Arrange
+-        $otherAvailability = availability_for($this->testSchedulable)->create([
++        $otherAvailability = availability_for($this->model)->create([
+             'type' => 'emergency',
+             'daily_start' => '18:00:00',
+             'daily_end' => '21:00:00',
+@@ @@
+         ]);
+
+         // Assert
+-        $this->assertSame(150.0, $impediment->duration_minutes);
++        $this->assertEqualsWithDelta(150.0, $impediment->duration_minutes, PHP_FLOAT_EPSILON);
+     }
+
+     /**
+@@ @@
+         $dailyEnd   = $now->copy()->addMinutes(20);
+         $validityEnd = $now->copy()->addHour();
+
+-        $availability = availability_for($this->testSchedulable)->create([
++        $availability = availability_for($this->model)->create([
+             'type' => 'instant-test',
+             'daily_start' => $dailyStart->format('H:i:s'),
+             'daily_end' => $dailyEnd->format('H:i:s'),
+@@ @@
+     public function test_impediment_on_non_availability_day(): void
+     {
+         // Arrange
+-        $mondayOnlyAvailability = availability_for($this->testSchedulable)->create([
++        $mondayOnlyAvailability = availability_for($this->model)->create([
+             'type' => 'monday-only',
+             'daily_start' => '20:00:00',
+             'daily_end' => '22:00:00',
+@@ @@
+     public function test_impediment_outside_availability_hours(): void
+     {
+         // Arrange
+-        $limitedAvailability = availability_for($this->testSchedulable)->create([
++        $limitedAvailability = availability_for($this->model)->create([
+             'type' => 'limited',
+             'daily_start' => '20:00:00',
+             'daily_end' => '23:00:00',
+@@ @@
+         }
+
+         // Act
+-        $paginator = impediment_for($this->availabilityModel)->paginate(10);
++        $lengthAwarePaginator = impediment_for($this->availabilityModel)->paginate(10);
+
+         // Assert
+-        $this->assertSame(25, $paginator->total());
+-        $this->assertSame(10, $paginator->perPage());
+-        $this->assertSame(3, $paginator->lastPage());
+-        $this->assertCount(10, $paginator->items());
++        $this->assertSame(25, $lengthAwarePaginator->total());
++        $this->assertSame(10, $lengthAwarePaginator->perPage());
++        $this->assertSame(3, $lengthAwarePaginator->lastPage());
++        $this->assertCount(10, $lengthAwarePaginator->items());
+     }
+
+     /**
+    ----------- end diff -----------
+
+Applied rules:
+ * NewlineBetweenClassLikeStmtsRector
+ * RenameVariableToMatchMethodCallReturnTypeRector
+ * RenamePropertyToMatchTypeRector
+ * AssertEqualsOrAssertSameFloatParameterToSpecificMethodsTypeRector
+
+
+27) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Services/ScheduleServiceTest.php:11
+
+    ---------- begin diff ----------
+@@ @@
+ use Illuminate\Support\Facades\Config;
+ use Roster\Enums\ScheduleStatus;
+ use Roster\Models\Schedule as ScheduleModel;
+-use Roster\Models\Availability as AvailabilityModel;
+ use Roster\Validation\Exceptions\ValidationFailedException;
+ use Tests\TestCase;
+ use Tests\Support\TestSchedulable;
+@@ @@
+ {
+     use RefreshDatabase;
+
+-    private Model $testSchedulable;
++    private Model $model;
+
+     /**
+      * Set up test environment.
+@@ @@
+     {
+         parent::setUp();
+
+-        $this->testSchedulable = TestSchedulable::create();
++        $this->model = TestSchedulable::create();
+
+         Config::set('roster.durations.default_slot_interval_minutes', 15);
+         Config::set('roster.durations.max_search_period_days', 30);
+@@ @@
+     public function test_create_schedule_successfully(): void
+     {
+         // Arrange
+-        $availability = availability_for($this->testSchedulable)->create([
++        $availability = availability_for($this->model)->create([
+             'type' => 'consultation',
+             'daily_start' => '09:00:00',
+             'daily_end' => '17:00:00',
+@@ @@
+     public function test_create_schedule_with_default_status(): void
+     {
+         // Arrange
+-        $availability = availability_for($this->testSchedulable)->create([
++        $availability = availability_for($this->model)->create([
+             'type' => 'consultation',
+             'daily_start' => '09:00:00',
+             'daily_end' => '17:00:00',
+@@ @@
+     public function test_create_schedule_fails_when_end_before_start(): void
+     {
+         // Arrange
+-        $availability = availability_for($this->testSchedulable)->create([
++        $availability = availability_for($this->model)->create([
+             'type' => 'consultation',
+             'daily_start' => '09:00:00',
+             'daily_end' => '17:00:00',
+@@ @@
+     public function test_create_schedule_fails_when_too_short(): void
+     {
+         // Arrange
+-        $availability = availability_for($this->testSchedulable)->create([
++        $availability = availability_for($this->model)->create([
+             'type' => 'consultation',
+             'daily_start' => '09:00:00',
+             'daily_end' => '17:00:00',
+@@ @@
+     public function test_update_schedule_successfully(): void
+     {
+         // Arrange
+-        $availability = availability_for($this->testSchedulable)->create([
++        $availability = availability_for($this->model)->create([
+             'type' => 'consultation',
+             'daily_start' => '09:00:00',
+             'daily_end' => '17:00:00',
+@@ @@
+     public function test_update_schedule_with_datetime_changes(): void
+     {
+         // Arrange
+-        $availability = availability_for($this->testSchedulable)->create([
++        $availability = availability_for($this->model)->create([
+             'type' => 'consultation',
+             'daily_start' => '09:00:00',
+             'daily_end' => '17:00:00',
+@@ @@
+     public function test_update_schedule_fails_when_overlap(): void
+     {
+         // Arrange
+-        $availability = availability_for($this->testSchedulable)->create([
++        $availability = availability_for($this->model)->create([
+             'type' => 'consultation',
+             'daily_start' => '09:00:00',
+             'daily_end' => '17:00:00',
+@@ @@
+     public function test_create_schedule_fails_when_overlap(): void
+     {
+         // Arrange
+-        $availability = availability_for($this->testSchedulable)->create([
++        $availability = availability_for($this->model)->create([
+             'type' => 'consultation',
+             'daily_start' => '09:00:00',
+             'daily_end' => '17:00:00',
+@@ @@
+     public function test_update_schedule_fails_when_not_found(): void
+     {
+         // Arrange
+-        $availability = availability_for($this->testSchedulable)->create([
++        $availability = availability_for($this->model)->create([
+             'type' => 'consultation',
+             'daily_start' => '09:00:00',
+             'daily_end' => '17:00:00',
+@@ @@
+     public function test_delete_schedule_successfully(): void
+     {
+         // Arrange
+-        $availability = availability_for($this->testSchedulable)->create([
++        $availability = availability_for($this->model)->create([
+             'type' => 'consultation',
+             'daily_start' => '09:00:00',
+             'daily_end' => '17:00:00',
+@@ @@
+     public function test_delete_schedule_fails_when_not_found(): void
+     {
+         // Arrange
+-        $availability = availability_for($this->testSchedulable)->create([
++        $availability = availability_for($this->model)->create([
+             'type' => 'consultation',
+             'daily_start' => '09:00:00',
+             'daily_end' => '17:00:00',
+@@ @@
+     public function test_find_schedule_by_id(): void
+     {
+         // Arrange
+-        $availability = availability_for($this->testSchedulable)->create([
++        $availability = availability_for($this->model)->create([
+             'type' => 'consultation',
+             'daily_start' => '09:00:00',
+             'daily_end' => '17:00:00',
+@@ @@
+     public function test_all_schedules(): void
+     {
+         // Arrange
+-        $availability = availability_for($this->testSchedulable)->create([
++        $availability = availability_for($this->model)->create([
+             'type' => 'consultation',
+             'daily_start' => '09:00:00',
+             'daily_end' => '17:00:00',
+@@ @@
+     public function test_get_schedules_with_filters(): void
+     {
+         // Arrange
+-        $availability = availability_for($this->testSchedulable)->create([
++        $availability = availability_for($this->model)->create([
+             'type' => 'consultation',
+             'daily_start' => '09:00:00',
+             'daily_end' => '17:00:00',
+@@ @@
+     public function test_get_schedules_with_datetime_range_filter(): void
+     {
+         // Arrange
+-        $availability = availability_for($this->testSchedulable)->create([
++        $availability = availability_for($this->model)->create([
+             'type' => 'consultation',
+             'daily_start' => '09:00:00',
+             'daily_end' => '17:00:00',
+@@ @@
+     public function test_find_next_slot_without_conflicts(): void
+     {
+         // Arrange
+-        $availability = availability_for($this->testSchedulable)->create([
++        $availability = availability_for($this->model)->create([
+             'type' => 'consultation',
+             'daily_start' => '09:00:00',
+             'daily_end' => '17:00:00',
+@@ @@
+     public function test_find_next_slot_return_start_only(): void
+     {
+         // Arrange
+-        $availability = availability_for($this->testSchedulable)->create([
++        $availability = availability_for($this->model)->create([
+             'type' => 'consultation',
+             'daily_start' => '09:00:00',
+             'daily_end' => '17:00:00',
+@@ @@
+     public function test_find_next_slot_respects_availability_hours(): void
+     {
+         // Arrange
+-        $availability = availability_for($this->testSchedulable)->create([
++        $availability = availability_for($this->model)->create([
+             'type' => 'consultation',
+             'daily_start' => '09:00:00',
+             'daily_end' => '17:00:00',
+@@ @@
+     public function test_find_next_slot_returns_null_when_no_availability(): void
+     {
+         // Arrange
+-        $availability = availability_for($this->testSchedulable)->create([
++        $availability = availability_for($this->model)->create([
+             'type' => 'limited',
+             'daily_start' => '09:00:00',
+             'daily_end' => '12:00:00',
+@@ @@
+     public function test_is_time_slot_available_returns_true(): void
+     {
+         // Arrange
+-        $availability = availability_for($this->testSchedulable)->create([
++        $availability = availability_for($this->model)->create([
+             'type' => 'consultation',
+             'daily_start' => '09:00:00',
+             'daily_end' => '17:00:00',
+@@ @@
+     public function test_is_time_slot_available_returns_false_when_schedule_overlap(): void
+     {
+         // Arrange
+-        $availability = availability_for($this->testSchedulable)->create([
++        $availability = availability_for($this->model)->create([
+             'type' => 'consultation',
+             'daily_start' => '09:00:00',
+             'daily_end' => '17:00:00',
+@@ @@
+     public function test_is_time_slot_available_returns_false_when_impediment_overlap(): void
+     {
+         // Arrange
+-        $availability = availability_for($this->testSchedulable)->create([
++        $availability = availability_for($this->model)->create([
+             'type' => 'consultation',
+             'daily_start' => '09:00:00',
+             'daily_end' => '17:00:00',
+@@ @@
+     public function test_is_time_slot_available_returns_false_when_outside_availability(): void
+     {
+         // Arrange
+-        $availability = availability_for($this->testSchedulable)->create([
++        $availability = availability_for($this->model)->create([
+             'type' => 'consultation',
+             'daily_start' => '09:00:00',
+             'daily_end' => '17:00:00',
+@@ @@
+     public function test_is_time_slot_available_with_type_filter(): void
+     {
+         // Arrange
+-        $availabilityConsultation = availability_for($this->testSchedulable)->create([
++        $availabilityConsultation = availability_for($this->model)->create([
+             'type' => 'consultation',
+             'daily_start' => '09:00:00',
+             'daily_end' => '12:00:00',
+@@ @@
+             'validity_end' => '2038-01-31',
+         ]);
+
+-        $availabilityTraining = availability_for($this->testSchedulable)->create([
++        $availabilityTraining = availability_for($this->model)->create([
+             'type' => 'training',
+             'daily_start' => '13:00:00',
+             'daily_end' => '17:00:00',
+@@ @@
+     public function test_find_available_slots_in_range(): void
+     {
+         // Arrange
+-        $availability = availability_for($this->testSchedulable)->create([
++        $availability = availability_for($this->model)->create([
+             'type' => 'consultation',
+             'daily_start' => '09:00:00',
+             'daily_end' => '17:00:00',
+@@ @@
+     public function test_is_period_available_returns_true(): void
+     {
+         // Arrange
+-        $availability = availability_for($this->testSchedulable)->create([
++        $availability = availability_for($this->model)->create([
+             'type' => 'consultation',
+             'daily_start' => '09:00:00',
+             'daily_end' => '17:00:00',
+@@ @@
+     public function test_is_period_available_returns_false_when_schedule_conflict(): void
+     {
+         // Arrange
+-        $availability = availability_for($this->testSchedulable)->create([
++        $availability = availability_for($this->model)->create([
+             'type' => 'consultation',
+             'daily_start' => '09:00:00',
+             'daily_end' => '17:00:00',
+@@ @@
+     public function test_is_period_available_returns_false_when_impediment_conflict(): void
+     {
+         // Arrange
+-        $availability = availability_for($this->testSchedulable)->create([
++        $availability = availability_for($this->model)->create([
+             'type' => 'consultation',
+             'daily_start' => '09:00:00',
+             'daily_end' => '17:00:00',
+@@ @@
+     public function test_is_period_available_returns_false_when_no_availability(): void
+     {
+         // Arrange
+-        $availability = availability_for($this->testSchedulable)->create([
++        $availability = availability_for($this->model)->create([
+             'type' => 'consultation',
+             'daily_start' => '09:00:00',
+             'daily_end' => '17:00:00',
+@@ @@
+     public function test_concurrent_schedule_creation_prevents_double_booking(): void
+     {
+         // Arrange
+-        $availability = availability_for($this->testSchedulable)->create([
++        $availability = availability_for($this->model)->create([
+             'type' => 'consultation',
+             'daily_start' => '09:00:00',
+             'daily_end' => '17:00:00',
+@@ @@
+     public function test_schedule_on_non_availability_day(): void
+     {
+         // Arrange
+-        $mondayOnlyAvailability = availability_for($this->testSchedulable)->create([
++        $mondayOnlyAvailability = availability_for($this->model)->create([
+             'type' => 'monday-only',
+             'daily_start' => '09:00:00',
+             'daily_end' => '17:00:00',
+@@ @@
+     public function test_schedule_outside_availability_hours(): void
+     {
+         // Arrange
+-        $availability = availability_for($this->testSchedulable)->create([
++        $availability = availability_for($this->model)->create([
+             'type' => 'consultation',
+             'daily_start' => '09:00:00',
+             'daily_end' => '17:00:00',
+@@ @@
+     public function test_schedule_exact_boundary_not_overlap(): void
+     {
+         // Arrange
+-        $availability = availability_for($this->testSchedulable)->create([
++        $availability = availability_for($this->model)->create([
+             'type' => 'consultation',
+             'daily_start' => '09:00:00',
+             'daily_end' => '17:00:00',
+@@ @@
+     public function test_find_next_slot_with_adjacent_impediments(): void
+     {
+         // Arrange
+-        $availability = availability_for($this->testSchedulable)->create([
++        $availability = availability_for($this->model)->create([
+             'type' => 'consultation',
+             'daily_start' => '09:00:00',
+             'daily_end' => '17:00:00',
+@@ @@
+     public function test_schedule_metadata_serialization(): void
+     {
+         // Arrange
+-        $availability = availability_for($this->testSchedulable)->create([
++        $availability = availability_for($this->model)->create([
+             'type' => 'consultation',
+             'daily_start' => '09:00:00',
+             'daily_end' => '17:00:00',
+@@ @@
+     public function test_schedule_duration_calculation(): void
+     {
+         // Arrange
+-        $availability = availability_for($this->testSchedulable)->create([
++        $availability = availability_for($this->model)->create([
+             'type' => 'consultation',
+             'daily_start' => '09:00:00',
+             'daily_end' => '17:00:00',
+@@ @@
+         ]);
+
+         // Assert
+-        $this->assertSame(90.0, $schedule->duration_minutes);
++        $this->assertEqualsWithDelta(90.0, $schedule->duration_minutes, PHP_FLOAT_EPSILON);
+     }
+
+     /**
+@@ @@
+     public function test_full_booking_scenario(): void
+     {
+         // Arrange
+-        $availability = availability_for($this->testSchedulable)->create([
++        $availability = availability_for($this->model)->create([
+             'type' => 'consultation',
+             'daily_start' => '09:00:00',
+             'daily_end' => '17:00:00',
+@@ @@
+     public function test_reschedule_scenario(): void
+     {
+         // Arrange
+-        $availability = availability_for($this->testSchedulable)->create([
++        $availability = availability_for($this->model)->create([
+             'type' => 'consultation',
+             'daily_start' => '09:00:00',
+             'daily_end' => '17:00:00',
+@@ @@
+     public function test_complex_availability_scenario(): void
+     {
+         // Arrange
+-        $morningAvailability = availability_for($this->testSchedulable)->create([
++        $morningAvailability = availability_for($this->model)->create([
+             'type' => 'consultation',
+             'daily_start' => '09:00:00',
+             'daily_end' => '12:00:00',
+@@ @@
+             'validity_end' => '2038-01-31',
+         ]);
+
+-        $afternoonAvailability = availability_for($this->testSchedulable)->create([
++        $afternoonAvailability = availability_for($this->model)->create([
+             'type' => 'training',
+             'daily_start' => '13:00:00',
+             'daily_end' => '17:00:00',
+    ----------- end diff -----------
+
+Applied rules:
+ * RenamePropertyToMatchTypeRector
+ * AssertEqualsOrAssertSameFloatParameterToSpecificMethodsTypeRector
+
+
+28) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Validation/Rules/AvailabilityTemporalCoherenceRuleTest.php:20
+
+    ---------- begin diff ----------
+@@ @@
+ {
+     use RefreshDatabase;
+
+-    private Model $testSchedulable;
++    private Model $model;
+
+     /**
+      * Set up test environment.
+@@ @@
+     protected function setUp(): void
+     {
+         parent::setUp();
+-        $this->testSchedulable = TestSchedulable::create();
++        $this->model = TestSchedulable::create();
+     }
+
+     /**
+@@ @@
+     public function test_cannot_shorten_availability_before_existing_future_schedule(): void
+     {
+         // Arrange
+-        $availability = availability_for($this->testSchedulable)->create([
++        $availability = availability_for($this->model)->create([
+             'type' => 'consultation',
+             'daily_start' => '09:00:00',
+             'daily_end' => '17:00:00',
+@@ @@
+         $this->expectExceptionMessageMatches("/Cannot set validity_start/");
+
+         // Act
+-        availability_for($this->testSchedulable)->update($availability->id, [
++        availability_for($this->model)->update($availability->id, [
+             'validity_start' => '2038-01-05',
+         ]);
+     }
+@@ @@
+     public function test_cannot_extend_availability_end_before_existing_future_schedule(): void
+     {
+         // Arrange
+-        $availability = availability_for($this->testSchedulable)->create([
++        $availability = availability_for($this->model)->create([
+             'type' => 'consultation',
+             'daily_start' => '09:00:00',
+             'daily_end' => '17:00:00',
+@@ @@
+         $this->expectExceptionMessageMatches("/Cannot set validity_end/");
+
+         // Act
+-        availability_for($this->testSchedulable)->update($availability->id, [
++        availability_for($this->model)->update($availability->id, [
+             'validity_end' => '2038-01-05',
+         ]);
+     }
+@@ @@
+     public function test_cannot_remove_days_with_future_impediments(): void
+     {
+         // Arrange
+-        $availability = availability_for($this->testSchedulable)->create([
++        $availability = availability_for($this->model)->create([
+             'type' => 'consultation',
+             'daily_start' => '09:00:00',
+             'daily_end' => '17:00:00',
+@@ @@
+         );
+
+         // Act
+-        availability_for($this->testSchedulable)->update($availability->id, [
++        availability_for($this->model)->update($availability->id, [
+             'days' => ['monday'],
+         ]);
+     }
+@@ @@
+     public function test_can_update_availability_without_conflict(): void
+     {
+         // Arrange
+-        $availability = availability_for($this->testSchedulable)->create([
++        $availability = availability_for($this->model)->create([
+             'type' => 'consultation',
+             'daily_start' => '09:00:00',
+             'daily_end' => '17:00:00',
+@@ @@
+         ]);
+
+         // Act
+-        $result = availability_for($this->testSchedulable)->update($availability->id, [
++        $result = availability_for($this->model)->update($availability->id, [
+             'daily_end' => '18:00:00',
+         ]);
+
+@@ @@
+     public function test_cannot_delete_availability_with_future_schedules(): void
+     {
+         // Arrange
+-        $availability = availability_for($this->testSchedulable)->create([
++        $availability = availability_for($this->model)->create([
+             'type' => 'consultation',
+             'daily_start' => '09:00:00',
+             'daily_end' => '17:00:00',
+@@ @@
+         $this->expectExceptionMessageMatches("/Cannot delete availability with future schedules/");
+
+         // Act
+-        availability_for($this->testSchedulable)->delete($availability->id);
++        availability_for($this->model)->delete($availability->id);
+     }
+
+     /**
+@@ @@
+     public function test_cannot_delete_availability_with_future_impediments(): void
+     {
+         // Arrange
+-        $availability = availability_for($this->testSchedulable)->create([
++        $availability = availability_for($this->model)->create([
+             'type' => 'consultation',
+             'daily_start' => '09:00:00',
+             'daily_end' => '17:00:00',
+@@ @@
+         $this->expectExceptionMessageMatches("/Cannot delete availability with future impediments/");
+
+         // Act
+-        availability_for($this->testSchedulable)->delete($availability->id);
++        availability_for($this->model)->delete($availability->id);
+     }
+
+     /**
+@@ @@
+     public function test_can_delete_availability_without_future_conflict(): void
+     {
+         // Arrange
+-        $availability = availability_for($this->testSchedulable)->create([
++        $availability = availability_for($this->model)->create([
+             'type' => 'consultation',
+             'daily_start' => '09:00:00',
+             'daily_end' => '17:00:00',
+@@ @@
+         ]);
+
+         // Act
+-        $result = availability_for($this->testSchedulable)->delete($availability->id);
++        $result = availability_for($this->model)->delete($availability->id);
+
+         // Assert
+         $this->assertTrue($result);
+    ----------- end diff -----------
+
+Applied rules:
+ * RenamePropertyToMatchTypeRector
+
+
+29) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Validation/Rules/ImpedimentScheduleDaysCoherenceRuleTest.php:20
+
+    ---------- begin diff ----------
+@@ @@
+ {
+     use RefreshDatabase;
+
+-    private Model $testSchedulable;
++    private Model $model;
+
+     /**
+      * Set up test environment.
+@@ @@
+     protected function setUp(): void
+     {
+         parent::setUp();
+-        $this->testSchedulable = TestSchedulable::create();
++        $this->model = TestSchedulable::create();
+     }
+
+     /**
+@@ @@
+     public function test_cannot_create_impediment_on_non_availability_day(): void
+     {
+         // Arrange
+-        $availability = availability_for($this->testSchedulable)->create([
++        $availability = availability_for($this->model)->create([
+             'type' => 'consultation',
+             'daily_start' => '09:00:00',
+             'daily_end' => '17:00:00',
+@@ @@
+     public function test_cannot_create_schedule_on_non_availability_day(): void
+     {
+         // Arrange
+-        $availability = availability_for($this->testSchedulable)->create([
++        $availability = availability_for($this->model)->create([
+             'type' => 'consultation',
+             'daily_start' => '09:00:00',
+             'daily_end' => '17:00:00',
+@@ @@
+     public function test_can_create_impediment_on_allowed_day(): void
+     {
+         // Arrange
+-        $availability = availability_for($this->testSchedulable)->create([
++        $availability = availability_for($this->model)->create([
+             'type' => 'consultation',
+             'daily_start' => '09:00:00',
+             'daily_end' => '17:00:00',
+    ----------- end diff -----------
+
+Applied rules:
+ * RenamePropertyToMatchTypeRector
+
+
+ [OK] 29 files would have been changed (dry-run) by Rector                                                              
 

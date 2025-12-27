@@ -4,19 +4,28 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Services;
 
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Roster\Facades\Availability as AvailabilityFacade;
-use Roster\Models\Availability;
+use Roster\Models\Availability as AvailabilityModel;
 use Roster\Validation\Exceptions\ValidationFailedException;
 use Tests\Support\TestSchedulable;
 use Tests\TestCase;
 
+/**
+ * Test suite for AvailabilityService.
+ *
+ * Validates CRUD operations, validation rules, and business logic
+ * for availability management within the roster system.
+ */
 final class AvailabilityServiceTest extends TestCase
 {
     use RefreshDatabase;
 
-    private TestSchedulable $testSchedulable;
+    private Model $testSchedulable;
 
+    /**
+     * Set up test environment.
+     */
     protected function setUp(): void
     {
         parent::setUp();
@@ -24,6 +33,9 @@ final class AvailabilityServiceTest extends TestCase
         $this->testSchedulable = TestSchedulable::create();
     }
 
+    /**
+     * Test successful availability creation.
+     */
     public function test_can_create_an_availability(): void
     {
         // Arrange
@@ -36,11 +48,11 @@ final class AvailabilityServiceTest extends TestCase
             'validity_end' => '2038-07-31',
         ];
 
-        // Act - DOIT utiliser la Facade avec ->for()
-        $availability = AvailabilityFacade::for($this->testSchedulable)->create($availabilityData);
+        // Act
+        $availability = availability_for($this->testSchedulable)->create($availabilityData);
 
         // Assert
-        $this->assertInstanceOf(Availability::class, $availability);
+        $this->assertInstanceOf(AvailabilityModel::class, $availability);
         $this->assertDatabaseHas('roster_availabilities', [
             'id' => $availability->id,
             'type' => 'consultation',
@@ -48,15 +60,18 @@ final class AvailabilityServiceTest extends TestCase
             'schedulable_type' => TestSchedulable::class,
         ]);
 
-        $this->assertEquals('consultation', $availability->type);
-        $this->assertEquals(['monday', 'wednesday', 'friday'], $availability->days);
-        $this->assertEquals($this->testSchedulable->id, $availability->schedulable_id);
-        $this->assertEquals(TestSchedulable::class, $availability->schedulable_type);
+        $this->assertSame('consultation', $availability->type);
+        $this->assertSame(['monday', 'wednesday', 'friday'], $availability->days);
+        $this->assertSame($this->testSchedulable->id, $availability->schedulable_id);
+        $this->assertSame(TestSchedulable::class, $availability->schedulable_type);
     }
 
+    /**
+     * Test days default to all days when not provided.
+     */
     public function test_days_default_to_all_days_when_not_provided(): void
     {
-        // Arrange - Données sans jours
+        // Arrange
         $availabilityData = [
             'type' => 'consultation',
             'daily_start' => '09:00:00',
@@ -66,20 +81,23 @@ final class AvailabilityServiceTest extends TestCase
         ];
 
         // Act
-        $availability = AvailabilityFacade::for($this->testSchedulable)->create($availabilityData);
+        $availability = availability_for($this->testSchedulable)->create($availabilityData);
 
-        // Assert - Doit utiliser tous les jours par défaut
+        // Assert
         $this->assertNotEmpty($availability->days);
-        $this->assertEquals(
+        $this->assertSame(
             ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'],
             $availability->days
         );
     }
 
+    /**
+     * Test successful availability update.
+     */
     public function test_can_update_an_existing_availability(): void
     {
-        // Arrange - Créer une disponibilité
-        $availability = AvailabilityFacade::for($this->testSchedulable)->create([
+        // Arrange
+        $availability = availability_for($this->testSchedulable)->create([
             'type' => 'consultation',
             'daily_start' => '09:00:00',
             'daily_end' => '17:00:00',
@@ -95,7 +113,7 @@ final class AvailabilityServiceTest extends TestCase
         ];
 
         // Act
-        $result = AvailabilityFacade::for($this->testSchedulable)->update($availability->id, $updateData);
+        $result = availability_for($this->testSchedulable)->update($availability->id, $updateData);
 
         // Assert
         $this->assertTrue($result);
@@ -107,6 +125,9 @@ final class AvailabilityServiceTest extends TestCase
         ]);
     }
 
+    /**
+     * Test update throws exception when availability not found.
+     */
     public function test_update_throws_exception_when_availability_not_found(): void
     {
         // Arrange
@@ -120,13 +141,16 @@ final class AvailabilityServiceTest extends TestCase
         );
 
         // Act
-        AvailabilityFacade::for($this->testSchedulable)->update($availabilityId, $updateData);
+        availability_for($this->testSchedulable)->update($availabilityId, $updateData);
     }
 
+    /**
+     * Test successful availability deletion.
+     */
     public function test_can_delete_an_availability(): void
     {
-        // Arrange - Créer une disponibilité
-        $availability = AvailabilityFacade::for($this->testSchedulable)->create([
+        // Arrange
+        $availability = availability_for($this->testSchedulable)->create([
             'type' => 'consultation',
             'daily_start' => '09:00:00',
             'daily_end' => '17:00:00',
@@ -136,7 +160,7 @@ final class AvailabilityServiceTest extends TestCase
         ]);
 
         // Act
-        $result = AvailabilityFacade::for($this->testSchedulable)->delete($availability->id);
+        $result = availability_for($this->testSchedulable)->delete($availability->id);
 
         // Assert
         $this->assertTrue($result);
@@ -145,6 +169,9 @@ final class AvailabilityServiceTest extends TestCase
         ]);
     }
 
+    /**
+     * Test delete throws exception when availability not found.
+     */
     public function test_delete_throws_exception_when_availability_not_found(): void
     {
         // Arrange
@@ -157,13 +184,16 @@ final class AvailabilityServiceTest extends TestCase
         );
 
         // Act
-        AvailabilityFacade::for($this->testSchedulable)->delete($availabilityId);
+        availability_for($this->testSchedulable)->delete($availabilityId);
     }
 
+    /**
+     * Test finding availability by ID.
+     */
     public function test_can_find_an_availability_by_id(): void
     {
-        // Arrange - Créer une disponibilité
-        $availability = AvailabilityFacade::for($this->testSchedulable)->create([
+        // Arrange
+        $availability = availability_for($this->testSchedulable)->create([
             'type' => 'consultation',
             'daily_start' => '09:00:00',
             'daily_end' => '17:00:00',
@@ -173,30 +203,36 @@ final class AvailabilityServiceTest extends TestCase
         ]);
 
         // Act
-        $result = AvailabilityFacade::for($this->testSchedulable)->find($availability->id);
+        $result = availability_for($this->testSchedulable)->find($availability->id);
 
         // Assert
-        $this->assertInstanceOf(Availability::class, $result);
-        $this->assertEquals($availability->id, $result->id);
-        $this->assertEquals('consultation', $result->type);
+        $this->assertInstanceOf(AvailabilityModel::class, $result);
+        $this->assertSame($availability->id, $result->id);
+        $this->assertSame('consultation', $result->type);
     }
 
+    /**
+     * Test find returns null when availability not found.
+     */
     public function test_find_returns_null_when_availability_not_found(): void
     {
         // Arrange
         $availabilityId = 999;
 
         // Act
-        $result = AvailabilityFacade::for($this->testSchedulable)->find($availabilityId);
+        $result = availability_for($this->testSchedulable)->find($availabilityId);
 
         // Assert
-        $this->assertNotInstanceOf(\Roster\Models\Availability::class, $result);
+        $this->assertNull($result);
     }
 
+    /**
+     * Test getting all availabilities with filters.
+     */
     public function test_can_get_all_availabilities_with_filters(): void
     {
-        // Arrange - Créer plusieurs disponibilités
-        AvailabilityFacade::for($this->testSchedulable)->create([
+        // Arrange
+        availability_for($this->testSchedulable)->create([
             'type' => 'consultation',
             'daily_start' => '09:00:00',
             'daily_end' => '12:00:00',
@@ -205,7 +241,7 @@ final class AvailabilityServiceTest extends TestCase
             'validity_end' => '2038-07-31',
         ]);
 
-        AvailabilityFacade::for($this->testSchedulable)->create([
+        availability_for($this->testSchedulable)->create([
             'type' => 'training',
             'daily_start' => '14:00:00',
             'daily_end' => '17:00:00',
@@ -214,19 +250,22 @@ final class AvailabilityServiceTest extends TestCase
             'validity_end' => '2038-07-31',
         ]);
 
-        // Act - Filtrer par type
-        $result = AvailabilityFacade::for($this->testSchedulable)
+        // Act
+        $result = availability_for($this->testSchedulable)
             ->whereType('consultation')
             ->all();
 
         // Assert
         $this->assertCount(1, $result);
-        $this->assertEquals('consultation', $result->first()->type);
+        $this->assertSame('consultation', $result->first()->type);
     }
 
+    /**
+     * Test validation failure during creation.
+     */
     public function test_handles_validation_failure_during_creation(): void
     {
-        // Arrange - Données invalides (heure de fin avant heure de début)
+        // Arrange
         $availabilityData = [
             'type' => 'consultation',
             'daily_start' => '17:00:00',
@@ -236,17 +275,20 @@ final class AvailabilityServiceTest extends TestCase
             'validity_end' => '2038-07-31',
         ];
 
-        // Expect exception
+        // Assert
         $this->expectException(ValidationFailedException::class);
 
         // Act
-        AvailabilityFacade::for($this->testSchedulable)->create($availabilityData);
+        availability_for($this->testSchedulable)->create($availabilityData);
     }
 
+    /**
+     * Test validation failure during update.
+     */
     public function test_handles_validation_failure_during_update(): void
     {
-        // Arrange - Créer une disponibilité
-        $availability = AvailabilityFacade::for($this->testSchedulable)->create([
+        // Arrange
+        $availability = availability_for($this->testSchedulable)->create([
             'type' => 'consultation',
             'daily_start' => '09:00:00',
             'daily_end' => '17:00:00',
@@ -255,22 +297,24 @@ final class AvailabilityServiceTest extends TestCase
             'validity_end' => '2038-07-31',
         ]);
 
-        // Mise à jour invalide (date de fin avant date de début)
         $updateData = [
             'validity_end' => '2038-06-30',
         ];
 
-        // Expect exception
+        // Assert
         $this->expectException(ValidationFailedException::class);
 
         // Act
-        AvailabilityFacade::for($this->testSchedulable)->update($availability->id, $updateData);
+        availability_for($this->testSchedulable)->update($availability->id, $updateData);
     }
 
+    /**
+     * Test partial date update fails when end before existing start.
+     */
     public function test_validate_partial_date_update_fails_when_end_before_existing_start(): void
     {
-        // Créer une disponibilité existante
-        $availability = AvailabilityFacade::for($this->testSchedulable)->create([
+        // Arrange
+        $availability = availability_for($this->testSchedulable)->create([
             'type' => 'consultation',
             'daily_start' => '09:00:00',
             'daily_end' => '17:00:00',
@@ -279,39 +323,45 @@ final class AvailabilityServiceTest extends TestCase
             'validity_end' => '2038-07-31',
         ]);
 
-        // Mise à jour invalide
         $updateData = [
             'validity_end' => '2038-06-30',
         ];
 
+        // Assert
         $this->expectException(ValidationFailedException::class);
 
-        AvailabilityFacade::for($this->testSchedulable)->update($availability->id, $updateData);
+        // Act
+        availability_for($this->testSchedulable)->update($availability->id, $updateData);
     }
 
+    /**
+     * Test validation fails when required fields missing.
+     */
     public function test_validation_fails_when_required_fields_missing(): void
     {
-        // Arrange - Données incomplètes
+        // Arrange
         $availabilityData = [
             'type' => 'consultation',
-            // daily_start manquant
             'daily_end' => '17:00:00',
             'days' => ['monday'],
             'validity_start' => '2038-07-01',
             'validity_end' => '2038-07-31',
         ];
 
-        // Expect exception
+        // Assert
         $this->expectException(ValidationFailedException::class);
 
         // Act
-        AvailabilityFacade::for($this->testSchedulable)->create($availabilityData);
+        availability_for($this->testSchedulable)->create($availabilityData);
     }
 
+    /**
+     * Test sets and gets filters correctly.
+     */
     public function test_sets_and_gets_filters_correctly(): void
     {
         // Arrange
-        $availabilityService = AvailabilityFacade::for($this->testSchedulable);
+        $availabilityService = availability_for($this->testSchedulable);
         $filters = [
             'type' => 'consultation',
             'day' => 'monday',
@@ -325,10 +375,13 @@ final class AvailabilityServiceTest extends TestCase
         $this->assertSame($filters, $result);
     }
 
+    /**
+     * Test does not merge non-adjacent availabilities.
+     */
     public function test_does_not_merge_non_adjacent_availabilities(): void
     {
-        // Arrange - Créer une disponibilité existante
-        $existingAvailability = AvailabilityFacade::for($this->testSchedulable)->create([
+        // Arrange
+        $existingAvailability = availability_for($this->testSchedulable)->create([
             'type' => 'consultation',
             'daily_start' => '09:00:00',
             'daily_end' => '12:00:00',
@@ -337,7 +390,6 @@ final class AvailabilityServiceTest extends TestCase
             'validity_end' => '2038-07-31',
         ]);
 
-        // Nouvelle disponibilité avec un écart
         $newData = [
             'type' => 'consultation',
             'daily_start' => '14:00:00',
@@ -348,9 +400,9 @@ final class AvailabilityServiceTest extends TestCase
         ];
 
         // Act
-        $availability = AvailabilityFacade::for($this->testSchedulable)->create($newData);
+        $availability = availability_for($this->testSchedulable)->create($newData);
 
-        // Assert - Les deux disponibilités doivent exister
+        // Assert
         $this->assertDatabaseHas('roster_availabilities', [
             'id' => $existingAvailability->id,
             'daily_start' => '09:00:00',
@@ -364,9 +416,12 @@ final class AvailabilityServiceTest extends TestCase
         ]);
     }
 
+    /**
+     * Test validates minimum duration.
+     */
     public function test_validates_minimum_duration(): void
     {
-        // Arrange - Durée trop courte
+        // Arrange
         $availabilityData = [
             'type' => 'consultation',
             'daily_start' => '09:00:00',
@@ -376,17 +431,20 @@ final class AvailabilityServiceTest extends TestCase
             'validity_end' => '2038-07-31',
         ];
 
-        // Expect exception
+        // Assert
         $this->expectException(ValidationFailedException::class);
         $this->expectExceptionMessageMatches('/Minimum duration/');
 
         // Act
-        AvailabilityFacade::for($this->testSchedulable)->create($availabilityData);
+        availability_for($this->testSchedulable)->create($availabilityData);
     }
 
+    /**
+     * Test validates date range order.
+     */
     public function test_validates_date_range_order(): void
     {
-        // Arrange - Date de fin avant date de début
+        // Arrange
         $availabilityData = [
             'type' => 'consultation',
             'daily_start' => '09:00:00',
@@ -396,17 +454,20 @@ final class AvailabilityServiceTest extends TestCase
             'validity_end' => '2038-07-01',
         ];
 
-        // Expect exception
+        // Assert
         $this->expectException(ValidationFailedException::class);
 
         // Act
-        AvailabilityFacade::for($this->testSchedulable)->create($availabilityData);
+        availability_for($this->testSchedulable)->create($availabilityData);
     }
 
+    /**
+     * Test cannot update schedulable fields.
+     */
     public function test_cannot_update_schedulable_fields(): void
     {
-        // Arrange - Créer une disponibilité
-        $availability = AvailabilityFacade::for($this->testSchedulable)->create([
+        // Arrange
+        $availability = availability_for($this->testSchedulable)->create([
             'type' => 'consultation',
             'daily_start' => '09:00:00',
             'daily_end' => '17:00:00',
@@ -415,27 +476,28 @@ final class AvailabilityServiceTest extends TestCase
             'validity_end' => '2038-07-31',
         ]);
 
-        // Créer un autre schedulable
         $anotherSchedulable = TestSchedulable::create();
 
-        // Essayer de changer le schedulable (interdit)
         $updateData = [
             'schedulable_id' => $anotherSchedulable->id,
             'schedulable_type' => TestSchedulable::class,
         ];
 
-        // Expect exception
+        // Assert
         $this->expectException(ValidationFailedException::class);
         $this->expectExceptionMessageMatches("/cannot be changed/");
 
         // Act
-        AvailabilityFacade::for($this->testSchedulable)->update($availability->id, $updateData);
+        availability_for($this->testSchedulable)->update($availability->id, $updateData);
     }
 
+    /**
+     * Test getting availabilities by type filter.
+     */
     public function test_can_get_availabilities_by_type_filter(): void
     {
-        // Arrange - Créer plusieurs disponibilités de différents types
-        AvailabilityFacade::for($this->testSchedulable)->create([
+        // Arrange
+        availability_for($this->testSchedulable)->create([
             'type' => 'consultation',
             'daily_start' => '09:00:00',
             'daily_end' => '12:00:00',
@@ -444,7 +506,7 @@ final class AvailabilityServiceTest extends TestCase
             'validity_end' => '2038-07-31',
         ]);
 
-        AvailabilityFacade::for($this->testSchedulable)->create([
+        availability_for($this->testSchedulable)->create([
             'type' => 'training',
             'daily_start' => '14:00:00',
             'daily_end' => '17:00:00',
@@ -453,36 +515,41 @@ final class AvailabilityServiceTest extends TestCase
             'validity_end' => '2038-07-31',
         ]);
 
-        // Act - Utiliser whereType
-        $result = AvailabilityFacade::for($this->testSchedulable)
+        // Act
+        $result = availability_for($this->testSchedulable)
             ->whereType('consultation')
             ->all();
 
         // Assert
         $this->assertCount(1, $result);
-        $this->assertEquals('consultation', $result->first()->type);
+        $this->assertSame('consultation', $result->first()->type);
     }
 
+    /**
+     * Test resetting filters.
+     */
     public function test_can_reset_filters(): void
     {
         // Arrange
-        $availabilityService = AvailabilityFacade::for($this->testSchedulable);
+        $availabilityService = availability_for($this->testSchedulable);
         $availabilityService->setFilters(['type' => 'consultation']);
         $availabilityService->setFilter('day', 'monday');
 
         // Act
         $availabilityService->resetFilters();
-
         $filters = $availabilityService->getFilters();
 
         // Assert
         $this->assertEmpty($filters);
     }
 
+    /**
+     * Test filtering by availability ID.
+     */
     public function test_can_filter_by_availability_id(): void
     {
-        // Arrange - Créer une disponibilité
-        $availability = AvailabilityFacade::for($this->testSchedulable)->create([
+        // Arrange
+        $availability = availability_for($this->testSchedulable)->create([
             'type' => 'consultation',
             'daily_start' => '09:00:00',
             'daily_end' => '17:00:00',
@@ -491,16 +558,19 @@ final class AvailabilityServiceTest extends TestCase
             'validity_end' => '2038-07-31',
         ]);
 
-        // Act - Filtrer par availability_id
-        $result = AvailabilityFacade::for($this->testSchedulable)
-            ->find($availability->id);
+        // Act
+        $result = availability_for($this->testSchedulable)->find($availability->id);
+
         // Assert
-        $this->assertEquals($availability->id, $result->id);
+        $this->assertSame($availability->id, $result->id);
     }
 
+    /**
+     * Test validation of invalid days format.
+     */
     public function test_validate_invalid_days_format(): void
     {
-        // Arrange - Jours invalides
+        // Arrange
         $availabilityData = [
             'type' => 'consultation',
             'daily_start' => '09:00:00',
@@ -510,17 +580,20 @@ final class AvailabilityServiceTest extends TestCase
             'validity_end' => '2038-07-31',
         ];
 
-        // Expect exception
+        // Assert
         $this->expectException(ValidationFailedException::class);
         $this->expectExceptionMessage("Day 'not-an-array' is not a valid day of week");
 
         // Act
-        AvailabilityFacade::for($this->testSchedulable)->create($availabilityData);
+        availability_for($this->testSchedulable)->create($availabilityData);
     }
 
+    /**
+     * Test validation of empty days array.
+     */
     public function test_validate_empty_days_array(): void
     {
-        // Arrange - Tableau de jours vide
+        // Arrange
         $availabilityData = [
             'type' => 'consultation',
             'daily_start' => '09:00:00',
@@ -530,18 +603,21 @@ final class AvailabilityServiceTest extends TestCase
             'validity_end' => '2038-07-31',
         ];
 
-        // Expect exception
+        // Assert
         $this->expectException(ValidationFailedException::class);
         $this->expectExceptionMessage('Days array cannot be empty');
 
         // Act
-        AvailabilityFacade::for($this->testSchedulable)->create($availabilityData);
+        availability_for($this->testSchedulable)->create($availabilityData);
     }
 
+    /**
+     * Test partial update is allowed.
+     */
     public function test_partial_update_allowed(): void
     {
-        // Arrange - Créer une disponibilité
-        $availability = AvailabilityFacade::for($this->testSchedulable)->create([
+        // Arrange
+        $availability = availability_for($this->testSchedulable)->create([
             'type' => 'consultation',
             'daily_start' => '09:00:00',
             'daily_end' => '17:00:00',
@@ -550,13 +626,12 @@ final class AvailabilityServiceTest extends TestCase
             'validity_end' => '2038-07-31',
         ]);
 
-        // Mise à jour partielle
         $updateData = [
             'daily_end' => '18:00:00',
         ];
 
         // Act
-        $result = AvailabilityFacade::for($this->testSchedulable)->update($availability->id, $updateData);
+        $result = availability_for($this->testSchedulable)->update($availability->id, $updateData);
 
         // Assert
         $this->assertTrue($result);
@@ -568,9 +643,12 @@ final class AvailabilityServiceTest extends TestCase
         ]);
     }
 
+    /**
+     * Test validation of invalid day value.
+     */
     public function test_validate_invalid_day_value(): void
     {
-        // Arrange - Jour invalide
+        // Arrange
         $availabilityData = [
             'type' => 'consultation',
             'daily_start' => '09:00:00',
@@ -580,14 +658,17 @@ final class AvailabilityServiceTest extends TestCase
             'validity_end' => '2038-07-31',
         ];
 
-        // Expect exception
+        // Assert
         $this->expectException(ValidationFailedException::class);
         $this->expectExceptionMessage("Day 'invalid-day' is not a valid day of week");
 
         // Act
-        AvailabilityFacade::for($this->testSchedulable)->create($availabilityData);
+        availability_for($this->testSchedulable)->create($availabilityData);
     }
 
+    /**
+     * Test validation of invalid type.
+     */
     public function test_validate_invalid_type(): void
     {
         config()->set('roster.allowed_types', [
@@ -598,7 +679,7 @@ final class AvailabilityServiceTest extends TestCase
             'support',
         ]);
 
-        // Arrange - Type invalide
+        // Arrange
         $availabilityData = [
             'type' => 'invalid-type',
             'daily_start' => '09:00:00',
@@ -608,20 +689,23 @@ final class AvailabilityServiceTest extends TestCase
             'validity_end' => '2038-07-31',
         ];
 
-        // Expect exception
+        // Assert
         $this->expectException(ValidationFailedException::class);
         $this->expectExceptionMessageMatches("/Invalid type 'invalid-type'/");
 
         // Act
-        AvailabilityFacade::for($this->testSchedulable)->create($availabilityData);
+        availability_for($this->testSchedulable)->create($availabilityData);
     }
 
+    /**
+     * Test type validation when config empty.
+     */
     public function test_validate_type_allowed_when_config_empty(): void
     {
         config()->set('roster.allowed_types', []);
 
-        // Act - Type quelconque devrait être accepté
-        $availability = AvailabilityFacade::for($this->testSchedulable)->create([
+        // Act
+        $availability = availability_for($this->testSchedulable)->create([
             'type' => 'anything',
             'daily_start' => '09:00:00',
             'daily_end' => '17:00:00',
@@ -631,14 +715,17 @@ final class AvailabilityServiceTest extends TestCase
         ]);
 
         // Assert
-        $this->assertInstanceOf(Availability::class, $availability);
-        $this->assertEquals('anything', $availability->type);
+        $this->assertInstanceOf(AvailabilityModel::class, $availability);
+        $this->assertSame('anything', $availability->type);
     }
 
+    /**
+     * Test update does not trigger merge.
+     */
     public function test_update_does_not_trigger_merge(): void
     {
-        // Arrange - Créer deux availabilities
-        $availability1 = AvailabilityFacade::for($this->testSchedulable)->create([
+        // Arrange
+        $availability1 = availability_for($this->testSchedulable)->create([
             'type' => 'consultation',
             'daily_start' => '09:00:00',
             'daily_end' => '12:00:00',
@@ -647,7 +734,7 @@ final class AvailabilityServiceTest extends TestCase
             'validity_end' => '2038-07-31',
         ]);
 
-        $availability2 = AvailabilityFacade::for($this->testSchedulable)->create([
+        $availability2 = availability_for($this->testSchedulable)->create([
             'type' => 'consultation',
             'daily_start' => '14:00:00',
             'daily_end' => '17:00:00',
@@ -656,19 +743,17 @@ final class AvailabilityServiceTest extends TestCase
             'validity_end' => '2038-07-31',
         ]);
 
-        // Mettre à jour la deuxième pour qu'elle soit adjacente
         $updateData = [
             'daily_start' => '12:00:00',
             'daily_end' => '17:00:00',
         ];
 
         // Act
-        $result = AvailabilityFacade::for($this->testSchedulable)->update($availability2->id, $updateData);
+        $result = availability_for($this->testSchedulable)->update($availability2->id, $updateData);
 
-        // Assert - Mise à jour réussie mais pas de fusion
+        // Assert
         $this->assertTrue($result);
 
-        // Les deux doivent toujours exister
         $this->assertDatabaseHas('roster_availabilities', [
             'id' => $availability1->id,
             'daily_start' => '09:00:00',

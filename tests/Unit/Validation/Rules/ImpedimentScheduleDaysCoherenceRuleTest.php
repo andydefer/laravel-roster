@@ -4,31 +4,40 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Validation\Rules;
 
-
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Roster\Facades\Availability as AvailabilityFacade;
-use Roster\Facades\Impediment as ImpedimentFacade;
-use Roster\Facades\Schedule as ScheduleFacade;
 use Roster\Validation\Exceptions\ValidationFailedException;
-use Tests\Support\TestSchedulable;
 use Tests\TestCase;
+use Tests\Support\TestSchedulable;
 
+/**
+ * Test suite for ImpedimentScheduleDaysCoherenceRule validation rule.
+ *
+ * Validates that impediments and schedules can only be created on days
+ * allowed by their parent availability.
+ */
 final class ImpedimentScheduleDaysCoherenceRuleTest extends TestCase
 {
     use RefreshDatabase;
 
-    private TestSchedulable $testSchedulable;
+    private Model $testSchedulable;
 
+    /**
+     * Set up test environment.
+     */
     protected function setUp(): void
     {
         parent::setUp();
         $this->testSchedulable = TestSchedulable::create();
     }
 
+    /**
+     * Test impediment cannot be created on non-availability day.
+     */
     public function test_cannot_create_impediment_on_non_availability_day(): void
     {
-        // Arrange - Disponibilité uniquement mardi et jeudi
-        $availability = AvailabilityFacade::for($this->testSchedulable)->create([
+        // Arrange
+        $availability = availability_for($this->testSchedulable)->create([
             'type' => 'consultation',
             'daily_start' => '09:00:00',
             'daily_end' => '17:00:00',
@@ -37,25 +46,25 @@ final class ImpedimentScheduleDaysCoherenceRuleTest extends TestCase
             'validity_end' => '2038-01-31',
         ]);
 
-        // Expect - impediment sur un jour interdit
+        // Assert
         $this->expectException(ValidationFailedException::class);
         $this->expectExceptionMessageMatches('/failed for Impediment.*not allowed.*following days/i');
 
-
         // Act
-        ImpedimentFacade::for($this->testSchedulable)
-            ->owner($availability)
-            ->create([
-                'reason' => 'Impediment lundi',
-                'start_datetime' => '2038-01-04 10:00:00', // lundi
-                'end_datetime' => '2038-01-04 11:00:00',
-            ]);
+        impediment_for($availability)->create([
+            'reason' => 'Monday impediment',
+            'start_datetime' => '2038-01-04 10:00:00', // Monday
+            'end_datetime' => '2038-01-04 11:00:00',
+        ]);
     }
 
+    /**
+     * Test schedule cannot be created on non-availability day.
+     */
     public function test_cannot_create_schedule_on_non_availability_day(): void
     {
-        // Arrange - Même disponibilité
-        $availability = AvailabilityFacade::for($this->testSchedulable)->create([
+        // Arrange
+        $availability = availability_for($this->testSchedulable)->create([
             'type' => 'consultation',
             'daily_start' => '09:00:00',
             'daily_end' => '17:00:00',
@@ -64,27 +73,27 @@ final class ImpedimentScheduleDaysCoherenceRuleTest extends TestCase
             'validity_end' => '2038-01-31',
         ]);
 
-        // Expect - schedule sur un jour interdit
+        // Assert
         $this->expectException(ValidationFailedException::class);
         $this->expectExceptionMessageMatches(
             "/failed for Schedule.*not allowed because this availability only permits/"
         );
 
-
         // Act
-        ScheduleFacade::for($this->testSchedulable)
-            ->owner($availability)
-            ->create([
-                'reason' => 'Schedule mercredi',
-                'start_datetime' => '2038-01-06 10:00:00', // mercredi
-                'end_datetime' => '2038-01-06 11:00:00',
-            ]);
+        schedule_for($availability)->create([
+            'title' => 'Wednesday schedule',
+            'start_datetime' => '2038-01-06 10:00:00', // Wednesday
+            'end_datetime' => '2038-01-06 11:00:00',
+        ]);
     }
 
+    /**
+     * Test impediment can be created on allowed day.
+     */
     public function test_can_create_impediment_on_allowed_day(): void
     {
-        // Arrange - disponibilité mardi et jeudi
-        $availability = AvailabilityFacade::for($this->testSchedulable)->create([
+        // Arrange
+        $availability = availability_for($this->testSchedulable)->create([
             'type' => 'consultation',
             'daily_start' => '09:00:00',
             'daily_end' => '17:00:00',
@@ -94,13 +103,11 @@ final class ImpedimentScheduleDaysCoherenceRuleTest extends TestCase
         ]);
 
         // Act
-        $impediment = ImpedimentFacade::for($this->testSchedulable)
-            ->owner($availability)
-            ->create([
-                'reason' => 'Impediment mardi',
-                'start_datetime' => '2038-01-05 10:00:00', // mardi
-                'end_datetime' => '2038-01-05 11:00:00',
-            ]);
+        $impediment = impediment_for($availability)->create([
+            'reason' => 'Tuesday impediment',
+            'start_datetime' => '2038-01-05 10:00:00', // Tuesday
+            'end_datetime' => '2038-01-05 11:00:00',
+        ]);
 
         // Assert
         $this->assertNotNull($impediment);

@@ -4,40 +4,43 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Services;
 
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Config;
-use Roster\Enums\ScheduleStatus;
-use Roster\Facades\Availability;
-use Roster\Facades\Impediment;
-use Roster\Facades\Schedule;
 use Roster\Models\Availability as AvailabilityModel;
 use Roster\Models\Impediment as ImpedimentModel;
 use Roster\Validation\Exceptions\ValidationFailedException;
 use Tests\TestCase;
 use Tests\Support\TestSchedulable;
 
+/**
+ * Test suite for ImpedimentService.
+ *
+ * Validates CRUD operations, conflict detection, and availability blocking
+ * scenarios for impediment management within the roster system.
+ */
 final class ImpedimentServiceTest extends TestCase
 {
     use RefreshDatabase;
 
-    private TestSchedulable $testSchedulable;
-
+    private Model $testSchedulable;
     private AvailabilityModel $availabilityModel;
 
+    /**
+     * Set up test environment.
+     */
     protected function setUp(): void
     {
         parent::setUp();
 
         $this->testSchedulable = TestSchedulable::create();
 
-        // Configurer pour les tests
         Config::set('roster.durations.default_slot_interval_minutes', 15);
         Config::set('roster.durations.max_search_period_days', 30);
 
-        // Créer la disponibilité UNIQUEMENT via la facade
-        $this->availabilityModel = Availability::for($this->testSchedulable)->create([
+        $this->availabilityModel = availability_for($this->testSchedulable)->create([
             'type' => 'consultation',
             'daily_start' => '09:00:00',
             'daily_end' => '17:00:00',
@@ -47,132 +50,137 @@ final class ImpedimentServiceTest extends TestCase
         ]);
     }
 
-    protected function tearDown(): void
-    {
-        parent::tearDown();
-    }
-
-    /* -----------------------------------------------------------------
-     | Tests CRUD
-     | -----------------------------------------------------------------
+    /**
+     * Test successful impediment creation.
      */
-
     public function test_create_impediment_successfully(): void
     {
+        // Arrange
+        $impedimentData = [
+            'reason' => 'System maintenance',
+            'start_datetime' => '2038-01-04 10:00:00',
+            'end_datetime' => '2038-01-04 12:00:00',
+            'metadata' => ['priority' => 'high'],
+        ];
+
         // Act
-        $impediment = Impediment::for($this->testSchedulable)
-            ->owner($this->availabilityModel)
-            ->create([
-                'reason' => 'Maintenance système',
-                'start_datetime' => '2038-01-04 10:00:00', // Lundi
-                'end_datetime' => '2038-01-04 12:00:00',
-                'metadata' => ['priority' => 'high'],
-            ]);
+        $impediment = impediment_for($this->availabilityModel)->create($impedimentData);
 
         // Assert
         $this->assertInstanceOf(ImpedimentModel::class, $impediment);
-        $this->assertEquals('Maintenance système', $impediment->reason);
-        $this->assertEquals($this->availabilityModel->id, $impediment->availability_id);
-        $this->assertEquals($this->testSchedulable->id, $impediment->schedulable_id);
-        $this->assertEquals(['priority' => 'high'], $impediment->metadata);
+        $this->assertSame('System maintenance', $impediment->reason);
+        $this->assertSame($this->availabilityModel->id, $impediment->availability_id);
+        $this->assertSame($this->testSchedulable->id, $impediment->schedulable_id);
+        $this->assertSame(['priority' => 'high'], $impediment->metadata);
     }
 
+    /**
+     * Test impediment creation without metadata.
+     */
     public function test_create_impediment_without_metadata(): void
     {
+        // Arrange
+        $impedimentData = [
+            'reason' => 'Training',
+            'start_datetime' => '2038-01-05 14:00:00',
+            'end_datetime' => '2038-01-05 16:00:00',
+        ];
+
         // Act
-        $impediment = Impediment::for($this->testSchedulable)
-            ->owner($this->availabilityModel)
-            ->create([
-                'reason' => 'Formation',
-                'start_datetime' => '2038-01-05 14:00:00', // Mardi
-                'end_datetime' => '2038-01-05 16:00:00',
-            ]);
+        $impediment = impediment_for($this->availabilityModel)->create($impedimentData);
 
         // Assert
-        $this->assertEquals('Formation', $impediment->reason);
+        $this->assertSame('Training', $impediment->reason);
         $this->assertEmpty($impediment->metadata);
     }
 
+    /**
+     * Test impediment creation fails when end time is before start time.
+     */
     public function test_create_impediment_fails_when_end_before_start(): void
     {
-        // Expect
+        // Arrange
+        $invalidData = [
+            'reason' => 'Invalid test',
+            'start_datetime' => '2038-01-04 12:00:00',
+            'end_datetime' => '2038-01-04 10:00:00',
+        ];
+
+        // Assert
         $this->expectException(ValidationFailedException::class);
         $this->expectExceptionMessageMatches('/End datetime must be after start datetime/');
 
         // Act
-        Impediment::for($this->testSchedulable)
-            ->owner($this->availabilityModel)
-            ->create([
-                'reason' => 'Test invalide',
-                'start_datetime' => '2038-01-04 12:00:00',
-                'end_datetime' => '2038-01-04 10:00:00', // Avant le début
-            ]);
+        impediment_for($this->availabilityModel)->create($invalidData);
     }
 
+    /**
+     * Test impediment creation fails when duration is too short.
+     */
     public function test_create_impediment_fails_when_too_short(): void
     {
-        // Configurer durée minimale pour le test
+        // Arrange
         Config::set('roster.durations.minimum_impediment_minutes', 15);
 
-        // Expect
+        $shortData = [
+            'reason' => 'Too short test',
+            'start_datetime' => '2038-01-04 10:00:00',
+            'end_datetime' => '2038-01-04 10:05:00',
+        ];
+
+        // Assert
         $this->expectException(ValidationFailedException::class);
         $this->expectExceptionMessageMatches('/Minimum duration/');
 
-        // Act - 5 minutes seulement
-        Impediment::for($this->testSchedulable)
-            ->owner($this->availabilityModel)
-            ->create([
-                'reason' => 'Test trop court',
-                'start_datetime' => '2038-01-04 10:00:00',
-                'end_datetime' => '2038-01-04 10:05:00', // 5 minutes
-            ]);
+        // Act
+        impediment_for($this->availabilityModel)->create($shortData);
     }
 
+    /**
+     * Test successful impediment update.
+     */
     public function test_update_impediment_successfully(): void
     {
         // Arrange
-        $impediment = Impediment::for($this->testSchedulable)
-            ->owner($this->availabilityModel)
-            ->create([
-                'reason' => 'Raison originale',
-                'start_datetime' => '2038-01-04 10:00:00',
-                'end_datetime' => '2038-01-04 12:00:00',
-                'metadata' => ['original' => true],
-            ]);
+        $impediment = impediment_for($this->availabilityModel)->create([
+            'reason' => 'Original reason',
+            'start_datetime' => '2038-01-04 10:00:00',
+            'end_datetime' => '2038-01-04 12:00:00',
+            'metadata' => ['original' => true],
+        ]);
+
+        $updateData = [
+            'reason' => 'Updated reason',
+            'metadata' => ['updated' => true],
+        ];
 
         // Act
-        $result = Impediment::for($this->testSchedulable)
-            ->owner($this->availabilityModel)
-            ->update($impediment->id, [
-                'reason' => 'Nouvelle raison',
-                'metadata' => ['updated' => true],
-            ]);
+        $result = impediment_for($this->availabilityModel)->update($impediment->id, $updateData);
 
         // Assert
         $this->assertTrue($result);
         $impediment->refresh();
-        $this->assertEquals('Nouvelle raison', $impediment->reason);
-        $this->assertEquals(['updated' => true], $impediment->metadata);
+        $this->assertSame('Updated reason', $impediment->reason);
+        $this->assertSame(['updated' => true], $impediment->metadata);
     }
 
+    /**
+     * Test impediment update with datetime changes.
+     */
     public function test_update_impediment_with_datetime_changes(): void
     {
         // Arrange
-        $impediment = Impediment::for($this->testSchedulable)
-            ->owner($this->availabilityModel)
-            ->create([
-                'reason' => 'Original',
-                'start_datetime' => '2038-01-04 10:00:00',
-                'end_datetime' => '2038-01-04 12:00:00',
-            ]);
+        $impediment = impediment_for($this->availabilityModel)->create([
+            'reason' => 'Original',
+            'start_datetime' => '2038-01-04 10:00:00',
+            'end_datetime' => '2038-01-04 12:00:00',
+        ]);
 
         // Act
-        $result = Impediment::for($this->testSchedulable)
-            ->owner($this->availabilityModel)
-            ->update($impediment->id, [
-                'start_datetime' => '2038-01-04 13:00:00',
-                'end_datetime' => '2038-01-04 15:00:00',
-            ]);
+        $result = impediment_for($this->availabilityModel)->update($impediment->id, [
+            'start_datetime' => '2038-01-04 13:00:00',
+            'end_datetime' => '2038-01-04 15:00:00',
+        ]);
 
         // Assert
         $this->assertTrue($result);
@@ -181,83 +189,81 @@ final class ImpedimentServiceTest extends TestCase
         $this->assertEquals(Carbon::parse('2038-01-04 15:00:00'), $impediment->end_datetime);
     }
 
+    /**
+     * Test impediment update fails when impediment not found.
+     */
     public function test_update_impediment_throws_exception_when_not_found(): void
     {
-        // Expect
+        // Assert
         $this->expectException(ValidationFailedException::class);
         $this->expectExceptionMessageMatches('/Impediment with given ID does not exist/');
 
         // Act
-        Impediment::for($this->testSchedulable)
-            ->owner($this->availabilityModel)
-            ->update(999999, ['reason' => 'test']);
+        impediment_for($this->availabilityModel)->update(999999, ['reason' => 'test']);
     }
 
+    /**
+     * Test successful impediment deletion.
+     */
     public function test_delete_impediment_successfully(): void
     {
         // Arrange
-        $impediment = Impediment::for($this->testSchedulable)
-            ->owner($this->availabilityModel)
-            ->create([
-                'reason' => 'À supprimer',
-                'start_datetime' => '2038-01-04 10:00:00',
-                'end_datetime' => '2038-01-04 12:00:00',
-            ]);
+        $impediment = impediment_for($this->availabilityModel)->create([
+            'reason' => 'To delete',
+            'start_datetime' => '2038-01-04 10:00:00',
+            'end_datetime' => '2038-01-04 12:00:00',
+        ]);
 
         // Act
-        $result = Impediment::for($this->testSchedulable)
-            ->owner($this->availabilityModel)
-            ->delete($impediment->id);
+        $result = impediment_for($this->availabilityModel)->delete($impediment->id);
 
         // Assert
         $this->assertTrue($result);
         $this->assertNull(ImpedimentModel::find($impediment->id));
     }
 
+    /**
+     * Test impediment deletion fails when impediment not found.
+     */
     public function test_delete_impediment_throws_exception_when_not_found(): void
     {
-        // Expect
+        // Assert
         $this->expectException(ValidationFailedException::class);
         $this->expectExceptionMessageMatches('/Impediment with given ID does not exist/');
 
         // Act
-        Impediment::for($this->testSchedulable)
-            ->owner($this->availabilityModel)
-            ->delete(999999);
+        impediment_for($this->availabilityModel)->delete(999999);
     }
 
-    /* -----------------------------------------------------------------
-     | Tests de Recherche
-     | -----------------------------------------------------------------
+    /**
+     * Test finding impediment by ID.
      */
-
     public function test_find_impediment_by_id(): void
     {
         // Arrange
-        $impediment = Impediment::for($this->testSchedulable)
-            ->owner($this->availabilityModel)
-            ->create([
-                'reason' => 'Test find',
-                'start_datetime' => '2038-01-04 10:00:00',
-                'end_datetime' => '2038-01-04 12:00:00',
-            ]);
+        $impediment = impediment_for($this->availabilityModel)->create([
+            'reason' => 'Test find',
+            'start_datetime' => '2038-01-04 10:00:00',
+            'end_datetime' => '2038-01-04 12:00:00',
+        ]);
 
         // Act
-        $found = Impediment::for($this->testSchedulable)
-            ->owner($this->availabilityModel)
-            ->find($impediment->id);
+        $found = impediment_for($this->availabilityModel)->find($impediment->id);
 
         // Assert
         $this->assertInstanceOf(ImpedimentModel::class, $found);
-        $this->assertEquals($impediment->id, $found->id);
+        $this->assertSame($impediment->id, $found->id);
     }
 
+    /**
+     * Test find returns null for impediment belonging to different schedulable.
+     */
     public function test_find_returns_null_for_wrong_schedulable(): void
     {
         // Arrange
         $otherSchedulable = TestSchedulable::create();
 
-        $otherAvailability = Availability::for($otherSchedulable)->create([
+        $otherAvailability = availability_for($otherSchedulable)->create([
             'type' => 'consultation',
             'daily_start' => '09:00:00',
             'daily_end' => '17:00:00',
@@ -266,46 +272,39 @@ final class ImpedimentServiceTest extends TestCase
             'validity_end' => '2038-01-31',
         ]);
 
-        $impediment = Impediment::for($otherSchedulable)
-            ->owner($otherAvailability)
-            ->create([
-                'reason' => 'Pour autre schedulable',
-                'start_datetime' => '2038-01-04 10:00:00',
-                'end_datetime' => '2038-01-04 12:00:00',
-            ]);
+        $impediment = impediment_for($otherAvailability)->create([
+            'reason' => 'For other schedulable',
+            'start_datetime' => '2038-01-04 10:00:00',
+            'end_datetime' => '2038-01-04 12:00:00',
+        ]);
 
-        // Act - Essayer de trouver avec le mauvais schedulable
-        $found = Impediment::for($this->testSchedulable)
-            ->owner($this->availabilityModel)
-            ->find($impediment->id);
+        // Act
+        $found = impediment_for($this->availabilityModel)->find($impediment->id);
 
-        // Assert - Ne devrait pas trouver
-        $this->assertNotInstanceOf(\Roster\Models\Impediment::class, $found);
+        // Assert
+        $this->assertNull($found);
     }
 
+    /**
+     * Test retrieving all impediments.
+     */
     public function test_get_all_impediments(): void
     {
         // Arrange
-        Impediment::for($this->testSchedulable)
-            ->owner($this->availabilityModel)
-            ->create([
-                'reason' => 'Impediment 1',
-                'start_datetime' => '2038-01-04 10:00:00',
-                'end_datetime' => '2038-01-04 12:00:00',
-            ]);
+        impediment_for($this->availabilityModel)->create([
+            'reason' => 'Impediment 1',
+            'start_datetime' => '2038-01-04 10:00:00',
+            'end_datetime' => '2038-01-04 12:00:00',
+        ]);
 
-        Impediment::for($this->testSchedulable)
-            ->owner($this->availabilityModel)
-            ->create([
-                'reason' => 'Impediment 2',
-                'start_datetime' => '2038-01-05 14:00:00',
-                'end_datetime' => '2038-01-05 16:00:00',
-            ]);
+        impediment_for($this->availabilityModel)->create([
+            'reason' => 'Impediment 2',
+            'start_datetime' => '2038-01-05 14:00:00',
+            'end_datetime' => '2038-01-05 16:00:00',
+        ]);
 
         // Act
-        $result = Impediment::for($this->testSchedulable)
-            ->owner($this->availabilityModel)
-            ->all();
+        $result = impediment_for($this->availabilityModel)->all();
 
         // Assert
         $this->assertCount(2, $result);
@@ -314,271 +313,248 @@ final class ImpedimentServiceTest extends TestCase
         $this->assertContains('Impediment 2', $reasons);
     }
 
+    /**
+     * Test retrieving impediments with date range filter.
+     */
     public function test_get_with_filters(): void
     {
         // Arrange
-        Impediment::for($this->testSchedulable)
-            ->owner($this->availabilityModel)
-            ->create([
-                'reason' => 'Janvier',
-                'start_datetime' => '2038-01-04 10:00:00',
-                'end_datetime' => '2038-01-04 12:00:00',
-            ]);
+        impediment_for($this->availabilityModel)->create([
+            'reason' => 'January',
+            'start_datetime' => '2038-01-04 10:00:00',
+            'end_datetime' => '2038-01-04 12:00:00',
+        ]);
 
-        Impediment::for($this->testSchedulable)
-            ->owner($this->availabilityModel)
-            ->create([
-                'reason' => 'Février',
-                'start_datetime' => '2038-02-04 10:00:00',
-                'end_datetime' => '2038-02-04 12:00:00',
-            ]);
+        impediment_for($this->availabilityModel)->create([
+            'reason' => 'February',
+            'start_datetime' => '2038-02-04 10:00:00',
+            'end_datetime' => '2038-02-04 12:00:00',
+        ]);
 
-        Impediment::for($this->testSchedulable)
-            ->owner($this->availabilityModel)
-            ->create([
-                'reason' => 'Janvier tardif',
-                'start_datetime' => '2038-01-25 10:00:00',
-                'end_datetime' => '2038-01-25 12:00:00',
-            ]);
+        impediment_for($this->availabilityModel)->create([
+            'reason' => 'Late January',
+            'start_datetime' => '2038-01-25 10:00:00',
+            'end_datetime' => '2038-01-25 12:00:00',
+        ]);
 
-        // Act - Filtrer pour janvier seulement
-        $result = Impediment::for($this->testSchedulable)
-            ->owner($this->availabilityModel)
+        // Act
+        $result = impediment_for($this->availabilityModel)
             ->setFilter('start_datetime', '2038-01-01')
             ->setFilter('end_datetime', '2038-01-31')
             ->all();
+
         // Assert
         $this->assertCount(2, $result);
         $reasons = $result->pluck('reason')->toArray();
-        $this->assertContains('Janvier', $reasons);
-        $this->assertContains('Janvier tardif', $reasons);
-        $this->assertNotContains('Février', $reasons);
+        $this->assertContains('January', $reasons);
+        $this->assertContains('Late January', $reasons);
+        $this->assertNotContains('February', $reasons);
     }
 
+    /**
+     * Test retrieving impediments with reason filter.
+     */
     public function test_get_with_reason_filter(): void
     {
         // Arrange
-        Impediment::for($this->testSchedulable)
-            ->owner($this->availabilityModel)
-            ->create([
-                'reason' => 'Maintenance système',
-                'start_datetime' => '2038-01-04 10:00:00',
-                'end_datetime' => '2038-01-04 12:00:00',
-            ]);
+        impediment_for($this->availabilityModel)->create([
+            'reason' => 'System maintenance',
+            'start_datetime' => '2038-01-04 10:00:00',
+            'end_datetime' => '2038-01-04 12:00:00',
+        ]);
 
-        Impediment::for($this->testSchedulable)
-            ->owner($this->availabilityModel)
-            ->create([
-                'reason' => 'Formation sécurité',
-                'start_datetime' => '2038-01-05 10:00:00',
-                'end_datetime' => '2038-01-05 12:00:00',
-            ]);
+        impediment_for($this->availabilityModel)->create([
+            'reason' => 'Security training',
+            'start_datetime' => '2038-01-05 10:00:00',
+            'end_datetime' => '2038-01-05 12:00:00',
+        ]);
 
-        Impediment::for($this->testSchedulable)
-            ->owner($this->availabilityModel)
-            ->create([
-                'reason' => 'Maintenance réseau',
-                'start_datetime' => '2038-01-06 10:00:00',
-                'end_datetime' => '2038-01-06 12:00:00',
-            ]);
+        impediment_for($this->availabilityModel)->create([
+            'reason' => 'Network maintenance',
+            'start_datetime' => '2038-01-06 10:00:00',
+            'end_datetime' => '2038-01-06 12:00:00',
+        ]);
 
-        // Act - Filtrer par raison contenant "Maintenance"
-        $result = Impediment::for($this->testSchedulable)
-            ->owner($this->availabilityModel)
+        // Act
+        $result = impediment_for($this->availabilityModel)
             ->setFilter('reason', 'Maintenance')
             ->all();
 
         // Assert
         $this->assertCount(2, $result);
         $reasons = $result->pluck('reason')->toArray();
-        $this->assertContains('Maintenance système', $reasons);
-        $this->assertContains('Maintenance réseau', $reasons);
-        $this->assertNotContains('Formation sécurité', $reasons);
+        $this->assertContains('System maintenance', $reasons);
+        $this->assertContains('Network maintenance', $reasons);
+        $this->assertNotContains('Security training', $reasons);
     }
 
-    /* -----------------------------------------------------------------
-     | Tests de Vérification de Chevauchement
-     | -----------------------------------------------------------------
+    /**
+     * Test checking overlap with existing schedule returns true.
      */
-
     public function test_would_overlap_with_schedule_returns_true(): void
     {
-        // Arrange - Créer un schedule
-        Schedule::for($this->testSchedulable)
-            ->owner($this->availabilityModel)
-            ->create([
-                'title' => 'Réunion existante',
-                'start_datetime' => '2038-01-04 11:00:00',
-                'end_datetime' => '2038-01-04 13:00:00',
-            ]);
+        // Arrange
+        schedule_for($this->availabilityModel)->create([
+            'title' => 'Existing meeting',
+            'start_datetime' => '2038-01-04 11:00:00',
+            'end_datetime' => '2038-01-04 13:00:00',
+        ]);
 
-        // Act - Vérifier chevauchement
-        $wouldOverlap = Impediment::for($this->testSchedulable)
-            ->owner($this->availabilityModel)
-            ->wouldOverlapWithSchedule(
-                $this->availabilityModel->id,
-                Carbon::parse('2038-01-04 10:00:00'),
-                Carbon::parse('2038-01-04 12:00:00')
-            );
+        // Act
+        $wouldOverlap = impediment_for($this->availabilityModel)->wouldOverlapWithSchedule(
+            availabilityId: $this->availabilityModel->id,
+            start: Carbon::parse('2038-01-04 10:00:00'),
+            end: Carbon::parse('2038-01-04 12:00:00')
+        );
 
         // Assert
         $this->assertTrue($wouldOverlap);
     }
 
+    /**
+     * Test checking overlap with existing schedule returns false.
+     */
     public function test_would_overlap_with_schedule_returns_false(): void
     {
-        // Arrange - Créer un schedule
-        Schedule::for($this->testSchedulable)
-            ->owner($this->availabilityModel)
-            ->create([
-                'title' => 'Réunion existante',
-                'start_datetime' => '2038-01-04 11:00:00',
-                'end_datetime' => '2038-01-04 13:00:00',
-            ]);
+        // Arrange
+        schedule_for($this->availabilityModel)->create([
+            'title' => 'Existing meeting',
+            'start_datetime' => '2038-01-04 11:00:00',
+            'end_datetime' => '2038-01-04 13:00:00',
+        ]);
 
-        // Act - Vérifier pas de chevauchement
-        $wouldOverlap = Impediment::for($this->testSchedulable)
-            ->owner($this->availabilityModel)
-            ->wouldOverlapWithSchedule(
-                $this->availabilityModel->id,
-                Carbon::parse('2038-01-04 14:00:00'),
-                Carbon::parse('2038-01-04 15:00:00')
-            );
+        // Act
+        $wouldOverlap = impediment_for($this->availabilityModel)->wouldOverlapWithSchedule(
+            availabilityId: $this->availabilityModel->id,
+            start: Carbon::parse('2038-01-04 14:00:00'),
+            end: Carbon::parse('2038-01-04 15:00:00')
+        );
 
         // Assert
         $this->assertFalse($wouldOverlap);
     }
 
+    /**
+     * Test checking overlap with schedule excluding current impediment.
+     */
     public function test_would_overlap_with_schedule_excluding_current_impediment(): void
     {
-        // Arrange - Créer un impediment existant
-        $impediment = Impediment::for($this->testSchedulable)
-            ->owner($this->availabilityModel)
-            ->create([
-                'reason' => 'Existant',
-                'start_datetime' => '2038-01-04 11:00:00',
-                'end_datetime' => '2038-01-04 13:00:00',
-            ]);
+        // Arrange
+        $impediment = impediment_for($this->availabilityModel)->create([
+            'reason' => 'Existing',
+            'start_datetime' => '2038-01-04 11:00:00',
+            'end_datetime' => '2038-01-04 13:00:00',
+        ]);
 
-        // Act - Vérifier avec exclusion
-        $wouldOverlap = Impediment::for($this->testSchedulable)
-            ->owner($this->availabilityModel)
-            ->wouldOverlapWithSchedule(
-                $this->availabilityModel->id,
-                Carbon::parse('2038-01-04 12:00:00'), // Chevauche l'impediment existant
-                Carbon::parse('2038-01-04 14:00:00'),
-                $impediment->id // Exclure cet impediment
-            );
+        // Act
+        $wouldOverlap = impediment_for($this->availabilityModel)->wouldOverlapWithSchedule(
+            availabilityId: $this->availabilityModel->id,
+            start: Carbon::parse('2038-01-04 12:00:00'),
+            end: Carbon::parse('2038-01-04 14:00:00'),
+            exceptImpedimentId: $impediment->id
+        );
 
-        // Assert - Pas de chevauchement avec schedule
+        // Assert
         $this->assertFalse($wouldOverlap);
     }
 
+    /**
+     * Test checking overlap with other impediment returns true.
+     */
     public function test_would_overlap_with_other_impediment_returns_true(): void
     {
-        // Arrange - Créer un impediment existant
-        Impediment::for($this->testSchedulable)
-            ->owner($this->availabilityModel)
-            ->create([
-                'reason' => 'Impediment existant',
-                'start_datetime' => '2038-01-04 11:00:00',
-                'end_datetime' => '2038-01-04 13:00:00',
-            ]);
+        // Arrange
+        impediment_for($this->availabilityModel)->create([
+            'reason' => 'Existing impediment',
+            'start_datetime' => '2038-01-04 11:00:00',
+            'end_datetime' => '2038-01-04 13:00:00',
+        ]);
 
-        // Act - Vérifier chevauchement
-        $wouldOverlap = Impediment::for($this->testSchedulable)
-            ->owner($this->availabilityModel)
-            ->wouldOverlapWithOtherImpediment(
-                $this->availabilityModel->id,
-                Carbon::parse('2038-01-04 10:00:00'),
-                Carbon::parse('2038-01-04 12:00:00')
-            );
+        // Act
+        $wouldOverlap = impediment_for($this->availabilityModel)->wouldOverlapWithOtherImpediment(
+            availabilityId: $this->availabilityModel->id,
+            start: Carbon::parse('2038-01-04 10:00:00'),
+            end: Carbon::parse('2038-01-04 12:00:00')
+        );
 
         // Assert
         $this->assertTrue($wouldOverlap);
     }
 
+    /**
+     * Test checking overlap with other impediment returns false.
+     */
     public function test_would_overlap_with_other_impediment_returns_false(): void
     {
-        // Arrange - Créer un impediment existant
-        Impediment::for($this->testSchedulable)
-            ->owner($this->availabilityModel)
-            ->create([
-                'reason' => 'Impediment existant',
-                'start_datetime' => '2038-01-04 11:00:00',
-                'end_datetime' => '2038-01-04 13:00:00',
-            ]);
+        // Arrange
+        impediment_for($this->availabilityModel)->create([
+            'reason' => 'Existing impediment',
+            'start_datetime' => '2038-01-04 11:00:00',
+            'end_datetime' => '2038-01-04 13:00:00',
+        ]);
 
-        // Act - Vérifier pas de chevauchement
-        $wouldOverlap = Impediment::for($this->testSchedulable)
-            ->owner($this->availabilityModel)
-            ->wouldOverlapWithOtherImpediment(
-                $this->availabilityModel->id,
-                Carbon::parse('2038-01-04 14:00:00'),
-                Carbon::parse('2038-01-04 15:00:00')
-            );
+        // Act
+        $wouldOverlap = impediment_for($this->availabilityModel)->wouldOverlapWithOtherImpediment(
+            availabilityId: $this->availabilityModel->id,
+            start: Carbon::parse('2038-01-04 14:00:00'),
+            end: Carbon::parse('2038-01-04 15:00:00')
+        );
 
         // Assert
         $this->assertFalse($wouldOverlap);
     }
 
-    /* -----------------------------------------------------------------
-     | Tests de Vérification de Disponibilité
-     | -----------------------------------------------------------------
+    /**
+     * Test checking time slot is blocked returns true.
      */
-
     public function test_is_time_slot_blocked_returns_true(): void
     {
-        // Arrange - Créer un impediment
-        Impediment::for($this->testSchedulable)
-            ->owner($this->availabilityModel)
-            ->create([
-                'reason' => 'Test block',
-                'start_datetime' => '2038-01-04 10:00:00',
-                'end_datetime' => '2038-01-04 12:00:00',
-            ]);
+        // Arrange
+        impediment_for($this->availabilityModel)->create([
+            'reason' => 'Test block',
+            'start_datetime' => '2038-01-04 10:00:00',
+            'end_datetime' => '2038-01-04 12:00:00',
+        ]);
 
-        // Act - Vérifier créneau chevauchant
-        $isBlocked = Impediment::for($this->testSchedulable)
-            ->owner($this->availabilityModel)
-            ->isTimeSlotBlocked(
-                Carbon::parse('2038-01-04 11:00:00'),
-                Carbon::parse('2038-01-04 13:00:00')
-            );
+        // Act
+        $isBlocked = impediment_for($this->availabilityModel)->isTimeSlotBlocked(
+            start: Carbon::parse('2038-01-04 11:00:00'),
+            end: Carbon::parse('2038-01-04 13:00:00')
+        );
 
         // Assert
         $this->assertTrue($isBlocked);
     }
 
+    /**
+     * Test checking time slot is blocked returns false.
+     */
     public function test_is_time_slot_blocked_returns_false(): void
     {
-        // Arrange - Créer un impediment
-        Impediment::for($this->testSchedulable)
-            ->owner($this->availabilityModel)
-            ->create([
-                'reason' => 'Test block',
-                'start_datetime' => '2038-01-04 10:00:00',
-                'end_datetime' => '2038-01-04 12:00:00',
-            ]);
+        // Arrange
+        impediment_for($this->availabilityModel)->create([
+            'reason' => 'Test block',
+            'start_datetime' => '2038-01-04 10:00:00',
+            'end_datetime' => '2038-01-04 12:00:00',
+        ]);
 
-        // Act - Vérifier créneau non chevauchant
-        $isBlocked = Impediment::for($this->testSchedulable)
-            ->owner($this->availabilityModel)
-            ->isTimeSlotBlocked(
-                Carbon::parse('2038-01-04 14:00:00'),
-                Carbon::parse('2038-01-04 15:00:00')
-            );
+        // Act
+        $isBlocked = impediment_for($this->availabilityModel)->isTimeSlotBlocked(
+            start: Carbon::parse('2038-01-04 14:00:00'),
+            end: Carbon::parse('2038-01-04 15:00:00')
+        );
 
         // Assert
         $this->assertFalse($isBlocked);
     }
 
+    /**
+     * Test checking time slot is blocked with type filter.
+     */
     public function test_is_time_slot_blocked_with_type_filter(): void
     {
-        $otherUser = TestSchedulable::create();
-
-        // Arrange - Créer une deuxième disponibilité avec type différent
-        $otherAvailability = Availability::for($this->testSchedulable)->create([
+        // Arrange
+        $otherAvailability = availability_for($this->testSchedulable)->create([
             'type' => 'emergency',
             'daily_start' => '18:00:00',
             'daily_end' => '21:00:00',
@@ -587,161 +563,135 @@ final class ImpedimentServiceTest extends TestCase
             'validity_end' => '2038-01-31',
         ]);
 
+        impediment_for($otherAvailability)->create([
+            'reason' => 'Emergency block',
+            'start_datetime' => '2038-01-04 19:00:00',
+            'end_datetime' => '2038-01-04 21:00:00',
+        ]);
 
-        // Créer un impediment sur l'autre disponibilité
-        Impediment::for($this->testSchedulable)
-            ->owner($otherAvailability)
-            ->create([
-                'reason' => 'Emergency block',
-                'start_datetime' => '2038-01-04 19:00:00',
-                'end_datetime' => '2038-01-04 21:00:00',
-            ]);
+        // Act
+        $isBlocked = impediment_for($this->availabilityModel)->isTimeSlotBlocked(
+            start: Carbon::parse('2038-01-04 20:00:00'),
+            end: Carbon::parse('2038-01-04 20:30:00'),
+            type: 'consultation'
+        );
 
-        // Act - Vérifier avec type 'consultation' (différent de 'emergency')
-        $isBlocked = Impediment::for($this->testSchedulable)
-            ->owner($this->availabilityModel)
-            ->isTimeSlotBlocked(
-                Carbon::parse('2038-01-04 20:00:00'),
-                Carbon::parse('2038-01-04 20:30:00'),
-                'consultation' // Type différent
-            );
-
-        // Assert - Ne devrait pas être bloqué car impediment est sur un type différent
+        // Assert
         $this->assertFalse($isBlocked);
     }
 
+    /**
+     * Test getting available time slots.
+     */
     public function test_get_available_time_slots(): void
     {
-        // Arrange - Créer un impediment
-        Impediment::for($this->testSchedulable)
-            ->owner($this->availabilityModel)
-            ->create([
-                'reason' => 'Meeting',
-                'start_datetime' => '2038-01-04 10:00:00', // Lundi
-                'end_datetime' => '2038-01-04 12:00:00',
-            ]);
+        // Arrange
+        impediment_for($this->availabilityModel)->create([
+            'reason' => 'Meeting',
+            'start_datetime' => '2038-01-04 10:00:00',
+            'end_datetime' => '2038-01-04 12:00:00',
+        ]);
 
         // Act
-        $slots = Impediment::for($this->testSchedulable)
-            ->owner($this->availabilityModel)
-            ->getAvailableTimeSlots(
-                Carbon::parse('2038-01-04 09:00:00'),
-                Carbon::parse('2038-01-04 17:00:00')
-            );
-
-        // Assert
-        $this->assertInstanceOf(Collection::class, $slots);
-
-        // Devrait avoir 2 créneaux: avant 10h et après 12h
-        $this->assertCount(2, $slots);
-
-        // Premier créneau: 9h-10h
-        $this->assertEquals('2038-01-04 09:00:00', $slots[0]['start']->format('Y-m-d H:i:s'));
-        $this->assertEquals('2038-01-04 10:00:00', $slots[0]['end']->format('Y-m-d H:i:s'));
-
-        // Deuxième créneau: 12h-17h
-        $this->assertEquals('2038-01-04 12:00:00', $slots[1]['start']->format('Y-m-d H:i:s'));
-        $this->assertEquals('2038-01-04 17:00:00', $slots[1]['end']->format('Y-m-d H:i:s'));
-    }
-
-    public function test_get_available_time_slots_when_no_availability(): void
-    {
-        // Arrange - Bloquer toute la journée
-        Impediment::for($this->testSchedulable)
-            ->owner($this->availabilityModel)
-            ->create([
-                'reason' => 'Full day meeting',
-                'start_datetime' => '2038-01-04 09:00:00',
-                'end_datetime' => '2038-01-04 17:00:00',
-            ]);
-
-        // Act
-        $slots = Impediment::for($this->testSchedulable)
-            ->owner($this->availabilityModel)
-            ->getAvailableTimeSlots(
-                Carbon::parse('2038-01-04 09:00:00'),
-                Carbon::parse('2038-01-04 17:00:00')
-            );
-
-        // Assert
-        $this->assertInstanceOf(Collection::class, $slots);
-        $this->assertCount(0, $slots); // Aucun créneau disponible
-    }
-
-    /* -----------------------------------------------------------------
-     | Tests d'Intégration
-     | -----------------------------------------------------------------
-     */
-
-    public function test_impediment_prevents_schedule_creation(): void
-    {
-        // Arrange - Créer un impediment
-        Impediment::for($this->testSchedulable)
-            ->owner($this->availabilityModel)
-            ->create([
-                'reason' => 'Rendez-vous médical',
-                'start_datetime' => '2038-01-04 10:00:00',
-                'end_datetime' => '2038-01-04 12:00:00',
-            ]);
-
-        // Expect - La création de schedule devrait échouer
-        $this->expectException(ValidationFailedException::class);
-
-        $this->expectExceptionMessageMatches(
-            '/Schedule overlaps with existing impediment/'
+        $slots = impediment_for($this->availabilityModel)->getAvailableTimeSlots(
+            start: Carbon::parse('2038-01-04 09:00:00'),
+            end: Carbon::parse('2038-01-04 17:00:00')
         );
 
-        // Act - Essayer de créer un schedule qui chevauche l'impediment
-        Schedule::for($this->testSchedulable)
-            ->owner($this->availabilityModel)
-            ->create([
-                'title' => 'Nouveau rendez-vous',
-                'start_datetime' => '2038-01-04 11:00:00', // Chevauche l'impediment
-                'end_datetime' => '2038-01-04 13:00:00',
-                'status' => ScheduleStatus::BOOKED->value,
-            ]);
+        // Assert
+        $this->assertInstanceOf(Collection::class, $slots);
+        $this->assertCount(2, $slots);
+        $this->assertSame('2038-01-04 09:00:00', $slots[0]['start']->format('Y-m-d H:i:s'));
+        $this->assertSame('2038-01-04 10:00:00', $slots[0]['end']->format('Y-m-d H:i:s'));
+        $this->assertSame('2038-01-04 12:00:00', $slots[1]['start']->format('Y-m-d H:i:s'));
+        $this->assertSame('2038-01-04 17:00:00', $slots[1]['end']->format('Y-m-d H:i:s'));
     }
 
-    public function test_multiple_impediments_on_same_day(): void
+    /**
+     * Test getting available time slots when no availability.
+     */
+    public function test_get_available_time_slots_when_no_availability(): void
     {
-        // Arrange - Créer plusieurs impediments
-        Impediment::for($this->testSchedulable)
-            ->owner($this->availabilityModel)
-            ->create([
-                'reason' => 'Réunion matin',
-                'start_datetime' => '2038-01-04 09:00:00',
-                'end_datetime' => '2038-01-04 10:00:00',
-            ]);
-
-        Impediment::for($this->testSchedulable)
-            ->owner($this->availabilityModel)
-            ->create([
-                'reason' => 'Pause déjeuner',
-                'start_datetime' => '2038-01-04 12:00:00',
-                'end_datetime' => '2038-01-04 13:00:00',
-            ]);
-
-        Impediment::for($this->testSchedulable)
-            ->owner($this->availabilityModel)
-            ->create([
-                'reason' => 'Formation',
-                'start_datetime' => '2038-01-04 15:00:00',
-                'end_datetime' => '2038-01-04 16:00:00',
-            ]);
+        // Arrange
+        impediment_for($this->availabilityModel)->create([
+            'reason' => 'Full day meeting',
+            'start_datetime' => '2038-01-04 09:00:00',
+            'end_datetime' => '2038-01-04 17:00:00',
+        ]);
 
         // Act
-        $allImpediments = Impediment::for($this->testSchedulable)
-            ->owner($this->availabilityModel)
-            ->all();
+        $slots = impediment_for($this->availabilityModel)->getAvailableTimeSlots(
+            start: Carbon::parse('2038-01-04 09:00:00'),
+            end: Carbon::parse('2038-01-04 17:00:00')
+        );
+
+        // Assert
+        $this->assertInstanceOf(Collection::class, $slots);
+        $this->assertCount(0, $slots);
+    }
+
+    /**
+     * Test impediment prevents schedule creation.
+     */
+    public function test_impediment_prevents_schedule_creation(): void
+    {
+        // Arrange
+        impediment_for($this->availabilityModel)->create([
+            'reason' => 'Medical appointment',
+            'start_datetime' => '2038-01-04 10:00:00',
+            'end_datetime' => '2038-01-04 12:00:00',
+        ]);
+
+        // Assert
+        $this->expectException(ValidationFailedException::class);
+        $this->expectExceptionMessageMatches('/Schedule overlaps with existing impediment/');
+
+        // Act
+        schedule_for($this->availabilityModel)->create([
+            'title' => 'New appointment',
+            'start_datetime' => '2038-01-04 11:00:00',
+            'end_datetime' => '2038-01-04 13:00:00',
+        ]);
+    }
+
+    /**
+     * Test multiple impediments on same day.
+     */
+    public function test_multiple_impediments_on_same_day(): void
+    {
+        // Arrange
+        impediment_for($this->availabilityModel)->create([
+            'reason' => 'Morning meeting',
+            'start_datetime' => '2038-01-04 09:00:00',
+            'end_datetime' => '2038-01-04 10:00:00',
+        ]);
+
+        impediment_for($this->availabilityModel)->create([
+            'reason' => 'Lunch break',
+            'start_datetime' => '2038-01-04 12:00:00',
+            'end_datetime' => '2038-01-04 13:00:00',
+        ]);
+
+        impediment_for($this->availabilityModel)->create([
+            'reason' => 'Training',
+            'start_datetime' => '2038-01-04 15:00:00',
+            'end_datetime' => '2038-01-04 16:00:00',
+        ]);
+
+        // Act
+        $allImpediments = impediment_for($this->availabilityModel)->all();
 
         // Assert
         $this->assertCount(3, $allImpediments);
         $reasons = $allImpediments->pluck('reason')->toArray();
-        $this->assertContains('Réunion matin', $reasons);
-        $this->assertContains('Pause déjeuner', $reasons);
-        $this->assertContains('Formation', $reasons);
+        $this->assertContains('Morning meeting', $reasons);
+        $this->assertContains('Lunch break', $reasons);
+        $this->assertContains('Training', $reasons);
     }
 
+    /**
+     * Test impediment metadata serialization.
+     */
     public function test_impediment_metadata_serialization(): void
     {
         // Arrange
@@ -749,92 +699,88 @@ final class ImpedimentServiceTest extends TestCase
             'category' => 'maintenance',
             'priority' => 'high',
             'teams' => ['IT', 'Support'],
-            'notes' => 'Système critique',
+            'notes' => 'Critical system',
         ];
 
         // Act
-        $impediment = Impediment::for($this->testSchedulable)
-            ->owner($this->availabilityModel)
-            ->create([
-                'reason' => 'Maintenance complexe',
-                'start_datetime' => '2038-01-04 10:00:00',
-                'end_datetime' => '2038-01-04 12:00:00',
-                'metadata' => $complexMetadata,
-            ]);
+        $impediment = impediment_for($this->availabilityModel)->create([
+            'reason' => 'Complex maintenance',
+            'start_datetime' => '2038-01-04 10:00:00',
+            'end_datetime' => '2038-01-04 12:00:00',
+            'metadata' => $complexMetadata,
+        ]);
 
         // Assert
-        $this->assertEquals('maintenance', $impediment->metadata['category']);
-        $this->assertEquals('high', $impediment->metadata['priority']);
-        $this->assertEquals(['IT', 'Support'], $impediment->metadata['teams']);
-        $this->assertEquals('Système critique', $impediment->metadata['notes']);
+        $this->assertSame('maintenance', $impediment->metadata['category']);
+        $this->assertSame('high', $impediment->metadata['priority']);
+        $this->assertSame(['IT', 'Support'], $impediment->metadata['teams']);
+        $this->assertSame('Critical system', $impediment->metadata['notes']);
     }
 
+    /**
+     * Test impediment duration calculation.
+     */
     public function test_impediment_duration_calculation(): void
     {
-        // Arrange & Act
-        $impediment = Impediment::for($this->testSchedulable)
-            ->owner($this->availabilityModel)
-            ->create([
-                'reason' => 'Test duration',
-                'start_datetime' => '2038-01-04 10:00:00',
-                'end_datetime' => '2038-01-04 12:30:00', // 2.5 heures = 150 minutes
-            ]);
+        // Act
+        $impediment = impediment_for($this->availabilityModel)->create([
+            'reason' => 'Test duration',
+            'start_datetime' => '2038-01-04 10:00:00',
+            'end_datetime' => '2038-01-04 12:30:00',
+        ]);
 
         // Assert
-        $this->assertEquals(150, $impediment->duration_minutes);
+        $this->assertSame(150.0, $impediment->duration_minutes);
     }
 
-    /* -----------------------------------------------------------------
-     | Tests de Cas Limites
-     | -----------------------------------------------------------------
+    /**
+     * Test impediment exact time boundary conditions.
      */
-
     public function test_impediment_exact_time_boundary(): void
     {
         // Arrange
-        $impediment = Impediment::for($this->testSchedulable)
-            ->owner($this->availabilityModel)
-            ->create([
-                'reason' => 'Exact boundary',
-                'start_datetime' => '2038-01-04 10:00:00',
-                'end_datetime' => '2038-01-04 12:00:00',
-            ]);
+        $impediment = impediment_for($this->availabilityModel)->create([
+            'reason' => 'Exact boundary',
+            'start_datetime' => '2038-01-04 10:00:00',
+            'end_datetime' => '2038-01-04 12:00:00',
+        ]);
 
-        // Act & Assert
-        // Chevauchement à l'intérieur
+        // Assert - Overlap inside
         $this->assertTrue($impediment->overlapsWith(
-            Carbon::parse('2038-01-04 10:00:00'),
-            Carbon::parse('2038-01-04 11:00:00')
+            start: Carbon::parse('2038-01-04 10:00:00'),
+            end: Carbon::parse('2038-01-04 11:00:00')
         ));
 
-        // Chevauchement à la limite (début exact)
+        // Assert - Overlap at boundary
         $this->assertTrue($impediment->overlapsWith(
-            Carbon::parse('2038-01-04 09:00:00'),
-            Carbon::parse('2038-01-04 10:30:00')
+            start: Carbon::parse('2038-01-04 09:00:00'),
+            end: Carbon::parse('2038-01-04 10:30:00')
         ));
 
-        // Pas de chevauchement (commence exactement à la fin)
+        // Assert - No overlap (starts exactly at end)
         $this->assertFalse($impediment->overlapsWith(
-            Carbon::parse('2038-01-04 12:00:00'), // Exactement à la fin
-            Carbon::parse('2038-01-04 13:00:00')
+            start: Carbon::parse('2038-01-04 12:00:00'),
+            end: Carbon::parse('2038-01-04 13:00:00')
         ));
     }
 
+    /**
+     * Test impediment active status live.
+     */
     public function test_impediment_active_status_live(): void
     {
         $now = now();
 
-        // Skip si on est trop proche de minuit (après 23h40)
         if ($now->format('H') == 23 && (int)$now->format('i') >= 40) {
-            $this->markTestSkipped('Impossible de tester un créneau live qui traverse minuit.');
+            $this->markTestSkipped('Cannot test live time slot crossing midnight.');
         }
 
-        // Arrange - Availability live
+        // Arrange
         $dailyStart = $now->copy();
         $dailyEnd   = $now->copy()->addMinutes(20);
         $validityEnd = $now->copy()->addHour();
 
-        $availability = Availability::for($this->testSchedulable)->create([
+        $availability = availability_for($this->testSchedulable)->create([
             'type' => 'instant-test',
             'daily_start' => $dailyStart->format('H:i:s'),
             'daily_end' => $dailyEnd->format('H:i:s'),
@@ -843,17 +789,14 @@ final class ImpedimentServiceTest extends TestCase
             'validity_end' => $validityEnd,
         ]);
 
-        // Impediment dans la fenêtre valide
         $start = $now->copy()->addSecond();
         $end   = $now->copy()->addMinutes(10);
 
-        $impediment = Impediment::for($this->testSchedulable)
-            ->owner($availability)
-            ->create([
-                'reason' => 'Live active test',
-                'start_datetime' => $start,
-                'end_datetime' => $end,
-            ]);
+        $impediment = impediment_for($availability)->create([
+            'reason' => 'Live active test',
+            'start_datetime' => $start,
+            'end_datetime' => $end,
+        ]);
 
         sleep(2);
 
@@ -863,70 +806,64 @@ final class ImpedimentServiceTest extends TestCase
         $this->assertFalse($impediment->isUpcoming());
     }
 
-
+    /**
+     * Test concurrent impediment creation prevents overlap.
+     */
     public function test_concurrent_impediment_creation_prevents_overlap(): void
     {
-        // Arrange - Créer un premier impediment
-        Impediment::for($this->testSchedulable)
-            ->owner($this->availabilityModel)
-            ->create([
-                'reason' => 'Premier impediment',
-                'start_datetime' => '2038-01-04 10:00:00',
-                'end_datetime' => '2038-01-04 12:00:00',
-            ]);
+        // Arrange
+        impediment_for($this->availabilityModel)->create([
+            'reason' => 'First impediment',
+            'start_datetime' => '2038-01-04 10:00:00',
+            'end_datetime' => '2038-01-04 12:00:00',
+        ]);
 
-        // Expect - La création du deuxième devrait échouer
+        // Assert
         $this->expectException(ValidationFailedException::class);
-        $this->expectExceptionMessageMatches(
-            '/overlaps with existing impediment/'
-        );
+        $this->expectExceptionMessageMatches('/overlaps with existing impediment/');
 
-
-        // Act - Essayer de créer un deuxième qui chevauche
-        Impediment::for($this->testSchedulable)
-            ->owner($this->availabilityModel)
-            ->create([
-                'reason' => 'Deuxième impediment',
-                'start_datetime' => '2038-01-04 11:00:00', // Chevauche
-                'end_datetime' => '2038-01-04 13:00:00',
-            ]);
+        // Act
+        impediment_for($this->availabilityModel)->create([
+            'reason' => 'Second impediment',
+            'start_datetime' => '2038-01-04 11:00:00',
+            'end_datetime' => '2038-01-04 13:00:00',
+        ]);
     }
 
+    /**
+     * Test impediment creation fails on non-availability day.
+     */
     public function test_impediment_on_non_availability_day(): void
     {
-        // Arrange - Disponibilité seulement le lundi
-        $mondayOnlyAvailability = Availability::for($this->testSchedulable)->create([
+        // Arrange
+        $mondayOnlyAvailability = availability_for($this->testSchedulable)->create([
             'type' => 'monday-only',
             'daily_start' => '20:00:00',
             'daily_end' => '22:00:00',
-            'days' => ['monday'], // Seulement lundi
+            'days' => ['monday'],
             'validity_start' => '2038-01-01',
             'validity_end' => '2038-01-31',
         ]);
 
-        // Expect - Essayer de créer un impediment le mardi devrait échouer
+        // Assert
         $this->expectException(ValidationFailedException::class);
-        $this->expectExceptionMessageMatches(
-            '/failed for Impediment.*not allowed.*only permits/i'
-        );
-
-
+        $this->expectExceptionMessageMatches('/failed for Impediment.*not allowed.*only permits/i');
 
         // Act
-        Impediment::for($this->testSchedulable)
-            ->owner($mondayOnlyAvailability)
-            ->create([
-                'reason' => 'Impediment mardi',
-                'start_datetime' => '2038-01-05 21:00:00', // Mardi
-                'end_datetime' => '2038-01-07 21:30:00',
-            ]);
+        impediment_for($mondayOnlyAvailability)->create([
+            'reason' => 'Tuesday impediment',
+            'start_datetime' => '2038-01-05 21:00:00',
+            'end_datetime' => '2038-01-07 21:30:00',
+        ]);
     }
 
-
+    /**
+     * Test impediment creation fails outside availability hours.
+     */
     public function test_impediment_outside_availability_hours(): void
     {
-        // Arrange - Disponibilité 9h-17h
-        $limitedAvailability = Availability::for($this->testSchedulable)->create([
+        // Arrange
+        $limitedAvailability = availability_for($this->testSchedulable)->create([
             'type' => 'limited',
             'daily_start' => '20:00:00',
             'daily_end' => '23:00:00',
@@ -935,262 +872,220 @@ final class ImpedimentServiceTest extends TestCase
             'validity_end' => '2038-01-31',
         ]);
 
-        // Expect - Essayer de créer un impediment avant 9h devrait échouer
+        // Assert
         $this->expectException(ValidationFailedException::class);
-        $this->expectExceptionMessageMatches(
-            '/selected start time .* is before the availability start time/'
-        );
-
+        $this->expectExceptionMessageMatches('/selected start time .* is before the availability start time/');
 
         // Act
-        Impediment::for($this->testSchedulable)
-            ->owner($limitedAvailability)
-            ->create([
-                'reason' => 'Impediment trop tôt',
-                'start_datetime' => '2038-01-04 16:00:00', // Avant 9h
-                'end_datetime' => '2038-01-04 19:00:00',
-            ]);
+        impediment_for($limitedAvailability)->create([
+            'reason' => 'Too early impediment',
+            'start_datetime' => '2038-01-04 16:00:00',
+            'end_datetime' => '2038-01-04 19:00:00',
+        ]);
     }
 
+    /**
+     * Test impediments at exact boundaries do not overlap.
+     */
     public function test_impediment_exact_boundary_not_overlap(): void
     {
         // Arrange
-        $impediment1 = Impediment::for($this->testSchedulable)
-            ->owner($this->availabilityModel)
-            ->create([
-                'reason' => 'Premier impediment',
-                'start_datetime' => '2038-01-04 10:00:00',
-                'end_datetime' => '2038-01-04 11:00:00',
-            ]);
-
-        // Act - Créer un deuxième qui commence exactement à la fin du premier
-        $impediment2 = Impediment::for($this->testSchedulable)
-            ->owner($this->availabilityModel)
-            ->create([
-                'reason' => 'Deuxième impediment',
-                'start_datetime' => '2038-01-04 11:00:00', // Exactement à la fin du premier
-                'end_datetime' => '2038-01-04 12:00:00',
-            ]);
-
-        // Assert - Devrait réussir (pas de chevauchement)
-        $this->assertInstanceOf(ImpedimentModel::class, $impediment2);
-        $this->assertEquals('2038-01-04 11:00:00', $impediment2->start_datetime->format('Y-m-d H:i:s'));
-
-        // Vérifier qu'ils ne se chevauchent pas
-        $this->assertFalse($impediment1->overlapsWith(
-            $impediment2->start_datetime,
-            $impediment2->end_datetime
-        ));
-    }
-
-    public function test_find_available_slots_with_adjacent_impediments(): void
-    {
-        // Arrange - Créer des impediments adjacents
-        Impediment::for($this->testSchedulable)
-            ->owner($this->availabilityModel)
-            ->create([
-                'reason' => 'Impediment 1',
-                'start_datetime' => '2038-01-04 10:00:00',
-                'end_datetime' => '2038-01-04 11:00:00',
-            ]);
-
-        Impediment::for($this->testSchedulable)
-            ->owner($this->availabilityModel)
-            ->create([
-                'reason' => 'Impediment 2',
-                'start_datetime' => '2038-01-04 11:00:00', // Exactement à la fin du premier
-                'end_datetime' => '2038-01-04 12:00:00',
-            ]);
-
-        // Act
-        $slots = Impediment::for($this->testSchedulable)
-            ->owner($this->availabilityModel)
-            ->getAvailableTimeSlots(
-                Carbon::parse('2038-01-04 09:00:00'),
-                Carbon::parse('2038-01-04 17:00:00')
-            );
-
-        // Assert - Devrait avoir 2 créneaux: avant 10h et après 12h
-        $this->assertCount(2, $slots);
-
-        // Premier créneau: 9h-10h
-        $this->assertEquals('2038-01-04 09:00:00', $slots[0]['start']->format('Y-m-d H:i:s'));
-        $this->assertEquals('2038-01-04 10:00:00', $slots[0]['end']->format('Y-m-d H:i:s'));
-
-        // Deuxième créneau: 12h-17h
-        $this->assertEquals('2038-01-04 12:00:00', $slots[1]['start']->format('Y-m-d H:i:s'));
-        $this->assertEquals('2038-01-04 17:00:00', $slots[1]['end']->format('Y-m-d H:i:s'));
-    }
-
-    public function test_complete_blocking_scenario(): void
-    {
-        // Arrange - Créer plusieurs impediments qui couvrent toute la journée
-        Impediment::for($this->testSchedulable)
-            ->owner($this->availabilityModel)
-            ->create([
-                'reason' => 'Réunion matin',
-                'start_datetime' => '2038-01-04 09:00:00',
-                'end_datetime' => '2038-01-04 12:00:00',
-            ]);
-
-        Impediment::for($this->testSchedulable)
-            ->owner($this->availabilityModel)
-            ->create([
-                'reason' => 'Pause déjeuner',
-                'start_datetime' => '2038-01-04 12:00:00',
-                'end_datetime' => '2038-01-04 13:00:00',
-            ]);
-
-        Impediment::for($this->testSchedulable)
-            ->owner($this->availabilityModel)
-            ->create([
-                'reason' => 'Réunion après-midi',
-                'start_datetime' => '2038-01-04 13:00:00',
-                'end_datetime' => '2038-01-04 17:00:00',
-            ]);
-
-        // Act - Vérifier qu'aucun créneau n'est disponible
-        $isBlocked = Impediment::for($this->testSchedulable)
-            ->owner($this->availabilityModel)
-            ->isTimeSlotBlocked(
-                Carbon::parse('2038-01-04 10:00:00'),
-                Carbon::parse('2038-01-04 11:00:00')
-            );
-
-        // Assert
-        $this->assertTrue($isBlocked);
-
-        // Act - Chercher créneaux disponibles
-        $slots = Impediment::for($this->testSchedulable)
-            ->owner($this->availabilityModel)
-            ->getAvailableTimeSlots(
-                Carbon::parse('2038-01-04 09:00:00'),
-                Carbon::parse('2038-01-04 17:00:00')
-            );
-
-        // Assert - Aucun créneau disponible
-        $this->assertCount(0, $slots);
-    }
-
-    public function test_impediment_with_json_string_metadata(): void
-    {
-        // Arrange - JSON string comme metadata
-        $jsonMetadata = json_encode([
-            'client' => 'ABC Corp',
-            'priority' => 'urgent',
-            'notify' => true
+        $impediment1 = impediment_for($this->availabilityModel)->create([
+            'reason' => 'First impediment',
+            'start_datetime' => '2038-01-04 10:00:00',
+            'end_datetime' => '2038-01-04 11:00:00',
         ]);
 
         // Act
-        $impediment = Impediment::for($this->testSchedulable)
-            ->owner($this->availabilityModel)
-            ->create([
-                'reason' => 'Maintenance urgente',
-                'start_datetime' => '2038-01-04 10:00:00',
-                'end_datetime' => '2038-01-04 12:00:00',
-                'metadata' => $jsonMetadata, // JSON string
-            ]);
+        $impediment2 = impediment_for($this->availabilityModel)->create([
+            'reason' => 'Second impediment',
+            'start_datetime' => '2038-01-04 11:00:00',
+            'end_datetime' => '2038-01-04 12:00:00',
+        ]);
 
-        // Assert - Doit être automatiquement décodé en tableau
+        // Assert
+        $this->assertInstanceOf(ImpedimentModel::class, $impediment2);
+        $this->assertSame('2038-01-04 11:00:00', $impediment2->start_datetime->format('Y-m-d H:i:s'));
+        $this->assertFalse($impediment1->overlapsWith(
+            start: $impediment2->start_datetime,
+            end: $impediment2->end_datetime
+        ));
+    }
+
+    /**
+     * Test finding available slots with adjacent impediments.
+     */
+    public function test_find_available_slots_with_adjacent_impediments(): void
+    {
+        // Arrange
+        impediment_for($this->availabilityModel)->create([
+            'reason' => 'Impediment 1',
+            'start_datetime' => '2038-01-04 10:00:00',
+            'end_datetime' => '2038-01-04 11:00:00',
+        ]);
+
+        impediment_for($this->availabilityModel)->create([
+            'reason' => 'Impediment 2',
+            'start_datetime' => '2038-01-04 11:00:00',
+            'end_datetime' => '2038-01-04 12:00:00',
+        ]);
+
+        // Act
+        $slots = impediment_for($this->availabilityModel)->getAvailableTimeSlots(
+            start: Carbon::parse('2038-01-04 09:00:00'),
+            end: Carbon::parse('2038-01-04 17:00:00')
+        );
+
+        // Assert
+        $this->assertCount(2, $slots);
+        $this->assertSame('2038-01-04 09:00:00', $slots[0]['start']->format('Y-m-d H:i:s'));
+        $this->assertSame('2038-01-04 10:00:00', $slots[0]['end']->format('Y-m-d H:i:s'));
+        $this->assertSame('2038-01-04 12:00:00', $slots[1]['start']->format('Y-m-d H:i:s'));
+        $this->assertSame('2038-01-04 17:00:00', $slots[1]['end']->format('Y-m-d H:i:s'));
+    }
+
+    /**
+     * Test complete blocking scenario.
+     */
+    public function test_complete_blocking_scenario(): void
+    {
+        // Arrange
+        impediment_for($this->availabilityModel)->create([
+            'reason' => 'Morning meeting',
+            'start_datetime' => '2038-01-04 09:00:00',
+            'end_datetime' => '2038-01-04 12:00:00',
+        ]);
+
+        impediment_for($this->availabilityModel)->create([
+            'reason' => 'Lunch break',
+            'start_datetime' => '2038-01-04 12:00:00',
+            'end_datetime' => '2038-01-04 13:00:00',
+        ]);
+
+        impediment_for($this->availabilityModel)->create([
+            'reason' => 'Afternoon meeting',
+            'start_datetime' => '2038-01-04 13:00:00',
+            'end_datetime' => '2038-01-04 17:00:00',
+        ]);
+
+        // Act
+        $isBlocked = impediment_for($this->availabilityModel)->isTimeSlotBlocked(
+            start: Carbon::parse('2038-01-04 10:00:00'),
+            end: Carbon::parse('2038-01-04 11:00:00')
+        );
+
+        $slots = impediment_for($this->availabilityModel)->getAvailableTimeSlots(
+            start: Carbon::parse('2038-01-04 09:00:00'),
+            end: Carbon::parse('2038-01-04 17:00:00')
+        );
+
+        // Assert
+        $this->assertTrue($isBlocked);
+        $this->assertCount(0, $slots);
+    }
+
+    /**
+     * Test impediment with JSON string metadata.
+     */
+    public function test_impediment_with_json_string_metadata(): void
+    {
+        // Arrange
+        $jsonMetadata = json_encode([
+            'client' => 'ABC Corp',
+            'priority' => 'urgent',
+            'notify' => true,
+        ]);
+
+        // Act
+        $impediment = impediment_for($this->availabilityModel)->create([
+            'reason' => 'Urgent maintenance',
+            'start_datetime' => '2038-01-04 10:00:00',
+            'end_datetime' => '2038-01-04 12:00:00',
+            'metadata' => $jsonMetadata,
+        ]);
+
+        // Assert
         $this->assertIsArray($impediment->metadata);
-        $this->assertEquals('ABC Corp', $impediment->metadata['client']);
-        $this->assertEquals('urgent', $impediment->metadata['priority']);
+        $this->assertSame('ABC Corp', $impediment->metadata['client']);
+        $this->assertSame('urgent', $impediment->metadata['priority']);
         $this->assertTrue($impediment->metadata['notify']);
     }
 
+    /**
+     * Test paginating impediments.
+     */
     public function test_paginate_impediments(): void
     {
-        // Arrange - Créer 25 impediments sur des jours permis (lundi à vendredi)
-        $startDate = Carbon::parse('2038-01-04'); // lundi
+        // Arrange
+        $startDate = Carbon::parse('2038-01-04');
         for ($i = 0; $i < 25; ++$i) {
-            // Calcul du jour suivant valide
             $date = $startDate->copy()->addWeeks(intdiv($i, 5))->addDays($i % 5);
 
-            Impediment::for($this->testSchedulable)
-                ->owner($this->availabilityModel)
-                ->create([
-                    'reason' => "Impediment " . ($i + 1),
-                    'start_datetime' => $date->setTime(10, 0, 0)->toDateTimeString(),
-                    'end_datetime' => $date->setTime(12, 0, 0)->toDateTimeString(),
-                ]);
+            impediment_for($this->availabilityModel)->create([
+                'reason' => "Impediment " . ($i + 1),
+                'start_datetime' => $date->setTime(10, 0, 0)->toDateTimeString(),
+                'end_datetime' => $date->setTime(12, 0, 0)->toDateTimeString(),
+            ]);
         }
 
-        // Act - Paginer
-        $lengthAwarePaginator = Impediment::for($this->testSchedulable)
-            ->owner($this->availabilityModel)
-            ->paginate(10);
-
+        // Act
+        $paginator = impediment_for($this->availabilityModel)->paginate(10);
 
         // Assert
-        $this->assertEquals(25, $lengthAwarePaginator->total());
-        $this->assertEquals(10, $lengthAwarePaginator->perPage());
-        $this->assertEquals(3, $lengthAwarePaginator->lastPage());
-        $this->assertCount(10, $lengthAwarePaginator->items());
+        $this->assertSame(25, $paginator->total());
+        $this->assertSame(10, $paginator->perPage());
+        $this->assertSame(3, $paginator->lastPage());
+        $this->assertCount(10, $paginator->items());
     }
 
-
-
-    /* -----------------------------------------------------------------
-     | Tests de Réinitialisation
-     | -----------------------------------------------------------------
+    /**
+     * Test resetting filters.
      */
-
     public function test_reset_filters(): void
     {
         // Arrange
-        Impediment::for($this->testSchedulable)
-            ->owner($this->availabilityModel)
-            ->create([
-                'reason' => 'Test 1',
-                'start_datetime' => '2038-01-04 10:00:00',
-                'end_datetime' => '2038-01-04 12:00:00',
-            ]);
+        impediment_for($this->availabilityModel)->create([
+            'reason' => 'Test 1',
+            'start_datetime' => '2038-01-04 10:00:00',
+            'end_datetime' => '2038-01-04 12:00:00',
+        ]);
 
-        Impediment::for($this->testSchedulable)
-            ->owner($this->availabilityModel)
-            ->create([
-                'reason' => 'Test 2',
-                'start_datetime' => '2038-01-05 10:00:00',
-                'end_datetime' => '2038-01-05 12:00:00',
-            ]);
+        impediment_for($this->availabilityModel)->create([
+            'reason' => 'Test 2',
+            'start_datetime' => '2038-01-05 10:00:00',
+            'end_datetime' => '2038-01-05 12:00:00',
+        ]);
 
-        // Act - Appliquer un filtre, puis réinitialiser
-        $filtered = Impediment::for($this->testSchedulable)
-            ->owner($this->availabilityModel)
+        // Act
+        $filtered = impediment_for($this->availabilityModel)
             ->setFilter('start_date', '2038-01-05')
             ->resetFilters()
             ->all();
 
-
-
-
         // Assert
-        $this->assertCount(2, $filtered); // Nous avons toujours 2 items car les filtres ont été réinitialisés
-
+        $this->assertCount(2, $filtered);
     }
 
+    /**
+     * Test clearing all service data.
+     */
     public function test_clear_all_data(): void
     {
         // Arrange
-        $impediment = Impediment::for($this->testSchedulable)
-            ->owner($this->availabilityModel)
-            ->create([
-                'reason' => 'Test clear',
-                'start_datetime' => '2038-01-04 10:00:00',
-                'end_datetime' => '2038-01-04 12:00:00',
-            ]);
+        $impediment = impediment_for($this->availabilityModel)->create([
+            'reason' => 'Test clear',
+            'start_datetime' => '2038-01-04 10:00:00',
+            'end_datetime' => '2038-01-04 12:00:00',
+        ]);
 
-        // Act - Utiliser clear() sur le service
-        $impedimentService = Impediment::for($this->testSchedulable)
-            ->owner($this->availabilityModel);
+        $impedimentService = impediment_for($this->availabilityModel);
 
+        // Act
         $impedimentService->clear();
 
-        // Assert - Le service devrait être vide mais l'impediment existe toujours
+        // Assert
         $this->assertEmpty($impedimentService->getFilters());
         $this->assertEmpty($impedimentService->getData());
-
-        // L'impediment devrait toujours exister en base
         $this->assertNotNull(ImpedimentModel::find($impediment->id));
     }
 }
