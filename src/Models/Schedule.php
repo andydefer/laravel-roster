@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Carbon;
+use Roster\Domain\Helpers\TimeWindowHelper;
 use Roster\Enums\ScheduleStatus;
 use Roster\Traits\BelongsToSchedulable;
 
@@ -108,6 +109,7 @@ class Schedule extends Model
      */
     public function overlapsWith(Carbon $start, Carbon $end): bool
     {
+        TimeWindowHelper::assertDailyWindow($start, $end);
         return $this->start_datetime->lt($end) && $this->end_datetime->gt($start);
     }
 

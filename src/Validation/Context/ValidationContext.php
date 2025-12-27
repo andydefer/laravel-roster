@@ -16,10 +16,15 @@ use Roster\Contracts\Validation\ValidationContextInterface;
 use Roster\Enums\EntityType;
 use Roster\Enums\OperationType;
 
+/**
+ * Context container for validation operations across different entity types.
+ *
+ * Provides access to validation data, entity information, and service instances
+ * configured with the appropriate context for the current validation operation.
+ */
 class ValidationContext implements ValidationContextInterface
 {
     private OperationType $operationType;
-
     private EntityType $entityType;
 
     /**
@@ -29,8 +34,7 @@ class ValidationContext implements ValidationContextInterface
      */
     private array $data;
 
-    private ?Model $model;
-
+    private ?Model $schedulable;
     private mixed $currentEntity;
 
     /**
@@ -47,14 +51,14 @@ class ValidationContext implements ValidationContextInterface
         OperationType $operationType,
         EntityType $entityType,
         array $data,
-        ?Model $model = null,
+        ?Model $schedulable = null,
         mixed $currentEntity = null
     ) {
-        $this->operationType  = $operationType;
-        $this->entityType     = $entityType;
-        $this->data           = $data;
-        $this->model          = $model;
-        $this->currentEntity  = $currentEntity;
+        $this->operationType = $operationType;
+        $this->entityType = $entityType;
+        $this->data = $data;
+        $this->schedulable = $schedulable;
+        $this->currentEntity = $currentEntity;
     }
 
     /* -----------------------------------------------------------------
@@ -62,114 +66,123 @@ class ValidationContext implements ValidationContextInterface
      | -----------------------------------------------------------------
      */
 
+    /**
+     * Get the type of operation being validated.
+     *
+     * @return OperationType The operation type (CREATE, UPDATE or UPDATE)
+     */
     public function getOperation(): OperationType
     {
         return $this->operationType;
     }
 
+    /**
+     * Get the type of entity being validated.
+     *
+     * @return EntityType The entity type (AVAILABILITY, SCHEDULE, or IMPEDIMENT)
+     */
     public function getEntityType(): EntityType
     {
         return $this->entityType;
     }
 
+    /**
+     * Get the schedulable entity associated with this validation context.
+     *
+     * @return Model|null The schedulable model or null if not set
+     */
     public function getSchedulable(): ?Model
     {
-        return $this->model;
+        return $this->schedulable;
     }
 
     /**
      * Get the current service instance configured with the appropriate context.
      *
-     * Returns an instance of the service facade with:
-     * - For Availability: schedulable already set via for()
-     * - For Schedule and Impediment: schedulable set via for() and owner already set via owner()
-     *
      * @return ServiceInterface The service instance with context configured
+     *
+     * @throws RuntimeException When schedulable is not set or owner is required but not available
      */
     public function getCurrentService(): ServiceInterface
     {
-        // Récupérer le schedulable du contexte
         $schedulable = $this->getSchedulable();
 
         if (!$schedulable instanceof Model) {
             throw new RuntimeException('Cannot get service: schedulable is not set in validation context');
         }
 
-        // Détecter le type d'entité et utiliser la facade appropriée
         return match ($this->getEntityType()) {
-            EntityType::AVAILABILITY =>
-            // Pour Availability: seulement le schedulable
-            Availability::for($schedulable),
-
-            EntityType::SCHEDULE =>
-            // Pour Schedule: schedulable et owner (s'il existe dans le contexte)
-            $this->setupScheduleService($schedulable),
-
-            EntityType::IMPEDIMENT =>
-            // Pour Impediment: schedulable et owner (s'il existe dans le contexte)
-            $this->setupImpedimentService($schedulable),
+            EntityType::AVAILABILITY => Availability::for($schedulable),
+            EntityType::SCHEDULE => $this->buildScheduleService($schedulable),
+            EntityType::IMPEDIMENT => $this->buildImpedimentService($schedulable),
         };
     }
 
     /**
-     * Configure le service Schedule avec le contexte approprié.
+     * Build Schedule service with the appropriate context.
+     *
+     * @param Model $schedulable The schedulable entity
+     *
+     * @return ServiceInterface Configured Schedule service
+     *
+     * @throws RuntimeException When owner is required but not available
      */
-    private function setupScheduleService(Model $model): ServiceInterface
+    private function buildScheduleService(Model $schedulable): ServiceInterface
     {
-        // Récupérer l'owner depuis les données ou l'entité courante
         $owner = $this->resolveOwner();
 
         if (!$owner instanceof Model) {
             throw new RuntimeException('Cannot get Schedule service: owner is required but not available in validation context');
         }
 
-        return Schedule::for($model)->owner($owner);
+        return Schedule::for($schedulable)->owner($owner);
     }
 
     /**
-     * Configure le service Impediment avec le contexte approprié.
+     * Build Impediment service with the appropriate context.
+     *
+     * @param Model $schedulable The schedulable entity
+     *
+     * @return ServiceInterface Configured Impediment service
+     *
+     * @throws RuntimeException When owner is required but not available
      */
-    private function setupImpedimentService(Model $model): ServiceInterface
+    private function buildImpedimentService(Model $schedulable): ServiceInterface
     {
-        // Récupérer l'owner depuis les données ou l'entité courante
         $owner = $this->resolveOwner();
 
         if (!$owner instanceof Model) {
             throw new RuntimeException('Cannot get Impediment service: owner is required but not available in validation context');
         }
 
-        return Impediment::for($model)->owner($owner);
+        return Impediment::for($schedulable)->owner($owner);
     }
 
     /**
-     * Résout l'owner depuis le contexte de validation.
+     * Resolve the owner entity from validation context.
+     *
+     * @return Model|null Resolved owner entity or null if not found
      */
     private function resolveOwner(): ?Model
     {
-        // 1. Chercher dans les données brutes
-        if (isset($this->data['availability_id']) && $this->model instanceof Model) {
-            // Si on a un ID de disponibilité, chercher le modèle
+        if (isset($this->data['availability_id']) && $this->schedulable instanceof Model) {
             try {
                 return \Roster\Models\Availability::find($this->data['availability_id']);
             } catch (Exception $e) {
-                // Continuer avec d'autres méthodes si non trouvé
+                // Continue to other resolution methods if not found
             }
         }
 
-        // 2. Chercher dans l'entité courante
         if ($this->currentEntity instanceof Model) {
-            // Si c'est un Schedule ou Impediment, il a une relation availability
             if (method_exists($this->currentEntity, 'availability')) {
                 return $this->currentEntity->availability;
             }
 
-            // Si c'est une Availability, c'est déjà l'owner
             if ($this->currentEntity instanceof \Roster\Models\Availability) {
                 return $this->currentEntity;
             }
         }
 
-        // 3. Chercher dans les flags
         if ($this->hasFlag('availability')) {
             $owner = $this->getFlag('availability');
             if ($owner instanceof Model) {
@@ -183,9 +196,9 @@ class ValidationContext implements ValidationContextInterface
     /**
      * Get an Availability service instance configured with the schedulable context.
      *
-     * Returns an instance of Availability service facade with the schedulable already set via for().
+     * @return AvailabilityService Configured Availability service
      *
-     * @return AvailabilityService The Availability service instance
+     * @throws RuntimeException When schedulable is not set
      */
     public function getAvailabilityService(): AvailabilityService
     {
@@ -198,6 +211,11 @@ class ValidationContext implements ValidationContextInterface
         return Availability::for($schedulable);
     }
 
+    /**
+     * Get the current entity being validated.
+     *
+     * @return mixed The current entity model or null
+     */
     public function getCurrentEntity(): mixed
     {
         return $this->currentEntity;
@@ -208,25 +226,59 @@ class ValidationContext implements ValidationContextInterface
      | -----------------------------------------------------------------
      */
 
-    public function get(string $key, mixed $default = null): mixed
-    {
-        $value = $this->data[$key] ?? null;
-
-        return $value !== null ? $value : $default;
-    }
-
+    /**
+     * Check if a key exists in the data and is not null.
+     *
+     * @param string $key The key to check
+     *
+     * @return bool True if key exists and value is not null
+     */
     public function has(string $key): bool
     {
-        return array_key_exists($key, $this->data)
-            && $this->data[$key] !== null;
+        return array_key_exists($key, $this->data) && $this->data[$key] !== null;
     }
 
+    /**
+     * Get data with null values filtered out.
+     *
+     * @return array<string, mixed> Data without null values
+     */
     public function safeData(): array
     {
-        return array_filter(
-            $this->data,
-            static fn($value): bool => $value !== null
-        );
+        return array_filter($this->data, static fn($value): bool => $value !== null);
+    }
+
+    /**
+     * Safe getter with fallback for partial updates.
+     *
+     * - For CREATE operations: returns the value from safeData() or default.
+     * - For UPDATE operations: first tries safeData(), then currentEntity property if missing.
+     *
+     * @param string $key The key to retrieve
+     * @param mixed $default Default value if not found
+     *
+     * @return mixed The retrieved value or default
+     */
+    public function get(string $key, mixed $default = null): mixed
+    {
+        $data = $this->safeData();
+
+        if (array_key_exists($key, $data)) {
+            return $data[$key];
+        }
+
+        if ($this->operationType === OperationType::UPDATE && $this->currentEntity instanceof Model) {
+            if (property_exists($this->currentEntity, $key)) {
+                return $this->currentEntity->{$key};
+            }
+
+            $getter = 'get' . str_replace('_', '', ucwords($key, '_'));
+            if (method_exists($this->currentEntity, $getter)) {
+                return $this->currentEntity->{$getter}();
+            }
+        }
+
+        return $default;
     }
 
     /* -----------------------------------------------------------------
@@ -234,18 +286,35 @@ class ValidationContext implements ValidationContextInterface
      | -----------------------------------------------------------------
      */
 
+    /**
+     * Get raw data value including null values.
+     *
+     * @param string $key The key to retrieve
+     * @param mixed $default Default value if key doesn't exist
+     *
+     * @return mixed The raw value or default
+     */
     public function rawGet(string $key, mixed $default = null): mixed
     {
         return $this->data[$key] ?? $default;
     }
 
+    /**
+     * Check if a key exists in raw data (including null values).
+     *
+     * @param string $key The key to check
+     *
+     * @return bool True if key exists in raw data
+     */
     public function rawHas(string $key): bool
     {
         return array_key_exists($key, $this->data);
     }
 
     /**
-     * @return array<string, mixed>
+     * Get all raw data including null values.
+     *
+     * @return array<string, mixed> All data including null values
      */
     public function getData(): array
     {
@@ -253,7 +322,9 @@ class ValidationContext implements ValidationContextInterface
     }
 
     /**
-     * @return array<string, mixed>
+     * Get all raw data including null values.
+     *
+     * @return array<string, mixed> All data including null values
      */
     public function rawData(): array
     {
@@ -265,6 +336,12 @@ class ValidationContext implements ValidationContextInterface
      | -----------------------------------------------------------------
      */
 
+    /**
+     * Set a value in the data array.
+     *
+     * @param string $key The key to set
+     * @param mixed $value The value to assign
+     */
     public function set(string $key, mixed $value): void
     {
         $this->data[$key] = $value;
@@ -275,20 +352,32 @@ class ValidationContext implements ValidationContextInterface
      | -----------------------------------------------------------------
      */
 
+    /**
+     * Add a validation violation for a specific field.
+     *
+     * @param string $field The field name with the violation
+     * @param string $message The violation message
+     */
     public function setViolation(string $field, string $message): void
     {
         $this->violations[$field] = $message;
     }
 
-
     /**
-     * @return array<string, string|array<int, string>>
+     * Get all validation violations.
+     *
+     * @return array<string, string|array<int, string>> Array of violations
      */
     public function getViolations(): array
     {
         return $this->violations;
     }
 
+    /**
+     * Check if any violations have been recorded.
+     *
+     * @return bool True if there are any violations
+     */
     public function hasViolations(): bool
     {
         return $this->violations !== [];
@@ -299,16 +388,37 @@ class ValidationContext implements ValidationContextInterface
      | -----------------------------------------------------------------
      */
 
+    /**
+     * Set a flag with an optional value.
+     *
+     * @param string $flag The flag name
+     * @param mixed $value The flag value (defaults to true)
+     */
     public function setFlag(string $flag, mixed $value = true): void
     {
         $this->flags[$flag] = $value;
     }
 
+    /**
+     * Check if a flag is set and truthy.
+     *
+     * @param string $flag The flag name
+     *
+     * @return bool True if flag exists and has a truthy value
+     */
     public function hasFlag(string $flag): bool
     {
         return isset($this->flags[$flag]) && $this->flags[$flag];
     }
 
+    /**
+     * Get the value of a flag.
+     *
+     * @param string $flag The flag name
+     * @param mixed $default Default value if flag doesn't exist
+     *
+     * @return mixed The flag value or default
+     */
     public function getFlag(string $flag, mixed $default = false): mixed
     {
         return $this->flags[$flag] ?? $default;

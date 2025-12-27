@@ -3048,8 +3048,8 @@ class [30;47mValidator[0m implements ValidatorInterface
     [97;41mpublic function validate([0m
 
 
-[0;31mERROR[0m: MissingOverrideAttribute - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Validation/Validator.php#L85\src/Validation/[1;31mValidator.php:85:5[0m]8;;\ - Method Roster\Validation\Validator::addrule should have the "Override" attribute (see https://psalm.dev/358)
-    [97;41mpublic function addRule(RuleInterface $rule): void[0m
+[0;31mERROR[0m: MissingOverrideAttribute - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Validation/Validator.php#L85\src/Validation/[1;31mValidator.php:85:5[0m]8;;\ - Method Roster\Validation\Validator::registerRule should have the "Override" attribute (see https://psalm.dev/358)
+    [97;41mpublic function registerRule(RuleInterface $rule): void[0m
 
 
 [0;31mERROR[0m: MissingOverrideAttribute - ]8;;file:///home/andy-kani/pro/sites/packages/laravel-roster/src/Validation/Validator.php#L133\src/Validation/[1;31mValidator.php:133:5[0m]8;;\ - Method Roster\Validation\Validator::getrulesfor should have the "Override" attribute (see https://psalm.dev/358)
@@ -3110,7 +3110,7 @@ INFO: RedundantFunctionCall - ]8;;file:///home/andy-kani/pro/sites/packages/lar
 311 other issues found.
 ------------------------------
 Psalm can automatically fix 316 issues.
-Run Psalm again with 
+Run Psalm again with
 [30;48;5;195m--alter --issues=MissingOverrideAttribute,UnusedVariable,InvalidNullableReturnType,PossiblyUnusedMethod,ClassMustBeFinal,MissingParamType --dry-run[0m
 to see what it can fix.
 ------------------------------

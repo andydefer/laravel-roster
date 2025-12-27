@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Support\Carbon;
+use Roster\Domain\Helpers\TimeWindowHelper;
 use Roster\Traits\BelongsToSchedulable;
 
 /**
@@ -59,6 +60,8 @@ class Availability extends Model
 
     /**
      * Get the schedulable resource that owns this availability.
+     *
+     * @return MorphTo
      */
     public function schedulable(): MorphTo
     {
@@ -67,6 +70,8 @@ class Availability extends Model
 
     /**
      * Get the schedules associated with this availability.
+     *
+     * @return HasMany
      */
     public function schedules(): HasMany
     {
@@ -75,6 +80,8 @@ class Availability extends Model
 
     /**
      * Get the impediments associated with this availability.
+     *
+     * @return HasMany
      */
     public function impediments(): HasMany
     {
@@ -93,6 +100,7 @@ class Availability extends Model
      */
     public function isAvailableForSchedule(Carbon $start, Carbon $end): bool
     {
+        TimeWindowHelper::assertDailyWindow($start, $end);
         return $this->isAvailableOnDay($start)
             && $this->isWithinDailyWindow($start, $end)
             && $this->isWithinValidityPeriod($start, $end);
@@ -120,6 +128,7 @@ class Availability extends Model
      */
     private function isWithinDailyWindow(Carbon $start, Carbon $end): bool
     {
+        TimeWindowHelper::assertDailyWindow($start, $end);
         $startTime = $start->format('H:i:s');
         $endTime = $end->format('H:i:s');
         $dailyStart = $this->daily_start->format('H:i:s');
@@ -137,11 +146,12 @@ class Availability extends Model
      */
     private function isWithinValidityPeriod(Carbon $start, Carbon $end): bool
     {
-        if ($this->validity_start && $start->lt($this->validity_start)) {
-            return false;
-        }
-        return !($this->validity_end && $end->gt($this->validity_end));
+        TimeWindowHelper::assertDailyWindow($start, $end);
+
+        return (! $this->validity_start || $start->gte($this->validity_start))
+            && (! $this->validity_end || $end->lte($this->validity_end));
     }
+
 
     /**
      * Check if the availability is active on a specific date.
@@ -151,14 +161,9 @@ class Availability extends Model
      */
     public function isActiveOnDate(Carbon $date): bool
     {
-        if (!$this->isAvailableOnDay($date)) {
-            return false;
-        }
-
-        if ($this->validity_start && $date->lt($this->validity_start)) {
-            return false;
-        }
-        return !($this->validity_end && $date->gt($this->validity_end));
+        return $this->isAvailableOnDay($date)
+            && (!$this->validity_start || $date->gte($this->validity_start))
+            && (!$this->validity_end || $date->lte($this->validity_end));
     }
 
     /**
@@ -178,11 +183,9 @@ class Availability extends Model
      */
     public function getValidityDurationDays(): ?int
     {
-        if (!$this->validity_start || !$this->validity_end) {
-            return null;
-        }
-
-        return (int) $this->validity_start->diffInDays($this->validity_end);
+        return ($this->validity_start && $this->validity_end)
+            ? (int) $this->validity_start->diffInDays($this->validity_end)
+            : null;
     }
 
     /**

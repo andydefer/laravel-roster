@@ -33,7 +33,7 @@ interface ValidatorInterface
      *
      * @param RuleInterface $rule The rule instance to add
      */
-    public function addRule(RuleInterface $rule): void;
+    public function registerRule(RuleInterface $rule): void;
 
     /**
      * Get all rules applicable for a specific operation and entity type.

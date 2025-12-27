@@ -4,85 +4,139 @@ declare(strict_types=1);
 
 namespace Roster\Validation;
 
-use RuntimeException;
+use Illuminate\Support\Facades\Log;
+use Roster\Contracts\Validation\RuleInterface;
 use Roster\Enums\EntityType;
 use Roster\Enums\OperationType;
-use Illuminate\Support\Facades\Log;
-use ReflectionClass;
-use Throwable;
-use Roster\Contracts\Validation\RuleInterface;
 use Roster\Validation\Attributes\ValidationRule;
 use Roster\Validation\Cache\RuleCacheGenerator;
+use ReflectionClass;
+use RuntimeException;
 use Symfony\Component\Finder\Finder;
+use Throwable;
 
+/**
+ * Scans directories for validation rules and manages rule caching.
+ *
+ * Discovers validation rule classes, extracts their metadata via attributes,
+ * and provides caching mechanisms for improved performance in production.
+ */
 class RuleScanner
 {
     /**
-     * @var mixed[]
+     * @var string[] Directories to scan for validation rule classes
      */
-    private array $ruleDirectories;
+    private array $directories;
 
+    /**
+     * @var array<string, ValidationRule>|null In-memory cache of scanned rules
+     */
     private ?array $cachedRules = null;
 
-    private bool $useCacheFile;
+    /**
+     * @var bool Whether to use file-based caching
+     */
+    private bool $useFileCache;
 
+    /**
+     * @var string|null Path to the cache file
+     */
     private ?string $cacheFile;
 
-    public function __construct(
-        array $ruleDirectories = [],
-        bool $useCacheFile = true
-    ) {
-        $this->ruleDirectories = $ruleDirectories;
-        $this->useCacheFile = $useCacheFile;
+    /**
+     * Constructor.
+     *
+     * @param string[] $directories Directories to scan for validation rules
+     * @param bool $useFileCache Whether to enable file-based caching
+     */
+    public function __construct(array $directories = [], bool $useFileCache = true)
+    {
+        $this->directories = $directories;
+        $this->useFileCache = $useFileCache;
         $this->cacheFile = config('roster.cache.cache_file');
     }
 
+    /**
+     * Scans directories for validation rules and returns their metadata.
+     *
+     * @return array<string, ValidationRule> Array of class names to ValidationRule objects
+     */
     public function scan(): array
     {
-        if ($this->useCacheFile && $this->shouldUseCache()) {
+        if ($this->useFileCache && $this->shouldUseCache()) {
             return $this->loadFromCache();
         }
 
-        return $this->doScan();
+        return $this->performScan();
     }
 
+    /**
+     * Instantiates all discovered validation rules.
+     *
+     * @return RuleInterface[] Array of instantiated rule objects
+     */
+    public function instantiateRules(): array
+    {
+        $rules = [];
+
+        foreach (array_keys($this->scan()) as $className) {
+            try {
+                $rules[] = app()->make($className);
+            } catch (Throwable $e) {
+                $rules[] = new $className();
+            }
+        }
+
+        return $rules;
+    }
+
+    /**
+     * Determines whether to use the cached version based on environment and freshness.
+     *
+     * @return bool True if cache should be used, false otherwise
+     */
     private function shouldUseCache(): bool
     {
         if (!$this->cacheFile || !file_exists($this->cacheFile)) {
             return false;
         }
 
-        // En production, toujours utiliser le cache
+        // Always use cache in production for performance
         if (app()->isProduction()) {
             return true;
         }
 
-        // En développement, vérifier si le cache est frais
+        // In development, check if cache is fresh
         $ruleCacheGenerator = new RuleCacheGenerator($this);
         return $ruleCacheGenerator->isCacheFresh();
     }
 
+    /**
+     * Loads validation rules from the cache file.
+     *
+     * @return array<string, ValidationRule> Array of class names to ValidationRule objects
+     *
+     * @throws RuntimeException If cache file structure is invalid
+     */
     private function loadFromCache(): array
     {
         try {
             $rules = require $this->cacheFile;
 
-            // Valider la structure du cache
             if (!is_array($rules)) {
                 throw new RuntimeException('Invalid cache file structure');
             }
 
-            // Convertir les données en objets ValidationRule
             $result = [];
             foreach ($rules as $className => $data) {
                 $result[$className] = new ValidationRule(
                     priority: $data['priority'],
                     entities: array_map(
-                        fn($e) => EntityType::from($e),
+                        fn($entity) => EntityType::from($entity),
                         $data['entities']
                     ),
                     operations: array_map(
-                        fn($o) => OperationType::from($o),
+                        fn($operation) => OperationType::from($operation),
                         $data['operations']
                     )
                 );
@@ -90,7 +144,6 @@ class RuleScanner
 
             return $result;
         } catch (Throwable $throwable) {
-            // Si le cache est corrompu, régénérer
             Log::warning('Roster rule cache corrupted, regenerating', [
                 'file' => $this->cacheFile,
                 'error' => $throwable->getMessage()
@@ -100,27 +153,34 @@ class RuleScanner
         }
     }
 
+    /**
+     * Regenerates the cache file from fresh scanning.
+     *
+     * @return array<string, ValidationRule> Freshly scanned rules
+     */
     private function regenerateCache(): array
     {
-        $rules = $this->doScan();
+        $rules = $this->performScan();
         $ruleCacheGenerator = new RuleCacheGenerator($this);
         $ruleCacheGenerator->generate();
 
         return $rules;
     }
 
-
-    private function doScan(): array
+    /**
+     * Performs the actual directory scanning for validation rules.
+     *
+     * @return array<string, ValidationRule> Discovered rules sorted by priority
+     */
+    private function performScan(): array
     {
-
-        // Si déjà scanné intra-requête
         if ($this->cachedRules !== null) {
             return $this->cachedRules;
         }
 
         $rules = [];
 
-        foreach ($this->ruleDirectories as $ruleDirectory) {
+        foreach ($this->directories as $ruleDirectory) {
             if (!is_dir($ruleDirectory)) {
                 continue;
             }
@@ -129,23 +189,16 @@ class RuleScanner
             $finder->files()->in($ruleDirectory)->name('*Rule.php');
 
             foreach ($finder as $file) {
-                $className = $this->getClassNameFromFile($file->getPathname());
+                $className = $this->extractClassNameFromFile($file->getPathname());
 
                 if ($className && class_exists($className)) {
                     $reflection = new ReflectionClass($className);
 
                     if ($reflection->implementsInterface(RuleInterface::class)) {
-                        try {
-                            $ruleInstance = app()->make($className);
-                            $attribute = $ruleInstance->getValidationRuleAttribute();
-                            if ($attribute) {
-                                $rules[$className] = $attribute;
-                            }
-                        } catch (Throwable $e) {
-                            $attributes = $reflection->getAttributes(ValidationRule::class);
-                            if ($attributes !== []) {
-                                $rules[$className] = $attributes[0]->newInstance();
-                            }
+                        $validationRule = $this->extractValidationRule($className, $reflection);
+
+                        if ($validationRule !== null) {
+                            $rules[$className] = $validationRule;
                         }
                     }
                 }
@@ -158,25 +211,48 @@ class RuleScanner
         return $rules;
     }
 
-    public function instantiateRules(): array
+    /**
+     * Extracts the ValidationRule attribute from a rule class.
+     *
+     * @param string $className The fully qualified class name
+     * @param ReflectionClass $reflection Reflection of the class
+     *
+     * @return ValidationRule|null The validation rule attribute, or null if not found
+     */
+    private function extractValidationRule(string $className, ReflectionClass $reflection): ?ValidationRule
     {
-        $rules = [];
-        foreach (array_keys($this->scan()) as $className) {
-            try {
-                $rules[] = app()->make($className);
-            } catch (Throwable $e) {
-                $rules[] = new $className();
+        try {
+            $ruleInstance = app()->make($className);
+            $attribute = $ruleInstance->getValidationRuleAttribute();
+
+            if ($attribute) {
+                return $attribute;
+            }
+        } catch (Throwable $e) {
+            $attributes = $reflection->getAttributes(ValidationRule::class);
+
+            if (!empty($attributes)) {
+                return $attributes[0]->newInstance();
             }
         }
 
-        return $rules;
+        return null;
     }
 
-    private function getClassNameFromFile(string $filePath): ?string
+    /**
+     * Extracts the fully qualified class name from a PHP file.
+     *
+     * @param string $filePath Path to the PHP file
+     *
+     * @return string|null Fully qualified class name, or null if not found
+     */
+    private function extractClassNameFromFile(string $filePath): ?string
     {
         $content = file_get_contents($filePath);
+
         if (preg_match('/namespace\s+([^;]+);/', $content, $namespaceMatches)) {
             $namespace = $namespaceMatches[1];
+
             if (preg_match('/class\s+(\w+)/', $content, $classMatches)) {
                 return $namespace . '\\' . $classMatches[1];
             }

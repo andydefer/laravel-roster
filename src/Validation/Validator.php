@@ -4,24 +4,30 @@ declare(strict_types=1);
 
 namespace Roster\Validation;
 
-use Throwable;
 use ReflectionClass;
-use Roster\Validation\Attributes\ValidationRule;
 use Roster\Contracts\Validation\RuleInterface;
 use Roster\Contracts\Validation\ValidationContextInterface;
 use Roster\Contracts\Validation\ValidatorInterface;
 use Roster\Enums\EntityType;
 use Roster\Enums\OperationType;
+use Roster\Validation\Attributes\ValidationRule;
+use Throwable;
 
+/**
+ * Main validator implementation that discovers, organizes, and executes validation rules.
+ *
+ * Automatically discovers rules using RuleScanner and organizes them by entity type
+ * and operation type for efficient validation execution.
+ */
 class Validator implements ValidatorInterface
 {
     /**
-     * @var array<string, array<int, RuleInterface>>
+     * @var array<string, array<int, RuleInterface>> Rules indexed by operation:entity key
      */
     private array $rulesByEntityOperation = [];
 
     /**
-     * @var array<int, RuleInterface>
+     * @var array<int, RuleInterface> All registered rules
      */
     private array $allRules = [];
 
@@ -29,23 +35,33 @@ class Validator implements ValidatorInterface
 
     public function __construct(?RuleScanner $ruleScanner = null)
     {
-        $this->ruleScanner = $ruleScanner ?? new RuleScanner([
-            __DIR__ . '/Rules',
-            // Ajoutez d'autres répertoires si nécessaire
-        ]);
+        $this->ruleScanner = $ruleScanner ?? new RuleScanner(
+            directories: [__DIR__ . '/Rules']
+        );
 
         $this->discoverAndRegisterRules();
     }
 
+    /**
+     * Discovers validation rules from configured directories and registers them.
+     */
     private function discoverAndRegisterRules(): void
     {
         $rules = $this->ruleScanner->instantiateRules();
 
         foreach ($rules as $rule) {
-            $this->addRule($rule);
+            $this->registerRule($rule);
         }
     }
 
+    /**
+     * Validates the given context against applicable rules.
+     *
+     * @param ValidationContextInterface $validationContext The context to validate
+     * @param array<int, RuleInterface> $additionalRules Additional rules to apply
+     *
+     * @return ValidationResult The validation result with success status and violations
+     */
     public function validate(
         ValidationContextInterface $validationContext,
         array $additionalRules = []
@@ -53,26 +69,19 @@ class Validator implements ValidatorInterface
         $operationType = $validationContext->getOperation();
         $entityType = $validationContext->getEntityType();
 
-        // Récupérer les règles applicables
         $applicableRules = $this->getRulesFor($operationType, $entityType);
 
         if ($additionalRules !== []) {
             $applicableRules = array_merge($applicableRules, $additionalRules);
         }
 
-        // Tri par priorité (plus haut = exécuté en premier)
-        usort(
-            $applicableRules,
-            fn(RuleInterface $a, RuleInterface $b): int =>
-            $b->getPriority() <=> $a->getPriority()
-        );
+        $this->sortRulesByPriority($applicableRules);
 
-        foreach ($applicableRules as $applicableRule) {
+        foreach ($applicableRules as $rule) {
             try {
-                $applicableRule->validate($validationContext);
-            } catch (Throwable $e) {
-
-                $validationContext->setViolation('_system', sprintf('Validation rule %s failed: ', $applicableRule->getName()) . $e->getMessage());
+                $rule->validate($validationContext);
+            } catch (Throwable $exception) {
+                $this->handleRuleException($validationContext, $rule, $exception);
             }
         }
 
@@ -82,74 +91,57 @@ class Validator implements ValidatorInterface
         );
     }
 
-    public function addRule(RuleInterface $rule): void
+    /**
+     * Registers a validation rule and indexes it for quick retrieval.
+     *
+     * @param RuleInterface $rule The rule to register
+     */
+    public function registerRule(RuleInterface $rule): void
     {
         $this->allRules[] = $rule;
 
-        // Indexer la règle pour un accès rapide
         $reflectionClass = new ReflectionClass($rule);
         $attributes = $reflectionClass->getAttributes(ValidationRule::class);
 
         if ($attributes !== []) {
-            $attribute = $attributes[0]->newInstance();
-
-            foreach ($attribute->entities as $entity) {
-                if (!$entity instanceof EntityType) {
-                    continue;
-                }
-
-                foreach ($attribute->operations as $operation) {
-                    if (!$operation instanceof OperationType) {
-                        continue;
-                    }
-
-                    $key = $this->getCacheKey($operation, $entity);
-
-                    if (!isset($this->rulesByEntityOperation[$key])) {
-                        $this->rulesByEntityOperation[$key] = [];
-                    }
-
-                    $this->rulesByEntityOperation[$key][] = $rule;
-                }
-            }
+            $this->indexRuleByAttribute($rule, $attributes[0]->newInstance());
         } else {
-            // Fallback: utiliser la méthode supports() si pas d'attribut
-            foreach (EntityType::cases() as $entity) {
-                foreach (OperationType::cases() as $operation) {
-                    if ($rule->supports($operation, $entity)) {
-                        $key = $this->getCacheKey($operation, $entity);
-
-                        if (!isset($this->rulesByEntityOperation[$key])) {
-                            $this->rulesByEntityOperation[$key] = [];
-                        }
-
-                        $this->rulesByEntityOperation[$key][] = $rule;
-                    }
-                }
-            }
+            $this->indexRuleBySupportsMethod($rule);
         }
     }
 
+    /**
+     * Gets all rules applicable to a specific operation and entity type.
+     *
+     * @param OperationType $operationType The operation type
+     * @param EntityType $entityType The entity type
+     *
+     * @return array<int, RuleInterface> Applicable rules
+     */
     public function getRulesFor(OperationType $operationType, EntityType $entityType): array
     {
-        $key = $this->getCacheKey($operationType, $entityType);
+        $key = $this->createCacheKey($operationType, $entityType);
+
         return $this->rulesByEntityOperation[$key] ?? [];
     }
 
+    /**
+     * Checks if any rules exist for a specific operation and entity type.
+     *
+     * @param OperationType $operationType The operation type
+     * @param EntityType $entityType The entity type
+     *
+     * @return bool True if rules exist, false otherwise
+     */
     public function hasRulesFor(OperationType $operationType, EntityType $entityType): bool
     {
         return $this->getRulesFor($operationType, $entityType) !== [];
     }
 
-    private function getCacheKey(OperationType $operationType, EntityType $entityType): string
-    {
-        return $operationType->value . ':' . $entityType->value;
-    }
-
     /**
-     * Obtenir toutes les règles enregistrées (pour le débogage)
+     * Gets all registered rules.
      *
-     * @return array<int, RuleInterface>
+     * @return array<int, RuleInterface> All registered rules
      */
     public function getAllRules(): array
     {
@@ -157,12 +149,16 @@ class Validator implements ValidatorInterface
     }
 
     /**
-     * Vérifier si une règle spécifique est enregistrée
+     * Checks if a specific rule class is registered.
+     *
+     * @param string $ruleClass Fully qualified rule class name
+     *
+     * @return bool True if the rule is registered, false otherwise
      */
     public function hasRule(string $ruleClass): bool
     {
-        foreach ($this->allRules as $allRule) {
-            if (get_class($allRule) === $ruleClass) {
+        foreach ($this->allRules as $rule) {
+            if (get_class($rule) === $ruleClass) {
                 return true;
             }
         }
@@ -171,7 +167,9 @@ class Validator implements ValidatorInterface
     }
 
     /**
-     * Obtenir le nombre total de règles enregistrées
+     * Gets the total number of registered rules.
+     *
+     * @return int Rule count
      */
     public function getRuleCount(): int
     {
@@ -179,22 +177,110 @@ class Validator implements ValidatorInterface
     }
 
     /**
-     * Obtenir les règles triées par priorité
+     * Sorts rules by priority in descending order.
+     *
+     * @param array<int, RuleInterface> &$rules Rules to sort
      */
-    public function getRulesSortedByPriority(): array
+    private function sortRulesByPriority(array &$rules): void
     {
-        $sortedRules = $this->allRules;
-        usort($sortedRules, fn($a, $b): int => $b->getPriority() <=> $a->getPriority());
-        return $sortedRules;
+        usort(
+            $rules,
+            fn(RuleInterface $a, RuleInterface $b): int => $b->getPriority() <=> $a->getPriority()
+        );
     }
 
     /**
-     * Réinitialiser toutes les règles (utile pour les tests)
+     * Handles exceptions thrown during rule validation.
+     *
+     * @param ValidationContextInterface $validationContext Current validation context
+     * @param RuleInterface $rule The rule that failed
+     * @param Throwable $exception The thrown exception
      */
-    public function reset(): void
+    private function handleRuleException(
+        ValidationContextInterface $validationContext,
+        RuleInterface $rule,
+        Throwable $exception
+    ): void {
+        $validationContext->setViolation(
+            '_system',
+            sprintf(
+                'Validation rule %s failed: %s',
+                $rule->getName(),
+                $exception->getMessage()
+            )
+        );
+    }
+
+    /**
+     * Indexes a rule using its ValidationRule attribute metadata.
+     *
+     * @param RuleInterface $rule The rule to index
+     * @param ValidationRule $attribute The validation rule attribute
+     */
+    private function indexRuleByAttribute(RuleInterface $rule, ValidationRule $attribute): void
     {
-        $this->rulesByEntityOperation = [];
-        $this->allRules = [];
-        $this->discoverAndRegisterRules();
+        foreach ($attribute->entities as $entity) {
+            if (!$entity instanceof EntityType) {
+                continue;
+            }
+
+            foreach ($attribute->operations as $operation) {
+                if (!$operation instanceof OperationType) {
+                    continue;
+                }
+
+                $this->registerRuleToIndex($rule, $operation, $entity);
+            }
+        }
+    }
+
+    /**
+     * Indexes a rule by checking its supports() method against all possible combinations.
+     *
+     * @param RuleInterface $rule The rule to index
+     */
+    private function indexRuleBySupportsMethod(RuleInterface $rule): void
+    {
+        foreach (EntityType::cases() as $entity) {
+            foreach (OperationType::cases() as $operation) {
+                if ($rule->supports($operation, $entity)) {
+                    $this->registerRuleToIndex($rule, $operation, $entity);
+                }
+            }
+        }
+    }
+
+    /**
+     * Adds a rule to the index for quick lookup.
+     *
+     * @param RuleInterface $rule The rule to add
+     * @param OperationType $operation The operation type
+     * @param EntityType $entity The entity type
+     */
+    private function registerRuleToIndex(
+        RuleInterface $rule,
+        OperationType $operation,
+        EntityType $entity
+    ): void {
+        $key = $this->createCacheKey($operation, $entity);
+
+        if (!isset($this->rulesByEntityOperation[$key])) {
+            $this->rulesByEntityOperation[$key] = [];
+        }
+
+        $this->rulesByEntityOperation[$key][] = $rule;
+    }
+
+    /**
+     * Creates a cache key for operation-entity combination.
+     *
+     * @param OperationType $operationType The operation type
+     * @param EntityType $entityType The entity type
+     *
+     * @return string The cache key
+     */
+    private function createCacheKey(OperationType $operationType, EntityType $entityType): string
+    {
+        return $operationType->value . ':' . $entityType->value;
     }
 }

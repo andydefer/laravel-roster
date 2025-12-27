@@ -300,7 +300,7 @@ abstract class AbstractService implements ServiceInterface
             operationType: $operationType,
             entityType: $entityType,
             data: $data,
-            model: $this->schedulable,
+            schedulable: $this->schedulable,
             currentEntity: $currentEntity
         );
 

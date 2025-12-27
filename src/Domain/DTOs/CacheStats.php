@@ -4,8 +4,19 @@ declare(strict_types=1);
 
 namespace Roster\Domain\DTOs;
 
+/**
+ * Data Transfer Object representing cache statistics.
+ *
+ * Contains information about cache file size, rule count, and generation metrics.
+ */
 final class CacheStats
 {
+    /**
+     * @param string $path Full path to the cache file
+     * @param int $rulesCount Number of validation rules in cache
+     * @param int $sizeBytes Size of cache file in bytes
+     * @param float $generationTimeMs Time taken to generate cache in milliseconds
+     */
     public function __construct(
         public readonly string $path,
         public readonly int $rulesCount,
@@ -14,7 +25,12 @@ final class CacheStats
     ) {}
 
     /**
-     * Create stats from an existing cache file.
+     * Create CacheStats instance from an existing cache file path.
+     *
+     * @param string $path Path to the cache file
+     * @param float $generationTimeMs Optional generation time for new caches
+     * @return self
+     * @throws \RuntimeException When cache file is missing or has invalid format
      */
     public static function fromPath(
         string $path,
@@ -39,11 +55,18 @@ final class CacheStats
     }
 
     /**
-     * Human readable cache size.
+     * Get human readable formatted file size.
+     *
+     * @return string Formatted size with appropriate unit (B, KB, MB, GB)
      */
     public function formattedSize(): string
     {
         $bytes = $this->sizeBytes;
+
+        if ($bytes === 0) {
+            return '0 B';
+        }
+
         $units = ['B', 'KB', 'MB', 'GB'];
         $unitIndex = 0;
 

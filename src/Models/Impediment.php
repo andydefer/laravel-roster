@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Support\Carbon;
+use Roster\Domain\Helpers\TimeWindowHelper;
 use Roster\Traits\BelongsToSchedulable;
 
 /**
@@ -104,6 +105,7 @@ class Impediment extends Model
      */
     public function overlapsWith(Carbon $start, Carbon $end): bool
     {
+        TimeWindowHelper::assertDailyWindow($start, $end);
         return $this->start_datetime->lt($end) && $this->end_datetime->gt($start);
     }
 

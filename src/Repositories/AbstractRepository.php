@@ -18,33 +18,38 @@ use Roster\Models\Availability;
 use Roster\Models\Impediment;
 use Roster\Support\RosterMutationContext;
 use ReflectionClass;
+use Roster\Domain\Helpers\TimeWindowHelper;
 
 /**
- * Abstract base repository providing common CRUD operations for Eloquent models.
- * Implements the Repository pattern with filter support and mutation context protection.
+ * Abstract repository providing CRUD operations with filter support and mutation context protection.
+ *
+ * Implements the Repository pattern with built-in validation for schedulable entities and owner relationships.
+ * Handles Availability and Impediment models with appropriate business rule enforcement.
  *
  * @template TModel of Model
  */
 abstract class AbstractRepository implements RepositoryInterface
 {
     /**
-     * The model class managed by the repository.
+     * The Eloquent model class managed by this repository.
      *
      * @var class-string<TModel>|null
      */
     protected ?string $modelClass = null;
 
     /**
-     * Active filters for query operations.
+     * Currently active filters for query operations.
      *
      * @var array<string, mixed>
      */
     protected array $filters = [];
 
     /**
-     * Get the model instance managed by this repository.
+     * Get an instance of the managed model.
      *
-     * @throws LogicException When model class cannot be determined
+     * @return TModel
+     *
+     * @throws LogicException When the model class cannot be resolved or instantiated
      */
     final protected function getModel(): Model
     {
@@ -66,7 +71,7 @@ abstract class AbstractRepository implements RepositoryInterface
     }
 
     /**
-     * Get the model class name.
+     * Get the fully qualified model class name.
      */
     private function getModelClass(): string
     {
@@ -74,21 +79,20 @@ abstract class AbstractRepository implements RepositoryInterface
     }
 
     /**
-     * Resolve the model class name from repository class name.
+     * Resolve the model class name based on repository class name convention.
      */
     private function resolveModelClass(): string
     {
         $repositoryClass = static::class;
         $shortName = (new ReflectionClass($repositoryClass))->getShortName();
 
-        // Remove 'Repository' suffix and prepend model namespace
         $modelName = str_replace('Repository', '', $shortName);
 
         return 'Roster\Models\\' . $modelName;
     }
 
     /**
-     * Check if the managed model is an Availability instance.
+     * Determine if the managed model is an Availability or its subclass.
      */
     private function isAvailabilityModel(): bool
     {
@@ -97,50 +101,50 @@ abstract class AbstractRepository implements RepositoryInterface
     }
 
     /**
-     * Validate that schedulable is provided for all operations.
+     * Validate that a schedulable entity is provided.
      *
-     * @throws MissingSchedulableException When schedulable is not provided
+     * @throws MissingSchedulableException When no schedulable is provided
      */
-    private function validateSchedulable(?Model $model): void
+    private function validateSchedulable(?Model $schedulable): void
     {
-        if (!$model instanceof Model) {
+        if (!$schedulable instanceof Model) {
             throw MissingSchedulableException::create();
         }
     }
 
     /**
-     * Validate that an owner is not provided for Availability models.
+     * Validate that no owner is provided for Availability models.
      *
      * @throws InvalidOwnerException When owner is provided for Availability model
      */
-    private function validateOwnerForAvailability(?Model $model): void
+    private function validateOwnerForAvailability(?Model $owner): void
     {
-        if ($model instanceof Model && $this->isAvailabilityModel()) {
+        if ($owner instanceof Model && $this->isAvailabilityModel()) {
             throw InvalidOwnerException::forAvailability();
         }
     }
 
     /**
-     * Validate that owner is provided for non-Availability models.
+     * Validate that an owner is provided for non-Availability models.
      *
      * @throws MissingOwnerException When owner is not provided for non-Availability model
      */
-    private function validateOwnerForNonAvailability(?Model $model): void
+    private function validateOwnerForNonAvailability(?Model $owner): void
     {
-        if (!$this->isAvailabilityModel() && !$model instanceof Model) {
+        if (!$this->isAvailabilityModel() && !$owner instanceof Model) {
             throw MissingOwnerException::create($this->getModelClass());
         }
     }
 
     /**
-     * Validate both schedulable and owner based on model type.
+     * Validate both schedulable and owner according to model-specific rules.
+     *
+     * @throws MissingSchedulableException|InvalidOwnerException|MissingOwnerException
      */
     private function validateSchedulableAndOwner(?Model $schedulable, ?Model $owner): void
     {
-        // Validate schedulable (required for all models)
         $this->validateSchedulable($schedulable);
 
-        // Validate owner based on model type
         if ($this->isAvailabilityModel()) {
             $this->validateOwnerForAvailability($owner);
         } else {
@@ -149,7 +153,7 @@ abstract class AbstractRepository implements RepositoryInterface
     }
 
     /**
-     * Build base query with schedulable scope.
+     * Build a base query scoped to a specific schedulable entity.
      */
     private function buildBaseQuery(Model $schedulable): Builder
     {
@@ -161,27 +165,31 @@ abstract class AbstractRepository implements RepositoryInterface
     }
 
     /**
-     * Apply owner constraint to query if applicable.
+     * Apply owner constraint to a query builder for non-Availability models.
      */
-    private function applyOwnerConstraint(Builder $builder, ?Model $model): Builder
+    private function applyOwnerConstraint(Builder $builder, ?Model $owner): Builder
     {
-        if ($model instanceof Model && !$this->isAvailabilityModel()) {
-            $builder->where('availability_id', $model->id);
+        if ($owner instanceof Model && !$this->isAvailabilityModel()) {
+            $builder->where('availability_id', $owner->id);
         }
 
         return $builder;
     }
 
     /**
-     * Apply owner constraint to data array if applicable.
+     * Inject owner relationship into data array for non-Availability models.
+     *
      * @param array<string, mixed> $data
+     * @return array<string, mixed>
+     *
+     * @throws MissingOwnerException When owner is required but not provided
      */
-    private function applyOwnerConstraintToData(array $data, ?Model $model): array
+    private function applyOwnerConstraintToData(array $data, ?Model $owner): array
     {
-        $this->validateOwnerForNonAvailability($model);
+        $this->validateOwnerForNonAvailability($owner);
 
-        if ($model instanceof Model && !$this->isAvailabilityModel()) {
-            $data['availability_id'] = $model->id;
+        if ($owner instanceof Model && !$this->isAvailabilityModel()) {
+            $data['availability_id'] = $owner->id;
         }
 
         return $data;
@@ -193,17 +201,12 @@ abstract class AbstractRepository implements RepositoryInterface
     final public function create(array $data, Model $schedulable, ?Model $owner = null): Model
     {
         return RosterMutationContext::allow(function () use ($data, $schedulable, $owner): Model {
-            // Validate schedulable and owner
             $this->validateSchedulableAndOwner($schedulable, $owner);
 
-            // Inject schedulable into data
             $data['schedulable_id'] = $schedulable->id;
             $data['schedulable_type'] = get_class($schedulable);
-
-            // Inject owner if required
             $data = $this->applyOwnerConstraintToData($data, $owner);
 
-            // Create the model
             $model = $this->getModel();
             return $model::create($data);
         });
@@ -219,7 +222,6 @@ abstract class AbstractRepository implements RepositoryInterface
         array $data = []
     ): bool {
         return RosterMutationContext::allow(function () use ($id, $schedulable, $owner, $data): bool {
-            // Validate schedulable and owner
             $this->validateSchedulableAndOwner($schedulable, $owner);
 
             $query = $this->buildBaseQuery($schedulable)
@@ -247,7 +249,6 @@ abstract class AbstractRepository implements RepositoryInterface
         ?Model $owner = null
     ): bool {
         return RosterMutationContext::allow(function () use ($id, $schedulable, $owner): bool {
-            // Validate schedulable and owner
             $this->validateSchedulableAndOwner($schedulable, $owner);
 
             $query = $this->buildBaseQuery($schedulable)
@@ -270,7 +271,6 @@ abstract class AbstractRepository implements RepositoryInterface
         ?Model $owner = null,
         array $filters = []
     ): ?Model {
-        // Validate schedulable and owner
         $this->validateSchedulableAndOwner($schedulable, $owner);
 
         $query = $this->buildBaseQuery($schedulable)
@@ -287,14 +287,14 @@ abstract class AbstractRepository implements RepositoryInterface
 
     /**
      * Build a query with schedulable scope and applied filters.
+     *
      * @param array<string, mixed> $filters
      */
-    public function buildQueryWithFilters(Model $model, array $filters): Builder
+    public function buildQueryWithFilters(Model $schedulable, array $filters): Builder
     {
-        // Validate schedulable (owner validation happens at query execution)
-        $this->validateSchedulable($model);
+        $this->validateSchedulable($schedulable);
 
-        $builder = $this->buildBaseQuery($model);
+        $builder = $this->buildBaseQuery($schedulable);
         return $this->applyFilters($builder, $filters);
     }
 
@@ -303,7 +303,6 @@ abstract class AbstractRepository implements RepositoryInterface
      */
     final public function all(Model $schedulable, ?Model $owner = null, array $filters = []): Collection
     {
-        // Validate schedulable and owner
         $this->validateSchedulableAndOwner($schedulable, $owner);
 
         $query = $this->buildBaseQuery($schedulable);
@@ -328,7 +327,6 @@ abstract class AbstractRepository implements RepositoryInterface
         string $pageName = 'page',
         ?int $page = null
     ): LengthAwarePaginator {
-        // Validate schedulable and owner
         $this->validateSchedulableAndOwner($schedulable, $owner);
 
         $query = $this->buildQueryWithFilters($schedulable, $filters);
@@ -343,7 +341,10 @@ abstract class AbstractRepository implements RepositoryInterface
     }
 
     /**
-     * Calculate available time slots between impediments.
+     * Calculate available time slots by subtracting impediments from a time range.
+     *
+     * @param Collection<int, Impediment> $impediments
+     * @return Collection<int, array{start: Carbon, end: Carbon}>
      */
     public function getAvailableSlotsFromImpediments(
         Carbon $start,
@@ -360,23 +361,20 @@ abstract class AbstractRepository implements RepositoryInterface
         /** @var Collection<int, Impediment> $sortedImpediments */
         $sortedImpediments = $impediments->sortBy('start_datetime');
 
-        foreach ($sortedImpediments as $sortedImpediment) {
-            $impStart = $sortedImpediment->start_datetime;
-            $impEnd = $sortedImpediment->end_datetime;
+        foreach ($sortedImpediments as $impediment) {
+            $impedimentStart = $impediment->start_datetime;
+            $impedimentEnd = $impediment->end_datetime;
 
-            // Check for gap before impediment
-            if ($impStart->gt($currentTime)) {
+            if ($impedimentStart->gt($currentTime)) {
                 $availableSlots->push([
                     'start' => $currentTime->copy(),
-                    'end' => $impStart->copy(),
+                    'end' => $impedimentStart->copy(),
                 ]);
             }
 
-            // Move current time to after impediment
-            $currentTime = max($currentTime, $impEnd);
+            $currentTime = max($currentTime, $impedimentEnd);
         }
 
-        // Check for remaining time after last impediment
         if ($currentTime->lt($end)) {
             $availableSlots->push([
                 'start' => $currentTime->copy(),
@@ -391,9 +389,13 @@ abstract class AbstractRepository implements RepositoryInterface
      * Find impediments overlapping with a specific time slot.
      *
      * @return Collection<int, Impediment>
+     *
+     * @throws InvalidArgumentException When the time window is invalid
      */
     public function findForTimeSlot(int $availabilityId, Carbon $start, Carbon $end): Collection
     {
+        TimeWindowHelper::assertDailyWindow($start, $end);
+
         $model = $this->getModel();
 
         return $model::where('availability_id', $availabilityId)
@@ -404,7 +406,14 @@ abstract class AbstractRepository implements RepositoryInterface
     }
 
     /**
-     * Apply filters to query builder.
+     * Apply filters to a query builder.
+     *
+     * Supports:
+     * - Array values: WHERE IN clause
+     * - Fields containing 'start': WHERE >= value
+     * - Fields containing 'end': WHERE <= value
+     * - String values: WHERE LIKE pattern
+     * - Other values: WHERE = value
      */
     protected function applyFilters(Builder $builder, array $filters = []): Builder
     {
@@ -456,7 +465,6 @@ abstract class AbstractRepository implements RepositoryInterface
 
     /**
      * {@inheritDoc}
-     * @return array<string, mixed>
      */
     public function getFilters(): array
     {

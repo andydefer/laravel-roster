@@ -819,23 +819,37 @@ final class ImpedimentServiceTest extends TestCase
 
     public function test_impediment_active_status_live(): void
     {
+        $now = now();
+
+        // Skip si on est trop proche de minuit (après 23h40)
+        if ($now->format('H') == 23 && (int)$now->format('i') >= 40) {
+            $this->markTestSkipped('Impossible de tester un créneau live qui traverse minuit.');
+        }
+
         // Arrange - Availability live
+        $dailyStart = $now->copy();
+        $dailyEnd   = $now->copy()->addMinutes(20);
+        $validityEnd = $now->copy()->addHour();
+
         $availability = Availability::for($this->testSchedulable)->create([
             'type' => 'instant-test',
-            'daily_start' => now()->format('H:i:s'),
-            'daily_end' => now()->addMinutes(20)->format('H:i:s'),
-            'days' => [strtolower(now()->englishDayOfWeek)],
-            'validity_start' => now(),
-            'validity_end' => now()->addHour(),
+            'daily_start' => $dailyStart->format('H:i:s'),
+            'daily_end' => $dailyEnd->format('H:i:s'),
+            'days' => [strtolower($now->englishDayOfWeek)],
+            'validity_start' => $now->copy(),
+            'validity_end' => $validityEnd,
         ]);
 
         // Impediment dans la fenêtre valide
+        $start = $now->copy()->addSecond();
+        $end   = $now->copy()->addMinutes(10);
+
         $impediment = Impediment::for($this->testSchedulable)
             ->owner($availability)
             ->create([
                 'reason' => 'Live active test',
-                'start_datetime' => now()->addSecond(),
-                'end_datetime' => now()->addMinutes(7),
+                'start_datetime' => $start,
+                'end_datetime' => $end,
             ]);
 
         sleep(2);
@@ -845,6 +859,7 @@ final class ImpedimentServiceTest extends TestCase
         $this->assertFalse($impediment->isPast());
         $this->assertFalse($impediment->isUpcoming());
     }
+
 
     public function test_concurrent_impediment_creation_prevents_overlap(): void
     {

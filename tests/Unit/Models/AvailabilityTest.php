@@ -170,7 +170,6 @@ final class AvailabilityTest extends TestCase
         $availability = $this->createAvailability([
             'days' => ['thursday'], // 1er juillet 2038 est un jeudi
         ]);
-
         $start = Carbon::parse('2038-07-01 10:00:00'); // Dans la période
         $end = Carbon::parse('2038-07-01 11:00:00');
 
