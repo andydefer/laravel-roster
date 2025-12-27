@@ -1,8 +1,8 @@
 # Rector Refactoring Report
-*Generated: sam. 27 déc. 2025 13:48:50 WAT*
+*Generated: sam. 27 déc. 2025 14:16:35 WAT*
 
 
-45 files with changes
+53 files with changes
 =====================
 
 1) /home/andy-kani/pro/sites/packages/laravel-roster/src/Commands/CacheRulesCommand.php:33
@@ -753,979 +753,194 @@ Applied rules:
  * EncapsedStringsToSprintfRector
 
 
-17) /home/andy-kani/pro/sites/packages/laravel-roster/src/Models/Availability.php:60
+17) /home/andy-kani/pro/sites/packages/laravel-roster/src/Validation/Rules/AvailabilityTemporalCoherenceRule.php:168
 
     ---------- begin diff ----------
 @@ @@
+             ->where('end_datetime', '>=', $referenceTime)
+             ->get();
 
-     /**
-      * Get the schedulable resource that owns this availability.
--     *
--     * @return MorphTo
-      */
-     public function schedulable(): MorphTo
-     {
+-        foreach ($futureEntities as $entity) {
++        foreach ($futureEntities as $futureEntity) {
+             $this->validateDateBoundary(
+                 boundaryType: 'start',
+-                entity: $entity,
++                entity: $futureEntity,
+                 newDate: $newStart,
+                 entityClass: $entityClass,
+                 validationContext: $validationContext
 @@ @@
 
-     /**
-      * Get the schedules associated with this availability.
--     *
--     * @return HasMany
-      */
-     public function schedules(): HasMany
-     {
+             $this->validateDateBoundary(
+                 boundaryType: 'end',
+-                entity: $entity,
++                entity: $futureEntity,
+                 newDate: $newEnd,
+                 entityClass: $entityClass,
+                 validationContext: $validationContext
 @@ @@
-
-     /**
-      * Get the impediments associated with this availability.
--     *
--     * @return HasMany
-      */
-     public function impediments(): HasMany
-     {
-    ----------- end diff -----------
-
-Applied rules:
- * RemoveUselessReturnTagRector
-
-
-18) /home/andy-kani/pro/sites/packages/laravel-roster/src/Repositories/AbstractRepository.php:4
-
-    ---------- begin diff ----------
-@@ @@
-
- namespace Roster\Repositories;
-
-+use InvalidArgumentException;
- use Illuminate\Contracts\Pagination\LengthAwarePaginator;
- use Illuminate\Database\Eloquent\Builder;
- use Illuminate\Database\Eloquent\Model;
-@@ @@
-                 ->whereKey($id);
-
-             $query = $this->applyOwnerScope($query, $owner);
-+
-             $model = $query->first();
-
-             if (!$model) {
-@@ @@
-                 ->whereKey($id);
-
-             $query = $this->applyOwnerScope($query, $owner);
-+
-             $model = $query->first();
-
-             return $model instanceof Model && (bool) $model->delete();
-@@ @@
-      * @param Carbon $start Start time
-      * @param Carbon $end End time
-      * @return Collection<int, Impediment> Overlapping impediments
--     * @throws \InvalidArgumentException When the time window is invalid
-+     * @throws InvalidArgumentException When the time window is invalid
-      */
-     public function findForTimeSlot(int $availabilityId, Carbon $start, Carbon $end): Collection
-     {
-@@ @@
-     /**
-      * Builds a query with schedulable scope and applied filters.
-      *
--     * @param Model $schedulable Schedulable entity
-+     * @param Model $model Schedulable entity
-      * @param array<string, mixed> $filters Query filters
-      * @return Builder Query builder
-      * @throws MissingSchedulableException If schedulable not provided
-      */
--    public function buildQueryWithFilters(Model $schedulable, array $filters): Builder
-+    public function buildQueryWithFilters(Model $model, array $filters): Builder
-     {
--        $this->validateSchedulable($schedulable);
-+        $this->validateSchedulable($model);
-
--        $builder = $this->buildSchedulableScopedQuery($schedulable);
-+        $builder = $this->buildSchedulableScopedQuery($model);
-         return $this->applyFilters($builder, $filters);
-     }
-
-@@ @@
-     /**
-      * Validates that a schedulable entity is provided.
-      *
--     * @param Model|null $schedulable Schedulable entity
-+     * @param Model|null $model Schedulable entity
-      * @throws MissingSchedulableException When no schedulable is provided
-      */
--    private function validateSchedulable(?Model $schedulable): void
-+    private function validateSchedulable(?Model $model): void
-     {
--        if (!$schedulable instanceof Model) {
-+        if (!$model instanceof Model) {
-             throw MissingSchedulableException::create();
-         }
-     }
-@@ @@
-     /**
-      * Validates that no owner is provided for Availability models.
-      *
--     * @param Model|null $owner Owning entity
-+     * @param Model|null $model Owning entity
-      * @throws InvalidOwnerException When owner is provided for Availability model
-      */
--    private function validateOwnerForAvailability(?Model $owner): void
-+    private function validateOwnerForAvailability(?Model $model): void
-     {
--        if ($owner instanceof Model && $this->isAvailabilityModel()) {
-+        if ($model instanceof Model && $this->isAvailabilityModel()) {
-             throw InvalidOwnerException::forAvailability();
-         }
-     }
-@@ @@
-     /**
-      * Validates that an owner is provided for non-Availability models.
-      *
--     * @param Model|null $owner Owning entity
-+     * @param Model|null $model Owning entity
-      * @throws MissingOwnerException When owner is not provided for non-Availability model
-      */
--    private function validateOwnerForNonAvailability(?Model $owner): void
-+    private function validateOwnerForNonAvailability(?Model $model): void
-     {
--        if (!$this->isAvailabilityModel() && !$owner instanceof Model) {
-+        if (!$this->isAvailabilityModel() && !$model instanceof Model) {
-             throw MissingOwnerException::create($this->getModelClass());
-         }
-     }
-@@ @@
-      * Applies owner constraint to a query builder for non-Availability models.
-      *
-      * @param Builder $builder Query builder
--     * @param Model|null $owner Owning entity
-+     * @param Model|null $model Owning entity
-      * @return Builder Modified query builder
-      */
--    private function applyOwnerScope(Builder $builder, ?Model $owner): Builder
-+    private function applyOwnerScope(Builder $builder, ?Model $model): Builder
-     {
--        if ($owner instanceof Model && !$this->isAvailabilityModel()) {
--            $builder->where('availability_id', $owner->id);
-+        if ($model instanceof Model && !$this->isAvailabilityModel()) {
-+            $builder->where('availability_id', $model->id);
-         }
-
-         return $builder;
-@@ @@
-      * Injects owner relationship into data array for non-Availability models.
-      *
-      * @param array<string, mixed> $data Entity data
--     * @param Model|null $owner Owning entity
-+     * @param Model|null $model Owning entity
-      * @return array<string, mixed> Modified data
-      * @throws MissingOwnerException When owner is required but not provided
-      */
--    private function injectOwnerIntoData(array $data, ?Model $owner): array
-+    private function injectOwnerIntoData(array $data, ?Model $model): array
-     {
--        $this->validateOwnerForNonAvailability($owner);
-+        $this->validateOwnerForNonAvailability($model);
-
--        if ($owner instanceof Model && !$this->isAvailabilityModel()) {
--            $data['availability_id'] = $owner->id;
-+        if ($model instanceof Model && !$this->isAvailabilityModel()) {
-+            $data['availability_id'] = $model->id;
-         }
-
-         return $data;
-    ----------- end diff -----------
-
-Applied rules:
- * NewlineBeforeNewAssignSetRector
- * RenameParamToMatchTypeRector
-
-
-19) /home/andy-kani/pro/sites/packages/laravel-roster/src/Repositories/AvailabilityRepository.php:23
-
-    ---------- begin diff ----------
-@@ @@
-     /**
-      * Retrieves a query builder for availabilities of a specific schedulable entity.
-      *
--     * @param Model $schedulable The schedulable entity (e.g., User, Team)
-+     * @param Model $model The schedulable entity (e.g., User, Team)
-      * @param string|null $type Optional availability type filter
-      *
-      * @return Builder Query builder for availabilities
-      */
--    public function findForSchedulable(Model $schedulable, ?string $type = null): Builder
-+    public function findForSchedulable(Model $model, ?string $type = null): Builder
-     {
--        $builder = $this->buildBaseQuery($schedulable);
-+        $builder = $this->buildBaseQuery($model);
-
-         if ($type !== null) {
-             $builder->where('type', $type);
-@@ @@
-     /**
-      * Retrieves availabilities valid within a specific date range.
-      *
--     * @param Model $schedulable The schedulable entity
-+     * @param Model $model The schedulable entity
-      * @param Carbon $start Start date of the range
-      * @param Carbon $end End date of the range
-      * @param string|null $type Optional availability type filter
-@@ @@
-      * @return Collection<int, Availability> Collection of matching availabilities
-      */
-     public function getForDateRange(
--        Model $schedulable,
-+        Model $model,
-         Carbon $start,
-         Carbon $end,
-         ?string $type = null
-     ): Collection {
--        $builder = $this->buildBaseQuery($schedulable)
-+        $builder = $this->buildBaseQuery($model)
-             ->where(function ($query) use ($end): void {
-                 $query->whereNull('validity_start')
-                     ->orWhere('validity_start', '<=', $end);
-@@ @@
-     /**
-      * Retrieves availabilities applicable to a specific date.
-      *
--     * @param Model $schedulable The schedulable entity
-+     * @param Model $model The schedulable entity
-      * @param Carbon $date Target date
-      * @param string|null $type Optional availability type filter
-      *
-@@ @@
-      * @return Collection<int, Availability> Collection of availabilities for the date
-      */
-     public function getForDate(
--        Model $schedulable,
-+        Model $model,
-         Carbon $date,
-         ?string $type = null
-     ): Collection {
--        $builder = $this->buildBaseQuery($schedulable)
-+        $builder = $this->buildBaseQuery($model)
-             ->whereJsonContains('days', strtolower($date->englishDayOfWeek));
-
-         if ($type !== null) {
-@@ @@
-     /**
-      * Finds an availability for a time slot with conflict detection information.
-      *
--     * @param Model $schedulable The schedulable entity
-+     * @param Model $model The schedulable entity
-      * @param Carbon $start Start time of the slot
-      * @param Carbon $end End time of the slot
-      * @param string|null $type Optional availability type filter
-@@ @@
-      * @return Availability|null Matching availability with conflict flags or null
-      */
-     public function findForTimeSlotWithConflictInfo(
--        Model $schedulable,
-+        Model $model,
-         Carbon $start,
-         Carbon $end,
-         ?string $type = null
-     ): ?Availability {
--        return Availability::where('schedulable_id', $schedulable->id)
--            ->where('schedulable_type', get_class($schedulable))
-+        return Availability::where('schedulable_id', $model->id)
-+            ->where('schedulable_type', get_class($model))
-             ->when($type !== null, function ($query) use ($type): void {
-                 $query->where('type', $type);
-             })
-@@ @@
-     /**
-      * Builds a base query for availabilities of a schedulable entity.
-      *
--     * @param Model $schedulable The schedulable entity
-+     * @param Model $model The schedulable entity
-      *
-      * @return Builder Base query builder
-      */
--    private function buildBaseQuery(Model $schedulable): Builder
-+    private function buildBaseQuery(Model $model): Builder
-     {
--        return Availability::where('schedulable_id', $schedulable->id)
--            ->where('schedulable_type', get_class($schedulable));
-+        return Availability::where('schedulable_id', $model->id)
-+            ->where('schedulable_type', get_class($model));
-     }
-
-     /**
-    ----------- end diff -----------
-
-Applied rules:
- * RenameParamToMatchTypeRector
-
-
-20) /home/andy-kani/pro/sites/packages/laravel-roster/src/RosterServiceProvider.php:36
-
-    ---------- begin diff ----------
-@@ @@
- {
-     /**
-      * Bootstrap package services.
--     *
--     * @return void
-      */
-     public function boot(): void
-     {
-@@ @@
-
-     /**
-      * Register package services and dependencies.
--     *
--     * @return void
-      */
-     public function register(): void
-     {
-@@ @@
-
-     /**
-      * Register observers for domain models.
--     *
--     * @return void
-      */
-     protected function registerModelObservers(): void
-     {
-@@ @@
-
-     /**
-      * Load package helper functions.
--     *
--     * @return void
-      */
-     protected function loadHelpers(): void
-     {
-@@ @@
-
-     /**
-      * Register repository interfaces with their implementations.
--     *
--     * @return void
-      */
-     protected function registerRepositories(): void
-     {
-@@ @@
-
-     /**
-      * Register validation system components.
--     *
--     * @return void
-      */
-     protected function registerValidationSystem(): void
-     {
-@@ @@
-
-     /**
-      * Register domain services with dependency injection container.
--     *
--     * @return void
-      */
-     protected function registerDomainServices(): void
-     {
-@@ @@
-
-     /**
-      * Publish package resources for user customization.
--     *
--     * @return void
-      */
-     private function publishResources(): void
-     {
-    ----------- end diff -----------
-
-Applied rules:
- * RemoveUselessReturnTagRector
-
-
-21) /home/andy-kani/pro/sites/packages/laravel-roster/src/Services/AvailabilityService.php:4
-
-    ---------- begin diff ----------
-@@ @@
-
- namespace Roster\Services;
-
--use Roster\DTOs\AvailabilityData;
- use Roster\Enums\EntityType;
- use Roster\Enums\OperationType;
- use Roster\Models\Availability;
-    ----------- end diff -----------
-
-Applied rules:
-
-
-22) /home/andy-kani/pro/sites/packages/laravel-roster/src/Services/Core/AbstractService.php:4
-
-    ---------- begin diff ----------
-@@ @@
-
- namespace Roster\Services\Core;
-
-+use Roster\DTOs\AvailabilityData;
-+use Roster\DTOs\ScheduleData;
-+use Roster\DTOs\ImpedimentData;
- use BadMethodCallException;
- use Illuminate\Contracts\Pagination\LengthAwarePaginator;
- use Illuminate\Database\Eloquent\Model;
-@@ @@
-
-     /**
-      * Active filters for query operations.
-+     * @var mixed[]
-      */
-     protected array $filters = [];
-
-     /**
-      * Current operation data.
-+     * @var mixed[]
-      */
-     protected array $data = [];
-
-@@ @@
-     final protected function createDTOFromArray(array $data, OperationType $operationType): mixed
-     {
-         return match ($this->getEntityTypeEnum()) {
--            EntityType::AVAILABILITY => \Roster\DTOs\AvailabilityData::fromArray($data),
--            EntityType::SCHEDULE => \Roster\DTOs\ScheduleData::fromArray($data),
--            EntityType::IMPEDIMENT => \Roster\DTOs\ImpedimentData::fromArray($data),
-+            EntityType::AVAILABILITY => AvailabilityData::fromArray($data),
-+            EntityType::SCHEDULE => ScheduleData::fromArray($data),
-+            EntityType::IMPEDIMENT => ImpedimentData::fromArray($data),
-             default => throw new LogicException('Unsupported entity type for DTO creation')
-         };
-     }
-@@ @@
-     /**
-      * Gets current operation data.
-      *
--     * @return array Current data
-+     * @return mixed[] Current data
-      */
-     public function getData(): array
-     {
-@@ @@
-     /**
-      * Gets active filters.
-      *
--     * @return array Current filters
-+     * @return mixed[] Current filters
-      */
-     public function getFilters(): array
-     {
-    ----------- end diff -----------
-
-Applied rules:
- * DocblockGetterReturnArrayFromPropertyDocblockVarRector
- * DocblockVarArrayFromGetterReturnRector
-
-
-23) /home/andy-kani/pro/sites/packages/laravel-roster/src/Services/ImpedimentService.php:4
-
-    ---------- begin diff ----------
-@@ @@
-
- namespace Roster\Services;
-
--use Illuminate\Database\Eloquent\Model;
- use Illuminate\Support\Carbon;
- use Illuminate\Support\Collection;
- use Roster\Domain\Helpers\TimeSlotHelper;
- use Roster\Domain\Helpers\TimeWindowHelper;
--use Roster\DTOs\ImpedimentData;
- use Roster\Enums\EntityType;
- use Roster\Enums\OperationType;
- use Roster\Models\Availability;
-    ----------- end diff -----------
-
-Applied rules:
-
-
-24) /home/andy-kani/pro/sites/packages/laravel-roster/src/Services/ScheduleService.php:7
-
-    ---------- begin diff ----------
-@@ @@
- use Illuminate\Support\Carbon;
- use Illuminate\Support\Collection;
- use Roster\Contracts\Repository\AvailabilityRepositoryInterface;
--use Roster\DTOs\ScheduleData;
- use Roster\Enums\EntityType;
--use Roster\Enums\OperationType;
- use Roster\Models\Availability;
- use Roster\Services\Core\AbstractService;
--use Roster\Validation\Exceptions\ValidationFailedException;
-
- /**
-  * Service for managing Schedule entities and time slot availability.
-@@ @@
-             availabilityEnd: $availabilityEnd
-         );
-
--        if ($slotStart === null) {
-+        if (!$slotStart instanceof Carbon) {
-             return null;
-         }
-
-@@ @@
-         Carbon $availabilityStart,
-         Carbon $availabilityEnd
-     ): ?Carbon {
--        if ($searchStart === null || !$searchStart->isSameDay($day)) {
-+        if (!$searchStart instanceof Carbon || !$searchStart->isSameDay($day)) {
-             return $availabilityStart->copy();
-         }
-    ----------- end diff -----------
-
-Applied rules:
- * FlipTypeControlToUseExclusiveTypeRector
-
-
-25) /home/andy-kani/pro/sites/packages/laravel-roster/src/Traits/BelongsToSchedulable.php:19
-
-    ---------- begin diff ----------
-@@ @@
- {
-     /**
-      * Boots the trait with event listeners and global scopes.
--     *
--     * @return void
-      */
-     protected static function bootBelongsToSchedulable(): void
-     {
-@@ @@
-      * Validates that a schedulable reference is present before persistence.
-      *
-      * @param Model $model The model being created or updated
--     * @return void
-      * @throws MissingSchedulableException If schedulable reference is incomplete
-      */
-     protected static function validateSchedulable(Model $model): void
-    ----------- end diff -----------
-
-Applied rules:
- * RemoveUselessReturnTagRector
-
-
-26) /home/andy-kani/pro/sites/packages/laravel-roster/src/Validation/Context/ValidationContext.php:33
-
-    ---------- begin diff ----------
-@@ @@
-      */
-     private array $data;
-
--    private ?Model $schedulable;
-+    private ?Model $model;
-
-     private mixed $currentEntity;
-
-@@ @@
-         OperationType $operationType,
-         EntityType $entityType,
-         array $data,
--        ?Model $schedulable = null,
-+        ?Model $model = null,
-         mixed $currentEntity = null
-     ) {
-         $this->operationType = $operationType;
-         $this->entityType = $entityType;
-         $this->data = $data;
--        $this->schedulable = $schedulable;
-+        $this->model = $model;
-         $this->currentEntity = $currentEntity;
-     }
-
-@@ @@
-      */
-     public function getSchedulable(): ?Model
-     {
--        return $this->schedulable;
-+        return $this->model;
-     }
-
-     /**
-@@ @@
-
-         return match ($this->getEntityType()) {
-             EntityType::AVAILABILITY => availability_for($schedulable),
--            EntityType::SCHEDULE => $this->buildScheduleService($schedulable),
--            EntityType::IMPEDIMENT => $this->buildImpedimentService($schedulable),
-+            EntityType::SCHEDULE => $this->buildScheduleService(),
-+            EntityType::IMPEDIMENT => $this->buildImpedimentService(),
-         };
-     }
-
-@@ @@
-     /**
-      * Build Schedule service with the appropriate context.
-      *
--     * @param Model $schedulable The schedulable entity
-      *
-      * @return ServiceInterface Configured Schedule service
--     *
-      * @throws RuntimeException When owner is required but not available
-      */
--    private function buildScheduleService(Model $schedulable): ServiceInterface
-+    private function buildScheduleService(): ServiceInterface
-     {
-         $owner = $this->resolveOwner();
--
-         if (!$owner instanceof Model) {
-             throw new RuntimeException(
-                 'Cannot get Schedule service: owner is required but not available in validation context'
              );
-         }
--
-         return schedule_for($owner);
-     }
 
+             $this->validateDayAvailability(
+-                entity: $entity,
++                entity: $futureEntity,
+                 newDays: $newDays,
+                 entityClass: $entityClass,
+                 validationContext: $validationContext
 @@ @@
-     /**
-      * Build Impediment service with the appropriate context.
-      *
--     * @param Model $schedulable The schedulable entity
-      *
-      * @return ServiceInterface Configured Impediment service
--     *
-      * @throws RuntimeException When owner is required but not available
-      */
--    private function buildImpedimentService(Model $schedulable): ServiceInterface
-+    private function buildImpedimentService(): ServiceInterface
-     {
-         $owner = $this->resolveOwner();
--
-         if (!$owner instanceof Model) {
-             throw new RuntimeException(
-                 'Cannot get Impediment service: owner is required but not available in validation context'
-             );
-         }
--
-         return impediment_for($owner);
-     }
 
+         $entityDays = $this->extractDaysFromPeriod($startString, $endString);
+
+-        foreach ($entityDays as $day) {
+-            if (!in_array($day, $newDays, true)) {
++        foreach ($entityDays as $entityDay) {
++            if (!in_array($entityDay, $newDays, true)) {
+                 $validationContext->setViolation(
+                     'days',
+                     sprintf(
+                         "Cannot remove '%s' from days because it is used by a future %s from '%s' to '%s'",
+-                        ucfirst($day),
++                        ucfirst($entityDay),
+                         strtolower(class_basename($entityClass)),
+                         $entity->start_datetime,
+                         $entity->end_datetime
 @@ @@
-      */
-     private function resolveOwner(): ?Model
-     {
--        if (isset($this->data['availability_id']) && $this->schedulable instanceof Model) {
-+        if (isset($this->data['availability_id']) && $this->model instanceof Model) {
-             try {
-                 return AvailabilityModel::find($this->data['availability_id']);
-             } catch (Exception $exception) {
+                 if (!in_array($day, $days, true)) {
+                     $days[] = $day;
+                 }
++
+                 $current->addDay();
+             }
     ----------- end diff -----------
 
 Applied rules:
- * RemoveUnusedPrivateMethodParameterRector
- * RenameParamToMatchTypeRector
- * RenamePropertyToMatchTypeRector
-
-
-27) /home/andy-kani/pro/sites/packages/laravel-roster/src/Validation/RuleScanner.php:180
-
-    ---------- begin diff ----------
-@@ @@
-
-         $rules = [];
-
--        foreach ($this->directories as $ruleDirectory) {
--            if (!is_dir($ruleDirectory)) {
-+        foreach ($this->directories as $directory) {
-+            if (!is_dir($directory)) {
-                 continue;
-             }
-
-             $finder = new Finder();
--            $finder->files()->in($ruleDirectory)->name('*Rule.php');
-+            $finder->files()->in($directory)->name('*Rule.php');
-
-             foreach ($finder as $file) {
-                 $className = $this->extractClassNameFromFile($file->getPathname());
-@@ @@
-                     if ($reflection->implementsInterface(RuleInterface::class)) {
-                         $validationRule = $this->extractValidationRule($className, $reflection);
-
--                        if ($validationRule !== null) {
-+                        if ($validationRule instanceof ValidationRule) {
-                             $rules[$className] = $validationRule;
-                         }
-                     }
-@@ @@
-      * Extracts the ValidationRule attribute from a rule class.
-      *
-      * @param string $className The fully qualified class name
--     * @param ReflectionClass $reflection Reflection of the class
-+     * @param ReflectionClass $reflectionClass Reflection of the class
-      *
-      * @return ValidationRule|null The validation rule attribute, or null if not found
-      */
--    private function extractValidationRule(string $className, ReflectionClass $reflection): ?ValidationRule
-+    private function extractValidationRule(string $className, ReflectionClass $reflectionClass): ?ValidationRule
-     {
-         try {
-             $ruleInstance = app()->make($className);
-@@ @@
-             if ($attribute) {
-                 return $attribute;
-             }
--        } catch (Throwable $e) {
--            $attributes = $reflection->getAttributes(ValidationRule::class);
-+        } catch (Throwable $throwable) {
-+            $attributes = $reflectionClass->getAttributes(ValidationRule::class);
-
--            if (!empty($attributes)) {
-+            if ($attributes !== []) {
-                 return $attributes[0]->newInstance();
-             }
-         }
-    ----------- end diff -----------
-
-Applied rules:
- * SimplifyEmptyCheckOnEmptyArrayRector
- * FlipTypeControlToUseExclusiveTypeRector
- * CatchExceptionNameMatchingTypeRector
- * RenameParamToMatchTypeRector
+ * NewlineAfterStatementRector
  * RenameForeachValueVariableToMatchExprVariableRector
 
 
-28) /home/andy-kani/pro/sites/packages/laravel-roster/src/Validation/Rules/AbstractRule.php:58
+18) /home/andy-kani/pro/sites/packages/laravel-roster/src/Validation/Rules/AvailabilityTypeRule.php:26
 
     ---------- begin diff ----------
 @@ @@
-     {
-         $ruleAttribute = $this->getValidationRuleAttribute();
-
--        if ($ruleAttribute === null) {
-+        if (!$ruleAttribute instanceof ValidationRule) {
-             // Default behavior for rules without attribute
-             return true;
-         }
-@@ @@
-      * Checks if an operation type is supported by the rule attribute.
+      * Validates the availability type.
       *
-      * @param OperationType $operationType Operation to check
--     * @param ValidationRule $ruleAttribute Rule configuration attribute
-+     * @param ValidationRule $validationRule Rule configuration attribute
-      * @return bool True if operation supported
+      * @param ValidationContextInterface $validationContext Validation context with data
+-     * @return void
       */
--    private function isOperationSupported(OperationType $operationType, ValidationRule $ruleAttribute): bool
-+    private function isOperationSupported(OperationType $operationType, ValidationRule $validationRule): bool
+     public function validate(ValidationContextInterface $validationContext): void
      {
--        foreach ($ruleAttribute->operations as $supportedOperation) {
-+        foreach ($validationRule->operations as $supportedOperation) {
-             if ($supportedOperation === $operationType) {
-                 return true;
-             }
-         }
-+
-         return false;
-     }
-
-@@ @@
-      * Checks if an entity type is supported by the rule attribute.
-      *
-      * @param EntityType $entityType Entity to check
--     * @param ValidationRule $ruleAttribute Rule configuration attribute
-+     * @param ValidationRule $validationRule Rule configuration attribute
-      * @return bool True if entity supported
-      */
--    private function isEntitySupported(EntityType $entityType, ValidationRule $ruleAttribute): bool
-+    private function isEntitySupported(EntityType $entityType, ValidationRule $validationRule): bool
-     {
--        foreach ($ruleAttribute->entities as $supportedEntity) {
-+        foreach ($validationRule->entities as $supportedEntity) {
-             if ($supportedEntity === $entityType) {
-                 return true;
-             }
-         }
-+
-         return false;
-     }
- }
     ----------- end diff -----------
 
 Applied rules:
- * FlipTypeControlToUseExclusiveTypeRector
- * NewlineAfterStatementRector
- * RenameParamToMatchTypeRector
+ * RemoveUselessReturnTagRector
 
 
-29) /home/andy-kani/pro/sites/packages/laravel-roster/src/Validation/Rules/AvailabilityDateRangeRule.php:43
+19) /home/andy-kani/pro/sites/packages/laravel-roster/src/Validation/Rules/DaysValidationRule.php:27
 
     ---------- begin diff ----------
 @@ @@
-      * Validates validity start and end dates.
+      * Validates days configuration based on operation type.
       *
-      * @param ValidationContextInterface $validationContext The validation context
--     * @param Model|null $entity The entity being validated
-+     * @param Model|null $model The entity being validated
-      * @param OperationType $operationType The operation type
+      * @param ValidationContextInterface $validationContext Validation context with data
+-     * @return void
       */
-     private function validateValidityDates(
-         ValidationContextInterface $validationContext,
--        ?Model $entity,
-+        ?Model $model,
-         OperationType $operationType
-     ): void {
-         if ($operationType === OperationType::CREATE) {
-             $this->validateCreateValidityDates($validationContext);
-         } else {
--            $this->validateUpdateValidityDates($validationContext, $entity);
-+            $this->validateUpdateValidityDates($validationContext, $model);
-         }
-     }
-
+     public function validate(ValidationContextInterface $validationContext): void
+     {
 @@ @@
-      * Validates validity dates for UPDATE operations.
+      * Validates days array for creation operations.
       *
-      * @param ValidationContextInterface $validationContext The validation context
--     * @param Model|null $entity The entity being validated
-+     * @param Model|null $model The entity being validated
+      * @param ValidationContextInterface $validationContext Validation context
+-     * @return void
       */
-     private function validateUpdateValidityDates(
-         ValidationContextInterface $validationContext,
--        ?Model $entity
-+        ?Model $model
-     ): void {
-         $hasStart = $validationContext->has('validity_start');
-         $hasEnd = $validationContext->has('validity_end');
+     private function validateForCreate(ValidationContextInterface $validationContext): void
+     {
 @@ @@
-
-         $startValue = $hasStart
-             ? $validationContext->get('validity_start')
--            : ($entity?->validity_start ?? null);
-+            : ($model?->validity_start ?? null);
-
-         $endValue = $hasEnd
-             ? $validationContext->get('validity_end')
--            : ($entity?->validity_end ?? null);
-+            : ($model?->validity_end ?? null);
-
-         $this->validateDateRange(
-             validationContext: $validationContext,
-@@ @@
-      * Validates daily start and end times.
       *
-      * @param ValidationContextInterface $validationContext The validation context
--     * @param Model|null $entity The entity being validated
-+     * @param Model|null $model The entity being validated
-      * @param OperationType $operationType The operation type
+      * @param mixed $days Days data to validate
+      * @param ValidationContextInterface $validationContext Validation context
+-     * @return void
       */
-     private function validateDailyTimes(
-         ValidationContextInterface $validationContext,
--        ?Model $entity,
-+        ?Model $model,
-         OperationType $operationType
-     ): void {
-         if ($operationType === OperationType::CREATE) {
-             $this->validateCreateDailyTimes($validationContext);
-         } else {
--            $this->validateUpdateDailyTimes($validationContext, $entity);
-+            $this->validateUpdateDailyTimes($validationContext, $model);
-         }
-     }
-
-@@ @@
-      * Validates daily times for UPDATE operations.
-      *
-      * @param ValidationContextInterface $validationContext The validation context
--     * @param Model|null $entity The entity being validated
-+     * @param Model|null $model The entity being validated
-      */
-     private function validateUpdateDailyTimes(
-         ValidationContextInterface $validationContext,
--        ?Model $entity
-+        ?Model $model
-     ): void {
-         $hasStart = $validationContext->has('daily_start');
-         $hasEnd = $validationContext->has('daily_end');
-@@ @@
-
-         $startValue = $hasStart
-             ? $validationContext->get('daily_start')
--            : ($entity?->daily_start ?? null);
-+            : ($model?->daily_start ?? null);
-
-         $endValue = $hasEnd
-             ? $validationContext->get('daily_end')
--            : ($entity?->daily_end ?? null);
-+            : ($model?->daily_end ?? null);
-
-         $this->validateTimeRange(
-             validationContext: $validationContext,
+     private function validateDaysArray(mixed $days, ValidationContextInterface $validationContext): void
+     {
     ----------- end diff -----------
 
 Applied rules:
- * RenameParamToMatchTypeRector
+ * RemoveUselessReturnTagRector
 
 
-30) /home/andy-kani/pro/sites/packages/laravel-roster/src/Validation/Rules/AvailabilityDaysCoherenceRule.php:4
+20) /home/andy-kani/pro/sites/packages/laravel-roster/src/Validation/Rules/RequiredFieldsRule.php:47
+
+    ---------- begin diff ----------
+@@ @@
+      * Validates that ownership fields cannot be modified during updates.
+      *
+      * @param ValidationContextInterface $validationContext Validation context
+-     * @param array $safeData Validated input data
++     * @param array<string, mixed> $safeData Validated input data
+      * @param OperationType $operationType Current operation
+      */
+     private function validateOwnershipFields(
+@@ @@
+
+         $ownershipFields = ['schedulable_id', 'schedulable_type'];
+
+-        foreach ($ownershipFields as $field) {
+-            if (array_key_exists($field, $safeData)) {
++        foreach ($ownershipFields as $ownershipField) {
++            if (array_key_exists($ownershipField, $safeData)) {
+                 $validationContext->setViolation(
+-                    $field,
+-                    sprintf("Field '%s' cannot be changed. Ownership cannot be modified.", $field)
++                    $ownershipField,
++                    sprintf("Field '%s' cannot be changed. Ownership cannot be modified.", $ownershipField)
+                 );
+             }
+         }
+@@ @@
+      * Validates all required fields are present for creation operations.
+      *
+      * @param ValidationContextInterface $validationContext Validation context
+-     * @param array $safeData Validated input data
++     * @param array<string, mixed> $safeData Validated input data
+      */
+     private function validateRequiredFields(
+         ValidationContextInterface $validationContext,
+@@ @@
+         $entityType = $validationContext->getEntityType();
+         $requiredFields = $this->getRequiredFields($entityType);
+
+-        foreach ($requiredFields as $field) {
+-            if (!array_key_exists($field, $safeData)) {
++        foreach ($requiredFields as $requiredField) {
++            if (!array_key_exists($requiredField, $safeData)) {
+                 $validationContext->setViolation(
+-                    $field,
+-                    sprintf("Field '%s' is required", $field)
++                    $requiredField,
++                    sprintf("Field '%s' is required", $requiredField)
+                 );
+             }
+         }
+    ----------- end diff -----------
+
+Applied rules:
+ * RenameForeachValueVariableToMatchExprVariableRector
+ * ClassMethodArrayDocblockParamFromLocalCallsRector
+
+
+21) /home/andy-kani/pro/sites/packages/laravel-roster/src/Validation/Rules/SchedulableConsistencyRule.php:4
 
     ---------- begin diff ----------
 @@ @@
 
  namespace Roster\Validation\Rules;
 
-+use Exception;
- use Carbon\Carbon;
+-use Illuminate\Database\Eloquent\Model;
+ use Illuminate\Support\Facades\App;
+ use Roster\Contracts\Repository\AvailabilityRepositoryInterface;
  use Roster\Contracts\Validation\ValidationContextInterface;
- use Roster\Enums\DaysOfWeek;
 @@ @@
-      * fall within the specified validity start and end dates.
-      *
-      * @param ValidationContextInterface $validationContext Validation context
--     * @return void
-      */
-     public function validate(ValidationContextInterface $validationContext): void
-     {
-@@ @@
-             if ($end->lte($start)) {
-                 return;
-             }
--        } catch (\Exception) {
-+        } catch (Exception) {
-             return;
-         }
-    ----------- end diff -----------
-
-Applied rules:
- * RemoveUselessReturnTagRector
-
-
-31) /home/andy-kani/pro/sites/packages/laravel-roster/src/Validation/Rules/AvailabilityOverlapRule.php:34
-
-    ---------- begin diff ----------
-@@ @@
-      * daily schedules, active days, and validity ranges.
-      *
-      * @param ValidationContextInterface $validationContext Validation context
--     * @return void
-      */
-     public function validate(ValidationContextInterface $validationContext): void
-     {
-@@ @@
-     {
-         $requiredFields = ['daily_start', 'daily_end', 'days'];
-
--        foreach ($requiredFields as $field) {
--            if (empty($data[$field])) {
-+        foreach ($requiredFields as $requiredField) {
-+            if (empty($data[$requiredField])) {
-                 return false;
-             }
-         }
-    ----------- end diff -----------
-
-Applied rules:
- * RemoveUselessReturnTagRector
- * RenameForeachValueVariableToMatchExprVariableRector
-
-
-32) /home/andy-kani/pro/sites/packages/laravel-roster/src/Validation/Rules/AvailabilityOwnershipRule.php:28
-
-    ---------- begin diff ----------
-@@ @@
-      * Validates availability ownership for schedule and impediment entities.
+      * 3. Both entities belong to the same schedulable
       *
       * @param ValidationContextInterface $validationContext Validation context with entity data
 -     * @return void
@@ -1733,40 +948,208 @@ Applied rules:
      public function validate(ValidationContextInterface $validationContext): void
      {
 @@ @@
+      * Adds a violation for schedulable mismatch.
       *
       * @param ValidationContextInterface $validationContext Validation context
-      * @param mixed $availabilityId Availability identifier
--     * @param Model $schedulable Schedulable entity
 -     * @return void
-+     * @param Model $model Schedulable entity
       */
-     private function validateAvailabilityOwnership(
-         ValidationContextInterface $validationContext,
-         mixed $availabilityId,
--        Model $schedulable
-+        Model $model
-     ): void {
-         $availability = $validationContext->getAvailabilityService()->find($availabilityId);
-
-@@ @@
-             return;
-         }
-
--        $isOwner = $availability->schedulable_id === $schedulable->id
--            && $availability->schedulable_type === get_class($schedulable);
-+        $isOwner = $availability->schedulable_id === $model->id
-+            && $availability->schedulable_type === get_class($model);
-
-         if (!$isOwner) {
-             $validationContext->setViolation(
+     private function addSchedulableMismatchViolation(ValidationContextInterface $validationContext): void
+     {
     ----------- end diff -----------
 
 Applied rules:
  * RemoveUselessReturnTagRector
+
+
+22) /home/andy-kani/pro/sites/packages/laravel-roster/src/Validation/Rules/SchedulableValidationRule.php:75
+
+    ---------- begin diff ----------
+@@ @@
+      * Validates schedulable consistency for create and delete operations.
+      *
+      * @param ValidationContextInterface $validationContext Validation context
+-     * @param Model $schedulable Schedulable entity
++     * @param Model $model Schedulable entity
+      * @param EntityType $entityType Type of entity being validated
+      */
+     private function validateSchedulableConsistency(
+         ValidationContextInterface $validationContext,
+-        Model $schedulable,
++        Model $model,
+         EntityType $entityType
+     ): void {
+         if (in_array($entityType, [EntityType::SCHEDULE, EntityType::IMPEDIMENT])) {
+-            $this->validateChildEntitySchedulable($validationContext, $schedulable);
++            $this->validateChildEntitySchedulable($validationContext, $model);
+             return;
+         }
+
+-        if ($entityType === EntityType::AVAILABILITY) {
+-            $this->validateAvailabilitySchedulable($validationContext, $schedulable);
+-        }
++        $this->validateAvailabilitySchedulable($validationContext, $model);
+     }
+
+     /**
+@@ @@
+      * Validates schedulable consistency for child entities (Schedule, Impediment).
+      *
+      * @param ValidationContextInterface $validationContext Validation context
+-     * @param Model $schedulable Schedulable entity
++     * @param Model $model Schedulable entity
+      */
+     private function validateChildEntitySchedulable(
+         ValidationContextInterface $validationContext,
+-        Model $schedulable
++        Model $model
+     ): void {
+         $schedulableId = $validationContext->get('schedulable_id');
+         $schedulableType = $validationContext->get('schedulable_type');
+@@ @@
+             return;
+         }
+
+-        $this->validateSchedulableId($validationContext, $schedulable, $schedulableId);
+-        $this->validateSchedulableType($validationContext, $schedulable, $schedulableType);
++        $this->validateSchedulableId($validationContext, $model, $schedulableId);
++        $this->validateSchedulableType($validationContext, $model, $schedulableType);
+     }
+
+     /**
+@@ @@
+      * Validates schedulable identifier matches expected value.
+      *
+      * @param ValidationContextInterface $validationContext Validation context
+-     * @param Model $schedulable Expected schedulable entity
++     * @param Model $model Expected schedulable entity
+      * @param mixed $providedId Provided schedulable identifier
+      */
+     private function validateSchedulableId(
+         ValidationContextInterface $validationContext,
+-        Model $schedulable,
++        Model $model,
+         mixed $providedId
+     ): void {
+-        if ($providedId != $schedulable->getKey()) {
++        if ($providedId != $model->getKey()) {
+             $validationContext->setViolation(
+                 'schedulable_id',
+                 sprintf(
+                     'Schedulable ID mismatch. Expected: %d, Got: %d',
+-                    $schedulable->getKey(),
++                    $model->getKey(),
+                     $providedId
+                 )
+             );
+@@ @@
+      * Validates schedulable type matches expected value.
+      *
+      * @param ValidationContextInterface $validationContext Validation context
+-     * @param Model $schedulable Expected schedulable entity
++     * @param Model $model Expected schedulable entity
+      * @param string|null $providedType Provided schedulable type
+      */
+     private function validateSchedulableType(
+         ValidationContextInterface $validationContext,
+-        Model $schedulable,
++        Model $model,
+         ?string $providedType
+     ): void {
+-        if ($providedType !== get_class($schedulable)) {
++        if ($providedType !== get_class($model)) {
+             $validationContext->setViolation(
+                 'schedulable_type',
+                 sprintf(
+                     'Schedulable type mismatch. Expected: %s, Got: %s',
+-                    get_class($schedulable),
++                    get_class($model),
+                     $providedType
+                 )
+             );
+@@ @@
+      * Validates schedulable consistency for Availability entities.
+      *
+      * @param ValidationContextInterface $validationContext Validation context
+-     * @param Model $schedulable Schedulable entity
++     * @param Model $model Schedulable entity
+      */
+     private function validateAvailabilitySchedulable(
+         ValidationContextInterface $validationContext,
+-        Model $schedulable
++        Model $model
+     ): void {
+         $schedulableId = $validationContext->get('schedulable_id');
+         $schedulableType = $validationContext->get('schedulable_type');
+
+         if ($schedulableId !== null) {
+-            $this->validateSchedulableId($validationContext, $schedulable, $schedulableId);
++            $this->validateSchedulableId($validationContext, $model, $schedulableId);
+         }
+
+         if ($schedulableType !== null) {
+-            $this->validateSchedulableType($validationContext, $schedulable, $schedulableType);
++            $this->validateSchedulableType($validationContext, $model, $schedulableType);
+         }
+     }
+ }
+    ----------- end diff -----------
+
+Applied rules:
+ * RemoveAlwaysTrueIfConditionRector
  * RenameParamToMatchTypeRector
 
 
-33) /home/andy-kani/pro/sites/packages/laravel-roster/src/Validation/Validator.php:77
+23) /home/andy-kani/pro/sites/packages/laravel-roster/src/Validation/Rules/TimeSlotDateTimeRule.php:139
+
+    ---------- begin diff ----------
+@@ @@
+     /**
+      * Resolves datetime value from update context or existing entity.
+      *
+-     * @param ValidationContextInterface $context Validation context
++     * @param ValidationContextInterface $validationContext Validation context
+      * @param string $fieldName Datetime field name
+      * @param bool $hasUpdate Whether field is being updated
+      * @param mixed $entityValue Existing entity value
+@@ @@
+      * @return mixed Resolved datetime value
+      */
+     private function resolveDateTimeValue(
+-        ValidationContextInterface $context,
++        ValidationContextInterface $validationContext,
+         string $fieldName,
+         bool $hasUpdate,
+         mixed $entityValue
+     ): mixed {
+-        return $hasUpdate ? $context->get($fieldName) : $entityValue;
++        return $hasUpdate ? $validationContext->get($fieldName) : $entityValue;
+     }
+ }
+    ----------- end diff -----------
+
+Applied rules:
+ * RenameParamToMatchTypeRector
+
+
+24) /home/andy-kani/pro/sites/packages/laravel-roster/src/Validation/ValidationResult.php:64
+
+    ---------- begin diff ----------
+@@ @@
+      */
+     public function hasViolations(): bool
+     {
+-        return !empty($this->violations);
++        return $this->violations !== [];
+     }
+
+     /**
+    ----------- end diff -----------
+
+Applied rules:
+ * SimplifyEmptyCheckOnEmptyArrayRector
+
+
+25) /home/andy-kani/pro/sites/packages/laravel-roster/src/Validation/Validator.php:77
 
     ---------- begin diff ----------
 @@ @@
@@ -1868,7 +1251,7 @@ Applied rules:
  * RenameForeachValueVariableToMatchExprVariableRector
 
 
-34) /home/andy-kani/pro/sites/packages/laravel-roster/src/helpers.php:6
+26) /home/andy-kani/pro/sites/packages/laravel-roster/src/helpers.php:6
 
     ---------- begin diff ----------
 @@ @@
@@ -2008,7 +1391,7 @@ Applied rules:
  * RenameParamToMatchTypeRector
 
 
-35) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Feature/Services/AvailabilityServiceDaysCoherenceTest.php:6
+27) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Feature/Services/AvailabilityServiceDaysCoherenceTest.php:6
 
     ---------- begin diff ----------
 @@ @@
@@ -2189,7 +1572,1020 @@ Applied rules:
  * RenamePropertyToMatchTypeRector
 
 
-36) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Commands/CacheRulesCommandTest.php:4
+28) /home/andy-kani/pro/sites/packages/laravel-roster/src/Models/Availability.php:60
+
+    ---------- begin diff ----------
+@@ @@
+
+     /**
+      * Get the schedulable resource that owns this availability.
+-     *
+-     * @return MorphTo
+      */
+     public function schedulable(): MorphTo
+     {
+@@ @@
+
+     /**
+      * Get the schedules associated with this availability.
+-     *
+-     * @return HasMany
+      */
+     public function schedules(): HasMany
+     {
+@@ @@
+
+     /**
+      * Get the impediments associated with this availability.
+-     *
+-     * @return HasMany
+      */
+     public function impediments(): HasMany
+     {
+    ----------- end diff -----------
+
+Applied rules:
+ * RemoveUselessReturnTagRector
+
+
+29) /home/andy-kani/pro/sites/packages/laravel-roster/src/Repositories/AbstractRepository.php:4
+
+    ---------- begin diff ----------
+@@ @@
+
+ namespace Roster\Repositories;
+
++use InvalidArgumentException;
+ use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+ use Illuminate\Database\Eloquent\Builder;
+ use Illuminate\Database\Eloquent\Model;
+@@ @@
+                 ->whereKey($id);
+
+             $query = $this->applyOwnerScope($query, $owner);
++
+             $model = $query->first();
+
+             if (!$model) {
+@@ @@
+                 ->whereKey($id);
+
+             $query = $this->applyOwnerScope($query, $owner);
++
+             $model = $query->first();
+
+             return $model instanceof Model && (bool) $model->delete();
+@@ @@
+      * @param Carbon $start Start time
+      * @param Carbon $end End time
+      * @return Collection<int, Impediment> Overlapping impediments
+-     * @throws \InvalidArgumentException When the time window is invalid
++     * @throws InvalidArgumentException When the time window is invalid
+      */
+     public function findForTimeSlot(int $availabilityId, Carbon $start, Carbon $end): Collection
+     {
+@@ @@
+     /**
+      * Builds a query with schedulable scope and applied filters.
+      *
+-     * @param Model $schedulable Schedulable entity
++     * @param Model $model Schedulable entity
+      * @param array<string, mixed> $filters Query filters
+      * @return Builder Query builder
+      * @throws MissingSchedulableException If schedulable not provided
+      */
+-    public function buildQueryWithFilters(Model $schedulable, array $filters): Builder
++    public function buildQueryWithFilters(Model $model, array $filters): Builder
+     {
+-        $this->validateSchedulable($schedulable);
++        $this->validateSchedulable($model);
+
+-        $builder = $this->buildSchedulableScopedQuery($schedulable);
++        $builder = $this->buildSchedulableScopedQuery($model);
+         return $this->applyFilters($builder, $filters);
+     }
+
+@@ @@
+     /**
+      * Validates that a schedulable entity is provided.
+      *
+-     * @param Model|null $schedulable Schedulable entity
++     * @param Model|null $model Schedulable entity
+      * @throws MissingSchedulableException When no schedulable is provided
+      */
+-    private function validateSchedulable(?Model $schedulable): void
++    private function validateSchedulable(?Model $model): void
+     {
+-        if (!$schedulable instanceof Model) {
++        if (!$model instanceof Model) {
+             throw MissingSchedulableException::create();
+         }
+     }
+@@ @@
+     /**
+      * Validates that no owner is provided for Availability models.
+      *
+-     * @param Model|null $owner Owning entity
++     * @param Model|null $model Owning entity
+      * @throws InvalidOwnerException When owner is provided for Availability model
+      */
+-    private function validateOwnerForAvailability(?Model $owner): void
++    private function validateOwnerForAvailability(?Model $model): void
+     {
+-        if ($owner instanceof Model && $this->isAvailabilityModel()) {
++        if ($model instanceof Model && $this->isAvailabilityModel()) {
+             throw InvalidOwnerException::forAvailability();
+         }
+     }
+@@ @@
+     /**
+      * Validates that an owner is provided for non-Availability models.
+      *
+-     * @param Model|null $owner Owning entity
++     * @param Model|null $model Owning entity
+      * @throws MissingOwnerException When owner is not provided for non-Availability model
+      */
+-    private function validateOwnerForNonAvailability(?Model $owner): void
++    private function validateOwnerForNonAvailability(?Model $model): void
+     {
+-        if (!$this->isAvailabilityModel() && !$owner instanceof Model) {
++        if (!$this->isAvailabilityModel() && !$model instanceof Model) {
+             throw MissingOwnerException::create($this->getModelClass());
+         }
+     }
+@@ @@
+      * Applies owner constraint to a query builder for non-Availability models.
+      *
+      * @param Builder $builder Query builder
+-     * @param Model|null $owner Owning entity
++     * @param Model|null $model Owning entity
+      * @return Builder Modified query builder
+      */
+-    private function applyOwnerScope(Builder $builder, ?Model $owner): Builder
++    private function applyOwnerScope(Builder $builder, ?Model $model): Builder
+     {
+-        if ($owner instanceof Model && !$this->isAvailabilityModel()) {
+-            $builder->where('availability_id', $owner->id);
++        if ($model instanceof Model && !$this->isAvailabilityModel()) {
++            $builder->where('availability_id', $model->id);
+         }
+
+         return $builder;
+@@ @@
+      * Injects owner relationship into data array for non-Availability models.
+      *
+      * @param array<string, mixed> $data Entity data
+-     * @param Model|null $owner Owning entity
++     * @param Model|null $model Owning entity
+      * @return array<string, mixed> Modified data
+      * @throws MissingOwnerException When owner is required but not provided
+      */
+-    private function injectOwnerIntoData(array $data, ?Model $owner): array
++    private function injectOwnerIntoData(array $data, ?Model $model): array
+     {
+-        $this->validateOwnerForNonAvailability($owner);
++        $this->validateOwnerForNonAvailability($model);
+
+-        if ($owner instanceof Model && !$this->isAvailabilityModel()) {
+-            $data['availability_id'] = $owner->id;
++        if ($model instanceof Model && !$this->isAvailabilityModel()) {
++            $data['availability_id'] = $model->id;
+         }
+
+         return $data;
+    ----------- end diff -----------
+
+Applied rules:
+ * NewlineBeforeNewAssignSetRector
+ * RenameParamToMatchTypeRector
+
+
+30) /home/andy-kani/pro/sites/packages/laravel-roster/src/Repositories/AvailabilityRepository.php:23
+
+    ---------- begin diff ----------
+@@ @@
+     /**
+      * Retrieves a query builder for availabilities of a specific schedulable entity.
+      *
+-     * @param Model $schedulable The schedulable entity (e.g., User, Team)
++     * @param Model $model The schedulable entity (e.g., User, Team)
+      * @param string|null $type Optional availability type filter
+      *
+      * @return Builder Query builder for availabilities
+      */
+-    public function findForSchedulable(Model $schedulable, ?string $type = null): Builder
++    public function findForSchedulable(Model $model, ?string $type = null): Builder
+     {
+-        $builder = $this->buildBaseQuery($schedulable);
++        $builder = $this->buildBaseQuery($model);
+
+         if ($type !== null) {
+             $builder->where('type', $type);
+@@ @@
+     /**
+      * Retrieves availabilities valid within a specific date range.
+      *
+-     * @param Model $schedulable The schedulable entity
++     * @param Model $model The schedulable entity
+      * @param Carbon $start Start date of the range
+      * @param Carbon $end End date of the range
+      * @param string|null $type Optional availability type filter
+@@ @@
+      * @return Collection<int, Availability> Collection of matching availabilities
+      */
+     public function getForDateRange(
+-        Model $schedulable,
++        Model $model,
+         Carbon $start,
+         Carbon $end,
+         ?string $type = null
+     ): Collection {
+-        $builder = $this->buildBaseQuery($schedulable)
++        $builder = $this->buildBaseQuery($model)
+             ->where(function ($query) use ($end): void {
+                 $query->whereNull('validity_start')
+                     ->orWhere('validity_start', '<=', $end);
+@@ @@
+     /**
+      * Retrieves availabilities applicable to a specific date.
+      *
+-     * @param Model $schedulable The schedulable entity
++     * @param Model $model The schedulable entity
+      * @param Carbon $date Target date
+      * @param string|null $type Optional availability type filter
+      *
+@@ @@
+      * @return Collection<int, Availability> Collection of availabilities for the date
+      */
+     public function getForDate(
+-        Model $schedulable,
++        Model $model,
+         Carbon $date,
+         ?string $type = null
+     ): Collection {
+-        $builder = $this->buildBaseQuery($schedulable)
++        $builder = $this->buildBaseQuery($model)
+             ->whereJsonContains('days', strtolower($date->englishDayOfWeek));
+
+         if ($type !== null) {
+@@ @@
+     /**
+      * Finds an availability for a time slot with conflict detection information.
+      *
+-     * @param Model $schedulable The schedulable entity
++     * @param Model $model The schedulable entity
+      * @param Carbon $start Start time of the slot
+      * @param Carbon $end End time of the slot
+      * @param string|null $type Optional availability type filter
+@@ @@
+      * @return Availability|null Matching availability with conflict flags or null
+      */
+     public function findForTimeSlotWithConflictInfo(
+-        Model $schedulable,
++        Model $model,
+         Carbon $start,
+         Carbon $end,
+         ?string $type = null
+     ): ?Availability {
+-        return Availability::where('schedulable_id', $schedulable->id)
+-            ->where('schedulable_type', get_class($schedulable))
++        return Availability::where('schedulable_id', $model->id)
++            ->where('schedulable_type', get_class($model))
+             ->when($type !== null, function ($query) use ($type): void {
+                 $query->where('type', $type);
+             })
+@@ @@
+     /**
+      * Builds a base query for availabilities of a schedulable entity.
+      *
+-     * @param Model $schedulable The schedulable entity
++     * @param Model $model The schedulable entity
+      *
+      * @return Builder Base query builder
+      */
+-    private function buildBaseQuery(Model $schedulable): Builder
++    private function buildBaseQuery(Model $model): Builder
+     {
+-        return Availability::where('schedulable_id', $schedulable->id)
+-            ->where('schedulable_type', get_class($schedulable));
++        return Availability::where('schedulable_id', $model->id)
++            ->where('schedulable_type', get_class($model));
+     }
+
+     /**
+    ----------- end diff -----------
+
+Applied rules:
+ * RenameParamToMatchTypeRector
+
+
+31) /home/andy-kani/pro/sites/packages/laravel-roster/src/RosterServiceProvider.php:36
+
+    ---------- begin diff ----------
+@@ @@
+ {
+     /**
+      * Bootstrap package services.
+-     *
+-     * @return void
+      */
+     public function boot(): void
+     {
+@@ @@
+
+     /**
+      * Register package services and dependencies.
+-     *
+-     * @return void
+      */
+     public function register(): void
+     {
+@@ @@
+
+     /**
+      * Register observers for domain models.
+-     *
+-     * @return void
+      */
+     protected function registerModelObservers(): void
+     {
+@@ @@
+
+     /**
+      * Load package helper functions.
+-     *
+-     * @return void
+      */
+     protected function loadHelpers(): void
+     {
+@@ @@
+
+     /**
+      * Register repository interfaces with their implementations.
+-     *
+-     * @return void
+      */
+     protected function registerRepositories(): void
+     {
+@@ @@
+
+     /**
+      * Register validation system components.
+-     *
+-     * @return void
+      */
+     protected function registerValidationSystem(): void
+     {
+@@ @@
+
+     /**
+      * Register domain services with dependency injection container.
+-     *
+-     * @return void
+      */
+     protected function registerDomainServices(): void
+     {
+@@ @@
+
+     /**
+      * Publish package resources for user customization.
+-     *
+-     * @return void
+      */
+     private function publishResources(): void
+     {
+    ----------- end diff -----------
+
+Applied rules:
+ * RemoveUselessReturnTagRector
+
+
+32) /home/andy-kani/pro/sites/packages/laravel-roster/src/Services/AvailabilityService.php:4
+
+    ---------- begin diff ----------
+@@ @@
+
+ namespace Roster\Services;
+
+-use Roster\DTOs\AvailabilityData;
+ use Roster\Enums\EntityType;
+ use Roster\Enums\OperationType;
+ use Roster\Models\Availability;
+    ----------- end diff -----------
+
+Applied rules:
+
+
+33) /home/andy-kani/pro/sites/packages/laravel-roster/src/Services/Core/AbstractService.php:4
+
+    ---------- begin diff ----------
+@@ @@
+
+ namespace Roster\Services\Core;
+
++use Roster\DTOs\AvailabilityData;
++use Roster\DTOs\ScheduleData;
++use Roster\DTOs\ImpedimentData;
+ use BadMethodCallException;
+ use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+ use Illuminate\Database\Eloquent\Model;
+@@ @@
+
+     /**
+      * Active filters for query operations.
++     * @var mixed[]
+      */
+     protected array $filters = [];
+
+     /**
+      * Current operation data.
++     * @var mixed[]
+      */
+     protected array $data = [];
+
+@@ @@
+     final protected function createDTOFromArray(array $data, OperationType $operationType): mixed
+     {
+         return match ($this->getEntityTypeEnum()) {
+-            EntityType::AVAILABILITY => \Roster\DTOs\AvailabilityData::fromArray($data),
+-            EntityType::SCHEDULE => \Roster\DTOs\ScheduleData::fromArray($data),
+-            EntityType::IMPEDIMENT => \Roster\DTOs\ImpedimentData::fromArray($data),
++            EntityType::AVAILABILITY => AvailabilityData::fromArray($data),
++            EntityType::SCHEDULE => ScheduleData::fromArray($data),
++            EntityType::IMPEDIMENT => ImpedimentData::fromArray($data),
+             default => throw new LogicException('Unsupported entity type for DTO creation')
+         };
+     }
+@@ @@
+     /**
+      * Gets current operation data.
+      *
+-     * @return array Current data
++     * @return mixed[] Current data
+      */
+     public function getData(): array
+     {
+@@ @@
+     /**
+      * Gets active filters.
+      *
+-     * @return array Current filters
++     * @return mixed[] Current filters
+      */
+     public function getFilters(): array
+     {
+    ----------- end diff -----------
+
+Applied rules:
+ * DocblockGetterReturnArrayFromPropertyDocblockVarRector
+ * DocblockVarArrayFromGetterReturnRector
+
+
+34) /home/andy-kani/pro/sites/packages/laravel-roster/src/Services/ImpedimentService.php:4
+
+    ---------- begin diff ----------
+@@ @@
+
+ namespace Roster\Services;
+
+-use Illuminate\Database\Eloquent\Model;
+ use Illuminate\Support\Carbon;
+ use Illuminate\Support\Collection;
+ use Roster\Domain\Helpers\TimeSlotHelper;
+ use Roster\Domain\Helpers\TimeWindowHelper;
+-use Roster\DTOs\ImpedimentData;
+ use Roster\Enums\EntityType;
+ use Roster\Enums\OperationType;
+ use Roster\Models\Availability;
+    ----------- end diff -----------
+
+Applied rules:
+
+
+35) /home/andy-kani/pro/sites/packages/laravel-roster/src/Services/ScheduleService.php:7
+
+    ---------- begin diff ----------
+@@ @@
+ use Illuminate\Support\Carbon;
+ use Illuminate\Support\Collection;
+ use Roster\Contracts\Repository\AvailabilityRepositoryInterface;
+-use Roster\DTOs\ScheduleData;
+ use Roster\Enums\EntityType;
+-use Roster\Enums\OperationType;
+ use Roster\Models\Availability;
+ use Roster\Services\Core\AbstractService;
+-use Roster\Validation\Exceptions\ValidationFailedException;
+
+ /**
+  * Service for managing Schedule entities and time slot availability.
+@@ @@
+             availabilityEnd: $availabilityEnd
+         );
+
+-        if ($slotStart === null) {
++        if (!$slotStart instanceof Carbon) {
+             return null;
+         }
+
+@@ @@
+         Carbon $availabilityStart,
+         Carbon $availabilityEnd
+     ): ?Carbon {
+-        if ($searchStart === null || !$searchStart->isSameDay($day)) {
++        if (!$searchStart instanceof Carbon || !$searchStart->isSameDay($day)) {
+             return $availabilityStart->copy();
+         }
+    ----------- end diff -----------
+
+Applied rules:
+ * FlipTypeControlToUseExclusiveTypeRector
+
+
+36) /home/andy-kani/pro/sites/packages/laravel-roster/src/Traits/BelongsToSchedulable.php:19
+
+    ---------- begin diff ----------
+@@ @@
+ {
+     /**
+      * Boots the trait with event listeners and global scopes.
+-     *
+-     * @return void
+      */
+     protected static function bootBelongsToSchedulable(): void
+     {
+@@ @@
+      * Validates that a schedulable reference is present before persistence.
+      *
+      * @param Model $model The model being created or updated
+-     * @return void
+      * @throws MissingSchedulableException If schedulable reference is incomplete
+      */
+     protected static function validateSchedulable(Model $model): void
+    ----------- end diff -----------
+
+Applied rules:
+ * RemoveUselessReturnTagRector
+
+
+37) /home/andy-kani/pro/sites/packages/laravel-roster/src/Validation/Context/ValidationContext.php:33
+
+    ---------- begin diff ----------
+@@ @@
+      */
+     private array $data;
+
+-    private ?Model $schedulable;
++    private ?Model $model;
+
+     private mixed $currentEntity;
+
+@@ @@
+         OperationType $operationType,
+         EntityType $entityType,
+         array $data,
+-        ?Model $schedulable = null,
++        ?Model $model = null,
+         mixed $currentEntity = null
+     ) {
+         $this->operationType = $operationType;
+         $this->entityType = $entityType;
+         $this->data = $data;
+-        $this->schedulable = $schedulable;
++        $this->model = $model;
+         $this->currentEntity = $currentEntity;
+     }
+
+@@ @@
+      */
+     public function getSchedulable(): ?Model
+     {
+-        return $this->schedulable;
++        return $this->model;
+     }
+
+     /**
+@@ @@
+
+         return match ($this->getEntityType()) {
+             EntityType::AVAILABILITY => availability_for($schedulable),
+-            EntityType::SCHEDULE => $this->buildScheduleService($schedulable),
+-            EntityType::IMPEDIMENT => $this->buildImpedimentService($schedulable),
++            EntityType::SCHEDULE => $this->buildScheduleService(),
++            EntityType::IMPEDIMENT => $this->buildImpedimentService(),
+         };
+     }
+
+@@ @@
+     /**
+      * Build Schedule service with the appropriate context.
+      *
+-     * @param Model $schedulable The schedulable entity
+      *
+      * @return ServiceInterface Configured Schedule service
+-     *
+      * @throws RuntimeException When owner is required but not available
+      */
+-    private function buildScheduleService(Model $schedulable): ServiceInterface
++    private function buildScheduleService(): ServiceInterface
+     {
+         $owner = $this->resolveOwner();
+-
+         if (!$owner instanceof Model) {
+             throw new RuntimeException(
+                 'Cannot get Schedule service: owner is required but not available in validation context'
+             );
+         }
+-
+         return schedule_for($owner);
+     }
+
+@@ @@
+     /**
+      * Build Impediment service with the appropriate context.
+      *
+-     * @param Model $schedulable The schedulable entity
+      *
+      * @return ServiceInterface Configured Impediment service
+-     *
+      * @throws RuntimeException When owner is required but not available
+      */
+-    private function buildImpedimentService(Model $schedulable): ServiceInterface
++    private function buildImpedimentService(): ServiceInterface
+     {
+         $owner = $this->resolveOwner();
+-
+         if (!$owner instanceof Model) {
+             throw new RuntimeException(
+                 'Cannot get Impediment service: owner is required but not available in validation context'
+             );
+         }
+-
+         return impediment_for($owner);
+     }
+
+@@ @@
+      */
+     private function resolveOwner(): ?Model
+     {
+-        if (isset($this->data['availability_id']) && $this->schedulable instanceof Model) {
++        if (isset($this->data['availability_id']) && $this->model instanceof Model) {
+             try {
+                 return AvailabilityModel::find($this->data['availability_id']);
+             } catch (Exception $exception) {
+    ----------- end diff -----------
+
+Applied rules:
+ * RemoveUnusedPrivateMethodParameterRector
+ * RenameParamToMatchTypeRector
+ * RenamePropertyToMatchTypeRector
+
+
+38) /home/andy-kani/pro/sites/packages/laravel-roster/src/Validation/RuleScanner.php:180
+
+    ---------- begin diff ----------
+@@ @@
+
+         $rules = [];
+
+-        foreach ($this->directories as $ruleDirectory) {
+-            if (!is_dir($ruleDirectory)) {
++        foreach ($this->directories as $directory) {
++            if (!is_dir($directory)) {
+                 continue;
+             }
+
+             $finder = new Finder();
+-            $finder->files()->in($ruleDirectory)->name('*Rule.php');
++            $finder->files()->in($directory)->name('*Rule.php');
+
+             foreach ($finder as $file) {
+                 $className = $this->extractClassNameFromFile($file->getPathname());
+@@ @@
+                     if ($reflection->implementsInterface(RuleInterface::class)) {
+                         $validationRule = $this->extractValidationRule($className, $reflection);
+
+-                        if ($validationRule !== null) {
++                        if ($validationRule instanceof ValidationRule) {
+                             $rules[$className] = $validationRule;
+                         }
+                     }
+@@ @@
+      * Extracts the ValidationRule attribute from a rule class.
+      *
+      * @param string $className The fully qualified class name
+-     * @param ReflectionClass $reflection Reflection of the class
++     * @param ReflectionClass $reflectionClass Reflection of the class
+      *
+      * @return ValidationRule|null The validation rule attribute, or null if not found
+      */
+-    private function extractValidationRule(string $className, ReflectionClass $reflection): ?ValidationRule
++    private function extractValidationRule(string $className, ReflectionClass $reflectionClass): ?ValidationRule
+     {
+         try {
+             $ruleInstance = app()->make($className);
+@@ @@
+             if ($attribute) {
+                 return $attribute;
+             }
+-        } catch (Throwable $e) {
+-            $attributes = $reflection->getAttributes(ValidationRule::class);
++        } catch (Throwable $throwable) {
++            $attributes = $reflectionClass->getAttributes(ValidationRule::class);
+
+-            if (!empty($attributes)) {
++            if ($attributes !== []) {
+                 return $attributes[0]->newInstance();
+             }
+         }
+    ----------- end diff -----------
+
+Applied rules:
+ * SimplifyEmptyCheckOnEmptyArrayRector
+ * FlipTypeControlToUseExclusiveTypeRector
+ * CatchExceptionNameMatchingTypeRector
+ * RenameParamToMatchTypeRector
+ * RenameForeachValueVariableToMatchExprVariableRector
+
+
+39) /home/andy-kani/pro/sites/packages/laravel-roster/src/Validation/Rules/AbstractRule.php:58
+
+    ---------- begin diff ----------
+@@ @@
+     {
+         $ruleAttribute = $this->getValidationRuleAttribute();
+
+-        if ($ruleAttribute === null) {
++        if (!$ruleAttribute instanceof ValidationRule) {
+             // Default behavior for rules without attribute
+             return true;
+         }
+@@ @@
+      * Checks if an operation type is supported by the rule attribute.
+      *
+      * @param OperationType $operationType Operation to check
+-     * @param ValidationRule $ruleAttribute Rule configuration attribute
++     * @param ValidationRule $validationRule Rule configuration attribute
+      * @return bool True if operation supported
+      */
+-    private function isOperationSupported(OperationType $operationType, ValidationRule $ruleAttribute): bool
++    private function isOperationSupported(OperationType $operationType, ValidationRule $validationRule): bool
+     {
+-        foreach ($ruleAttribute->operations as $supportedOperation) {
++        foreach ($validationRule->operations as $supportedOperation) {
+             if ($supportedOperation === $operationType) {
+                 return true;
+             }
+         }
++
+         return false;
+     }
+
+@@ @@
+      * Checks if an entity type is supported by the rule attribute.
+      *
+      * @param EntityType $entityType Entity to check
+-     * @param ValidationRule $ruleAttribute Rule configuration attribute
++     * @param ValidationRule $validationRule Rule configuration attribute
+      * @return bool True if entity supported
+      */
+-    private function isEntitySupported(EntityType $entityType, ValidationRule $ruleAttribute): bool
++    private function isEntitySupported(EntityType $entityType, ValidationRule $validationRule): bool
+     {
+-        foreach ($ruleAttribute->entities as $supportedEntity) {
++        foreach ($validationRule->entities as $supportedEntity) {
+             if ($supportedEntity === $entityType) {
+                 return true;
+             }
+         }
++
+         return false;
+     }
+ }
+    ----------- end diff -----------
+
+Applied rules:
+ * FlipTypeControlToUseExclusiveTypeRector
+ * NewlineAfterStatementRector
+ * RenameParamToMatchTypeRector
+
+
+40) /home/andy-kani/pro/sites/packages/laravel-roster/src/Validation/Rules/AvailabilityDateRangeRule.php:43
+
+    ---------- begin diff ----------
+@@ @@
+      * Validates validity start and end dates.
+      *
+      * @param ValidationContextInterface $validationContext The validation context
+-     * @param Model|null $entity The entity being validated
++     * @param Model|null $model The entity being validated
+      * @param OperationType $operationType The operation type
+      */
+     private function validateValidityDates(
+         ValidationContextInterface $validationContext,
+-        ?Model $entity,
++        ?Model $model,
+         OperationType $operationType
+     ): void {
+         if ($operationType === OperationType::CREATE) {
+             $this->validateCreateValidityDates($validationContext);
+         } else {
+-            $this->validateUpdateValidityDates($validationContext, $entity);
++            $this->validateUpdateValidityDates($validationContext, $model);
+         }
+     }
+
+@@ @@
+      * Validates validity dates for UPDATE operations.
+      *
+      * @param ValidationContextInterface $validationContext The validation context
+-     * @param Model|null $entity The entity being validated
++     * @param Model|null $model The entity being validated
+      */
+     private function validateUpdateValidityDates(
+         ValidationContextInterface $validationContext,
+-        ?Model $entity
++        ?Model $model
+     ): void {
+         $hasStart = $validationContext->has('validity_start');
+         $hasEnd = $validationContext->has('validity_end');
+@@ @@
+
+         $startValue = $hasStart
+             ? $validationContext->get('validity_start')
+-            : ($entity?->validity_start ?? null);
++            : ($model?->validity_start ?? null);
+
+         $endValue = $hasEnd
+             ? $validationContext->get('validity_end')
+-            : ($entity?->validity_end ?? null);
++            : ($model?->validity_end ?? null);
+
+         $this->validateDateRange(
+             validationContext: $validationContext,
+@@ @@
+      * Validates daily start and end times.
+      *
+      * @param ValidationContextInterface $validationContext The validation context
+-     * @param Model|null $entity The entity being validated
++     * @param Model|null $model The entity being validated
+      * @param OperationType $operationType The operation type
+      */
+     private function validateDailyTimes(
+         ValidationContextInterface $validationContext,
+-        ?Model $entity,
++        ?Model $model,
+         OperationType $operationType
+     ): void {
+         if ($operationType === OperationType::CREATE) {
+             $this->validateCreateDailyTimes($validationContext);
+         } else {
+-            $this->validateUpdateDailyTimes($validationContext, $entity);
++            $this->validateUpdateDailyTimes($validationContext, $model);
+         }
+     }
+
+@@ @@
+      * Validates daily times for UPDATE operations.
+      *
+      * @param ValidationContextInterface $validationContext The validation context
+-     * @param Model|null $entity The entity being validated
++     * @param Model|null $model The entity being validated
+      */
+     private function validateUpdateDailyTimes(
+         ValidationContextInterface $validationContext,
+-        ?Model $entity
++        ?Model $model
+     ): void {
+         $hasStart = $validationContext->has('daily_start');
+         $hasEnd = $validationContext->has('daily_end');
+@@ @@
+
+         $startValue = $hasStart
+             ? $validationContext->get('daily_start')
+-            : ($entity?->daily_start ?? null);
++            : ($model?->daily_start ?? null);
+
+         $endValue = $hasEnd
+             ? $validationContext->get('daily_end')
+-            : ($entity?->daily_end ?? null);
++            : ($model?->daily_end ?? null);
+
+         $this->validateTimeRange(
+             validationContext: $validationContext,
+    ----------- end diff -----------
+
+Applied rules:
+ * RenameParamToMatchTypeRector
+
+
+41) /home/andy-kani/pro/sites/packages/laravel-roster/src/Validation/Rules/AvailabilityDaysCoherenceRule.php:4
+
+    ---------- begin diff ----------
+@@ @@
+
+ namespace Roster\Validation\Rules;
+
++use Exception;
+ use Carbon\Carbon;
+ use Roster\Contracts\Validation\ValidationContextInterface;
+ use Roster\Enums\DaysOfWeek;
+@@ @@
+      * fall within the specified validity start and end dates.
+      *
+      * @param ValidationContextInterface $validationContext Validation context
+-     * @return void
+      */
+     public function validate(ValidationContextInterface $validationContext): void
+     {
+@@ @@
+             if ($end->lte($start)) {
+                 return;
+             }
+-        } catch (\Exception) {
++        } catch (Exception) {
+             return;
+         }
+    ----------- end diff -----------
+
+Applied rules:
+ * RemoveUselessReturnTagRector
+
+
+42) /home/andy-kani/pro/sites/packages/laravel-roster/src/Validation/Rules/AvailabilityOverlapRule.php:34
+
+    ---------- begin diff ----------
+@@ @@
+      * daily schedules, active days, and validity ranges.
+      *
+      * @param ValidationContextInterface $validationContext Validation context
+-     * @return void
+      */
+     public function validate(ValidationContextInterface $validationContext): void
+     {
+@@ @@
+     {
+         $requiredFields = ['daily_start', 'daily_end', 'days'];
+
+-        foreach ($requiredFields as $field) {
+-            if (empty($data[$field])) {
++        foreach ($requiredFields as $requiredField) {
++            if (empty($data[$requiredField])) {
+                 return false;
+             }
+         }
+    ----------- end diff -----------
+
+Applied rules:
+ * RemoveUselessReturnTagRector
+ * RenameForeachValueVariableToMatchExprVariableRector
+
+
+43) /home/andy-kani/pro/sites/packages/laravel-roster/src/Validation/Rules/AvailabilityOwnershipRule.php:28
+
+    ---------- begin diff ----------
+@@ @@
+      * Validates availability ownership for schedule and impediment entities.
+      *
+      * @param ValidationContextInterface $validationContext Validation context with entity data
+-     * @return void
+      */
+     public function validate(ValidationContextInterface $validationContext): void
+     {
+@@ @@
+      *
+      * @param ValidationContextInterface $validationContext Validation context
+      * @param mixed $availabilityId Availability identifier
+-     * @param Model $schedulable Schedulable entity
+-     * @return void
++     * @param Model $model Schedulable entity
+      */
+     private function validateAvailabilityOwnership(
+         ValidationContextInterface $validationContext,
+         mixed $availabilityId,
+-        Model $schedulable
++        Model $model
+     ): void {
+         $availability = $validationContext->getAvailabilityService()->find($availabilityId);
+
+@@ @@
+             return;
+         }
+
+-        $isOwner = $availability->schedulable_id === $schedulable->id
+-            && $availability->schedulable_type === get_class($schedulable);
++        $isOwner = $availability->schedulable_id === $model->id
++            && $availability->schedulable_type === get_class($model);
+
+         if (!$isOwner) {
+             $validationContext->setViolation(
+    ----------- end diff -----------
+
+Applied rules:
+ * RemoveUselessReturnTagRector
+ * RenameParamToMatchTypeRector
+
+
+44) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Commands/CacheRulesCommandTest.php:4
 
     ---------- begin diff ----------
 @@ @@
@@ -2315,7 +2711,7 @@ Applied rules:
  * RenameVariableToMatchNewTypeRector
 
 
-37) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Commands/InstallRosterCommandTest.php:13
+45) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Commands/InstallRosterCommandTest.php:13
 
     ---------- begin diff ----------
 @@ @@
@@ -2367,7 +2763,7 @@ Applied rules:
  * ClosureReturnTypeRector
 
 
-38) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Domain/RepositoryMutationTest.php:6
+46) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Domain/RepositoryMutationTest.php:6
 
     ---------- begin diff ----------
 @@ @@
@@ -2595,7 +2991,7 @@ Applied rules:
  * RenamePropertyToMatchTypeRector
 
 
-39) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Models/AvailabilityTest.php:19
+47) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Models/AvailabilityTest.php:19
 
     ---------- begin diff ----------
 @@ @@
@@ -2685,7 +3081,7 @@ Applied rules:
  * RenamePropertyToMatchTypeRector
 
 
-40) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Models/ImpedimentTest.php:24
+48) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Models/ImpedimentTest.php:24
 
     ---------- begin diff ----------
 @@ @@
@@ -2739,7 +3135,7 @@ Applied rules:
  * RenamePropertyToMatchTypeRector
 
 
-41) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Services/AvailabilityServiceTest.php:21
+49) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Services/AvailabilityServiceTest.php:21
 
     ---------- begin diff ----------
 @@ @@
@@ -3176,7 +3572,7 @@ Applied rules:
  * RenamePropertyToMatchTypeRector
 
 
-42) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Services/ImpedimentServiceTest.php:25
+50) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Services/ImpedimentServiceTest.php:25
 
     ---------- begin diff ----------
 @@ @@
@@ -3286,7 +3682,7 @@ Applied rules:
  * AssertEqualsOrAssertSameFloatParameterToSpecificMethodsTypeRector
 
 
-43) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Services/ScheduleServiceTest.php:11
+51) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Services/ScheduleServiceTest.php:11
 
     ---------- begin diff ----------
 @@ @@
@@ -3700,7 +4096,7 @@ Applied rules:
  * AssertEqualsOrAssertSameFloatParameterToSpecificMethodsTypeRector
 
 
-44) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Validation/Rules/AvailabilityTemporalCoherenceRuleTest.php:20
+52) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Validation/Rules/AvailabilityTemporalCoherenceRuleTest.php:20
 
     ---------- begin diff ----------
 @@ @@
@@ -3853,7 +4249,7 @@ Applied rules:
  * RenamePropertyToMatchTypeRector
 
 
-45) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Validation/Rules/ImpedimentScheduleDaysCoherenceRuleTest.php:20
+53) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Validation/Rules/ImpedimentScheduleDaysCoherenceRuleTest.php:20
 
     ---------- begin diff ----------
 @@ @@
@@ -3907,5 +4303,5 @@ Applied rules:
  * RenamePropertyToMatchTypeRector
 
 
- [OK] 45 files would have been changed (dry-run) by Rector                                                              
+ [OK] 53 files would have been changed (dry-run) by Rector                                                              
 

@@ -4,14 +4,21 @@ declare(strict_types=1);
 
 namespace Roster\Validation\Rules;
 
-use Roster\Models\Availability;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\App;
 use Roster\Contracts\Repository\AvailabilityRepositoryInterface;
-use Roster\Validation\Attributes\ValidationRule;
+use Roster\Contracts\Validation\ValidationContextInterface;
 use Roster\Enums\EntityType;
 use Roster\Enums\OperationType;
-use Illuminate\Support\Facades\App;
-use Roster\Contracts\Validation\ValidationContextInterface;
+use Roster\Models\Availability;
+use Roster\Validation\Attributes\ValidationRule;
 
+/**
+ * Validates that schedulable information is consistent between entities and their parent availability.
+ *
+ * Ensures that schedules and impediments belong to the same schedulable entity
+ * as their parent availability to maintain data integrity.
+ */
 #[ValidationRule(
     priority: 95,
     entities: [EntityType::SCHEDULE, EntityType::IMPEDIMENT],
@@ -19,6 +26,17 @@ use Roster\Contracts\Validation\ValidationContextInterface;
 )]
 class SchedulableConsistencyRule extends AbstractRule
 {
+    /**
+     * Validates schedulable consistency between entity and parent availability.
+     *
+     * Checks that:
+     * 1. Schedulable information is provided
+     * 2. The parent availability exists
+     * 3. Both entities belong to the same schedulable
+     *
+     * @param ValidationContextInterface $validationContext Validation context with entity data
+     * @return void
+     */
     public function validate(ValidationContextInterface $validationContext): void
     {
         $entityType = $validationContext->getEntityType();
@@ -27,40 +45,87 @@ class SchedulableConsistencyRule extends AbstractRule
             return;
         }
 
-        // Vérifier que schedulable_id et schedulable_type sont présents
-        if (!$validationContext->has('schedulable_id') || !$validationContext->has('schedulable_type')) {
-            $validationContext->setViolation(
-                'schedulable',
-                'Schedulable information is required'
-            );
+        if (!$this->hasRequiredSchedulableData($validationContext)) {
             return;
         }
 
         $schedulableId = $validationContext->get('schedulable_id');
         $schedulableType = $validationContext->get('schedulable_type');
 
-        // Vérifier que l'availability appartient au même schedulable
+        $availability = $this->getParentAvailability($validationContext);
+        if (!$availability instanceof Availability) {
+            return; // AvailabilityOwnershipRule will handle missing availability
+        }
+
+        if (!$this->isSchedulableConsistent($availability, $schedulableId, $schedulableType)) {
+            $this->addSchedulableMismatchViolation($validationContext);
+        }
+    }
+
+    /**
+     * Checks if required schedulable data is present.
+     *
+     * @param ValidationContextInterface $validationContext Validation context
+     * @return bool True if both schedulable_id and schedulable_type are present
+     */
+    private function hasRequiredSchedulableData(ValidationContextInterface $validationContext): bool
+    {
+        if (!$validationContext->has('schedulable_id') || !$validationContext->has('schedulable_type')) {
+            $validationContext->setViolation(
+                'schedulable',
+                'Schedulable information is required'
+            );
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * Retrieves the parent availability entity.
+     *
+     * @param ValidationContextInterface $validationContext Validation context
+     * @return Availability|null Parent availability or null if not found
+     */
+    private function getParentAvailability(ValidationContextInterface $validationContext): ?Availability
+    {
         $availabilityId = $validationContext->get('availability_id');
         if (!$availabilityId) {
-            return; // AvailabilityOwnershipRule gérera cela
+            return null; // AvailabilityOwnershipRule will handle missing availability_id
         }
 
         App::make(AvailabilityRepositoryInterface::class);
-        $availability = $validationContext->getAvailabilityService()->find($availabilityId);
+        return $validationContext->getAvailabilityService()->find($availabilityId);
+    }
 
-        if (!$availability instanceof Availability) {
-            return; // AvailabilityOwnershipRule gérera cela
-        }
+    /**
+     * Checks if schedulable information is consistent between entities.
+     *
+     * @param Availability $availability Parent availability
+     * @param mixed $schedulableId Entity schedulable identifier
+     * @param string $schedulableType Entity schedulable type
+     * @return bool True if schedulable information matches
+     */
+    private function isSchedulableConsistent(
+        Availability $availability,
+        mixed $schedulableId,
+        string $schedulableType
+    ): bool {
+        return $availability->schedulable_id == $schedulableId
+            && $availability->schedulable_type === $schedulableType;
+    }
 
-        // Vérifier la cohérence
-        if (
-            $availability->schedulable_id != $schedulableId
-            || $availability->schedulable_type !== $schedulableType
-        ) {
-            $validationContext->setViolation(
-                'schedulable',
-                "Schedulable information does not match the availability's schedulable"
-            );
-        }
+    /**
+     * Adds a violation for schedulable mismatch.
+     *
+     * @param ValidationContextInterface $validationContext Validation context
+     * @return void
+     */
+    private function addSchedulableMismatchViolation(ValidationContextInterface $validationContext): void
+    {
+        $validationContext->setViolation(
+            'schedulable',
+            "Schedulable information does not match the availability's schedulable"
+        );
     }
 }

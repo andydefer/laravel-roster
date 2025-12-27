@@ -1,11 +1,11 @@
 # Pint Formatting Test Report
-*Generated: sam. 27 déc. 2025 13:48:47 WAT*
+*Generated: sam. 27 déc. 2025 14:16:31 WAT*
 
 
-  ..⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯..⨯....⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯...⨯....⨯.......⨯......⨯....⨯⨯⨯⨯⨯.........⨯....⨯..⨯⨯⨯⨯⨯..⨯...⨯⨯⨯.....⨯..⨯.
+  .⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯..⨯....⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯...⨯....⨯.......⨯......⨯....⨯⨯⨯⨯⨯.........⨯....⨯..⨯⨯⨯⨯⨯..⨯...⨯⨯⨯.....⨯..⨯.
 
   ──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────── Laravel  
-    FAIL   ................................................................................................................................................ 151 files, 91 style issues  
+    FAIL   ................................................................................................................................................ 151 files, 92 style issues  
   ⨯ database/migrations/2024_01_01_000001_create_roster_availabilities_table.php         class_definition, no_superfluous_phpdoc_tags, braces_position, phpdoc_trim, no_unused_imports  
   ⨯ src/Commands/CacheRulesCommand.php                                                                                         concat_space, blank_line_before_statement, phpdoc_align  
   ⨯ src/Commands/InstallRosterCommand.php                                                                                     class_attributes_separation, blank_line_before_statement  
@@ -63,18 +63,19 @@
   ⨯ src/Validation/Rules/AvailabilityDaysCoherenceRule.php                    no_superfluous_phpdoc_tags, not_operator_with_successor_space, blank_line_before_statement, phpdoc_align  
   ⨯ src/Validation/Rules/AvailabilityOverlapRule.php                                                       no_superfluous_phpdoc_tags, not_operator_with_successor_space, phpdoc_align  
   ⨯ src/Validation/Rules/AvailabilityOwnershipRule.php                        no_superfluous_phpdoc_tags, not_operator_with_successor_space, blank_line_before_statement, phpdoc_align  
-  ⨯ src/Validation/Rules/AvailabilityTemporalCoherenceRule.php function_declaration, single_quote, not_operator_with_successor_space, blank_line_before_statement, ordered_imports, b…  
-  ⨯ src/Validation/Rules/AvailabilityTypeRule.php                                                             not_operator_with_successor_space, no_extra_blank_lines, ordered_imports  
-  ⨯ src/Validation/Rules/DaysValidationRule.php                                                        not_operator_with_successor_space, blank_line_before_statement, ordered_imports  
-  ⨯ src/Validation/Rules/DurationRule.php                                                 single_quote, concat_space, not_operator_with_successor_space, ordered_imports, phpdoc_align  
-  ⨯ src/Validation/Rules/FutureDateRule.php                                                                                         not_operator_with_successor_space, ordered_imports  
-  ⨯ src/Validation/Rules/ImpedimentScheduleDaysCoherenceRule.php                                              not_operator_with_successor_space, no_extra_blank_lines, ordered_imports  
-  ⨯ src/Validation/Rules/RequiredFieldsRule.php                                                                                     not_operator_with_successor_space, ordered_imports  
-  ⨯ src/Validation/Rules/SchedulableConsistencyRule.php                                                not_operator_with_successor_space, blank_line_before_statement, ordered_imports  
-  ⨯ src/Validation/Rules/SchedulableValidationRule.php                                                 not_operator_with_successor_space, blank_line_before_statement, ordered_imports  
-  ⨯ src/Validation/Rules/ScheduleOverlapRule.php                                           braces_position, not_operator_with_successor_space, single_line_empty_body, ordered_imports  
-  ⨯ src/Validation/Rules/TimeRangeRule.php                                                             not_operator_with_successor_space, blank_line_before_statement, ordered_imports  
-  ⨯ src/Validation/Rules/TimeSlotDateTimeRule.php                                                       single_quote, concat_space, not_operator_with_successor_space, ordered_imports  
+  ⨯ src/Validation/Rules/AvailabilityTemporalCoherenceRule.php                                     function_declaration, single_quote, not_operator_with_successor_space, phpdoc_align  
+  ⨯ src/Validation/Rules/AvailabilityTypeRule.php                                                          no_superfluous_phpdoc_tags, not_operator_with_successor_space, phpdoc_align  
+  ⨯ src/Validation/Rules/DaysValidationRule.php                               no_superfluous_phpdoc_tags, not_operator_with_successor_space, blank_line_before_statement, phpdoc_align  
+  ⨯ src/Validation/Rules/DurationRule.php                                                                  single_quote, concat_space, not_operator_with_successor_space, phpdoc_align  
+  ⨯ src/Validation/Rules/FutureDateRule.php                                                                                            not_operator_with_successor_space, phpdoc_align  
+  ⨯ src/Validation/Rules/ImpedimentScheduleDaysCoherenceRule.php                       phpdoc_separation, not_operator_with_successor_space, blank_line_before_statement, phpdoc_align  
+  ⨯ src/Validation/Rules/RequiredFieldsRule.php                                                                                        not_operator_with_successor_space, phpdoc_align  
+  ⨯ src/Validation/Rules/SchedulableConsistencyRule.php    no_superfluous_phpdoc_tags, no_unused_imports, not_operator_with_successor_space, blank_line_before_statement, phpdoc_align  
+  ⨯ src/Validation/Rules/SchedulableValidationRule.php                                                    not_operator_with_successor_space, blank_line_before_statement, phpdoc_align  
+  ⨯ src/Validation/Rules/ScheduleOverlapRule.php                                              braces_position, not_operator_with_successor_space, single_line_empty_body, phpdoc_align  
+  ⨯ src/Validation/Rules/TimeRangeRule.php                                             phpdoc_separation, not_operator_with_successor_space, blank_line_before_statement, phpdoc_align  
+  ⨯ src/Validation/Rules/TimeSlotDateTimeRule.php                                       single_quote, concat_space, phpdoc_separation, not_operator_with_successor_space, phpdoc_align  
+  ⨯ src/Validation/ValidationResult.php                                                                                                not_operator_with_successor_space, phpdoc_align  
   ⨯ src/Validation/Validator.php                                                function_declaration, concat_space, phpdoc_separation, not_operator_with_successor_space, phpdoc_align  
   ⨯ src/helpers.php function_declaration, no_multiline_whitespace_around_double_arrow, no_superfluous_phpdoc_tags, concat_space, phpdoc_separation, not_operator_with_successor_space…  
   ⨯ tests/Feature/Services/AvailabilityServiceDaysCoherenceTest.php                                                                            no_unused_imports, no_extra_blank_lines  

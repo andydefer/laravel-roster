@@ -5,10 +5,16 @@ declare(strict_types=1);
 namespace Roster\Validation\Rules;
 
 use Roster\Contracts\Validation\ValidationContextInterface;
-use Roster\Validation\Attributes\ValidationRule;
 use Roster\Enums\EntityType;
 use Roster\Enums\OperationType;
+use Roster\Validation\Attributes\ValidationRule;
 
+/**
+ * Validates availability type against configured allowed types.
+ *
+ * Ensures that availability types match the predefined configuration
+ * while handling partial updates gracefully.
+ */
 #[ValidationRule(
     priority: 80,
     entities: [EntityType::AVAILABILITY],
@@ -16,30 +22,30 @@ use Roster\Enums\OperationType;
 )]
 class AvailabilityTypeRule extends AbstractRule
 {
+    /**
+     * Validates the availability type.
+     *
+     * @param ValidationContextInterface $validationContext Validation context with data
+     * @return void
+     */
     public function validate(ValidationContextInterface $validationContext): void
     {
-        // Si le champ n’est pas présent (PATCH / UPDATE partiel)
         if (!$validationContext->has('type')) {
             return;
         }
 
         $type = $validationContext->get('type');
 
-        // null = absent (safeData semantics)
         if ($type === null) {
             return;
         }
 
-        // Charger les types autorisés
         $allowedTypes = config('roster.allowed_types', []);
 
-        // Si la config est vide → tout est permis
         if ($allowedTypes === []) {
             return;
         }
 
-
-        // Validation stricte
         if (!in_array($type, $allowedTypes, true)) {
             $validationContext->setViolation(
                 'type',

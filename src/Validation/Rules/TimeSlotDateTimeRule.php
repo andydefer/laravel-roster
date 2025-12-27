@@ -7,10 +7,16 @@ namespace Roster\Validation\Rules;
 use Exception;
 use Illuminate\Support\Carbon;
 use Roster\Contracts\Validation\ValidationContextInterface;
-use Roster\Validation\Attributes\ValidationRule;
 use Roster\Enums\EntityType;
 use Roster\Enums\OperationType;
+use Roster\Validation\Attributes\ValidationRule;
 
+/**
+ * Validates date-time pairs for Schedule and Impediment entities.
+ *
+ * Ensures that start and end datetime values form valid chronological ranges
+ * and handles partial updates intelligently by preserving existing values.
+ */
 #[ValidationRule(
     priority: 60,
     entities: [EntityType::SCHEDULE, EntityType::IMPEDIMENT],
@@ -18,77 +24,133 @@ use Roster\Enums\OperationType;
 )]
 class TimeSlotDateTimeRule extends AbstractRule
 {
+    /**
+     * Validates datetime pairs for Schedule and Impediment operations.
+     *
+     * @param ValidationContextInterface $validationContext Validation context
+     * @throws Exception If datetime parsing fails
+     */
     public function validate(ValidationContextInterface $validationContext): void
     {
         $operationType = $validationContext->getOperation();
-        $entity = $validationContext->getCurrentEntity();
+        $currentEntity = $validationContext->getCurrentEntity();
 
-        if ($operationType === OperationType::CREATE) {
-            $this->validateCreate($validationContext);
-        } else {
-            $this->validateUpdate($validationContext, $entity);
-        }
+        match ($operationType) {
+            OperationType::CREATE => $this->validateCreateOperation($validationContext),
+            OperationType::UPDATE => $this->validateUpdateOperation($validationContext, $currentEntity),
+            default => null
+        };
     }
 
-    private function validateCreate(ValidationContextInterface $validationContext): void
+    /**
+     * Validates datetime pairs for creation operations.
+     *
+     * @param ValidationContextInterface $validationContext Validation context
+     */
+    private function validateCreateOperation(ValidationContextInterface $validationContext): void
     {
-        // Pour CREATE : les deux datetime doivent être fournies
-        if (!$validationContext->has('start_datetime') || !$validationContext->has('end_datetime')) {
-            return; // Validation des champs requis gérée par une autre règle
+        if (!$this->hasRequiredDateTimeFields($validationContext)) {
+            return; // Required field validation handled by another rule
         }
 
         $startValue = $validationContext->get('start_datetime');
         $endValue = $validationContext->get('end_datetime');
 
-        $this->validateDateTimePair($validationContext, $startValue, $endValue);
+        $this->validateDateTimeChronology($validationContext, $startValue, $endValue);
     }
 
-    private function validateUpdate(ValidationContextInterface $validationContext, ?object $entity): void
+    /**
+     * Validates datetime pairs for update operations.
+     *
+     * @param ValidationContextInterface $validationContext Validation context
+     * @param object|null $currentEntity Existing entity
+     */
+    private function validateUpdateOperation(ValidationContextInterface $validationContext, ?object $currentEntity): void
     {
-        // UPDATE : logique intelligente
-        $hasStart = $validationContext->has('start_datetime');
-        $hasEnd = $validationContext->has('end_datetime');
+        $hasStartUpdate = $validationContext->has('start_datetime');
+        $hasEndUpdate = $validationContext->has('end_datetime');
 
-        // Si aucune des deux datetime n'est modifiée, on ne valide pas
-        if (!$hasStart && !$hasEnd) {
-            return;
+        if (!$hasStartUpdate && !$hasEndUpdate) {
+            return; // No datetime fields being updated
         }
 
-        // Récupérer les valeurs
-        $startValue = $hasStart
-            ? $validationContext->get('start_datetime')
-            : ($entity?->start_datetime ?? null);
+        $startValue = $this->resolveDateTimeValue(
+            context: $validationContext,
+            fieldName: 'start_datetime',
+            hasUpdate: $hasStartUpdate,
+            entityValue: $currentEntity?->start_datetime
+        );
 
-        $endValue = $hasEnd
-            ? $validationContext->get('end_datetime')
-            : ($entity?->end_datetime ?? null);
+        $endValue = $this->resolveDateTimeValue(
+            context: $validationContext,
+            fieldName: 'end_datetime',
+            hasUpdate: $hasEndUpdate,
+            entityValue: $currentEntity?->end_datetime
+        );
 
-        // Maintenant on a les deux valeurs (soit du contexte, soit de l'entité)
-        $this->validateDateTimePair($validationContext, $startValue, $endValue);
+        $this->validateDateTimeChronology($validationContext, $startValue, $endValue);
     }
 
-    private function validateDateTimePair(
+    /**
+     * Validates that end datetime occurs after start datetime.
+     *
+     * @param ValidationContextInterface $validationContext Validation context
+     * @param mixed $startValue Start datetime value
+     * @param mixed $endValue End datetime value
+     */
+    private function validateDateTimeChronology(
         ValidationContextInterface $validationContext,
         mixed $startValue,
         mixed $endValue
     ): void {
-        // Maintenant on devrait toujours avoir les deux valeurs
         if ($startValue === null || $endValue === null) {
             return;
         }
 
         try {
-            $start = Carbon::parse($startValue);
-            $end = Carbon::parse($endValue);
+            $startDateTime = Carbon::parse($startValue);
+            $endDateTime = Carbon::parse($endValue);
 
-            if ($end->lte($start)) {
+            if ($endDateTime->lte($startDateTime)) {
                 $validationContext->setViolation(
                     'datetime_range',
                     'End datetime must be after start datetime'
                 );
             }
         } catch (Exception $exception) {
-            $validationContext->setViolation('datetime_format', "Invalid datetime format: " . $exception->getMessage());
+            $validationContext->setViolation(
+                'datetime_format',
+                "Invalid datetime format: " . $exception->getMessage()
+            );
         }
+    }
+
+    /**
+     * Checks if required datetime fields are present.
+     *
+     * @param ValidationContextInterface $validationContext Validation context
+     * @return bool True if both datetime fields are present
+     */
+    private function hasRequiredDateTimeFields(ValidationContextInterface $validationContext): bool
+    {
+        return $validationContext->has('start_datetime') && $validationContext->has('end_datetime');
+    }
+
+    /**
+     * Resolves datetime value from update context or existing entity.
+     *
+     * @param ValidationContextInterface $context Validation context
+     * @param string $fieldName Datetime field name
+     * @param bool $hasUpdate Whether field is being updated
+     * @param mixed $entityValue Existing entity value
+     * @return mixed Resolved datetime value
+     */
+    private function resolveDateTimeValue(
+        ValidationContextInterface $context,
+        string $fieldName,
+        bool $hasUpdate,
+        mixed $entityValue
+    ): mixed {
+        return $hasUpdate ? $context->get($fieldName) : $entityValue;
     }
 }

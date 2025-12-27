@@ -5,10 +5,16 @@ declare(strict_types=1);
 namespace Roster\Validation\Rules;
 
 use Roster\Contracts\Validation\ValidationContextInterface;
-use Roster\Validation\Attributes\ValidationRule;
 use Roster\Enums\EntityType;
 use Roster\Enums\OperationType;
+use Roster\Validation\Attributes\ValidationRule;
 
+/**
+ * Validates required fields for entity creation and update operations.
+ *
+ * Ensures that all mandatory fields are present for creation operations
+ * and prevents modification of ownership fields during updates.
+ */
 #[ValidationRule(
     priority: 100,
     entities: [EntityType::AVAILABILITY],
@@ -16,65 +22,104 @@ use Roster\Enums\OperationType;
 )]
 class RequiredFieldsRule extends AbstractRule
 {
+    /**
+     * Validates required fields based on entity type and operation.
+     *
+     * For CREATE operations, ensures all mandatory fields are present.
+     * For UPDATE operations, allows partial updates but prevents modification
+     * of ownership-related fields.
+     *
+     * @param ValidationContextInterface $validationContext Validation context
+     */
     public function validate(ValidationContextInterface $validationContext): void
     {
-        $entityType = $validationContext->getEntityType();
         $operationType = $validationContext->getOperation();
-
-        $ownerFields = ['schedulable_id', 'schedulable_type'];
         $safeData = $validationContext->safeData();
 
-        // Vérifier les champs propriétaires pour CREATE et UPDATE
-        if ($operationType === OperationType::UPDATE) {
+        $this->validateOwnershipFields($validationContext, $safeData, $operationType);
 
-            foreach ($ownerFields as $ownerField) {
-                if (array_key_exists($ownerField, $safeData)) {
-                    $validationContext->setViolation(
-                        $ownerField,
-                        sprintf("Field '%s' cannot be changed. The owner cannot be modified.", $ownerField)
-                    );
-                }
-            }
+        if ($operationType === OperationType::CREATE) {
+            $this->validateRequiredFields($validationContext, $safeData);
         }
+    }
 
-        if ($operationType === OperationType::UPDATE) {
-            // Pour UPDATE, tout est optionnel (mises à jour partielles permises)
+    /**
+     * Validates that ownership fields cannot be modified during updates.
+     *
+     * @param ValidationContextInterface $validationContext Validation context
+     * @param array $safeData Validated input data
+     * @param OperationType $operationType Current operation
+     */
+    private function validateOwnershipFields(
+        ValidationContextInterface $validationContext,
+        array $safeData,
+        OperationType $operationType
+    ): void {
+        if ($operationType !== OperationType::UPDATE) {
             return;
         }
 
-        // CREATE : tous les champs doivent être présents
-        $requiredFields = $this->getRequiredFields($entityType);
-        foreach ($requiredFields as $requiredField) {
-            if (!array_key_exists($requiredField, $safeData)) {
+        $ownershipFields = ['schedulable_id', 'schedulable_type'];
+
+        foreach ($ownershipFields as $field) {
+            if (array_key_exists($field, $safeData)) {
                 $validationContext->setViolation(
-                    $requiredField,
-                    sprintf("Field '%s' is required", $requiredField)
+                    $field,
+                    sprintf("Field '%s' cannot be changed. Ownership cannot be modified.", $field)
                 );
             }
         }
     }
 
+    /**
+     * Validates all required fields are present for creation operations.
+     *
+     * @param ValidationContextInterface $validationContext Validation context
+     * @param array $safeData Validated input data
+     */
+    private function validateRequiredFields(
+        ValidationContextInterface $validationContext,
+        array $safeData
+    ): void {
+        $entityType = $validationContext->getEntityType();
+        $requiredFields = $this->getRequiredFields($entityType);
+
+        foreach ($requiredFields as $field) {
+            if (!array_key_exists($field, $safeData)) {
+                $validationContext->setViolation(
+                    $field,
+                    sprintf("Field '%s' is required", $field)
+                );
+            }
+        }
+    }
+
+    /**
+     * Returns required fields for each entity type.
+     *
+     * @param EntityType $entityType Type of entity
+     * @return array<string> Required field names
+     */
     private function getRequiredFields(EntityType $entityType): array
     {
         return match ($entityType) {
             EntityType::AVAILABILITY => [
-                'type',            // Type de disponibilité
-                'daily_start',     // Heure de début quotidienne
-                'daily_end',       // Heure de fin quotidienne
-                'days',            // Jours de la semaine
-                'validity_start',  // Date de début de validité
-                'validity_end',    // Date de fin de validité
+                'type',
+                'daily_start',
+                'daily_end',
+                'days',
+                'validity_start',
+                'validity_end',
             ],
             EntityType::SCHEDULE => [
-                'title',            // Titre du schedule (NOT NULL dans migration)
-                'start_datetime',   // Date/heure de début
-                'end_datetime',   // Date/heure de fin
-
+                'title',
+                'start_datetime',
+                'end_datetime',
             ],
             EntityType::IMPEDIMENT => [
-                'start_datetime',   // Date/heure de début
-                'end_datetime',     // Date/heure de fin
-                'reason',           // Raison de l'impediment
+                'start_datetime',
+                'end_datetime',
+                'reason',
             ],
         };
     }

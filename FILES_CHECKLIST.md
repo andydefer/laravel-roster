@@ -1,5 +1,5 @@
 # Project File Checklist
-*Last updated: sam. 27 déc. 2025 13:49:12 WAT*
+*Last updated: sam. 27 déc. 2025 14:16:57 WAT*
 
 ## Previously Checked Files
 1. config/roster.php [x]
@@ -76,21 +76,21 @@
 72. src/Validation/Rules/AvailabilityDaysCoherenceRule.php [x]
 73. src/Validation/Rules/AvailabilityOverlapRule.php [x]
 74. src/Validation/Rules/AvailabilityOwnershipRule.php [x]
-75. src/Validation/RuleScanner.php [x]
-76. src/Validation/Validator.php [x]
+75. src/Validation/Rules/AvailabilityTemporalCoherenceRule.php [x]
+76. src/Validation/Rules/AvailabilityTypeRule.php [x]
+77. src/Validation/RuleScanner.php [x]
+78. src/Validation/Rules/DaysValidationRule.php [x]
+79. src/Validation/Rules/DurationRule.php [x]
+80. src/Validation/Rules/FutureDateRule.php [x]
+81. src/Validation/Rules/ImpedimentScheduleDaysCoherenceRule.php [x]
+82. src/Validation/Rules/RequiredFieldsRule.php [x]
+83. src/Validation/Rules/SchedulableConsistencyRule.php [x]
+84. src/Validation/Rules/SchedulableValidationRule.php [x]
+85. src/Validation/Rules/ScheduleOverlapRule.php [x]
+86. src/Validation/Rules/TimeRangeRule.php [x]
+87. src/Validation/Rules/TimeSlotDateTimeRule.php [x]
+88. src/Validation/ValidationResult.php [x]
+89. src/Validation/Validator.php [x]
 
 ## Other Files
 1. config/roster.php.bak [ ]
-2. src/Validation/Rules/AvailabilityTemporalCoherenceRule.php [ ]
-3. src/Validation/Rules/AvailabilityTypeRule.php [ ]
-4. src/Validation/Rules/DaysValidationRule.php [ ]
-5. src/Validation/Rules/DurationRule.php [ ]
-6. src/Validation/Rules/FutureDateRule.php [ ]
-7. src/Validation/Rules/ImpedimentScheduleDaysCoherenceRule.php [ ]
-8. src/Validation/Rules/RequiredFieldsRule.php [ ]
-9. src/Validation/Rules/SchedulableConsistencyRule.php [ ]
-10. src/Validation/Rules/SchedulableValidationRule.php [ ]
-11. src/Validation/Rules/ScheduleOverlapRule.php [ ]
-12. src/Validation/Rules/TimeRangeRule.php [ ]
-13. src/Validation/Rules/TimeSlotDateTimeRule.php [ ]
-14. src/Validation/ValidationResult.php [ ]

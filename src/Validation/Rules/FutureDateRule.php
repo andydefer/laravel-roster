@@ -7,10 +7,16 @@ namespace Roster\Validation\Rules;
 use Exception;
 use Illuminate\Support\Carbon;
 use Roster\Contracts\Validation\ValidationContextInterface;
-use Roster\Validation\Attributes\ValidationRule;
 use Roster\Enums\EntityType;
 use Roster\Enums\OperationType;
+use Roster\Validation\Attributes\ValidationRule;
 
+/**
+ * Validates that date/times are not in the past for new entities.
+ *
+ * Ensures schedules and impediments are created with future start times,
+ * unless explicitly configured to allow past dates.
+ */
 #[ValidationRule(
     priority: 40,
     entities: [EntityType::SCHEDULE, EntityType::IMPEDIMENT],
@@ -18,6 +24,11 @@ use Roster\Enums\OperationType;
 )]
 class FutureDateRule extends AbstractRule
 {
+    /**
+     * Validates that date/times are not in the past.
+     *
+     * @param ValidationContextInterface $validationContext Validation context
+     */
     public function validate(ValidationContextInterface $validationContext): void
     {
         if (!$this->shouldValidateFutureDates()) {
@@ -37,6 +48,11 @@ class FutureDateRule extends AbstractRule
         }
     }
 
+    /**
+     * Validates availability start date is not in the past.
+     *
+     * @param ValidationContextInterface $validationContext Validation context
+     */
     private function validateFutureAvailability(ValidationContextInterface $validationContext): void
     {
         if (!$validationContext->has('start_date')) {
@@ -48,15 +64,20 @@ class FutureDateRule extends AbstractRule
 
             if ($date->isPast()) {
                 $validationContext->setViolation(
-                    'start_date',
-                    'Availability start date cannot be in the past'
+                    field: 'start_date',
+                    message: 'Availability start date cannot be in the past'
                 );
             }
         } catch (Exception $exception) {
-            // La validation du format est gérée par d'autres règles
+            // Format validation handled by other rules
         }
     }
 
+    /**
+     * Validates schedule/impediment start datetime is not in the past.
+     *
+     * @param ValidationContextInterface $validationContext Validation context
+     */
     private function validateFutureDateTime(ValidationContextInterface $validationContext): void
     {
         if (!$validationContext->has('start_datetime')) {
@@ -69,12 +90,12 @@ class FutureDateRule extends AbstractRule
             if ($date->isPast()) {
                 $entityType = $validationContext->getEntityType();
                 $validationContext->setViolation(
-                    'start_datetime',
-                    sprintf('%s start datetime cannot be in the past', $entityType->displayName())
+                    field: 'start_datetime',
+                    message: sprintf('%s start datetime cannot be in the past', $entityType->displayName())
                 );
             }
         } catch (Exception $exception) {
-            // La validation du format est gérée par d'autres règles
+            // Format validation handled by other rules
         }
     }
 }
