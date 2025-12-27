@@ -4,42 +4,46 @@
  * Roster Helpers
  *
  * Collection of helper functions for the Roster package.
+ * Provides date and day-related utilities and service instantiation helpers.
  */
+
+use Carbon\Carbon;
 use Carbon\WeekDay;
 use Carbon\Month;
-use Illuminate\Support\Carbon;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Contracts\Container\BindingResolutionException;
+use Roster\Models\Availability as ModelsAvailability;
+use Roster\Support\RosterServiceContext;
 
 if (!function_exists('roster_day_of_week')) {
     /**
-     * Retourne le jour de la semaine d'une date.
+     * Returns the day of the week for a given date.
      *
-     * @param string|DateTimeInterface $date Exemple : '2038-07-01' ou new DateTime('2038-07-01')
-     * @return string|null 'monday', 'tuesday', ... ou null si date invalide
+     * @param string|DateTimeInterface $date Date string or DateTimeInterface instance
+     * @return string|null Lowercase day name (e.g., 'monday') or null for invalid dates
      */
     function roster_day_of_week($date): ?string
     {
         try {
-            $dt = $date instanceof DateTimeInterface ? $date : new DateTime($date);
-
-            return strtolower($dt->format('l')); // 'Monday' -> 'monday'
+            $dateTime = $date instanceof DateTimeInterface ? $date : new DateTime($date);
+            return strtolower($dateTime->format('l'));
         } catch (Exception $exception) {
-            return null; // date invalide
+            return null;
         }
     }
 }
 
 if (!function_exists('roster_days_in_period')) {
     /**
-     * Retourne tous les jours d'une période.
+     * Returns all days occurring within a date period.
      *
-     * @param string|DateTimeInterface|Carbon $startDate Date de début
-     * @param string|DateTimeInterface|Carbon $endDate Date de fin
-     * @return array<string> Liste des jours (ex: ['monday', 'tuesday'])
+     * @param DateTimeInterface|WeekDay|Month|string|int|float|null $startDate Start date
+     * @param DateTimeInterface|WeekDay|Month|string|int|float|null $endDate End date
+     * @return array<string> Unique lowercase day names within the period
      */
     function roster_days_in_period(DateTimeInterface|WeekDay|Month|string|int|float|null $startDate, DateTimeInterface|WeekDay|Month|string|int|float|null $endDate): array
     {
         try {
-            // Utiliser Carbon qui est déjà dans les dépendances
             $start = Carbon::parse($startDate);
             $end = Carbon::parse($endDate);
 
@@ -60,102 +64,95 @@ if (!function_exists('roster_days_in_period')) {
 
 if (!function_exists('roster_format_period_days_for_display')) {
     /**
-     * Formate les jours d'une période pour l'affichage.
-     * Détecte les séquences continues et les formate comme "X to Y".
+     * Formats period days for human-readable display.
+     * Detects continuous sequences and formats them as "X to Y".
      *
-     * @param array<string> $days Liste des jours (doit être triée)
-     * @return string Chaîne formatée (ex: "Thursday to Sunday" ou "Monday, Wednesday and Friday")
+     * @param array<string> $days List of lowercase day names (should be sorted)
+     * @return string Formatted display string (e.g., "Thursday to Sunday" or "Monday, Wednesday and Friday")
      */
     function roster_format_period_days_for_display(array $days): string
     {
-        if ($days === []) {
+        if (empty($days)) {
             return '';
         }
 
-        // S'assurer que les jours sont triés
         $dayOrder = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
-        usort($days, function ($a, $b) use ($dayOrder): int {
-            return array_search($a, $dayOrder, true) <=> array_search($b, $dayOrder, true);
-        });
+        usort(
+            $days,
+            fn($a, $b): int =>
+            array_search($a, $dayOrder, true) <=> array_search($b, $dayOrder, true)
+        );
 
-        // Si un seul jour
         if (count($days) === 1) {
             return ucfirst($days[0]);
         }
 
-        // Vérifier si c'est une séquence continue
-        $isContinuous = true;
         $dayIndices = array_map(fn($day): false|int => array_search($day, $dayOrder, true), $days);
 
-        for ($i = 0; $i < count($dayIndices) - 1; ++$i) {
-            $current = $dayIndices[$i];
-            $next = $dayIndices[$i + 1];
+        $isContinuousSequence = true;
+        for ($i = 0; $i < count($dayIndices) - 1; $i++) {
+            $currentIndex = $dayIndices[$i];
+            $nextIndex = $dayIndices[$i + 1];
 
-            // Deux jours sont consécutifs si :
-            // 1. next = current + 1 (cas normal)
-            // 2. OU current = 6 (dimanche) et next = 0 (lundi) - traverse le weekend
-            if ($next !== $current + 1 && !($current === 6 && $next === 0)) {
-                $isContinuous = false;
+            $isConsecutive = $nextIndex === $currentIndex + 1;
+            $wrapsWeekend = $currentIndex === 6 && $nextIndex === 0;
+
+            if (!$isConsecutive && !$wrapsWeekend) {
+                $isContinuousSequence = false;
                 break;
             }
         }
 
-        // Si c'est une séquence continue, formater comme "X to Y"
-        if ($isContinuous) {
-            // Vérifier si la séquence traverse le weekend
-            // Si oui, nous avons peut-être besoin d'un format spécial
-            $first = ucfirst($days[0]);
-            $last = ucfirst(end($days));
+        if ($isContinuousSequence) {
+            $firstDay = ucfirst($days[0]);
+            $lastDay = ucfirst(end($days));
 
-            // Si la séquence commence par dimanche et finit par samedi,
-            // c'est que nous avons tous les jours
             if ($days[0] === 'sunday' && end($days) === 'saturday') {
-                return 'Monday to Sunday'; // Format plus logique
+                return 'Monday to Sunday';
             }
 
-            return sprintf('%s to %s', $first, $last);
+            return sprintf('%s to %s', $firstDay, $lastDay);
         }
 
-        // Sinon, utiliser le format normal
         return roster_format_days_for_display($days);
     }
 }
 
 if (!function_exists('roster_format_days_for_display')) {
     /**
-     * Formate une liste de jours pour l'affichage.
+     * Formats a list of days for human-readable display.
      *
-     * @param array<string> $days Liste des jours
-     * @return string Chaîne formatée (ex: "Monday, Tuesday and Thursday")
+     * @param array<string> $days List of lowercase day names
+     * @return string Formatted display string (e.g., "Monday, Tuesday and Thursday")
      */
     function roster_format_days_for_display(array $days): string
     {
-        if ($days === []) {
+        if (empty($days)) {
             return '';
         }
 
-        $capitalized = array_map('ucfirst', $days);
+        $capitalizedDays = array_map('ucfirst', $days);
 
-        if (count($capitalized) === 1) {
-            return $capitalized[0];
+        if (count($capitalizedDays) === 1) {
+            return $capitalizedDays[0];
         }
 
-        if (count($capitalized) === 2) {
-            return $capitalized[0] . ' and ' . $capitalized[1];
+        if (count($capitalizedDays) === 2) {
+            return $capitalizedDays[0] . ' and ' . $capitalizedDays[1];
         }
 
-        $last = array_pop($capitalized);
-        return implode(', ', $capitalized) . ' and ' . $last;
+        $lastDay = array_pop($capitalizedDays);
+        return implode(', ', $capitalizedDays) . ' and ' . $lastDay;
     }
 }
 
 if (!function_exists('roster_period_duration_in_days')) {
     /**
-     * Calcule la durée d'une période en jours.
+     * Calculates the duration of a period in days.
      *
-     * @param string|DateTimeInterface $startDate Date de début
-     * @param string|DateTimeInterface $endDate Date de fin
-     * @return int|null Nombre de jours ou null si dates invalides
+     * @param string|DateTimeInterface $startDate Start date
+     * @param string|DateTimeInterface $endDate End date
+     * @return int|null Number of days (inclusive) or null for invalid dates
      */
     function roster_period_duration_in_days($startDate, $endDate): ?int
     {
@@ -168,7 +165,6 @@ if (!function_exists('roster_period_duration_in_days')) {
                 $endDate = new DateTime($endDate);
             }
 
-            // Ajouter 1 pour inclure le jour de fin
             return (int) $startDate->diff($endDate)->days + 1;
         } catch (Exception $exception) {
             return null;
@@ -178,11 +174,12 @@ if (!function_exists('roster_period_duration_in_days')) {
 
 if (!function_exists('roster_is_day_in_period')) {
     /**
-     * Vérifie si un jour de la semaine est dans une période.
+     * Checks if a specific day occurs within a date period.
      *
-     * @param string $day Jour à vérifier (ex: 'monday')
-     * @param string|DateTimeInterface $startDate Date de début
-     * @param string|DateTimeInterface $endDate Date de fin
+     * @param string $day Day to check (e.g., 'monday')
+     * @param DateTimeInterface|WeekDay|Month|string|int|float|null $startDate Start date
+     * @param DateTimeInterface|WeekDay|Month|string|int|float|null $endDate End date
+     * @return bool True if the day occurs within the period
      */
     function roster_is_day_in_period(string $day, DateTimeInterface|WeekDay|Month|string|int|float|null $startDate, DateTimeInterface|WeekDay|Month|string|int|float|null $endDate): bool
     {
@@ -193,23 +190,24 @@ if (!function_exists('roster_is_day_in_period')) {
 
 if (!function_exists('roster_get_valid_days_in_period')) {
     /**
-     * Filtre une liste de jours pour ne garder que ceux dans la période.
+     * Filters a list of days to keep only those occurring within a date period.
      *
-     * @param array<string> $days Liste des jours à filtrer
-     * @param string|DateTimeInterface $startDate Date de début
-     * @param string|DateTimeInterface $endDate Date de fin
-     * @return array<string> Jours filtrés
+     * @param array<string> $days List of days to filter
+     * @param DateTimeInterface|WeekDay|Month|string|int|float|null $startDate Start date
+     * @param DateTimeInterface|WeekDay|Month|string|int|float|null $endDate End date
+     * @return array<string> Filtered days sorted in week order
      */
     function roster_get_valid_days_in_period(array $days, DateTimeInterface|WeekDay|Month|string|int|float|null $startDate, DateTimeInterface|WeekDay|Month|string|int|float|null $endDate): array
     {
         $daysInPeriod = roster_days_in_period($startDate, $endDate);
         $validDays = array_intersect($days, $daysInPeriod);
 
-        // Trier selon l'ordre des jours de la semaine
         $dayOrder = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
-        usort($validDays, function ($a, $b) use ($dayOrder): int {
-            return array_search($a, $dayOrder, true) <=> array_search($b, $dayOrder, true);
-        });
+        usort(
+            $validDays,
+            fn($a, $b): int =>
+            array_search($a, $dayOrder, true) <=> array_search($b, $dayOrder, true)
+        );
 
         return array_values($validDays);
     }
@@ -217,14 +215,14 @@ if (!function_exists('roster_get_valid_days_in_period')) {
 
 if (!function_exists('roster_should_auto_adjust_days')) {
     /**
-     * Détermine si les jours doivent être ajustés automatiquement.
+     * Determines whether days should be automatically adjusted based on period duration.
      *
-     * @param string|DateTimeInterface|null $startDate Date de début
-     * @param string|DateTimeInterface|null $endDate Date de fin
+     * @param string|DateTimeInterface|null $startDate Start date
+     * @param string|DateTimeInterface|null $endDate End date
+     * @return bool True if auto-adjustment should occur (period duration < 7 days)
      */
     function roster_should_auto_adjust_days($startDate, $endDate): bool
     {
-        // Si pas de dates, pas d'ajustement
         if ($startDate === null || $endDate === null) {
             return false;
         }
@@ -235,5 +233,79 @@ if (!function_exists('roster_should_auto_adjust_days')) {
         } catch (Exception $exception) {
             return false;
         }
+    }
+}
+
+if (!function_exists('availability_for')) {
+    /**
+     * Creates an Availability service instance for a given schedulable model.
+     *
+     * @param Model $schedulable The schedulable model instance
+     * @return \Roster\Services\AvailabilityService
+     * @throws BindingResolutionException If the service cannot be resolved from the container
+     */
+    function availability_for(Model $schedulable): \Roster\Services\AvailabilityService
+    {
+        return RosterServiceContext::allowViaHelper(function () use ($schedulable) {
+            /** @var \Roster\Services\AvailabilityService $service */
+            $service = app('roster.availability');
+            return $service->for($schedulable);
+        });
+    }
+}
+
+if (!function_exists('impediment_for')) {
+    /**
+     * Creates an Impediment service instance for a given availability.
+     * Automatically extracts the schedulable from the availability's polymorphic relationship.
+     *
+     * @param ModelsAvailability $availability The availability model instance
+     * @return \Roster\Services\ImpedimentService
+     * @throws \InvalidArgumentException If the availability has no schedulable relationship
+     * @throws BindingResolutionException If the service cannot be resolved from the container
+     */
+    function impediment_for(ModelsAvailability $availability): \Roster\Services\ImpedimentService
+    {
+        return RosterServiceContext::allowViaHelper(function () use ($availability) {
+            $schedulable = $availability->schedulable;
+
+            if (!$schedulable) {
+                throw new \InvalidArgumentException(
+                    'The provided availability does not have a schedulable relationship.'
+                );
+            }
+
+            /** @var \Roster\Services\ImpedimentService $service */
+            $service = app('roster.impediment');
+            return $service->for($schedulable)->owner($availability);
+        });
+    }
+}
+
+if (!function_exists('schedule_for')) {
+    /**
+     * Creates a Schedule service instance for a given availability.
+     * Automatically extracts the schedulable from the availability's polymorphic relationship.
+     *
+     * @param ModelsAvailability $availability The availability model instance
+     * @return \Roster\Services\ScheduleService
+     * @throws \InvalidArgumentException If the availability has no schedulable relationship
+     * @throws BindingResolutionException If the service cannot be resolved from the container
+     */
+    function schedule_for(ModelsAvailability $availability): \Roster\Services\ScheduleService
+    {
+        return RosterServiceContext::allowViaHelper(function () use ($availability) {
+            $schedulable = $availability->schedulable;
+
+            if (!$schedulable) {
+                throw new \InvalidArgumentException(
+                    'The provided availability does not have a schedulable relationship.'
+                );
+            }
+
+            /** @var \Roster\Services\ScheduleService $service */
+            $service = app('roster.schedule');
+            return $service->for($schedulable)->owner($availability);
+        });
     }
 }

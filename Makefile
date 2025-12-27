@@ -5,7 +5,6 @@
 # including code quality checks, version management, and file tracking.
 # ===================================================
 
-
 # ---------------------------------------------------
 # Tool Executables
 # ---------------------------------------------------
@@ -14,13 +13,11 @@ PHPSTAN = ./vendor/bin/phpstan
 RECTOR = ./vendor/bin/rector
 PSALM = ./vendor/bin/psalm
 
-
 # ---------------------------------------------------
 # Source Configuration
 # ---------------------------------------------------
-SOURCE_DIRS = src config database #routes tests
+SOURCE_DIRS = src config database
 IGNORED_FILES = CHANGED_FILES.md FILES_CHECKLIST.md psalm.md phpstan.md pint-test.md Makefile pint.md .gitkeep
-
 
 # ---------------------------------------------------
 # Version Control Operations
@@ -28,9 +25,8 @@ IGNORED_FILES = CHANGED_FILES.md FILES_CHECKLIST.md psalm.md phpstan.md pint-tes
 
 .PHONY: enable-cache
 enable-cache:
-	@echo "Activation automatique de 'with_cache = true' dans roster.php..."
 	@sed -i.bak -E "s/('with_cache'\s*=>\s*)false/\1true/" config/roster.php
-	@echo "'with_cache' activé ✅"
+	@echo "✅ Cache enabled in roster.php"
 
 .PHONY: pre-commit
 pre-commit:
@@ -43,7 +39,7 @@ pre-commit:
 git-commit-push: pre-commit enable-cache update-checklist
 	@read -p "Enter commit message: " commit_message; \
 	if [ -z "$$commit_message" ]; then \
-		echo "Error: Commit message cannot be empty"; \
+		echo "❌ Error: Commit message cannot be empty"; \
 		exit 1; \
 	fi; \
 	git add .; \
@@ -59,17 +55,16 @@ git-tag:
 	major=$$(echo $$last_tag | cut -d. -f1); \
 	minor=$$(echo $$last_tag | cut -d. -f2); \
 	patch=$$(echo $$last_tag | cut -d. -f3); \
-	if [ "$$tag_type" = "major" ]; then \
-		major=$$((major + 1)); minor=0; patch=0; \
-	elif [ "$$tag_type" = "minor" ]; then \
-		minor=$$((minor + 1)); patch=0; \
-	elif [ "$$tag_type" = "patch" ]; then \
-		patch=$$((patch + 1)); \
-	else echo "Invalid type: $$tag_type"; exit 1; fi; \
+	case "$$tag_type" in \
+		major) major=$$((major + 1)); minor=0; patch=0;; \
+		minor) minor=$$((minor + 1)); patch=0;; \
+		patch) patch=$$((patch + 1));; \
+		*) echo "❌ Invalid tag type: $$tag_type"; exit 1;; \
+	esac; \
 	new_tag="$$major.$$minor.$$patch"; \
 	git tag -a "$$new_tag" -m "Release $$new_tag"; \
 	git push origin "$$new_tag"; \
-	echo "Released new tag: $$new_tag"; \
+	echo "✅ Released new tag: $$new_tag"; \
 	'
 
 .PHONY: generate-ai-diff
@@ -126,12 +121,11 @@ generate-ai-diff:
 git-tag-republish:
 	@bash -c '\
 	last_tag=$$(git tag --sort=-v:refname | head -n 1); \
-	if [ -z "$$last_tag" ]; then echo "No tags found!"; exit 1; fi; \
+	if [ -z "$$last_tag" ]; then echo "❌ No tags found!"; exit 1; fi; \
 	echo "Republishing last tag: $$last_tag"; \
 	git push origin "$$last_tag" --force; \
-	echo "Tag $$last_tag republished"; \
+	echo "✅ Tag $$last_tag republished"; \
 	'
-
 
 # ---------------------------------------------------
 # File Management Operations
@@ -139,9 +133,8 @@ git-tag-republish:
 
 .PHONY: update-checklist
 update-checklist:
-	@echo "Updating FILES_CHECKLIST.md..."
+	@echo "📋 Updating FILES_CHECKLIST.md..."
 	@if [ -f FILES_CHECKLIST.md ]; then \
-		echo "Preserving existing checklist with checkmarks..."; \
 		grep -E '^[0-9]+\. .* \[[ xX]\]$$' FILES_CHECKLIST.md > .existing_checklist.tmp; \
 		awk -F' ' '{ \
 			file_path=""; \
@@ -177,11 +170,11 @@ update-checklist:
 		fi; \
 	done; \
 	rm -f .existing_checklist.tmp .existing_files.tmp; \
-	echo "FILES_CHECKLIST.md updated successfully (states preserved, duplicates avoided)"
+	echo "✅ FILES_CHECKLIST.md updated successfully"
 
 .PHONY: list-modified-files
 list-modified-files:
-	@echo "Updating CHANGED_FILES.md..."
+	@echo "📝 Updating CHANGED_FILES.md..."
 	@previously_checked_files=$$(grep -E '^[0-9]+\. .* \[[xX]\]' FILES_CHECKLIST.md | sed 's/^[0-9]\+\. //' | sed 's/ *\[[xX]\]$$//'); \
 	modified_file_count=0; \
 	all_files=$$( (git diff --name-only; git ls-files --others --exclude-standard) | sort -u ); \
@@ -214,19 +207,17 @@ list-modified-files:
 	if [ $$modified_file_count -eq 0 ]; then \
 		echo "*(No modified files in this category)*" >> CHANGED_FILES.md; \
 	fi; \
-	echo "" >> CHANGED_FILES.md; \
-	echo "CHANGED_FILES.md updated successfully"
+	echo "✅ CHANGED_FILES.md updated successfully"
 
 .PHONY: update-all
 update-all: update-checklist list-modified-files
-	@echo "All updates completed successfully!"
+	@echo "✅ All file management updates completed"
 
 .PHONY: concat-all
 concat-all:
-	@echo "Concatenating all PHP files from source directories into all.txt..."
+	@echo "🔗 Concatenating all PHP files into all.txt..."
 	@find $(SOURCE_DIRS) -type f -name "*.php" -exec sh -c 'echo ""; echo "// ==== {} ==="; echo ""; cat {}' \; > all.txt
-	@echo "File all.txt generated successfully."
-
+	@echo "✅ File all.txt generated successfully"
 
 # ---------------------------------------------------
 # Testing
@@ -236,41 +227,39 @@ concat-all:
 test: clean-testbench-migrations
 	@./vendor/bin/phpunit --testdox --display-notices
 
-
 # ---------------------------------------------------
 # Code Quality Tools (Console Output Versions)
 # ---------------------------------------------------
 
 .PHONY: lint-php
 lint-php:
-	@echo "Running Pint code formatter..."
+	@echo "🛠️  Running Pint code formatter..."
 	@$(PINT) --test
 	@echo "✅ Pint formatting check completed"
 
 .PHONY: lint-php-fix
 lint-php-fix:
-	@echo "Running Pint code formatter..."
+	@echo "🛠️  Running Pint code formatter..."
 	@$(PINT)
 	@echo "✅ Pint formatting applied"
 
 .PHONY: lint-phpstan
 lint-phpstan:
-	@echo "Running PHPStan static analysis..."
+	@echo "🔍 Running PHPStan static analysis..."
 	@$(PHPSTAN) analyse src tests --level=max
 	@echo "✅ PHPStan analysis completed"
 
 .PHONY: lint-rector
 lint-rector:
-	@echo "Running Rector refactoring..."
+	@echo "🔄 Running Rector refactoring..."
 	@$(RECTOR) process
 	@echo "✅ Rector refactoring completed"
 
 .PHONY: lint-psalm
 lint-psalm:
-	@echo "Running Psalm static analysis..."
+	@echo "📖 Running Psalm static analysis..."
 	@$(PSALM) --show-info=true
 	@echo "✅ Psalm analysis completed"
-
 
 # ---------------------------------------------------
 # Code Quality Tools (Markdown Report Versions)
@@ -278,7 +267,7 @@ lint-psalm:
 
 .PHONY: lint-php-md
 lint-php-md:
-	@echo "Running Pint and saving report to pint.md..."
+	@echo "📊 Running Pint and saving report to pint.md..."
 	@echo "# Pint Code Formatter Report" > pint.md
 	@echo "*Generated: $$(date)*" >> pint.md
 	@echo "" >> pint.md
@@ -287,7 +276,7 @@ lint-php-md:
 
 .PHONY: lint-php-fix-md
 lint-php-fix-md:
-	@echo "Running Pint formatting check and saving report to pint-test.md..."
+	@echo "📊 Running Pint formatting test and saving report to pint-test.md..."
 	@echo "# Pint Formatting Test Report" > pint-test.md
 	@echo "*Generated: $$(date)*" >> pint-test.md
 	@echo "" >> pint-test.md
@@ -296,7 +285,7 @@ lint-php-fix-md:
 
 .PHONY: lint-phpstan-md
 lint-phpstan-md:
-	@echo "Running PHPStan and saving report to phpstan.md..."
+	@echo "📊 Running PHPStan and saving report to phpstan.md..."
 	@echo "# PHPStan Static Analysis Report" > phpstan.md
 	@echo "*Generated: $$(date)*" >> phpstan.md
 	@echo "" >> phpstan.md
@@ -305,7 +294,7 @@ lint-phpstan-md:
 
 .PHONY: lint-rector-md
 lint-rector-md:
-	@echo "Running Rector and saving report to rector.md..."
+	@echo "📊 Running Rector and saving report to rector.md..."
 	@echo "# Rector Refactoring Report" > rector.md
 	@echo "*Generated: $$(date)*" >> rector.md
 	@echo "" >> rector.md
@@ -314,7 +303,7 @@ lint-rector-md:
 
 .PHONY: lint-psalm-md
 lint-psalm-md:
-	@echo "Running Psalm and saving report to psalm.md..."
+	@echo "📊 Running Psalm and saving report to psalm.md..."
 	@echo "# Psalm Static Analysis Report" > psalm.md
 	@echo "*Generated: $$(date)*" >> psalm.md
 	@echo "" >> psalm.md
@@ -322,12 +311,10 @@ lint-psalm-md:
 	@echo "✅ Psalm report saved to psalm.md"
 
 .PHONY: clean-testbench-migrations
-
 clean-testbench-migrations:
 	@echo "🧹 Cleaning Orchestra Testbench migrations..."
 	@rm -f vendor/orchestra/testbench-core/laravel/database/migrations/*_create_roster_*_table.php || true
 	@echo "✅ Testbench migrations cleaned"
-
 
 # ---------------------------------------------------
 # Batch Quality Checks (Non-blocking)
@@ -335,26 +322,25 @@ clean-testbench-migrations:
 
 .PHONY: lint-all-md
 lint-all-md:
-	@echo "Running all code quality checks and saving reports..."
+	@echo "📦 Running all code quality checks and saving reports..."
 	@make lint-php-md
 	@make lint-phpstan-md
 	@make lint-psalm-md
 	@echo "✅ All code quality reports generated"
-	@echo "📊 Reports:"
+	@echo "📋 Reports:"
 	@echo "  - pint.md (Pint formatting)"
 	@echo "  - phpstan.md (PHPStan analysis)"
 	@echo "  - psalm.md (Psalm analysis)"
 
 .PHONY: lint-all-fix-md
 lint-all-fix-md:
-	@echo "Running all code fixers and saving reports..."
+	@echo "📦 Running all code fixers and saving reports..."
 	@make lint-php-fix-md
 	@make lint-rector-md
 	@echo "✅ All code fixer reports generated"
-	@echo "📊 Reports:"
+	@echo "📋 Reports:"
 	@echo "  - pint-test.md (Pint formatting test)"
 	@echo "  - rector.md (Rector refactoring)"
-
 
 # ---------------------------------------------------
 # Release Management Workflow
@@ -362,74 +348,74 @@ lint-all-fix-md:
 
 .PHONY: pre-release
 pre-release:
-	@echo "Running pre-release checks (non-blocking)..."
-	@echo "📊 Generating reports instead of failing..."
+	@echo "🚀 Running pre-release checks..."
+	@echo "📊 Generating quality reports..."
 	@make test
 	@make lint-all-md
-	@echo "✅ Pre-release checks completed - reports generated"
-	@echo "📋 Review the following files before release:"
+	@echo "✅ Pre-release checks completed"
+	@echo "📋 Review reports before release:"
 	@echo "  - pint.md (formatting issues)"
 	@echo "  - phpstan.md (static analysis errors)"
 	@echo "  - psalm.md (type checking issues)"
 
 .PHONY: release
 release: pre-release
-	@echo "Creating release..."
+	@echo "🚀 Creating release..."
 	@make git-tag
 	@echo "✅ Release created successfully"
 
 .PHONY: post-release
 post-release:
-	@echo "Performing post-release cleanup..."
+	@echo "🧹 Performing post-release cleanup..."
 	@make update-all
 	@echo "✅ Post-release cleanup completed"
-
 
 # ---------------------------------------------------
 # Help & Documentation
 # ---------------------------------------------------
+
 .PHONY: help
 help:
-	@echo "Commandes disponibles :"
+	@echo "📚 Available commands:"
 	@echo ""
-	@echo "Contrôle de version :"
-	@echo "  git-commit-push       Commit et push de tous les changements"
-	@echo "  git-tag               Créer et pousser un nouveau tag de version"
-	@echo "  generate-ai-diff      Générer un diff propre pour revue par l'IA"
-	@echo "  git-tag-republish     Forcer le push du dernier tag"
+	@echo "🚀 Version Control:"
+	@echo "  git-commit-push       Commit and push all changes"
+	@echo "  git-tag               Create and push a new version tag"
+	@echo "  generate-ai-diff      Generate clean diff for AI review"
+	@echo "  git-tag-republish     Force push the last tag"
 	@echo ""
-	@echo "Gestion des fichiers :"
-	@echo "  update-checklist      Mettre à jour la checklist des fichiers"
-	@echo "  list-modified-files   Lister les fichiers modifiés"
-	@echo "  update-all            Mettre à jour checklist et fichiers modifiés"
-	@echo "  concat-all            Concaténer tous les fichiers PHP"
+	@echo "📁 File Management:"
+	@echo "  update-checklist      Update file checklist"
+	@echo "  list-modified-files   List modified files"
+	@echo "  update-all            Update checklist and modified files"
+	@echo "  concat-all            Concatenate all PHP files"
 	@echo ""
-	@echo "Tests :"
-	@echo "  test                  Exécuter les tests PHPUnit"
+	@echo "🧪 Testing:"
+	@echo "  test                  Run PHPUnit tests"
 	@echo ""
-	@echo "Qualité du code (Console - échoue sur erreur) :"
-	@echo "  lint-php              Exécuter le formateur de code Pint"
-	@echo "  lint-php-fix          Appliquer le formatage avec Pint"
-	@echo "  lint-phpstan          Exécuter l'analyse statique PHPStan"
-	@echo "  lint-rector           Appliquer le refactoring avec Rector"
-	@echo "  lint-psalm            Exécuter l'analyse Psalm"
+	@echo "🔍 Code Quality (Console - fails on error):"
+	@echo "  lint-php              Run Pint code formatter"
+	@echo "  lint-php-fix          Apply formatting with Pint"
+	@echo "  lint-phpstan          Run PHPStan static analysis"
+	@echo "  lint-rector           Apply refactoring with Rector"
+	@echo "  lint-psalm            Run Psalm analysis"
 	@echo ""
-	@echo "Qualité du code (Markdown - ne bloque pas) :"
-	@echo "  lint-php-md           Exécuter Pint et sauvegarder le rapport"
-	@echo "  lint-php-fix-md       Tester le formatage et sauvegarder le rapport"
-	@echo "  lint-phpstan-md       Exécuter PHPStan et sauvegarder les résultats"
-	@echo "  lint-rector-md        Exécuter Rector et sauvegarder le rapport"
-	@echo "  lint-psalm-md         Exécuter Psalm et sauvegarder les résultats"
-	@echo "  lint-all-md           Exécuter tous les linters (ne bloque pas)"
-	@echo "  lint-all-fix-md       Exécuter tous les correcteurs (ne bloque pas)"
+	@echo "📊 Code Quality (Markdown - non-blocking):"
+	@echo "  lint-php-md           Run Pint and save report"
+	@echo "  lint-php-fix-md       Test formatting and save report"
+	@echo "  lint-phpstan-md       Run PHPStan and save results"
+	@echo "  lint-rector-md        Run Rector and save report"
+	@echo "  lint-psalm-md         Run Psalm and save results"
+	@echo "  lint-all-md           Run all linters (non-blocking)"
+	@echo "  lint-all-fix-md       Run all fixers (non-blocking)"
 	@echo ""
-	@echo "Gestion des releases :"
-	@echo "  pre-release           Exécuter toutes les vérifications avant la release"
-	@echo "  release               Créer une nouvelle release (inclut pre-release)"
-	@echo "  post-release          Nettoyer après la release"
+	@echo "🔄 Release Management:"
+	@echo "  pre-release           Run all pre-release checks"
+	@echo "  release               Create new release (includes pre-release)"
+	@echo "  post-release          Clean up after release"
 	@echo ""
-	@echo "Aide :"
-	@echo "  help                  Afficher ce message d'aide"
+	@echo "❓ Help:"
+	@echo "  help                  Display this help message"
 
 # ---------------------------------------------------
 # Default Target

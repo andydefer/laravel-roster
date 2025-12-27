@@ -4,45 +4,50 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Services;
 
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Config;
 use Roster\Enums\ScheduleStatus;
-use Roster\Facades\Availability;
-use Roster\Facades\Impediment;
-use Roster\Facades\Schedule;
 use Roster\Models\Schedule as ScheduleModel;
+use Roster\Models\Availability as AvailabilityModel;
 use Roster\Validation\Exceptions\ValidationFailedException;
 use Tests\TestCase;
 use Tests\Support\TestSchedulable;
 
+/**
+ * Test suite for ScheduleService.
+ *
+ * Validates CRUD operations, conflict detection, and availability scenarios
+ * for schedule management within the roster system.
+ */
 final class ScheduleServiceTest extends TestCase
 {
     use RefreshDatabase;
 
-    private TestSchedulable $testSchedulable;
+    private Model $testSchedulable;
 
+    /**
+     * Set up test environment.
+     */
     protected function setUp(): void
     {
         parent::setUp();
 
         $this->testSchedulable = TestSchedulable::create();
 
-        // Configurer pour les tests
         Config::set('roster.durations.default_slot_interval_minutes', 15);
         Config::set('roster.durations.max_search_period_days', 30);
     }
 
-    /* -----------------------------------------------------------------
-     | Tests CRUD Basiques avec respect des principes
-     | -----------------------------------------------------------------
+    /**
+     * Test successful schedule creation.
      */
-
     public function test_create_schedule_successfully(): void
     {
-        // Arrange - Créer une disponibilité UNIQUE pour ce test
-        $availability = Availability::for($this->testSchedulable)->create([
+        // Arrange
+        $availability = availability_for($this->testSchedulable)->create([
             'type' => 'consultation',
             'daily_start' => '09:00:00',
             'daily_end' => '17:00:00',
@@ -52,34 +57,35 @@ final class ScheduleServiceTest extends TestCase
         ]);
 
         $scheduleData = [
-            'title' => 'Réunion de test',
-            'description' => 'Description de test',
-            'start_datetime' => '2038-01-04 10:00:00', // Lundi
+            'title' => 'Test Meeting',
+            'description' => 'Test description',
+            'start_datetime' => '2038-01-04 10:00:00',
             'end_datetime' => '2038-01-04 11:00:00',
             'status' => ScheduleStatus::BOOKED->value,
             'metadata' => ['priority' => 'high'],
         ];
 
         // Act
-        $schedule = Schedule::for($this->testSchedulable)
-            ->owner($availability)
-            ->create($scheduleData);
+        $schedule = schedule_for($availability)->create($scheduleData);
 
         // Assert
         $this->assertInstanceOf(ScheduleModel::class, $schedule);
         $this->assertNotNull($schedule->id);
-        $this->assertEquals($availability->id, $schedule->availability_id);
-        $this->assertEquals('Réunion de test', $schedule->title);
+        $this->assertSame($availability->id, $schedule->availability_id);
+        $this->assertSame('Test Meeting', $schedule->title);
         $this->assertEquals(Carbon::parse('2038-01-04 10:00:00'), $schedule->start_datetime);
         $this->assertEquals(Carbon::parse('2038-01-04 11:00:00'), $schedule->end_datetime);
-        $this->assertEquals(ScheduleStatus::BOOKED, $schedule->status);
-        $this->assertEquals(['priority' => 'high'], $schedule->metadata);
+        $this->assertSame(ScheduleStatus::BOOKED, $schedule->status);
+        $this->assertSame(['priority' => 'high'], $schedule->metadata);
     }
 
+    /**
+     * Test schedule creation with default status.
+     */
     public function test_create_schedule_with_default_status(): void
     {
         // Arrange
-        $availability = Availability::for($this->testSchedulable)->create([
+        $availability = availability_for($this->testSchedulable)->create([
             'type' => 'consultation',
             'daily_start' => '09:00:00',
             'daily_end' => '17:00:00',
@@ -89,24 +95,25 @@ final class ScheduleServiceTest extends TestCase
         ]);
 
         $scheduleData = [
-            'title' => 'Réunion sans statut',
+            'title' => 'Meeting without status',
             'start_datetime' => '2038-01-04 10:00:00',
             'end_datetime' => '2038-01-04 11:00:00',
         ];
 
         // Act
-        $schedule = Schedule::for($this->testSchedulable)
-            ->owner($availability)
-            ->create($scheduleData);
+        $schedule = schedule_for($availability)->create($scheduleData);
 
-        // Assert - Doit utiliser le statut par défaut
-        $this->assertEquals(ScheduleStatus::AVAILABLE->value, $schedule->status->value);
+        // Assert
+        $this->assertSame(ScheduleStatus::AVAILABLE->value, $schedule->status->value);
     }
 
+    /**
+     * Test schedule creation fails when end time is before start time.
+     */
     public function test_create_schedule_fails_when_end_before_start(): void
     {
         // Arrange
-        $availability = Availability::for($this->testSchedulable)->create([
+        $availability = availability_for($this->testSchedulable)->create([
             'type' => 'consultation',
             'daily_start' => '09:00:00',
             'daily_end' => '17:00:00',
@@ -116,25 +123,26 @@ final class ScheduleServiceTest extends TestCase
         ]);
 
         $scheduleData = [
-            'title' => 'Réunion invalide',
+            'title' => 'Invalid meeting',
             'start_datetime' => '2038-01-04 12:00:00',
-            'end_datetime' => '2038-01-04 11:00:00', // Avant le début
+            'end_datetime' => '2038-01-04 11:00:00',
         ];
 
-        // Expect
+        // Assert
         $this->expectException(ValidationFailedException::class);
         $this->expectExceptionMessageMatches('/End datetime must be after start datetime/');
 
         // Act
-        Schedule::for($this->testSchedulable)
-            ->owner($availability)
-            ->create($scheduleData);
+        schedule_for($availability)->create($scheduleData);
     }
 
+    /**
+     * Test schedule creation fails when duration is too short.
+     */
     public function test_create_schedule_fails_when_too_short(): void
     {
         // Arrange
-        $availability = Availability::for($this->testSchedulable)->create([
+        $availability = availability_for($this->testSchedulable)->create([
             'type' => 'consultation',
             'daily_start' => '09:00:00',
             'daily_end' => '17:00:00',
@@ -144,28 +152,29 @@ final class ScheduleServiceTest extends TestCase
         ]);
 
         $scheduleData = [
-            'title' => 'Réunion trop courte',
+            'title' => 'Too short meeting',
             'start_datetime' => '2038-01-04 10:00:00',
-            'end_datetime' => '2038-01-04 10:05:00', // 5 minutes seulement
+            'end_datetime' => '2038-01-04 10:05:00',
         ];
 
-        // Expect
+        // Assert
         $this->expectException(ValidationFailedException::class);
         $this->expectExceptionMessageMatches('/Minimum duration/');
 
         // Act
-        Schedule::for($this->testSchedulable)
-            ->owner($availability)
-            ->create($scheduleData);
+        schedule_for($availability)->create($scheduleData);
     }
 
+    /**
+     * Test schedule creation fails with incorrect availability.
+     */
     public function test_create_schedule_fails_when_no_availability(): void
     {
-        // Arrange - Créer deux schedulables différents
+        // Arrange
         $schedulable1 = TestSchedulable::create();
         $schedulable2 = TestSchedulable::create();
 
-        $availabilityForSchedulable1 = Availability::for($schedulable1)->create([
+        $availabilityForSchedulable1 = availability_for($schedulable1)->create([
             'type' => 'consultation',
             'daily_start' => '09:00:00',
             'daily_end' => '17:00:00',
@@ -175,28 +184,28 @@ final class ScheduleServiceTest extends TestCase
         ]);
 
         $scheduleData = [
-            'title' => 'Réunion avec mauvaise disponibilité',
+            'title' => 'Meeting with wrong availability',
             'start_datetime' => '2038-01-04 10:00:00',
             'end_datetime' => '2038-01-04 11:00:00',
         ];
 
-        // Expect - Doit échouer car l'availability n'appartient pas au bon schedulable
+        // Assert
         $this->expectException(ValidationFailedException::class);
-        $this->expectExceptionMessageMatches(
-            '/Create validation failed for Schedule: availability_id → Invalid availability ID/'
-        );
+        $this->expectExceptionMessageMatches('/Create validation failed for Schedule: availability_id → Invalid availability ID/');
 
-
-        // Act - Utiliser l'availability de schedulable1 avec schedulable2
-        Schedule::for($schedulable2)
-            ->owner($availabilityForSchedulable1)
+        // Act
+        schedule_for($availabilityForSchedulable1)
+            ->for($schedulable2)
             ->create($scheduleData);
     }
 
+    /**
+     * Test successful schedule update.
+     */
     public function test_update_schedule_successfully(): void
     {
         // Arrange
-        $availability = Availability::for($this->testSchedulable)->create([
+        $availability = availability_for($this->testSchedulable)->create([
             'type' => 'consultation',
             'daily_start' => '09:00:00',
             'daily_end' => '17:00:00',
@@ -205,41 +214,39 @@ final class ScheduleServiceTest extends TestCase
             'validity_end' => '2038-01-31',
         ]);
 
-        $schedule = Schedule::for($this->testSchedulable)
-            ->owner($availability)
-            ->create([
-                'title' => 'Réunion originale',
-                'description' => 'Description originale',
-                'start_datetime' => '2038-01-04 10:00:00',
-                'end_datetime' => '2038-01-04 11:00:00',
-                'metadata' => ['original' => true],
-            ]);
+        $schedule = schedule_for($availability)->create([
+            'title' => 'Original meeting',
+            'description' => 'Original description',
+            'start_datetime' => '2038-01-04 10:00:00',
+            'end_datetime' => '2038-01-04 11:00:00',
+            'metadata' => ['original' => true],
+        ]);
 
         $updateData = [
-            'title' => 'Titre modifié',
-            'description' => 'Description modifiée',
+            'title' => 'Updated title',
+            'description' => 'Updated description',
             'metadata' => ['updated' => true],
         ];
 
         // Act
-        $result = Schedule::for($this->testSchedulable)
-            ->owner($availability)
-            ->update($schedule->id, $updateData);
+        $result = schedule_for($availability)->update($schedule->id, $updateData);
 
         // Assert
         $this->assertTrue($result);
         $schedule->refresh();
-        $this->assertEquals('Titre modifié', $schedule->title);
-        $this->assertEquals('Description modifiée', $schedule->description);
-        $this->assertEquals(['updated' => true], $schedule->metadata);
-        // Les dates ne devraient pas changer
+        $this->assertSame('Updated title', $schedule->title);
+        $this->assertSame('Updated description', $schedule->description);
+        $this->assertSame(['updated' => true], $schedule->metadata);
         $this->assertEquals(Carbon::parse('2038-01-04 10:00:00'), $schedule->start_datetime);
     }
 
+    /**
+     * Test schedule update with datetime changes.
+     */
     public function test_update_schedule_with_datetime_changes(): void
     {
-        // Arrange - Créer une disponibilité assez large
-        $availability = Availability::for($this->testSchedulable)->create([
+        // Arrange
+        $availability = availability_for($this->testSchedulable)->create([
             'type' => 'consultation',
             'daily_start' => '09:00:00',
             'daily_end' => '17:00:00',
@@ -248,21 +255,17 @@ final class ScheduleServiceTest extends TestCase
             'validity_end' => '2038-01-31',
         ]);
 
-        $schedule = Schedule::for($this->testSchedulable)
-            ->owner($availability)
-            ->create([
-                'title' => 'Réunion originale',
-                'start_datetime' => '2038-01-04 10:00:00',
-                'end_datetime' => '2038-01-04 11:00:00',
-            ]);
+        $schedule = schedule_for($availability)->create([
+            'title' => 'Original meeting',
+            'start_datetime' => '2038-01-04 10:00:00',
+            'end_datetime' => '2038-01-04 11:00:00',
+        ]);
 
-        // Act - Déplacer dans la même journée, même disponibilité
-        $result = Schedule::for($this->testSchedulable)
-            ->owner($availability)
-            ->update($schedule->id, [
-                'start_datetime' => '2038-01-04 13:00:00',
-                'end_datetime' => '2038-01-04 14:00:00',
-            ]);
+        // Act
+        $result = schedule_for($availability)->update($schedule->id, [
+            'start_datetime' => '2038-01-04 13:00:00',
+            'end_datetime' => '2038-01-04 14:00:00',
+        ]);
 
         // Assert
         $this->assertTrue($result);
@@ -271,10 +274,13 @@ final class ScheduleServiceTest extends TestCase
         $this->assertEquals(Carbon::parse('2038-01-04 14:00:00'), $schedule->end_datetime);
     }
 
+    /**
+     * Test schedule update fails when overlapping with existing schedule.
+     */
     public function test_update_schedule_fails_when_overlap(): void
     {
-        // Arrange - Créer une disponibilité
-        $availability = Availability::for($this->testSchedulable)->create([
+        // Arrange
+        $availability = availability_for($this->testSchedulable)->create([
             'type' => 'consultation',
             'daily_start' => '09:00:00',
             'daily_end' => '17:00:00',
@@ -283,44 +289,38 @@ final class ScheduleServiceTest extends TestCase
             'validity_end' => '2038-01-31',
         ]);
 
-        // Créer deux schedules différents
-        $schedule1 = Schedule::for($this->testSchedulable)
-            ->owner($availability)
-            ->create([
-                'title' => 'Réunion 1',
-                'start_datetime' => '2038-01-04 10:00:00',
-                'end_datetime' => '2038-01-04 11:00:00',
-            ]);
+        $schedule1 = schedule_for($availability)->create([
+            'title' => 'Meeting 1',
+            'start_datetime' => '2038-01-04 10:00:00',
+            'end_datetime' => '2038-01-04 11:00:00',
+        ]);
 
-        Schedule::for($this->testSchedulable)
-            ->owner($availability)
-            ->create([
-                'title' => 'Réunion 2',
-                'start_datetime' => '2038-01-04 12:00:00',
-                'end_datetime' => '2038-01-04 13:00:00',
-            ]);
+        schedule_for($availability)->create([
+            'title' => 'Meeting 2',
+            'start_datetime' => '2038-01-04 12:00:00',
+            'end_datetime' => '2038-01-04 13:00:00',
+        ]);
 
-
-        // Essayer de déplacer schedule1 pour qu'il chevauche schedule2
         $updateData = [
-            'start_datetime' => '2038-01-04 12:30:00', // Chevauche avec schedule2
+            'start_datetime' => '2038-01-04 12:30:00',
             'end_datetime' => '2038-01-04 13:30:00',
         ];
 
-        // Expect
+        // Assert
         $this->expectException(ValidationFailedException::class);
         $this->expectExceptionMessageMatches('/Schedule overlaps with existing schedule/');
 
         // Act
-        Schedule::for($this->testSchedulable)
-            ->owner($availability)
-            ->update($schedule1->id, $updateData);
+        schedule_for($availability)->update($schedule1->id, $updateData);
     }
 
+    /**
+     * Test schedule creation fails when overlapping with existing schedule.
+     */
     public function test_create_schedule_fails_when_overlap(): void
     {
-        // Arrange - Créer une disponibilité
-        $availability = Availability::for($this->testSchedulable)->create([
+        // Arrange
+        $availability = availability_for($this->testSchedulable)->create([
             'type' => 'consultation',
             'daily_start' => '09:00:00',
             'daily_end' => '17:00:00',
@@ -329,39 +329,33 @@ final class ScheduleServiceTest extends TestCase
             'validity_end' => '2038-01-31',
         ]);
 
-        // Schedule existant
-        Schedule::for($this->testSchedulable)
-            ->owner($availability)
-            ->create([
-                'title' => 'Schedule existant',
-                'start_datetime' => '2038-01-04 10:00:00',
-                'end_datetime' => '2038-01-04 11:00:00',
-            ]);
+        schedule_for($availability)->create([
+            'title' => 'Existing schedule',
+            'start_datetime' => '2038-01-04 10:00:00',
+            'end_datetime' => '2038-01-04 11:00:00',
+        ]);
 
-        // Données du schedule qui va chevaucher
         $overlappingData = [
-            'title' => 'Schedule chevauchant',
-            'start_datetime' => '2038-01-04 10:30:00', // overlap
+            'title' => 'Overlapping schedule',
+            'start_datetime' => '2038-01-04 10:30:00',
             'end_datetime' => '2038-01-04 11:30:00',
         ];
 
-        // Expect
+        // Assert
         $this->expectException(ValidationFailedException::class);
-        $this->expectExceptionMessageMatches(
-            '/overlaps with existing schedule/'
-        );
+        $this->expectExceptionMessageMatches('/overlaps with existing schedule/');
 
-        // Act - Tentative de création
-        Schedule::for($this->testSchedulable)
-            ->owner($availability)
-            ->create($overlappingData);
+        // Act
+        schedule_for($availability)->create($overlappingData);
     }
 
-
+    /**
+     * Test schedule update fails when schedule not found.
+     */
     public function test_update_schedule_fails_when_not_found(): void
     {
         // Arrange
-        $availability = Availability::for($this->testSchedulable)->create([
+        $availability = availability_for($this->testSchedulable)->create([
             'type' => 'consultation',
             'daily_start' => '09:00:00',
             'daily_end' => '17:00:00',
@@ -370,20 +364,21 @@ final class ScheduleServiceTest extends TestCase
             'validity_end' => '2038-01-31',
         ]);
 
-        // Expect
+        // Assert
         $this->expectException(ValidationFailedException::class);
         $this->expectExceptionMessageMatches('/Schedule with given ID does not exist/');
 
         // Act
-        Schedule::for($this->testSchedulable)
-            ->owner($availability)
-            ->update(999999, ['title' => 'test']);
+        schedule_for($availability)->update(999999, ['title' => 'test']);
     }
 
+    /**
+     * Test successful schedule deletion.
+     */
     public function test_delete_schedule_successfully(): void
     {
         // Arrange
-        $availability = Availability::for($this->testSchedulable)->create([
+        $availability = availability_for($this->testSchedulable)->create([
             'type' => 'consultation',
             'daily_start' => '09:00:00',
             'daily_end' => '17:00:00',
@@ -392,28 +387,27 @@ final class ScheduleServiceTest extends TestCase
             'validity_end' => '2038-01-31',
         ]);
 
-        $schedule = Schedule::for($this->testSchedulable)
-            ->owner($availability)
-            ->create([
-                'title' => 'Réunion à supprimer',
-                'start_datetime' => '2038-01-04 10:00:00',
-                'end_datetime' => '2038-01-04 11:00:00',
-            ]);
+        $schedule = schedule_for($availability)->create([
+            'title' => 'Meeting to delete',
+            'start_datetime' => '2038-01-04 10:00:00',
+            'end_datetime' => '2038-01-04 11:00:00',
+        ]);
 
         // Act
-        $result = Schedule::for($this->testSchedulable)
-            ->owner($availability)
-            ->delete($schedule->id);
+        $result = schedule_for($availability)->delete($schedule->id);
 
         // Assert
         $this->assertTrue($result);
         $this->assertNull(ScheduleModel::find($schedule->id));
     }
 
+    /**
+     * Test schedule deletion fails when schedule not found.
+     */
     public function test_delete_schedule_fails_when_not_found(): void
     {
         // Arrange
-        $availability = Availability::for($this->testSchedulable)->create([
+        $availability = availability_for($this->testSchedulable)->create([
             'type' => 'consultation',
             'daily_start' => '09:00:00',
             'daily_end' => '17:00:00',
@@ -422,20 +416,21 @@ final class ScheduleServiceTest extends TestCase
             'validity_end' => '2038-01-31',
         ]);
 
-        // Expect
+        // Assert
         $this->expectException(ValidationFailedException::class);
         $this->expectExceptionMessageMatches('/Schedule with given ID does not exist/');
 
         // Act
-        Schedule::for($this->testSchedulable)
-            ->owner($availability)
-            ->delete(999999);
+        schedule_for($availability)->delete(999999);
     }
 
+    /**
+     * Test finding schedule by ID.
+     */
     public function test_find_schedule_by_id(): void
     {
         // Arrange
-        $availability = Availability::for($this->testSchedulable)->create([
+        $availability = availability_for($this->testSchedulable)->create([
             'type' => 'consultation',
             'daily_start' => '09:00:00',
             'daily_end' => '17:00:00',
@@ -444,32 +439,31 @@ final class ScheduleServiceTest extends TestCase
             'validity_end' => '2038-01-31',
         ]);
 
-        $schedule = Schedule::for($this->testSchedulable)
-            ->owner($availability)
-            ->create([
-                'title' => 'Réunion à trouver',
-                'start_datetime' => '2038-01-04 10:00:00',
-                'end_datetime' => '2038-01-04 11:00:00',
-            ]);
+        $schedule = schedule_for($availability)->create([
+            'title' => 'Meeting to find',
+            'start_datetime' => '2038-01-04 10:00:00',
+            'end_datetime' => '2038-01-04 11:00:00',
+        ]);
 
         // Act
-        $found = Schedule::for($this->testSchedulable)
-            ->owner($availability)
-            ->find($schedule->id);
+        $found = schedule_for($availability)->find($schedule->id);
 
         // Assert
         $this->assertInstanceOf(ScheduleModel::class, $found);
-        $this->assertEquals($schedule->id, $found->id);
-        $this->assertEquals('Réunion à trouver', $found->title);
+        $this->assertSame($schedule->id, $found->id);
+        $this->assertSame('Meeting to find', $found->title);
     }
 
+    /**
+     * Test find returns null for schedule belonging to different schedulable.
+     */
     public function test_find_returns_null_for_wrong_schedulable(): void
     {
-        // Arrange - Créer deux schedulables
+        // Arrange
         $schedulable1 = TestSchedulable::create();
         $schedulable2 = TestSchedulable::create();
 
-        $availability1 = Availability::for($schedulable1)->create([
+        $availability1 = availability_for($schedulable1)->create([
             'type' => 'consultation',
             'daily_start' => '09:00:00',
             'daily_end' => '17:00:00',
@@ -478,7 +472,7 @@ final class ScheduleServiceTest extends TestCase
             'validity_end' => '2038-01-31',
         ]);
 
-        $availability2 = Availability::for($schedulable2)->create([
+        $availability2 = availability_for($schedulable2)->create([
             'type' => 'consultation',
             'daily_start' => '09:00:00',
             'daily_end' => '17:00:00',
@@ -487,28 +481,26 @@ final class ScheduleServiceTest extends TestCase
             'validity_end' => '2038-01-31',
         ]);
 
-        // Créer un schedule pour schedulable2
-        $scheduleForSchedulable2 = Schedule::for($schedulable2)
-            ->owner($availability2)
-            ->create([
-                'title' => 'Pour autre schedulable',
-                'start_datetime' => '2038-01-04 10:00:00',
-                'end_datetime' => '2038-01-04 11:00:00',
-            ]);
+        $scheduleForSchedulable2 = schedule_for($availability2)->create([
+            'title' => 'For other schedulable',
+            'start_datetime' => '2038-01-04 10:00:00',
+            'end_datetime' => '2038-01-04 11:00:00',
+        ]);
 
-        // Act - Essayer de récupérer ce schedule avec le service pour schedulable1
-        $found = Schedule::for($schedulable1)
-            ->owner($availability1)
-            ->find($scheduleForSchedulable2->id);
+        // Act
+        $found = schedule_for($availability1)->find($scheduleForSchedulable2->id);
 
-        // Assert - Ne devrait pas trouver car ce schedule n'appartient pas au bon schedulable
-        $this->assertNotInstanceOf(\Roster\Models\Schedule::class, $found);
+        // Assert
+        $this->assertNull($found);
     }
 
+    /**
+     * Test retrieving all schedules.
+     */
     public function test_all_schedules(): void
     {
         // Arrange
-        $availability = Availability::for($this->testSchedulable)->create([
+        $availability = availability_for($this->testSchedulable)->create([
             'type' => 'consultation',
             'daily_start' => '09:00:00',
             'daily_end' => '17:00:00',
@@ -517,94 +509,85 @@ final class ScheduleServiceTest extends TestCase
             'validity_end' => '2038-01-31',
         ]);
 
-        Schedule::for($this->testSchedulable)
-            ->owner($availability)
-            ->create([
-                'title' => 'Réunion 1',
-                'start_datetime' => '2038-01-04 10:00:00',
-                'end_datetime' => '2038-01-04 11:00:00',
-            ]);
+        schedule_for($availability)->create([
+            'title' => 'Meeting 1',
+            'start_datetime' => '2038-01-04 10:00:00',
+            'end_datetime' => '2038-01-04 11:00:00',
+        ]);
 
-        Schedule::for($this->testSchedulable)
-            ->owner($availability)
-            ->create([
-                'title' => 'Réunion 2',
-                'start_datetime' => '2038-01-05 14:00:00',
-                'end_datetime' => '2038-01-05 15:00:00',
-            ]);
+        schedule_for($availability)->create([
+            'title' => 'Meeting 2',
+            'start_datetime' => '2038-01-05 14:00:00',
+            'end_datetime' => '2038-01-05 15:00:00',
+        ]);
 
         // Act
-        $result = Schedule::for($this->testSchedulable)
-            ->owner($availability)
-            ->all();
+        $result = schedule_for($availability)->all();
 
         // Assert
         $this->assertInstanceOf(Collection::class, $result);
         $this->assertCount(2, $result);
         $titles = $result->pluck('title')->toArray();
-        $this->assertContains('Réunion 1', $titles);
-        $this->assertContains('Réunion 2', $titles);
+        $this->assertContains('Meeting 1', $titles);
+        $this->assertContains('Meeting 2', $titles);
     }
 
+    /**
+     * Test retrieving schedules with status filter.
+     */
     public function test_get_schedules_with_filters(): void
     {
         // Arrange
-        $availability = Availability::for($this->testSchedulable)->create([
+        $availability = availability_for($this->testSchedulable)->create([
             'type' => 'consultation',
             'daily_start' => '09:00:00',
             'daily_end' => '17:00:00',
-            'days' => ['monday', 'tuesday'], // seuls jours autorisés
+            'days' => ['monday', 'tuesday'],
             'validity_start' => '2038-01-01',
             'validity_end' => '2038-01-31',
         ]);
 
-        // Crée uniquement des schedules sur monday et tuesday
-        Schedule::for($this->testSchedulable)
-            ->owner($availability)
-            ->create([
-                'title' => 'Disponible',
-                'start_datetime' => '2038-01-04 10:00:00', // lundi
-                'end_datetime' => '2038-01-04 11:00:00',
-                'status' => ScheduleStatus::AVAILABLE->value,
-            ]);
+        schedule_for($availability)->create([
+            'title' => 'Available',
+            'start_datetime' => '2038-01-04 10:00:00',
+            'end_datetime' => '2038-01-04 11:00:00',
+            'status' => ScheduleStatus::AVAILABLE->value,
+        ]);
 
-        Schedule::for($this->testSchedulable)
-            ->owner($availability)
-            ->create([
-                'title' => 'Réservé',
-                'start_datetime' => '2038-01-05 10:00:00', // mardi
-                'end_datetime' => '2038-01-05 11:00:00',
-                'status' => ScheduleStatus::BOOKED->value,
-            ]);
+        schedule_for($availability)->create([
+            'title' => 'Booked',
+            'start_datetime' => '2038-01-05 10:00:00',
+            'end_datetime' => '2038-01-05 11:00:00',
+            'status' => ScheduleStatus::BOOKED->value,
+        ]);
 
-        Schedule::for($this->testSchedulable)
-            ->owner($availability)
-            ->create([
-                'title' => 'Disponible 2',
-                'start_datetime' => '2038-01-11 10:00:00', // lundi suivant
-                'end_datetime' => '2038-01-11 11:00:00',
-                'status' => ScheduleStatus::AVAILABLE->value,
-            ]);
+        schedule_for($availability)->create([
+            'title' => 'Available 2',
+            'start_datetime' => '2038-01-11 10:00:00',
+            'end_datetime' => '2038-01-11 11:00:00',
+            'status' => ScheduleStatus::AVAILABLE->value,
+        ]);
 
-        // Act - Filtrer par statut ScheduleStatus::AVAILABLE
-        $result = Schedule::for($this->testSchedulable)
-            ->owner($availability)
+        // Act
+        $result = schedule_for($availability)
             ->setFilter('status', ScheduleStatus::AVAILABLE->value)
             ->all();
 
         // Assert
         $this->assertCount(2, $result);
         $titles = $result->pluck('title')->toArray();
-        $this->assertContains('Disponible', $titles);
-        $this->assertContains('Disponible 2', $titles);
-        $this->assertNotContains('Réservé', $titles);
+        $this->assertContains('Available', $titles);
+        $this->assertContains('Available 2', $titles);
+        $this->assertNotContains('Booked', $titles);
     }
 
-
+    /**
+     * Test retrieving schedules with datetime range filter.
+     */
     public function test_get_schedules_with_datetime_range_filter(): void
     {
         // Arrange
-        $availability = Availability::for($this->testSchedulable)->create([
+        $availability = availability_for($this->testSchedulable)->create([
             'type' => 'consultation',
             'daily_start' => '09:00:00',
             'daily_end' => '17:00:00',
@@ -613,26 +596,20 @@ final class ScheduleServiceTest extends TestCase
             'validity_end' => '2038-01-31',
         ]);
 
-        // Crée uniquement des schedules dans la période valide et sur des jours permis
-        Schedule::for($this->testSchedulable)
-            ->owner($availability)
-            ->create([
-                'title' => 'Janvier',
-                'start_datetime' => '2038-01-04 10:00:00', // lundi
-                'end_datetime' => '2038-01-04 11:00:00',
-            ]);
+        schedule_for($availability)->create([
+            'title' => 'January',
+            'start_datetime' => '2038-01-04 10:00:00',
+            'end_datetime' => '2038-01-04 11:00:00',
+        ]);
 
-        Schedule::for($this->testSchedulable)
-            ->owner($availability)
-            ->create([
-                'title' => 'Janvier tardif',
-                'start_datetime' => '2038-01-25 10:00:00', // lundi
-                'end_datetime' => '2038-01-25 11:00:00',
-            ]);
+        schedule_for($availability)->create([
+            'title' => 'Late January',
+            'start_datetime' => '2038-01-25 10:00:00',
+            'end_datetime' => '2038-01-25 11:00:00',
+        ]);
 
-        // Act - Filtrer pour janvier seulement avec datetime complet
-        $result = Schedule::for($this->testSchedulable)
-            ->owner($availability)
+        // Act
+        $result = schedule_for($availability)
             ->setFilter('start_datetime', '2038-01-01 00:00:00')
             ->setFilter('end_datetime', '2038-01-31 23:59:59')
             ->all();
@@ -640,19 +617,17 @@ final class ScheduleServiceTest extends TestCase
         // Assert
         $this->assertCount(2, $result);
         $titles = $result->pluck('title')->toArray();
-        $this->assertContains('Janvier', $titles);
-        $this->assertContains('Janvier tardif', $titles);
+        $this->assertContains('January', $titles);
+        $this->assertContains('Late January', $titles);
     }
 
-    /* -----------------------------------------------------------------
-     | Tests de Recherche de Créneaux
-     | -----------------------------------------------------------------
+    /**
+     * Test finding next available slot without conflicts.
      */
-
     public function test_find_next_slot_without_conflicts(): void
     {
-        // Arrange - Créer une disponibilité
-        $availability = Availability::for($this->testSchedulable)->create([
+        // Arrange
+        $availability = availability_for($this->testSchedulable)->create([
             'type' => 'consultation',
             'daily_start' => '09:00:00',
             'daily_end' => '17:00:00',
@@ -661,44 +636,39 @@ final class ScheduleServiceTest extends TestCase
             'validity_end' => '2038-01-31',
         ]);
 
-        // Créer un schedule pour bloquer 10h-11h
-        Schedule::for($this->testSchedulable)
-            ->owner($availability)
-            ->create([
-                'title' => 'Réunion bloquante',
-                'start_datetime' => '2038-01-04 10:00:00',
-                'end_datetime' => '2038-01-04 11:00:00',
-            ]);
+        schedule_for($availability)->create([
+            'title' => 'Blocking meeting',
+            'start_datetime' => '2038-01-04 10:00:00',
+            'end_datetime' => '2038-01-04 11:00:00',
+        ]);
 
-        // Act - Chercher un créneau de 60 minutes
-        $slot = Schedule::for($this->testSchedulable)
-            ->owner($availability)
-            ->findNextSlot(
-                120, // 1 heure
-                'consultation',
-                false,
-                Carbon::parse('2038-01-04 09:00:00') // Chercher à partir de 9h
-            );
+        // Act
+        $slot = schedule_for($availability)->findNextSlot(
+            durationMinutes: 120,
+            type: 'consultation',
+            returnStartOnly: false,
+            startFrom: Carbon::parse('2038-01-04 09:00:00')
+        );
 
-        // Assert - Devrait trouver après 11h
+        // Assert
         $this->assertNotNull($slot);
         $this->assertIsArray($slot);
         $this->assertArrayHasKey('start', $slot);
         $this->assertArrayHasKey('end', $slot);
         $this->assertArrayHasKey('availability', $slot);
         $this->assertArrayHasKey('duration_minutes', $slot);
-
-        // Le créneau doit commencer après 11h (fin du schedule existant)
-
         $this->assertTrue($slot['start']->gte(Carbon::parse('2038-01-04 11:00:00')));
-        $this->assertEquals(120, $slot['duration_minutes']);
-        $this->assertEquals($availability->id, $slot['availability']->id);
+        $this->assertSame(120, $slot['duration_minutes']);
+        $this->assertSame($availability->id, $slot['availability']->id);
     }
 
+    /**
+     * Test finding next slot returning start only.
+     */
     public function test_find_next_slot_return_start_only(): void
     {
         // Arrange
-        $availability = Availability::for($this->testSchedulable)->create([
+        $availability = availability_for($this->testSchedulable)->create([
             'type' => 'consultation',
             'daily_start' => '09:00:00',
             'daily_end' => '17:00:00',
@@ -708,14 +678,12 @@ final class ScheduleServiceTest extends TestCase
         ]);
 
         // Act
-        $startOnly = Schedule::for($this->testSchedulable)
-            ->owner($availability)
-            ->findNextSlot(
-                30,
-                'consultation',
-                true, // returnStartOnly = true
-                Carbon::parse('2038-01-04 09:00:00')
-            );
+        $startOnly = schedule_for($availability)->findNextSlot(
+            durationMinutes: 30,
+            type: 'consultation',
+            returnStartOnly: true,
+            startFrom: Carbon::parse('2038-01-04 09:00:00')
+        );
 
         // Assert
         $this->assertNotNull($startOnly);
@@ -723,10 +691,13 @@ final class ScheduleServiceTest extends TestCase
         $this->assertSame('2038-01-04 09:00:00', $startOnly->format('Y-m-d H:i:s'));
     }
 
+    /**
+     * Test finding next slot respects availability hours.
+     */
     public function test_find_next_slot_respects_availability_hours(): void
     {
         // Arrange
-        $availability = Availability::for($this->testSchedulable)->create([
+        $availability = availability_for($this->testSchedulable)->create([
             'type' => 'consultation',
             'daily_start' => '09:00:00',
             'daily_end' => '17:00:00',
@@ -735,52 +706,54 @@ final class ScheduleServiceTest extends TestCase
             'validity_end' => '2038-01-31',
         ]);
 
-        // Act - Chercher un créneau qui doit respecter 9h-17h
-        $slot = Schedule::for($this->testSchedulable)
-            ->owner($availability)
-            ->findNextSlot(
-                120, // 2 heures
-                'consultation',
-                false,
-                Carbon::parse('2038-01-04 16:00:00') // 16h - trop tard pour 2h
-            );
+        // Act
+        $slot = schedule_for($availability)->findNextSlot(
+            durationMinutes: 120,
+            type: 'consultation',
+            returnStartOnly: false,
+            startFrom: Carbon::parse('2038-01-04 16:00:00')
+        );
 
-        // Assert - Devrait trouver le lendemain
+        // Assert
         $this->assertNotNull($slot);
-        $this->assertEquals('2038-01-05', $slot['start']->format('Y-m-d')); // Mardi
-        $this->assertEquals('09:00:00', $slot['start']->format('H:i:s')); // Début à 9h
+        $this->assertSame('2038-01-05', $slot['start']->format('Y-m-d'));
+        $this->assertSame('09:00:00', $slot['start']->format('H:i:s'));
     }
 
+    /**
+     * Test finding next slot returns null when no availability.
+     */
     public function test_find_next_slot_returns_null_when_no_availability(): void
     {
-        // Arrange - Créer une disponibilité uniquement pour lundi matin
-        $availability = Availability::for($this->testSchedulable)->create([
+        // Arrange
+        $availability = availability_for($this->testSchedulable)->create([
             'type' => 'limited',
             'daily_start' => '09:00:00',
-            'daily_end' => '12:00:00', // Seulement le matin
-            'days' => ['monday'], // Seulement lundi
+            'daily_end' => '12:00:00',
+            'days' => ['monday'],
             'validity_start' => '2038-01-01',
             'validity_end' => '2038-01-10',
         ]);
 
-        // Act - Chercher un créneau le mardi (jour non disponible)
-        $slot = Schedule::for($this->testSchedulable)
-            ->owner($availability)
-            ->findNextSlot(
-                60,
-                'limited',
-                false,
-                Carbon::parse('2038-01-05 09:00:00') // Mardi
-            );
+        // Act
+        $slot = schedule_for($availability)->findNextSlot(
+            durationMinutes: 60,
+            type: 'limited',
+            returnStartOnly: false,
+            startFrom: Carbon::parse('2038-01-05 09:00:00')
+        );
 
-        // Assert - Devrait retourner null
+        // Assert
         $this->assertNull($slot);
     }
 
+    /**
+     * Test checking time slot availability returns true.
+     */
     public function test_is_time_slot_available_returns_true(): void
     {
         // Arrange
-        $availability = Availability::for($this->testSchedulable)->create([
+        $availability = availability_for($this->testSchedulable)->create([
             'type' => 'consultation',
             'daily_start' => '09:00:00',
             'daily_end' => '17:00:00',
@@ -790,22 +763,23 @@ final class ScheduleServiceTest extends TestCase
         ]);
 
         // Act
-        $isAvailable = Schedule::for($this->testSchedulable)
-            ->owner($availability)
-            ->isTimeSlotAvailable(
-                Carbon::parse('2038-01-04 10:00:00'),
-                Carbon::parse('2038-01-04 11:00:00'),
-                'consultation'
-            );
+        $isAvailable = schedule_for($availability)->isTimeSlotAvailable(
+            start: Carbon::parse('2038-01-04 10:00:00'),
+            end: Carbon::parse('2038-01-04 11:00:00'),
+            type: 'consultation'
+        );
 
         // Assert
         $this->assertTrue($isAvailable);
     }
 
+    /**
+     * Test checking time slot availability returns false when schedule overlap.
+     */
     public function test_is_time_slot_available_returns_false_when_schedule_overlap(): void
     {
         // Arrange
-        $availability = Availability::for($this->testSchedulable)->create([
+        $availability = availability_for($this->testSchedulable)->create([
             'type' => 'consultation',
             'daily_start' => '09:00:00',
             'daily_end' => '17:00:00',
@@ -814,32 +788,30 @@ final class ScheduleServiceTest extends TestCase
             'validity_end' => '2038-01-31',
         ]);
 
-        // Créer un schedule existant
-        Schedule::for($this->testSchedulable)
-            ->owner($availability)
-            ->create([
-                'title' => 'Réunion existante',
-                'start_datetime' => '2038-01-04 10:30:00',
-                'end_datetime' => '2038-01-04 11:30:00',
-            ]);
+        schedule_for($availability)->create([
+            'title' => 'Existing meeting',
+            'start_datetime' => '2038-01-04 10:30:00',
+            'end_datetime' => '2038-01-04 11:30:00',
+        ]);
 
-        // Act - Vérifier créneau chevauchant
-        $isAvailable = Schedule::for($this->testSchedulable)
-            ->owner($availability)
-            ->isTimeSlotAvailable(
-                Carbon::parse('2038-01-04 11:00:00'), // Chevauche 11h-11h30
-                Carbon::parse('2038-01-04 12:00:00'),
-                'consultation'
-            );
+        // Act
+        $isAvailable = schedule_for($availability)->isTimeSlotAvailable(
+            start: Carbon::parse('2038-01-04 11:00:00'),
+            end: Carbon::parse('2038-01-04 12:00:00'),
+            type: 'consultation'
+        );
 
         // Assert
         $this->assertFalse($isAvailable);
     }
 
+    /**
+     * Test checking time slot availability returns false when impediment overlap.
+     */
     public function test_is_time_slot_available_returns_false_when_impediment_overlap(): void
     {
         // Arrange
-        $availability = Availability::for($this->testSchedulable)->create([
+        $availability = availability_for($this->testSchedulable)->create([
             'type' => 'consultation',
             'daily_start' => '09:00:00',
             'daily_end' => '17:00:00',
@@ -848,32 +820,30 @@ final class ScheduleServiceTest extends TestCase
             'validity_end' => '2038-01-31',
         ]);
 
-        // Créer un impediment
-        Impediment::for($this->testSchedulable)
-            ->owner($availability)
-            ->create([
-                'reason' => 'Maintenance',
-                'start_datetime' => '2038-01-04 11:00:00',
-                'end_datetime' => '2038-01-04 12:00:00',
-            ]);
+        impediment_for($availability)->create([
+            'reason' => 'Maintenance',
+            'start_datetime' => '2038-01-04 11:00:00',
+            'end_datetime' => '2038-01-04 12:00:00',
+        ]);
 
-        // Act - Vérifier créneau chevauchant
-        $isAvailable = Schedule::for($this->testSchedulable)
-            ->owner($availability)
-            ->isTimeSlotAvailable(
-                Carbon::parse('2038-01-04 11:00:00'), // Chevauche l'impediment
-                Carbon::parse('2038-01-04 12:00:00'),
-                'consultation'
-            );
+        // Act
+        $isAvailable = schedule_for($availability)->isTimeSlotAvailable(
+            start: Carbon::parse('2038-01-04 11:00:00'),
+            end: Carbon::parse('2038-01-04 12:00:00'),
+            type: 'consultation'
+        );
 
         // Assert
         $this->assertFalse($isAvailable);
     }
 
+    /**
+     * Test checking time slot availability returns false when outside availability.
+     */
     public function test_is_time_slot_available_returns_false_when_outside_availability(): void
     {
         // Arrange
-        $availability = Availability::for($this->testSchedulable)->create([
+        $availability = availability_for($this->testSchedulable)->create([
             'type' => 'consultation',
             'daily_start' => '09:00:00',
             'daily_end' => '17:00:00',
@@ -882,67 +852,65 @@ final class ScheduleServiceTest extends TestCase
             'validity_end' => '2038-01-31',
         ]);
 
-        // Act - Vérifier créneau en dehors des heures de disponibilité
-        $isAvailable = Schedule::for($this->testSchedulable)
-            ->owner($availability)
-            ->isTimeSlotAvailable(
-                Carbon::parse('2038-01-04 18:00:00'), // Après 17h
-                Carbon::parse('2038-01-04 19:00:00'),
-                'consultation'
-            );
+        // Act
+        $isAvailable = schedule_for($availability)->isTimeSlotAvailable(
+            start: Carbon::parse('2038-01-04 18:00:00'),
+            end: Carbon::parse('2038-01-04 19:00:00'),
+            type: 'consultation'
+        );
 
         // Assert
         $this->assertFalse($isAvailable);
     }
 
+    /**
+     * Test checking time slot availability with type filter.
+     */
     public function test_is_time_slot_available_with_type_filter(): void
     {
-        // Arrange - Créer deux disponibilités de types différents
-        $availabilityConsultation = Availability::for($this->testSchedulable)->create([
+        // Arrange
+        $availabilityConsultation = availability_for($this->testSchedulable)->create([
             'type' => 'consultation',
             'daily_start' => '09:00:00',
-            'daily_end' => '12:00:00', // Matin seulement
+            'daily_end' => '12:00:00',
             'days' => ['monday'],
             'validity_start' => '2038-01-01',
             'validity_end' => '2038-01-31',
         ]);
 
-        $availabilityTraining = Availability::for($this->testSchedulable)->create([
+        $availabilityTraining = availability_for($this->testSchedulable)->create([
             'type' => 'training',
             'daily_start' => '13:00:00',
-            'daily_end' => '17:00:00', // Après-midi seulement
+            'daily_end' => '17:00:00',
             'days' => ['monday'],
             'validity_start' => '2038-01-01',
             'validity_end' => '2038-01-31',
         ]);
 
-        // Créer un schedule sur la disponibilité training
-        Schedule::for($this->testSchedulable)
-            ->owner($availabilityTraining)
-            ->create([
-                'title' => 'Training',
-                'start_datetime' => '2038-01-04 14:00:00',
-                'end_datetime' => '2038-01-04 15:00:00',
-            ]);
+        schedule_for($availabilityTraining)->create([
+            'title' => 'Training',
+            'start_datetime' => '2038-01-04 14:00:00',
+            'end_datetime' => '2038-01-04 15:00:00',
+        ]);
 
-        // Act - Vérifier avec type 'consultation' (matin, différent de training)
-        $isAvailable = Schedule::for($this->testSchedulable)
-            ->owner($availabilityConsultation)
-            ->isTimeSlotAvailable(
-                Carbon::parse('2038-01-04 10:00:00'), // Matin
-                Carbon::parse('2038-01-04 11:00:00'),
-                'consultation' // Type consultation
-            );
+        // Act
+        $isAvailable = schedule_for($availabilityConsultation)->isTimeSlotAvailable(
+            start: Carbon::parse('2038-01-04 10:00:00'),
+            end: Carbon::parse('2038-01-04 11:00:00'),
+            type: 'consultation'
+        );
 
-        // Assert - Devrait être disponible car c'est un créneau du matin pour consultation
-        // Le schedule training de l'après-midi ne devrait pas affecter
+        // Assert
         $this->assertTrue($isAvailable);
     }
 
+    /**
+     * Test finding available slots in range.
+     */
     public function test_find_available_slots_in_range(): void
     {
         // Arrange
-        $availability = Availability::for($this->testSchedulable)->create([
+        $availability = availability_for($this->testSchedulable)->create([
             'type' => 'consultation',
             'daily_start' => '09:00:00',
             'daily_end' => '17:00:00',
@@ -951,29 +919,23 @@ final class ScheduleServiceTest extends TestCase
             'validity_end' => '2038-01-31',
         ]);
 
-        // Créer un schedule pour bloquer 10h-12h lundi
-        Schedule::for($this->testSchedulable)
-            ->owner($availability)
-            ->create([
-                'title' => 'Réunion 10h-12h',
-                'start_datetime' => '2038-01-04 10:00:00',
-                'end_datetime' => '2038-01-04 12:00:00',
-            ]);
+        schedule_for($availability)->create([
+            'title' => 'Meeting 10h-12h',
+            'start_datetime' => '2038-01-04 10:00:00',
+            'end_datetime' => '2038-01-04 12:00:00',
+        ]);
 
-        // Act - Chercher tous les créneaux de 60 minutes sur 2 jours
-        $slots = Schedule::for($this->testSchedulable)
-            ->owner($availability)
-            ->findAvailableSlots(
-                Carbon::parse('2038-01-04'),
-                Carbon::parse('2038-01-05'),
-                60,
-                'consultation'
-            );
+        // Act
+        $slots = schedule_for($availability)->findAvailableSlots(
+            startDate: Carbon::parse('2038-01-04'),
+            endDate: Carbon::parse('2038-01-05'),
+            durationMinutes: 60,
+            type: 'consultation'
+        );
 
         // Assert
         $this->assertInstanceOf(Collection::class, $slots);
 
-        // Vérifier qu'aucun créneau lundi ne chevauche 10h-12h
         foreach ($slots as $slot) {
             if ($slot['start']->format('Y-m-d') === '2038-01-04') {
                 $slotStart = $slot['start'];
@@ -987,10 +949,13 @@ final class ScheduleServiceTest extends TestCase
         }
     }
 
+    /**
+     * Test checking period availability returns true.
+     */
     public function test_is_period_available_returns_true(): void
     {
         // Arrange
-        $availability = Availability::for($this->testSchedulable)->create([
+        $availability = availability_for($this->testSchedulable)->create([
             'type' => 'consultation',
             'daily_start' => '09:00:00',
             'daily_end' => '17:00:00',
@@ -1000,22 +965,23 @@ final class ScheduleServiceTest extends TestCase
         ]);
 
         // Act
-        $isAvailable = Schedule::for($this->testSchedulable)
-            ->owner($availability)
-            ->isPeriodAvailable(
-                Carbon::parse('2038-01-04 10:00:00'),
-                Carbon::parse('2038-01-04 12:00:00'),
-                'consultation'
-            );
+        $isAvailable = schedule_for($availability)->isPeriodAvailable(
+            start: Carbon::parse('2038-01-04 10:00:00'),
+            end: Carbon::parse('2038-01-04 12:00:00'),
+            type: 'consultation'
+        );
 
         // Assert
         $this->assertTrue($isAvailable);
     }
 
+    /**
+     * Test checking period availability returns false when schedule conflict.
+     */
     public function test_is_period_available_returns_false_when_schedule_conflict(): void
     {
         // Arrange
-        $availability = Availability::for($this->testSchedulable)->create([
+        $availability = availability_for($this->testSchedulable)->create([
             'type' => 'consultation',
             'daily_start' => '09:00:00',
             'daily_end' => '17:00:00',
@@ -1024,32 +990,30 @@ final class ScheduleServiceTest extends TestCase
             'validity_end' => '2038-01-31',
         ]);
 
-        // Créer un schedule au milieu de la période
-        Schedule::for($this->testSchedulable)
-            ->owner($availability)
-            ->create([
-                'title' => 'Réunion au milieu',
-                'start_datetime' => '2038-01-04 11:00:00',
-                'end_datetime' => '2038-01-04 12:00:00',
-            ]);
+        schedule_for($availability)->create([
+            'title' => 'Middle meeting',
+            'start_datetime' => '2038-01-04 11:00:00',
+            'end_datetime' => '2038-01-04 12:00:00',
+        ]);
 
-        // Act - Vérifier période plus large
-        $isAvailable = Schedule::for($this->testSchedulable)
-            ->owner($availability)
-            ->isPeriodAvailable(
-                Carbon::parse('2038-01-04 10:00:00'), // 10h-13h
-                Carbon::parse('2038-01-04 13:00:00'),
-                'consultation'
-            );
+        // Act
+        $isAvailable = schedule_for($availability)->isPeriodAvailable(
+            start: Carbon::parse('2038-01-04 10:00:00'),
+            end: Carbon::parse('2038-01-04 13:00:00'),
+            type: 'consultation'
+        );
 
-        // Assert - Devrait être false car chevauchement
+        // Assert
         $this->assertFalse($isAvailable);
     }
 
+    /**
+     * Test checking period availability returns false when impediment conflict.
+     */
     public function test_is_period_available_returns_false_when_impediment_conflict(): void
     {
         // Arrange
-        $availability = Availability::for($this->testSchedulable)->create([
+        $availability = availability_for($this->testSchedulable)->create([
             'type' => 'consultation',
             'daily_start' => '09:00:00',
             'daily_end' => '17:00:00',
@@ -1058,32 +1022,30 @@ final class ScheduleServiceTest extends TestCase
             'validity_end' => '2038-01-31',
         ]);
 
-        // Créer un impediment
-        Impediment::for($this->testSchedulable)
-            ->owner($availability)
-            ->create([
-                'reason' => 'Maintenance',
-                'start_datetime' => '2038-01-04 11:00:00',
-                'end_datetime' => '2038-01-04 12:00:00',
-            ]);
+        impediment_for($availability)->create([
+            'reason' => 'Maintenance',
+            'start_datetime' => '2038-01-04 11:00:00',
+            'end_datetime' => '2038-01-04 12:00:00',
+        ]);
 
         // Act
-        $isAvailable = Schedule::for($this->testSchedulable)
-            ->owner($availability)
-            ->isPeriodAvailable(
-                Carbon::parse('2038-01-04 10:00:00'),
-                Carbon::parse('2038-01-04 13:00:00'),
-                'consultation'
-            );
+        $isAvailable = schedule_for($availability)->isPeriodAvailable(
+            start: Carbon::parse('2038-01-04 10:00:00'),
+            end: Carbon::parse('2038-01-04 13:00:00'),
+            type: 'consultation'
+        );
 
         // Assert
         $this->assertFalse($isAvailable);
     }
 
+    /**
+     * Test checking period availability returns false when no availability.
+     */
     public function test_is_period_available_returns_false_when_no_availability(): void
     {
         // Arrange
-        $availability = Availability::for($this->testSchedulable)->create([
+        $availability = availability_for($this->testSchedulable)->create([
             'type' => 'consultation',
             'daily_start' => '09:00:00',
             'daily_end' => '17:00:00',
@@ -1092,28 +1054,24 @@ final class ScheduleServiceTest extends TestCase
             'validity_end' => '2038-01-31',
         ]);
 
-        // Act - Vérifier période en dehors des heures
-        $isAvailable = Schedule::for($this->testSchedulable)
-            ->owner($availability)
-            ->isPeriodAvailable(
-                Carbon::parse('2038-01-04 18:00:00'), // Après 17h
-                Carbon::parse('2038-01-04 19:00:00'),
-                'consultation'
-            );
+        // Act
+        $isAvailable = schedule_for($availability)->isPeriodAvailable(
+            start: Carbon::parse('2038-01-04 18:00:00'),
+            end: Carbon::parse('2038-01-04 19:00:00'),
+            type: 'consultation'
+        );
 
         // Assert
         $this->assertFalse($isAvailable);
     }
 
-    /* -----------------------------------------------------------------
-     | Tests de Cas Limites
-     | -----------------------------------------------------------------
+    /**
+     * Test concurrent schedule creation prevents double booking.
      */
-
     public function test_concurrent_schedule_creation_prevents_double_booking(): void
     {
         // Arrange
-        $availability = Availability::for($this->testSchedulable)->create([
+        $availability = availability_for($this->testSchedulable)->create([
             'type' => 'consultation',
             'daily_start' => '09:00:00',
             'daily_end' => '17:00:00',
@@ -1122,60 +1080,60 @@ final class ScheduleServiceTest extends TestCase
             'validity_end' => '2038-01-31',
         ]);
 
-        // Créer un schedule
-        Schedule::for($this->testSchedulable)
-            ->owner($availability)
-            ->create([
-                'title' => 'Première réunion',
-                'start_datetime' => '2038-01-04 10:00:00',
-                'end_datetime' => '2038-01-04 11:00:00',
-            ]);
+        schedule_for($availability)->create([
+            'title' => 'First meeting',
+            'start_datetime' => '2038-01-04 10:00:00',
+            'end_datetime' => '2038-01-04 11:00:00',
+        ]);
 
-        // Act & Assert - Essayer de créer un schedule chevauchant
+        // Assert
         $this->expectException(ValidationFailedException::class);
         $this->expectExceptionMessageMatches('/Schedule overlaps with existing schedule/');
 
-        Schedule::for($this->testSchedulable)
-            ->owner($availability)
-            ->create([
-                'title' => 'Deuxième réunion',
-                'start_datetime' => '2038-01-04 10:30:00', // Chevauche
-                'end_datetime' => '2038-01-04 11:30:00',
-            ]);
+        // Act
+        schedule_for($availability)->create([
+            'title' => 'Second meeting',
+            'start_datetime' => '2038-01-04 10:30:00',
+            'end_datetime' => '2038-01-04 11:30:00',
+        ]);
     }
 
+    /**
+     * Test schedule creation fails on non-availability day.
+     */
     public function test_schedule_on_non_availability_day(): void
     {
-        // Arrange - Disponibilité seulement le lundi
-        $mondayOnlyAvailability = Availability::for($this->testSchedulable)->create([
+        // Arrange
+        $mondayOnlyAvailability = availability_for($this->testSchedulable)->create([
             'type' => 'monday-only',
             'daily_start' => '09:00:00',
             'daily_end' => '17:00:00',
-            'days' => ['monday'], // Seulement lundi
+            'days' => ['monday'],
             'validity_start' => '2038-01-01',
             'validity_end' => '2038-01-31',
         ]);
 
-        // Act & Assert - Essayer de créer un schedule le mardi
+        // Assert
         $this->expectException(ValidationFailedException::class);
         $this->expectExceptionMessageMatches(
             '/The selected date 2038-01-05 \(tuesday\) is not allowed because this availability only permits the following days: monday/'
         );
 
-        Schedule::for($this->testSchedulable)
-            ->owner($mondayOnlyAvailability)
-            ->create([
-                'title' => 'Réunion mardi',
-                'start_datetime' => '2038-01-05 10:00:00', // Mardi
-                'end_datetime' => '2038-01-05 11:00:00',
-            ]);
+        // Act
+        schedule_for($mondayOnlyAvailability)->create([
+            'title' => 'Tuesday meeting',
+            'start_datetime' => '2038-01-05 10:00:00',
+            'end_datetime' => '2038-01-05 11:00:00',
+        ]);
     }
 
-
+    /**
+     * Test schedule creation fails outside availability hours.
+     */
     public function test_schedule_outside_availability_hours(): void
     {
         // Arrange
-        $availability = Availability::for($this->testSchedulable)->create([
+        $availability = availability_for($this->testSchedulable)->create([
             'type' => 'consultation',
             'daily_start' => '09:00:00',
             'daily_end' => '17:00:00',
@@ -1184,26 +1142,27 @@ final class ScheduleServiceTest extends TestCase
             'validity_end' => '2038-01-31',
         ]);
 
-        // Act & Assert - Essayer de créer un schedule avant 9h
+        // Assert
         $this->expectException(ValidationFailedException::class);
         $this->expectExceptionMessageMatches(
             '/The selected start time .* is before the availability start time .*/'
         );
 
-        Schedule::for($this->testSchedulable)
-            ->owner($availability)
-            ->create([
-                'title' => 'Réunion trop tôt',
-                'start_datetime' => '2038-01-04 08:00:00', // Avant 9h
-                'end_datetime' => '2038-01-04 09:00:00',
-            ]);
+        // Act
+        schedule_for($availability)->create([
+            'title' => 'Too early meeting',
+            'start_datetime' => '2038-01-04 08:00:00',
+            'end_datetime' => '2038-01-04 09:00:00',
+        ]);
     }
 
-
+    /**
+     * Test schedules at exact boundaries do not overlap.
+     */
     public function test_schedule_exact_boundary_not_overlap(): void
     {
         // Arrange
-        $availability = Availability::for($this->testSchedulable)->create([
+        $availability = availability_for($this->testSchedulable)->create([
             'type' => 'consultation',
             'daily_start' => '09:00:00',
             'daily_end' => '17:00:00',
@@ -1212,33 +1171,31 @@ final class ScheduleServiceTest extends TestCase
             'validity_end' => '2038-01-31',
         ]);
 
-        // Créer un schedule
-        Schedule::for($this->testSchedulable)
-            ->owner($availability)
-            ->create([
-                'title' => 'Première réunion',
-                'start_datetime' => '2038-01-04 10:00:00',
-                'end_datetime' => '2038-01-04 11:00:00',
-            ]);
+        schedule_for($availability)->create([
+            'title' => 'First meeting',
+            'start_datetime' => '2038-01-04 10:00:00',
+            'end_datetime' => '2038-01-04 11:00:00',
+        ]);
 
-        // Act - Créer un schedule qui commence exactement à la fin du premier
-        $schedule2 = Schedule::for($this->testSchedulable)
-            ->owner($availability)
-            ->create([
-                'title' => 'Deuxième réunion',
-                'start_datetime' => '2038-01-04 11:00:00', // Exactement à la fin du premier
-                'end_datetime' => '2038-01-04 12:00:00',
-            ]);
+        // Act
+        $schedule2 = schedule_for($availability)->create([
+            'title' => 'Second meeting',
+            'start_datetime' => '2038-01-04 11:00:00',
+            'end_datetime' => '2038-01-04 12:00:00',
+        ]);
 
-        // Assert - Devrait réussir (pas de chevauchement)
+        // Assert
         $this->assertInstanceOf(ScheduleModel::class, $schedule2);
-        $this->assertEquals('2038-01-04 11:00:00', $schedule2->start_datetime->format('Y-m-d H:i:s'));
+        $this->assertSame('2038-01-04 11:00:00', $schedule2->start_datetime->format('Y-m-d H:i:s'));
     }
 
+    /**
+     * Test finding next slot with adjacent impediments.
+     */
     public function test_find_next_slot_with_adjacent_impediments(): void
     {
         // Arrange
-        $availability = Availability::for($this->testSchedulable)->create([
+        $availability = availability_for($this->testSchedulable)->create([
             'type' => 'consultation',
             'daily_start' => '09:00:00',
             'daily_end' => '17:00:00',
@@ -1247,42 +1204,38 @@ final class ScheduleServiceTest extends TestCase
             'validity_end' => '2038-01-31',
         ]);
 
-        // Créer des impediments adjacents
-        Impediment::for($this->testSchedulable)
-            ->owner($availability)
-            ->create([
-                'reason' => 'Impediment 1',
-                'start_datetime' => '2038-01-04 10:00:00',
-                'end_datetime' => '2038-01-04 11:00:00',
-            ]);
+        impediment_for($availability)->create([
+            'reason' => 'Impediment 1',
+            'start_datetime' => '2038-01-04 10:00:00',
+            'end_datetime' => '2038-01-04 11:00:00',
+        ]);
 
-        Impediment::for($this->testSchedulable)
-            ->owner($availability)
-            ->create([
-                'reason' => 'Impediment 2',
-                'start_datetime' => '2038-01-04 11:00:00',
-                'end_datetime' => '2038-01-04 12:00:00',
-            ]);
+        impediment_for($availability)->create([
+            'reason' => 'Impediment 2',
+            'start_datetime' => '2038-01-04 11:00:00',
+            'end_datetime' => '2038-01-04 12:00:00',
+        ]);
 
-        // Act - Chercher un créneau de 30 minutes
-        $slot = Schedule::for($this->testSchedulable)
-            ->owner($availability)
-            ->findNextSlot(
-                30,
-                'consultation',
-                false,
-                Carbon::parse('2038-01-04 10:00:00')
-            );
+        // Act
+        $slot = schedule_for($availability)->findNextSlot(
+            durationMinutes: 30,
+            type: 'consultation',
+            returnStartOnly: false,
+            startFrom: Carbon::parse('2038-01-04 10:00:00')
+        );
 
-        // Assert - Devrait trouver après 12h
+        // Assert
         $this->assertNotNull($slot);
         $this->assertTrue($slot['start']->gte(Carbon::parse('2038-01-04 12:00:00')));
     }
 
+    /**
+     * Test schedule metadata serialization.
+     */
     public function test_schedule_metadata_serialization(): void
     {
         // Arrange
-        $availability = Availability::for($this->testSchedulable)->create([
+        $availability = availability_for($this->testSchedulable)->create([
             'type' => 'consultation',
             'daily_start' => '09:00:00',
             'daily_end' => '17:00:00',
@@ -1299,25 +1252,26 @@ final class ScheduleServiceTest extends TestCase
         ];
 
         // Act
-        $schedule = Schedule::for($this->testSchedulable)
-            ->owner($availability)
-            ->create([
-                'title' => 'Réunion avec métadata',
-                'start_datetime' => '2038-01-04 10:00:00',
-                'end_datetime' => '2038-01-04 11:00:00',
-                'metadata' => $complexMetadata,
-            ]);
+        $schedule = schedule_for($availability)->create([
+            'title' => 'Meeting with metadata',
+            'start_datetime' => '2038-01-04 10:00:00',
+            'end_datetime' => '2038-01-04 11:00:00',
+            'metadata' => $complexMetadata,
+        ]);
 
         // Assert
-        $this->assertEquals($complexMetadata, $schedule->metadata);
-        $this->assertEquals('John Doe', $schedule->metadata['client']);
-        $this->assertEquals(['urgent', 'follow-up'], $schedule->metadata['tags']);
+        $this->assertSame($complexMetadata, $schedule->metadata);
+        $this->assertSame('John Doe', $schedule->metadata['client']);
+        $this->assertSame(['urgent', 'follow-up'], $schedule->metadata['tags']);
     }
 
+    /**
+     * Test schedule duration calculation.
+     */
     public function test_schedule_duration_calculation(): void
     {
         // Arrange
-        $availability = Availability::for($this->testSchedulable)->create([
+        $availability = availability_for($this->testSchedulable)->create([
             'type' => 'consultation',
             'daily_start' => '09:00:00',
             'daily_end' => '17:00:00',
@@ -1327,27 +1281,23 @@ final class ScheduleServiceTest extends TestCase
         ]);
 
         // Act
-        $schedule = Schedule::for($this->testSchedulable)
-            ->owner($availability)
-            ->create([
-                'title' => 'Réunion longue',
-                'start_datetime' => '2038-01-04 10:00:00',
-                'end_datetime' => '2038-01-04 11:30:00',
-            ]);
+        $schedule = schedule_for($availability)->create([
+            'title' => 'Long meeting',
+            'start_datetime' => '2038-01-04 10:00:00',
+            'end_datetime' => '2038-01-04 11:30:00',
+        ]);
 
         // Assert
-        $this->assertEquals(90, $schedule->duration_minutes); // 1.5 * 60 = 90 minutes
+        $this->assertSame(90.0, $schedule->duration_minutes);
     }
 
-    /* -----------------------------------------------------------------
-     | Tests d'Intégration
-     | -----------------------------------------------------------------
+    /**
+     * Test full booking scenario.
      */
-
     public function test_full_booking_scenario(): void
     {
         // Arrange
-        $availability = Availability::for($this->testSchedulable)->create([
+        $availability = availability_for($this->testSchedulable)->create([
             'type' => 'consultation',
             'daily_start' => '09:00:00',
             'daily_end' => '17:00:00',
@@ -1356,56 +1306,51 @@ final class ScheduleServiceTest extends TestCase
             'validity_end' => '2038-01-31',
         ]);
 
-        // 1. Chercher un créneau
-        $slot = Schedule::for($this->testSchedulable)
-            ->owner($availability)
-            ->findNextSlot(
-                60,
-                'consultation',
-                false,
-                Carbon::parse('2038-01-04 09:00:00')
-            );
+        // 1. Find a slot
+        $slot = schedule_for($availability)->findNextSlot(
+            durationMinutes: 60,
+            type: 'consultation',
+            returnStartOnly: false,
+            startFrom: Carbon::parse('2038-01-04 09:00:00')
+        );
 
         $this->assertNotNull($slot);
 
-        // 2. Vérifier qu'il est disponible
-        $isAvailable = Schedule::for($this->testSchedulable)
-            ->owner($availability)
-            ->isTimeSlotAvailable(
-                $slot['start'],
-                $slot['end'],
-                'consultation'
-            );
+        // 2. Verify it's available
+        $isAvailable = schedule_for($availability)->isTimeSlotAvailable(
+            start: $slot['start'],
+            end: $slot['end'],
+            type: 'consultation'
+        );
 
         $this->assertTrue($isAvailable);
 
-        // 3. Créer le schedule
-        $schedule = Schedule::for($this->testSchedulable)
-            ->owner($availability)
-            ->create([
-                'title' => 'Réunion créée',
-                'start_datetime' => $slot['start']->format('Y-m-d H:i:s'),
-                'end_datetime' => $slot['end']->format('Y-m-d H:i:s'),
-            ]);
+        // 3. Create the schedule
+        $schedule = schedule_for($availability)->create([
+            'title' => 'Created meeting',
+            'start_datetime' => $slot['start']->format('Y-m-d H:i:s'),
+            'end_datetime' => $slot['end']->format('Y-m-d H:i:s'),
+        ]);
 
         $this->assertInstanceOf(ScheduleModel::class, $schedule);
 
-        // 4. Vérifier qu'on ne peut pas recréer le même créneau
+        // 4. Verify cannot recreate same slot
         $this->expectException(ValidationFailedException::class);
 
-        Schedule::for($this->testSchedulable)
-            ->owner($availability)
-            ->create([
-                'title' => 'Deuxième réunion',
-                'start_datetime' => $slot['start']->format('Y-m-d H:i:s'),
-                'end_datetime' => $slot['end']->format('Y-m-d H:i:s'),
-            ]);
+        schedule_for($availability)->create([
+            'title' => 'Second meeting',
+            'start_datetime' => $slot['start']->format('Y-m-d H:i:s'),
+            'end_datetime' => $slot['end']->format('Y-m-d H:i:s'),
+        ]);
     }
 
+    /**
+     * Test reschedule scenario.
+     */
     public function test_reschedule_scenario(): void
     {
         // Arrange
-        $availability = Availability::for($this->testSchedulable)->create([
+        $availability = availability_for($this->testSchedulable)->create([
             'type' => 'consultation',
             'daily_start' => '09:00:00',
             'daily_end' => '17:00:00',
@@ -1414,103 +1359,84 @@ final class ScheduleServiceTest extends TestCase
             'validity_end' => '2038-01-31',
         ]);
 
-        // 1. Créer un schedule
-        $schedule = Schedule::for($this->testSchedulable)
-            ->owner($availability)
-            ->create([
-                'title' => 'Réunion originale',
-                'start_datetime' => '2038-01-04 10:00:00',
-                'end_datetime' => '2038-01-04 11:00:00',
-            ]);
+        // 1. Create a schedule
+        $schedule = schedule_for($availability)->create([
+            'title' => 'Original meeting',
+            'start_datetime' => '2038-01-04 10:00:00',
+            'end_datetime' => '2038-01-04 11:00:00',
+        ]);
 
-        // 2. Créer un autre schedule
-        Schedule::for($this->testSchedulable)
-            ->owner($availability)
-            ->create([
-                'title' => 'Autre réunion',
-                'start_datetime' => '2038-01-04 14:00:00',
-                'end_datetime' => '2038-01-04 15:00:00',
-            ]);
+        // 2. Create another schedule
+        schedule_for($availability)->create([
+            'title' => 'Other meeting',
+            'start_datetime' => '2038-01-04 14:00:00',
+            'end_datetime' => '2038-01-04 15:00:00',
+        ]);
 
-        // 3. Essayer de déplacer le premier pour chevaucher le deuxième
+        // 3. Try to move first to overlap second
         $this->expectException(ValidationFailedException::class);
 
-        Schedule::for($this->testSchedulable)
-            ->owner($availability)
-            ->update($schedule->id, [
-                'start_datetime' => '2038-01-04 14:30:00', // Chevauche l'autre
-                'end_datetime' => '2038-01-04 15:30:00',
-            ]);
+        schedule_for($availability)->update($schedule->id, [
+            'start_datetime' => '2038-01-04 14:30:00',
+            'end_datetime' => '2038-01-04 15:30:00',
+        ]);
 
-        // 4. Vérifier que l'original n'a pas changé
+        // 4. Verify original unchanged
         $schedule->refresh();
-        $this->assertEquals('2038-01-04 10:00:00', $schedule->start_datetime->format('Y-m-d H:i:s'));
+        $this->assertSame('2038-01-04 10:00:00', $schedule->start_datetime->format('Y-m-d H:i:s'));
     }
 
+    /**
+     * Test complex availability scenario.
+     */
     public function test_complex_availability_scenario(): void
     {
-        // Arrange - Créer deux disponibilités qui NE SE CHEVAUCHENT PAS
-        $morningAvailability = Availability::for($this->testSchedulable)->create([
+        // Arrange
+        $morningAvailability = availability_for($this->testSchedulable)->create([
             'type' => 'consultation',
             'daily_start' => '09:00:00',
-            'daily_end' => '12:00:00', // Matin seulement
+            'daily_end' => '12:00:00',
             'days' => ['monday'],
             'validity_start' => '2038-01-01',
             'validity_end' => '2038-01-31',
         ]);
 
-        $afternoonAvailability = Availability::for($this->testSchedulable)->create([
+        $afternoonAvailability = availability_for($this->testSchedulable)->create([
             'type' => 'training',
             'daily_start' => '13:00:00',
-            'daily_end' => '17:00:00', // Après-midi seulement
+            'daily_end' => '17:00:00',
             'days' => ['monday'],
             'validity_start' => '2038-01-01',
             'validity_end' => '2038-01-31',
         ]);
 
-        // Note: Ces deux disponibilités ne se chevauchent pas (matin vs après-midi)
+        schedule_for($morningAvailability)->create([
+            'title' => 'Morning meeting',
+            'start_datetime' => '2038-01-04 09:00:00',
+            'end_datetime' => '2038-01-04 11:00:00',
+        ]);
 
-        // 1. Créer un schedule le matin
-        Schedule::for($this->testSchedulable)
-            ->owner($morningAvailability)
-            ->create([
-                'title' => 'Réunion matin',
-                'start_datetime' => '2038-01-04 09:00:00',
-                'end_datetime' => '2038-01-04 11:00:00',
-            ]);
+        schedule_for($afternoonAvailability)->create([
+            'title' => 'Afternoon meeting',
+            'start_datetime' => '2038-01-04 14:00:00',
+            'end_datetime' => '2038-01-04 15:00:00',
+        ]);
 
-        // 2. Créer un schedule l'après-midi
-        Schedule::for($this->testSchedulable)
-            ->owner($afternoonAvailability)
-            ->create([
-                'title' => 'Réunion après-midi',
-                'start_datetime' => '2038-01-04 14:00:00',
-                'end_datetime' => '2038-01-04 15:00:00',
-            ]);
-
-        // 3. Vérifier que les deux existent
-        $morningSchedules = Schedule::for($this->testSchedulable)
-            ->owner($morningAvailability)
-            ->all();
-
-        $afternoonSchedules = Schedule::for($this->testSchedulable)
-            ->owner($afternoonAvailability)
-            ->all();
+        // 3. Verify both exist
+        $morningSchedules = schedule_for($morningAvailability)->all();
+        $afternoonSchedules = schedule_for($afternoonAvailability)->all();
 
         $this->assertCount(1, $morningSchedules);
         $this->assertCount(1, $afternoonSchedules);
 
-        // 4. Chercher un créneau le matin avec type 'consultation'
-        $slot = Schedule::for($this->testSchedulable)
-            ->owner($morningAvailability)
-            ->findNextSlot(
-                60,
-                'consultation',
-                false,
-                Carbon::parse('2038-01-04 09:00:00')
-            );
+        // 4. Find a slot in the morning
+        $slot = schedule_for($morningAvailability)->findNextSlot(
+            durationMinutes: 60,
+            type: 'consultation',
+            returnStartOnly: false,
+            startFrom: Carbon::parse('2038-01-04 09:00:00')
+        );
 
-        // Devrait trouver un créneau (après 11h, le créneau 10h-11h est pris)
         $this->assertNotNull($slot);
         $this->assertTrue($slot['start']->gte(Carbon::parse('2038-01-04 11:00:00')));
     }

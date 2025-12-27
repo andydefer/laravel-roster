@@ -21,6 +21,8 @@ use Roster\Domain\Services\TemporalConflictService;
 use Roster\Exceptions\InvalidServiceContextException;
 use ReflectionClass;
 use Roster\Contracts\Services\ServiceInterface;
+use Roster\Exceptions\DirectServiceUsageException;
+use Roster\Support\RosterServiceContext;
 
 /**
  * Abstract service providing a complete CRUD template with dynamic repository resolution.
@@ -41,7 +43,21 @@ abstract class AbstractService implements ServiceInterface
         protected ImpedimentRepositoryInterface $impedimentRepository,
         protected ScheduleRepositoryInterface $scheduleRepository,
         protected TemporalConflictService $conflictService
-    ) {}
+    ) {
+        // Empêche l'instanciation directe du service
+        $this->guardDirectUsage();
+    }
+
+    /**
+     * Protège contre l'utilisation directe du service.
+     */
+    private function guardDirectUsage(): void
+    {
+        if (RosterServiceContext::isDirectUsage()) {
+            throw DirectServiceUsageException::create(static::class);
+        }
+    }
+
 
     /**
      * Create a new entity.
@@ -101,7 +117,7 @@ abstract class AbstractService implements ServiceInterface
         $existingEntity = $this->find($id);
         if (!$existingEntity) {
             throw ValidationFailedException::fromViolations(
-                ['id' => sprintf('%s with given ID does not exist', $this->getEntityTypeEnum()->displayName())],
+                ['id' => sprintf('%s with given ID does not exist for owner or schedulable', $this->getEntityTypeEnum()->displayName())],
                 OperationType::UPDATE,
                 $this->getEntityTypeEnum()
             );

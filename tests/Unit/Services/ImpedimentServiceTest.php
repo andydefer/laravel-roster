@@ -575,6 +575,8 @@ final class ImpedimentServiceTest extends TestCase
 
     public function test_is_time_slot_blocked_with_type_filter(): void
     {
+        $otherUser = TestSchedulable::create();
+
         // Arrange - Créer une deuxième disponibilité avec type différent
         $otherAvailability = Availability::for($this->testSchedulable)->create([
             'type' => 'emergency',
@@ -584,6 +586,7 @@ final class ImpedimentServiceTest extends TestCase
             'validity_start' => '2038-01-01',
             'validity_end' => '2038-01-31',
         ]);
+
 
         // Créer un impediment sur l'autre disponibilité
         Impediment::for($this->testSchedulable)
