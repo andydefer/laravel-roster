@@ -10,10 +10,18 @@ use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Roster\Exceptions\MissingSchedulableException;
 
 /**
- * Handles schedulable ownership and query scoping.
+ * Trait for handling schedulable entity ownership and query scoping.
+ *
+ * Provides automatic validation, global scoping, and relationship methods
+ * for models that belong to a schedulable polymorphic entity.
  */
 trait BelongsToSchedulable
 {
+    /**
+     * Boots the trait with event listeners and global scopes.
+     *
+     * @return void
+     */
     protected static function bootBelongsToSchedulable(): void
     {
         static::creating(static::validateSchedulable(...));
@@ -30,6 +38,13 @@ trait BelongsToSchedulable
         });
     }
 
+    /**
+     * Validates that a schedulable reference is present before persistence.
+     *
+     * @param Model $model The model being created or updated
+     * @return void
+     * @throws MissingSchedulableException If schedulable reference is incomplete
+     */
     protected static function validateSchedulable(Model $model): void
     {
         if (
@@ -40,15 +55,25 @@ trait BelongsToSchedulable
         }
     }
 
+    /**
+     * Defines the polymorphic relationship to the schedulable entity.
+     *
+     * @return MorphTo The schedulable polymorphic relationship
+     */
     public function schedulable(): MorphTo
     {
         return $this->morphTo();
     }
 
-    public function scopeForSchedulable(
-        Builder $builder,
-        Model $model
-    ): Builder {
+    /**
+     * Scopes queries to a specific schedulable entity.
+     *
+     * @param Builder $builder The query builder instance
+     * @param Model $model The schedulable entity model
+     * @return Builder The scoped query builder
+     */
+    public function scopeForSchedulable(Builder $builder, Model $model): Builder
+    {
         return $builder
             ->where('schedulable_id', $model->getKey())
             ->where('schedulable_type', $model::class);

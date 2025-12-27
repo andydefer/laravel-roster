@@ -7,13 +7,17 @@ namespace Roster\Exceptions;
 use LogicException;
 
 /**
- * Exception thrown when an invalid owner is provided for a model.
- * Specifically used when trying to assign an owner to an Availability model.
+ * Exception thrown when an invalid owner is assigned to a model.
+ *
+ * Prevents assignment of ownership relationships that violate business rules,
+ * particularly for Availability models which cannot have owners.
  */
 final class InvalidOwnerException extends LogicException
 {
     /**
-     * Creates a new InvalidOwnerException instance for Availability model.
+     * Creates exception for invalid Availability model ownership.
+     *
+     * @return self Exception for Availability owner assignment attempts
      */
     public static function forAvailability(): self
     {
@@ -23,7 +27,10 @@ final class InvalidOwnerException extends LogicException
     }
 
     /**
-     * Creates a new InvalidOwnerException with a custom message.
+     * Creates exception with custom error message.
+     *
+     * @param string $message Custom error description
+     * @return self Exception with provided message
      */
     public static function withMessage(string $message): self
     {

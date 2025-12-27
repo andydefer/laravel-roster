@@ -1,5 +1,4 @@
 <?php
-// src/Validation/Cache/RuleCacheGenerator.php
 
 declare(strict_types=1);
 
@@ -11,10 +10,25 @@ use Roster\Enums\OperationType;
 use Roster\Validation\RuleScanner;
 use Roster\Validation\Attributes\ValidationRule;
 
+/**
+ * Generates and manages cached validation rules for the roster system.
+ *
+ * Responsible for scanning validation rule classes, compiling them into an optimized cache file,
+ * and providing cache freshness checks to ensure validation rules are up-to-date.
+ */
 class RuleCacheGenerator
 {
+    /**
+     * Path to the cache file.
+     */
     private string $cachePath;
 
+    /**
+     * Initializes the cache generator with a scanner and optional cache path.
+     *
+     * @param RuleScanner $ruleScanner Scanner for discovering validation rules
+     * @param string|null $cachePath Optional custom cache file path
+     */
     public function __construct(
         private RuleScanner $ruleScanner,
         ?string $cachePath = null
@@ -22,18 +36,23 @@ class RuleCacheGenerator
         $this->cachePath = $cachePath ?? storage_path('framework/cache/roster_rules.php');
     }
 
+    /**
+     * Generates the validation rules cache file.
+     *
+     * Scans for validation rules and writes them to an optimized cache file.
+     *
+     * @return bool True if cache generation succeeded
+     */
     public function generate(): bool
     {
         $rules = $this->ruleScanner->scan();
         $content = $this->buildCacheFile($rules);
 
-        // Créer le répertoire si nécessaire
         $directory = dirname($this->cachePath);
         if (!is_dir($directory)) {
             mkdir($directory, 0755, true);
         }
 
-        // Écrire le fichier atomiquement
         $tempFile = $this->cachePath . '.tmp';
         if (file_put_contents($tempFile, $content) === false) {
             return false;
@@ -42,23 +61,38 @@ class RuleCacheGenerator
         return rename($tempFile, $this->cachePath);
     }
 
+    /**
+     * Gets the current cache file path.
+     *
+     * @return string Absolute path to the cache file
+     */
     public function getCachePath(): string
     {
         return $this->cachePath;
     }
 
+    /**
+     * Checks if the cache is fresh and should be used.
+     *
+     * @return bool True if cache exists and is within freshness threshold
+     */
     public function isCacheFresh(): bool
     {
         if (!file_exists($this->cachePath)) {
             return false;
         }
 
-        // Vérifier si le fichier a été généré il y a moins de X heures
         $maxAge = config('roster.cache.cache_max_age_hours', 24);
-        return (Carbon::now()
-            ->getTimestamp() - filemtime($this->cachePath)) < ($maxAge * 3600);
+        $cacheAge = Carbon::now()->getTimestamp() - filemtime($this->cachePath);
+
+        return $cacheAge < ($maxAge * 3600);
     }
 
+    /**
+     * Clears the validation rules cache.
+     *
+     * @return bool True if cache was successfully cleared or didn't exist
+     */
     public function clear(): bool
     {
         if (file_exists($this->cachePath)) {
@@ -68,10 +102,15 @@ class RuleCacheGenerator
         return true;
     }
 
+    /**
+     * Builds the cache file content from scanned rules.
+     *
+     * @param array<string, ValidationRule> $rules Scanned validation rules
+     * @return string Complete cache file content
+     */
     private function buildCacheFile(array $rules): string
     {
-        $timestamp = Carbon::now()
-            ->format('Y-m-d H:i:s');
+        $timestamp = Carbon::now()->format('Y-m-d H:i:s');
         $rulesCount = count($rules);
 
         $content = <<<PHP
@@ -96,16 +135,36 @@ PHP;
         return $content . "];\n";
     }
 
+    /**
+     * Builds a single rule entry for the cache file.
+     *
+     * @param string $className Validation rule class name
+     * @param ValidationRule $validationRule Validation rule attribute
+     * @return string Formatted rule entry
+     */
     private function buildRuleEntry(string $className, ValidationRule $validationRule): string
     {
-        $entities = array_map(fn(EntityType $entityType) => $entityType->value, $validationRule->entities);
-        $operations = array_map(fn(OperationType $operationType) => $operationType->value, $validationRule->operations);
+        $entities = array_map(
+            fn(EntityType $entityType): string => $entityType->value,
+            $validationRule->entities
+        );
+
+        $operations = array_map(
+            fn(OperationType $operationType): string => $operationType->value,
+            $validationRule->operations
+        );
 
         $indent = '    ';
         $entry = $indent . "'" . addslashes($className) . "' => [\n";
         $entry .= $indent . $indent . "'priority' => " . $validationRule->priority . ",\n";
-        $entry .= $indent . $indent . "'entities' => [" . implode(', ', array_map(fn(string $e): string => sprintf("'%s'", $e), $entities)) . "],\n";
-        $entry .= $indent . $indent . "'operations' => [" . implode(', ', array_map(fn(string $o): string => sprintf("'%s'", $o), $operations)) . "],\n";
+        $entry .= $indent . $indent . "'entities' => [" . implode(', ', array_map(
+            fn(string $entity): string => sprintf("'%s'", $entity),
+            $entities
+        )) . "],\n";
+        $entry .= $indent . $indent . "'operations' => [" . implode(', ', array_map(
+            fn(string $operation): string => sprintf("'%s'", $operation),
+            $operations
+        )) . "],\n";
         $entry .= $indent . $indent . "'class' => '" . addslashes($className) . "',\n";
 
         return $entry . ($indent . "],\n");

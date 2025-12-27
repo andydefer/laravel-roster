@@ -10,10 +10,21 @@ use Illuminate\Support\Collection;
 use Roster\Contracts\Repository\ImpedimentRepositoryInterface;
 use Roster\Models\Impediment;
 
+/**
+ * Repository for Impediment entity data access operations.
+ *
+ * Provides methods for querying and retrieving impediment data
+ * with support for availability-based filtering and temporal constraints.
+ */
 class ImpedimentRepository extends AbstractRepository implements ImpedimentRepositoryInterface
 {
     /**
-     * Find impediments by availability with optional time range.
+     * Finds impediments by availability with optional time range constraints.
+     *
+     * @param int $availabilityId Availability entity identifier
+     * @param Carbon|null $start Start time filter (inclusive)
+     * @param Carbon|null $end End time filter (inclusive)
+     * @return Builder Eloquent query builder for further refinement
      */
     public function findByAvailability(
         int $availabilityId,
@@ -34,7 +45,11 @@ class ImpedimentRepository extends AbstractRepository implements ImpedimentRepos
     }
 
     /**
-     * Get future impediments for an availability.
+     * Retrieves future impediments for an availability starting from a specific date.
+     *
+     * @param int $availabilityId Availability entity identifier
+     * @param Carbon $from Starting date for future impediments (inclusive)
+     * @return Collection<Impediment> Future impediments ordered by start time
      */
     public function getFutureImpediments(int $availabilityId, Carbon $from): Collection
     {

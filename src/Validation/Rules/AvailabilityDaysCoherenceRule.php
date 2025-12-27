@@ -4,14 +4,19 @@ declare(strict_types=1);
 
 namespace Roster\Validation\Rules;
 
-use Exception;
-use Illuminate\Support\Carbon;
+use Carbon\Carbon;
 use Roster\Contracts\Validation\ValidationContextInterface;
-use Roster\Validation\Attributes\ValidationRule;
+use Roster\Enums\DaysOfWeek;
 use Roster\Enums\EntityType;
 use Roster\Enums\OperationType;
-use Roster\Enums\DaysOfWeek;
+use Roster\Validation\Attributes\ValidationRule;
 
+/**
+ * Validates that provided days are coherent with the availability validity period.
+ *
+ * Ensures that days specified for availability fall within the validity date range
+ * and are valid days of the week according to the DaysOfWeek enum.
+ */
 #[ValidationRule(
     priority: 85,
     entities: [EntityType::AVAILABILITY],
@@ -19,36 +24,36 @@ use Roster\Enums\DaysOfWeek;
 )]
 class AvailabilityDaysCoherenceRule extends AbstractRule
 {
+    /**
+     * Validates day coherence with validity period.
+     *
+     * Checks that all provided days are valid days of the week and
+     * fall within the specified validity start and end dates.
+     *
+     * @param ValidationContextInterface $validationContext Validation context
+     * @return void
+     */
     public function validate(ValidationContextInterface $validationContext): void
     {
-        // Si les jours ne sont pas fournis, pas de validation
         if (!$validationContext->has('days')) {
             return;
         }
 
         $days = $validationContext->get('days');
 
-        // null = absent (safeData semantics)
         if ($days === null) {
             return;
         }
 
-        // Vérification du type avant traitement métier
         if (!is_array($days)) {
-            $validationContext->setViolation(
-                'days',
-                'Days must be an array'
-            );
+            $validationContext->setViolation('days', 'Days must be an array');
             return;
         }
 
-        // Vérification que le tableau n'est pas vide
         if ($days === []) {
-            // Ne pas valider ici - une autre règle (DaysValidationRule) gère cela
             return;
         }
 
-        // Vérifier que tous les jours sont valides selon l'enum DaysOfWeek
         $validDays = DaysOfWeek::values();
 
         foreach ($days as $day) {
@@ -61,36 +66,37 @@ class AvailabilityDaysCoherenceRule extends AbstractRule
             }
         }
 
-        // Récupérer l'entité actuelle
         $entity = $validationContext->getCurrentEntity();
 
-        // Déterminer les dates de validité à utiliser
-        $validityStart = $this->getValidityDate($validationContext, 'validity_start', $entity);
-        $validityEnd = $this->getValidityDate($validationContext, 'validity_end', $entity);
+        $validityStart = $this->getValidityDate(
+            validationContext: $validationContext,
+            field: 'validity_start',
+            entity: $entity
+        );
 
-        // Si une des dates est null, pas de validation de cohérence
+        $validityEnd = $this->getValidityDate(
+            validationContext: $validationContext,
+            field: 'validity_end',
+            entity: $entity
+        );
+
         if ($validityStart === null || $validityEnd === null) {
             return;
         }
 
-        // Vérifier que les dates sont valides avant de continuer
         try {
             $start = Carbon::parse($validityStart);
             $end = Carbon::parse($validityEnd);
 
-            // Si end <= start, pas de validation de cohérence des jours
             if ($end->lte($start)) {
                 return;
             }
-        } catch (Exception $exception) {
-            // Dates invalides, une autre règle s'en occupera
+        } catch (\Exception) {
             return;
         }
 
-        // Utiliser les helpers pour la validation
         $daysInPeriod = roster_days_in_period($validityStart, $validityEnd);
 
-        // Vérifier chaque jour fourni
         foreach ($days as $day) {
             if (!in_array($day, $daysInPeriod, true)) {
                 $periodDescription = roster_format_period_days_for_display($daysInPeriod);
@@ -99,22 +105,27 @@ class AvailabilityDaysCoherenceRule extends AbstractRule
                     'days',
                     sprintf("Day '%s' is not within the validity period (%s)", $day, $periodDescription)
                 );
-                // Pas de return ici pour collecter toutes les violations
             }
         }
     }
 
     /**
-     * Récupère une date de validité en priorisant le contexte, puis l'entité
+     * Retrieves a validity date from context or existing entity.
+     *
+     * @param ValidationContextInterface $validationContext Validation context
+     * @param string $field Date field name
+     * @param object|null $entity Existing entity for updates
+     * @return mixed Date value or null
      */
-    private function getValidityDate(ValidationContextInterface $validationContext, string $field, ?object $entity): mixed
-    {
-        // Si la date est fournie dans le contexte (même si null), l'utiliser
+    private function getValidityDate(
+        ValidationContextInterface $validationContext,
+        string $field,
+        ?object $entity
+    ): mixed {
         if ($validationContext->has($field)) {
             return $validationContext->get($field);
         }
 
-        // Sinon, pour l'UPDATE, récupérer depuis l'entité existante
         if ($validationContext->getOperation() === OperationType::UPDATE && $entity !== null) {
             return match ($field) {
                 'validity_start' => $entity->validity_start ?? null,
@@ -123,7 +134,6 @@ class AvailabilityDaysCoherenceRule extends AbstractRule
             };
         }
 
-        // Pour CREATE ou sans entité, retourner null
         return null;
     }
 }

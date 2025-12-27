@@ -1,8 +1,8 @@
 # Rector Refactoring Report
-*Generated: sam. 27 déc. 2025 13:10:51 WAT*
+*Generated: sam. 27 déc. 2025 13:48:50 WAT*
 
 
-41 files with changes
+45 files with changes
 =====================
 
 1) /home/andy-kani/pro/sites/packages/laravel-roster/src/Commands/CacheRulesCommand.php:33
@@ -711,29 +711,7 @@ Applied rules:
  * RenameVariableToMatchMethodCallReturnTypeRector
 
 
-16) /home/andy-kani/pro/sites/packages/laravel-roster/src/Exceptions/DirectServiceUsageException.php:4
-
-    ---------- begin diff ----------
-@@ @@
-
- namespace Roster\Exceptions;
-
-+use RuntimeException;
-+
- /**
-  * Exception lancée lorsqu'un service est utilisé directement sans passer par un helper.
-  */
--final class DirectServiceUsageException extends \RuntimeException
-+final class DirectServiceUsageException extends RuntimeException
- {
-     public static function create(string $serviceClass): self
-     {
-    ----------- end diff -----------
-
-Applied rules:
-
-
-17) /home/andy-kani/pro/sites/packages/laravel-roster/src/Exceptions/InvalidServiceContextException.php:20
+16) /home/andy-kani/pro/sites/packages/laravel-roster/src/Exceptions/InvalidServiceContextException.php:20
 
     ---------- begin diff ----------
 @@ @@
@@ -775,7 +753,7 @@ Applied rules:
  * EncapsedStringsToSprintfRector
 
 
-18) /home/andy-kani/pro/sites/packages/laravel-roster/src/Models/Availability.php:60
+17) /home/andy-kani/pro/sites/packages/laravel-roster/src/Models/Availability.php:60
 
     ---------- begin diff ----------
 @@ @@
@@ -811,11 +789,69 @@ Applied rules:
  * RemoveUselessReturnTagRector
 
 
-19) /home/andy-kani/pro/sites/packages/laravel-roster/src/Repositories/AbstractRepository.php:105
+18) /home/andy-kani/pro/sites/packages/laravel-roster/src/Repositories/AbstractRepository.php:4
 
     ---------- begin diff ----------
 @@ @@
+
+ namespace Roster\Repositories;
+
++use InvalidArgumentException;
+ use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+ use Illuminate\Database\Eloquent\Builder;
+ use Illuminate\Database\Eloquent\Model;
+@@ @@
+                 ->whereKey($id);
+
+             $query = $this->applyOwnerScope($query, $owner);
++
+             $model = $query->first();
+
+             if (!$model) {
+@@ @@
+                 ->whereKey($id);
+
+             $query = $this->applyOwnerScope($query, $owner);
++
+             $model = $query->first();
+
+             return $model instanceof Model && (bool) $model->delete();
+@@ @@
+      * @param Carbon $start Start time
+      * @param Carbon $end End time
+      * @return Collection<int, Impediment> Overlapping impediments
+-     * @throws \InvalidArgumentException When the time window is invalid
++     * @throws InvalidArgumentException When the time window is invalid
+      */
+     public function findForTimeSlot(int $availabilityId, Carbon $start, Carbon $end): Collection
+     {
+@@ @@
+     /**
+      * Builds a query with schedulable scope and applied filters.
       *
+-     * @param Model $schedulable Schedulable entity
++     * @param Model $model Schedulable entity
+      * @param array<string, mixed> $filters Query filters
+      * @return Builder Query builder
+      * @throws MissingSchedulableException If schedulable not provided
+      */
+-    public function buildQueryWithFilters(Model $schedulable, array $filters): Builder
++    public function buildQueryWithFilters(Model $model, array $filters): Builder
+     {
+-        $this->validateSchedulable($schedulable);
++        $this->validateSchedulable($model);
+
+-        $builder = $this->buildSchedulableScopedQuery($schedulable);
++        $builder = $this->buildSchedulableScopedQuery($model);
+         return $this->applyFilters($builder, $filters);
+     }
+
+@@ @@
+     /**
+      * Validates that a schedulable entity is provided.
+      *
+-     * @param Model|null $schedulable Schedulable entity
++     * @param Model|null $model Schedulable entity
       * @throws MissingSchedulableException When no schedulable is provided
       */
 -    private function validateSchedulable(?Model $schedulable): void
@@ -827,7 +863,11 @@ Applied rules:
          }
      }
 @@ @@
+     /**
+      * Validates that no owner is provided for Availability models.
       *
+-     * @param Model|null $owner Owning entity
++     * @param Model|null $model Owning entity
       * @throws InvalidOwnerException When owner is provided for Availability model
       */
 -    private function validateOwnerForAvailability(?Model $owner): void
@@ -839,7 +879,11 @@ Applied rules:
          }
      }
 @@ @@
+     /**
+      * Validates that an owner is provided for non-Availability models.
       *
+-     * @param Model|null $owner Owning entity
++     * @param Model|null $model Owning entity
       * @throws MissingOwnerException When owner is not provided for non-Availability model
       */
 -    private function validateOwnerForNonAvailability(?Model $owner): void
@@ -851,11 +895,15 @@ Applied rules:
          }
      }
 @@ @@
-     /**
-      * Apply owner constraint to a query builder for non-Availability models.
+      * Applies owner constraint to a query builder for non-Availability models.
+      *
+      * @param Builder $builder Query builder
+-     * @param Model|null $owner Owning entity
++     * @param Model|null $model Owning entity
+      * @return Builder Modified query builder
       */
--    private function applyOwnerConstraint(Builder $builder, ?Model $owner): Builder
-+    private function applyOwnerConstraint(Builder $builder, ?Model $model): Builder
+-    private function applyOwnerScope(Builder $builder, ?Model $owner): Builder
++    private function applyOwnerScope(Builder $builder, ?Model $model): Builder
      {
 -        if ($owner instanceof Model && !$this->isAvailabilityModel()) {
 -            $builder->where('availability_id', $owner->id);
@@ -865,11 +913,16 @@ Applied rules:
 
          return $builder;
 @@ @@
+      * Injects owner relationship into data array for non-Availability models.
       *
+      * @param array<string, mixed> $data Entity data
+-     * @param Model|null $owner Owning entity
++     * @param Model|null $model Owning entity
+      * @return array<string, mixed> Modified data
       * @throws MissingOwnerException When owner is required but not provided
       */
--    private function applyOwnerConstraintToData(array $data, ?Model $owner): array
-+    private function applyOwnerConstraintToData(array $data, ?Model $model): array
+-    private function injectOwnerIntoData(array $data, ?Model $owner): array
++    private function injectOwnerIntoData(array $data, ?Model $model): array
      {
 -        $this->validateOwnerForNonAvailability($owner);
 +        $this->validateOwnerForNonAvailability($model);
@@ -881,46 +934,14 @@ Applied rules:
          }
 
          return $data;
-@@ @@
-      *
-      * @param array<string, mixed> $filters
-      */
--    public function buildQueryWithFilters(Model $schedulable, array $filters): Builder
-+    public function buildQueryWithFilters(Model $model, array $filters): Builder
-     {
--        $this->validateSchedulable($schedulable);
-+        $this->validateSchedulable($model);
-
--        $builder = $this->buildBaseQuery($schedulable);
-+        $builder = $this->buildBaseQuery($model);
-         return $this->applyFilters($builder, $filters);
-     }
-
-@@ @@
-      * - Fields containing 'end': WHERE <= value
-      * - String values: WHERE LIKE pattern
-      * - Other values: WHERE = value
-+     * @param array<string, mixed> $filters
-      */
-     protected function applyFilters(Builder $builder, array $filters = []): Builder
-     {
-@@ @@
-
-     /**
-      * {@inheritDoc}
-+     * @return array<string, mixed>
-      */
-     public function getFilters(): array
-     {
     ----------- end diff -----------
 
 Applied rules:
+ * NewlineBeforeNewAssignSetRector
  * RenameParamToMatchTypeRector
- * DocblockGetterReturnArrayFromPropertyDocblockVarRector
- * ClassMethodArrayDocblockParamFromLocalCallsRector
 
 
-20) /home/andy-kani/pro/sites/packages/laravel-roster/src/Repositories/AvailabilityRepository.php:23
+19) /home/andy-kani/pro/sites/packages/laravel-roster/src/Repositories/AvailabilityRepository.php:23
 
     ---------- begin diff ----------
 @@ @@
@@ -1039,7 +1060,7 @@ Applied rules:
  * RenameParamToMatchTypeRector
 
 
-21) /home/andy-kani/pro/sites/packages/laravel-roster/src/RosterServiceProvider.php:36
+20) /home/andy-kani/pro/sites/packages/laravel-roster/src/RosterServiceProvider.php:36
 
     ---------- begin diff ----------
 @@ @@
@@ -1120,7 +1141,7 @@ Applied rules:
  * RemoveUselessReturnTagRector
 
 
-22) /home/andy-kani/pro/sites/packages/laravel-roster/src/Services/AvailabilityService.php:4
+21) /home/andy-kani/pro/sites/packages/laravel-roster/src/Services/AvailabilityService.php:4
 
     ---------- begin diff ----------
 @@ @@
@@ -1136,7 +1157,7 @@ Applied rules:
 Applied rules:
 
 
-23) /home/andy-kani/pro/sites/packages/laravel-roster/src/Services/Core/AbstractService.php:4
+22) /home/andy-kani/pro/sites/packages/laravel-roster/src/Services/Core/AbstractService.php:4
 
     ---------- begin diff ----------
 @@ @@
@@ -1201,7 +1222,7 @@ Applied rules:
  * DocblockVarArrayFromGetterReturnRector
 
 
-24) /home/andy-kani/pro/sites/packages/laravel-roster/src/Services/ImpedimentService.php:4
+23) /home/andy-kani/pro/sites/packages/laravel-roster/src/Services/ImpedimentService.php:4
 
     ---------- begin diff ----------
 @@ @@
@@ -1222,7 +1243,7 @@ Applied rules:
 Applied rules:
 
 
-25) /home/andy-kani/pro/sites/packages/laravel-roster/src/Services/ScheduleService.php:7
+24) /home/andy-kani/pro/sites/packages/laravel-roster/src/Services/ScheduleService.php:7
 
     ---------- begin diff ----------
 @@ @@
@@ -1259,6 +1280,32 @@ Applied rules:
 
 Applied rules:
  * FlipTypeControlToUseExclusiveTypeRector
+
+
+25) /home/andy-kani/pro/sites/packages/laravel-roster/src/Traits/BelongsToSchedulable.php:19
+
+    ---------- begin diff ----------
+@@ @@
+ {
+     /**
+      * Boots the trait with event listeners and global scopes.
+-     *
+-     * @return void
+      */
+     protected static function bootBelongsToSchedulable(): void
+     {
+@@ @@
+      * Validates that a schedulable reference is present before persistence.
+      *
+      * @param Model $model The model being created or updated
+-     * @return void
+      * @throws MissingSchedulableException If schedulable reference is incomplete
+      */
+     protected static function validateSchedulable(Model $model): void
+    ----------- end diff -----------
+
+Applied rules:
+ * RemoveUselessReturnTagRector
 
 
 26) /home/andy-kani/pro/sites/packages/laravel-roster/src/Validation/Context/ValidationContext.php:33
@@ -1441,7 +1488,69 @@ Applied rules:
  * RenameForeachValueVariableToMatchExprVariableRector
 
 
-28) /home/andy-kani/pro/sites/packages/laravel-roster/src/Validation/Rules/AvailabilityDateRangeRule.php:43
+28) /home/andy-kani/pro/sites/packages/laravel-roster/src/Validation/Rules/AbstractRule.php:58
+
+    ---------- begin diff ----------
+@@ @@
+     {
+         $ruleAttribute = $this->getValidationRuleAttribute();
+
+-        if ($ruleAttribute === null) {
++        if (!$ruleAttribute instanceof ValidationRule) {
+             // Default behavior for rules without attribute
+             return true;
+         }
+@@ @@
+      * Checks if an operation type is supported by the rule attribute.
+      *
+      * @param OperationType $operationType Operation to check
+-     * @param ValidationRule $ruleAttribute Rule configuration attribute
++     * @param ValidationRule $validationRule Rule configuration attribute
+      * @return bool True if operation supported
+      */
+-    private function isOperationSupported(OperationType $operationType, ValidationRule $ruleAttribute): bool
++    private function isOperationSupported(OperationType $operationType, ValidationRule $validationRule): bool
+     {
+-        foreach ($ruleAttribute->operations as $supportedOperation) {
++        foreach ($validationRule->operations as $supportedOperation) {
+             if ($supportedOperation === $operationType) {
+                 return true;
+             }
+         }
++
+         return false;
+     }
+
+@@ @@
+      * Checks if an entity type is supported by the rule attribute.
+      *
+      * @param EntityType $entityType Entity to check
+-     * @param ValidationRule $ruleAttribute Rule configuration attribute
++     * @param ValidationRule $validationRule Rule configuration attribute
+      * @return bool True if entity supported
+      */
+-    private function isEntitySupported(EntityType $entityType, ValidationRule $ruleAttribute): bool
++    private function isEntitySupported(EntityType $entityType, ValidationRule $validationRule): bool
+     {
+-        foreach ($ruleAttribute->entities as $supportedEntity) {
++        foreach ($validationRule->entities as $supportedEntity) {
+             if ($supportedEntity === $entityType) {
+                 return true;
+             }
+         }
++
+         return false;
+     }
+ }
+    ----------- end diff -----------
+
+Applied rules:
+ * FlipTypeControlToUseExclusiveTypeRector
+ * NewlineAfterStatementRector
+ * RenameParamToMatchTypeRector
+
+
+29) /home/andy-kani/pro/sites/packages/laravel-roster/src/Validation/Rules/AvailabilityDateRangeRule.php:43
 
     ---------- begin diff ----------
 @@ @@
@@ -1550,7 +1659,114 @@ Applied rules:
  * RenameParamToMatchTypeRector
 
 
-29) /home/andy-kani/pro/sites/packages/laravel-roster/src/Validation/Validator.php:77
+30) /home/andy-kani/pro/sites/packages/laravel-roster/src/Validation/Rules/AvailabilityDaysCoherenceRule.php:4
+
+    ---------- begin diff ----------
+@@ @@
+
+ namespace Roster\Validation\Rules;
+
++use Exception;
+ use Carbon\Carbon;
+ use Roster\Contracts\Validation\ValidationContextInterface;
+ use Roster\Enums\DaysOfWeek;
+@@ @@
+      * fall within the specified validity start and end dates.
+      *
+      * @param ValidationContextInterface $validationContext Validation context
+-     * @return void
+      */
+     public function validate(ValidationContextInterface $validationContext): void
+     {
+@@ @@
+             if ($end->lte($start)) {
+                 return;
+             }
+-        } catch (\Exception) {
++        } catch (Exception) {
+             return;
+         }
+    ----------- end diff -----------
+
+Applied rules:
+ * RemoveUselessReturnTagRector
+
+
+31) /home/andy-kani/pro/sites/packages/laravel-roster/src/Validation/Rules/AvailabilityOverlapRule.php:34
+
+    ---------- begin diff ----------
+@@ @@
+      * daily schedules, active days, and validity ranges.
+      *
+      * @param ValidationContextInterface $validationContext Validation context
+-     * @return void
+      */
+     public function validate(ValidationContextInterface $validationContext): void
+     {
+@@ @@
+     {
+         $requiredFields = ['daily_start', 'daily_end', 'days'];
+
+-        foreach ($requiredFields as $field) {
+-            if (empty($data[$field])) {
++        foreach ($requiredFields as $requiredField) {
++            if (empty($data[$requiredField])) {
+                 return false;
+             }
+         }
+    ----------- end diff -----------
+
+Applied rules:
+ * RemoveUselessReturnTagRector
+ * RenameForeachValueVariableToMatchExprVariableRector
+
+
+32) /home/andy-kani/pro/sites/packages/laravel-roster/src/Validation/Rules/AvailabilityOwnershipRule.php:28
+
+    ---------- begin diff ----------
+@@ @@
+      * Validates availability ownership for schedule and impediment entities.
+      *
+      * @param ValidationContextInterface $validationContext Validation context with entity data
+-     * @return void
+      */
+     public function validate(ValidationContextInterface $validationContext): void
+     {
+@@ @@
+      *
+      * @param ValidationContextInterface $validationContext Validation context
+      * @param mixed $availabilityId Availability identifier
+-     * @param Model $schedulable Schedulable entity
+-     * @return void
++     * @param Model $model Schedulable entity
+      */
+     private function validateAvailabilityOwnership(
+         ValidationContextInterface $validationContext,
+         mixed $availabilityId,
+-        Model $schedulable
++        Model $model
+     ): void {
+         $availability = $validationContext->getAvailabilityService()->find($availabilityId);
+
+@@ @@
+             return;
+         }
+
+-        $isOwner = $availability->schedulable_id === $schedulable->id
+-            && $availability->schedulable_type === get_class($schedulable);
++        $isOwner = $availability->schedulable_id === $model->id
++            && $availability->schedulable_type === get_class($model);
+
+         if (!$isOwner) {
+             $validationContext->setViolation(
+    ----------- end diff -----------
+
+Applied rules:
+ * RemoveUselessReturnTagRector
+ * RenameParamToMatchTypeRector
+
+
+33) /home/andy-kani/pro/sites/packages/laravel-roster/src/Validation/Validator.php:77
 
     ---------- begin diff ----------
 @@ @@
@@ -1652,7 +1868,7 @@ Applied rules:
  * RenameForeachValueVariableToMatchExprVariableRector
 
 
-30) /home/andy-kani/pro/sites/packages/laravel-roster/src/helpers.php:6
+34) /home/andy-kani/pro/sites/packages/laravel-roster/src/helpers.php:6
 
     ---------- begin diff ----------
 @@ @@
@@ -1792,7 +2008,7 @@ Applied rules:
  * RenameParamToMatchTypeRector
 
 
-31) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Feature/Services/AvailabilityServiceDaysCoherenceTest.php:6
+35) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Feature/Services/AvailabilityServiceDaysCoherenceTest.php:6
 
     ---------- begin diff ----------
 @@ @@
@@ -1973,7 +2189,7 @@ Applied rules:
  * RenamePropertyToMatchTypeRector
 
 
-32) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Commands/CacheRulesCommandTest.php:4
+36) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Commands/CacheRulesCommandTest.php:4
 
     ---------- begin diff ----------
 @@ @@
@@ -2099,7 +2315,7 @@ Applied rules:
  * RenameVariableToMatchNewTypeRector
 
 
-33) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Commands/InstallRosterCommandTest.php:13
+37) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Commands/InstallRosterCommandTest.php:13
 
     ---------- begin diff ----------
 @@ @@
@@ -2151,7 +2367,7 @@ Applied rules:
  * ClosureReturnTypeRector
 
 
-34) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Domain/RepositoryMutationTest.php:6
+38) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Domain/RepositoryMutationTest.php:6
 
     ---------- begin diff ----------
 @@ @@
@@ -2379,7 +2595,7 @@ Applied rules:
  * RenamePropertyToMatchTypeRector
 
 
-35) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Models/AvailabilityTest.php:19
+39) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Models/AvailabilityTest.php:19
 
     ---------- begin diff ----------
 @@ @@
@@ -2469,7 +2685,7 @@ Applied rules:
  * RenamePropertyToMatchTypeRector
 
 
-36) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Models/ImpedimentTest.php:24
+40) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Models/ImpedimentTest.php:24
 
     ---------- begin diff ----------
 @@ @@
@@ -2523,7 +2739,7 @@ Applied rules:
  * RenamePropertyToMatchTypeRector
 
 
-37) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Services/AvailabilityServiceTest.php:21
+41) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Services/AvailabilityServiceTest.php:21
 
     ---------- begin diff ----------
 @@ @@
@@ -2960,7 +3176,7 @@ Applied rules:
  * RenamePropertyToMatchTypeRector
 
 
-38) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Services/ImpedimentServiceTest.php:25
+42) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Services/ImpedimentServiceTest.php:25
 
     ---------- begin diff ----------
 @@ @@
@@ -3070,7 +3286,7 @@ Applied rules:
  * AssertEqualsOrAssertSameFloatParameterToSpecificMethodsTypeRector
 
 
-39) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Services/ScheduleServiceTest.php:11
+43) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Services/ScheduleServiceTest.php:11
 
     ---------- begin diff ----------
 @@ @@
@@ -3484,7 +3700,7 @@ Applied rules:
  * AssertEqualsOrAssertSameFloatParameterToSpecificMethodsTypeRector
 
 
-40) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Validation/Rules/AvailabilityTemporalCoherenceRuleTest.php:20
+44) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Validation/Rules/AvailabilityTemporalCoherenceRuleTest.php:20
 
     ---------- begin diff ----------
 @@ @@
@@ -3637,7 +3853,7 @@ Applied rules:
  * RenamePropertyToMatchTypeRector
 
 
-41) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Validation/Rules/ImpedimentScheduleDaysCoherenceRuleTest.php:20
+45) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Validation/Rules/ImpedimentScheduleDaysCoherenceRuleTest.php:20
 
     ---------- begin diff ----------
 @@ @@
@@ -3691,5 +3907,5 @@ Applied rules:
  * RenamePropertyToMatchTypeRector
 
 
- [OK] 41 files would have been changed (dry-run) by Rector                                                              
+ [OK] 45 files would have been changed (dry-run) by Rector                                                              
 
