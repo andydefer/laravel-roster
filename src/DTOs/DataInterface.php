@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Roster\DTOs;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Carbon;
 
 /**
  * Interface for all Data Transfer Objects.

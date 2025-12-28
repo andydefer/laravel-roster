@@ -24,6 +24,8 @@ return new class extends Migration
             Schema::create('test_schedulables', function (Blueprint $blueprint): void {
                 $blueprint->id();
                 $blueprint->timestamps();
+                $blueprint->string('name')->default('Dr. John Doe');
+                $blueprint->string('specialty')->default('cardiology');
             });
         }
     }

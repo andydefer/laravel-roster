@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Roster\DTOs;
 
-use Illuminate\Database\Eloquent\Model;
+use InvalidArgumentException;
 use Illuminate\Support\Carbon;
 
 /**
@@ -46,7 +46,7 @@ abstract class AbstractData implements DataInterface
      * @param string|Carbon|null $datetime Datetime input to parse
      * @return Carbon|null Parsed Carbon instance or null
      *
-     * @throws \InvalidArgumentException If the input is not null, string, or Carbon
+     * @throws InvalidArgumentException If the input is not null, string, or Carbon
      */
     final protected static function parseDateTime(string|Carbon|null $datetime): ?Carbon
     {
@@ -54,7 +54,7 @@ abstract class AbstractData implements DataInterface
             $datetime === null => null,
             $datetime instanceof Carbon => $datetime,
             is_string($datetime) => Carbon::parse($datetime),
-            default => throw new \InvalidArgumentException(
+            default => throw new InvalidArgumentException(
                 'Datetime must be null, string or instance of Carbon'
             ),
         };

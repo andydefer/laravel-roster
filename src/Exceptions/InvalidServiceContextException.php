@@ -20,7 +20,9 @@ final class InvalidServiceContextException extends LogicException
 
         $message = match (true) {
             str_contains($serviceClass, 'AvailabilityService') =>
-            "{$serviceName} requires a valid schedulable context.\n\n" .
+            $serviceName . ' requires a valid schedulable context.
+
+' .
                 "This usually happens because you are calling the service without providing a schedulable model.\n\n" .
                 "How to fix:\n" .
                 "- Always use the availability_for() helper with a schedulable model.\n" .
@@ -29,7 +31,9 @@ final class InvalidServiceContextException extends LogicException
                 "availability_for(\$schedulable)->create([...]);",
 
             str_contains($serviceClass, 'ScheduleService') || str_contains($serviceClass, 'ImpedimentService') =>
-            "{$serviceName} requires both schedulable and owner context.\n\n" .
+            $serviceName . ' requires both schedulable and owner context.
+
+' .
                 "This usually happens because:\n" .
                 "1. You are calling the service without providing an availability as owner.\n" .
                 "2. You are using the wrong helper function.\n\n" .
@@ -42,7 +46,9 @@ final class InvalidServiceContextException extends LogicException
                 "impediment_for(\$availability)->create([...]);",
 
             default =>
-            "{$serviceName} requires a valid context.\n\n" .
+            $serviceName . ' requires a valid context.
+
+' .
                 "This usually happens because you are using the service incorrectly.\n\n" .
                 "How to fix:\n" .
                 "- Use the appropriate helper function instead of instantiating the service directly.\n" .

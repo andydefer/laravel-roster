@@ -1,551 +1,1233 @@
 # Rector Refactoring Report
-*Generated: sam. 27 déc. 2025 14:16:35 WAT*
+*Generated: dim. 28 déc. 2025 13:41:10 WAT*
 
 
-53 files with changes
+19 files with changes
 =====================
 
-1) /home/andy-kani/pro/sites/packages/laravel-roster/src/Commands/CacheRulesCommand.php:33
+1) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Validation/Rules/SchedulableValidationRuleTest.php:688
 
     ---------- begin diff ----------
 @@ @@
+
      /**
-      * Execute the console command.
-      *
--     * @param CacheRulesService $service The cache rules service
-+     * @param CacheRulesService $cacheRulesService The cache rules service
-      * @return int Command exit code (SUCCESS or FAILURE)
+      * Create a mock model stub with specified ID.
+-     *
+-     * @param int $id
+-     * @return Model
       */
--    public function handle(CacheRulesService $service): int
-+    public function handle(CacheRulesService $cacheRulesService): int
+     private function createModelStub(int $id): Model
      {
-         try {
-             if ($this->option('clear')) {
--                $stats = $service->clear(
-+                $stats = $cacheRulesService->clear(
-                     force: (bool) $this->option('force')
-                 );
-             } elseif ($this->option('list')) {
--                $service->displayRulesTable($this);
-+                $cacheRulesService->displayRulesTable($this);
-                 return self::SUCCESS;
-             } elseif ($this->option('show')) {
--                $stats = $service->show();
-+                $stats = $cacheRulesService->show();
-             } else {
--                $stats = $service->generate();
-+                $stats = $cacheRulesService->generate();
-             }
-
-             if ($stats instanceof CacheStats) {
-@@ @@
-             }
-
-             return self::SUCCESS;
--        } catch (Throwable $exception) {
--            $this->error($exception->getMessage());
-+        } catch (Throwable $throwable) {
-+            $this->error($throwable->getMessage());
-             return self::FAILURE;
-         }
-     }
 @@ @@
      /**
-      * Display cache statistics in a formatted way.
+      * Create a validation context mock for CREATE operation.
       *
--     * @param CacheStats $stats Cache statistics to display
-+     * @param CacheStats $cacheStats Cache statistics to display
+-     * @param EntityType $entityType
+-     * @param Model|null $schedulable
+      * @param array<string, mixed> $data
+      * @return MockObject&ValidationContextInterface
       */
--    protected function displayCacheStats(CacheStats $stats): void
-+    protected function displayCacheStats(CacheStats $cacheStats): void
-     {
-         $this->line('📊 Cache stats:');
--        $this->line('   Path: ' . $stats->path);
--        $this->line('   Rules: ' . $stats->rulesCount);
--        $this->line('   Size: ' . $stats->formattedSize());
-+        $this->line('   Path: ' . $cacheStats->path);
-+        $this->line('   Rules: ' . $cacheStats->rulesCount);
-+        $this->line('   Size: ' . $cacheStats->formattedSize());
-
--        if ($stats->generationTimeMs > 0) {
--            $this->line('   Duration: ' . $stats->generationTimeMs . ' ms');
-+        if ($cacheStats->generationTimeMs > 0) {
-+            $this->line('   Duration: ' . $cacheStats->generationTimeMs . ' ms');
-         }
-     }
- }
+@@ @@
+     /**
+      * Create a validation context mock for UPDATE operation.
+      *
+-     * @param EntityType $entityType
+-     * @param Model $schedulable
+      * @param array<string, mixed> $data
+      * @return MockObject&ValidationContextInterface
+      */
+@@ @@
+     /**
+      * Create a validation context mock for DELETE operation.
+      *
+-     * @param EntityType $entityType
+-     * @param Model $schedulable
+      * @return MockObject&ValidationContextInterface
+      */
+     private function createContextForDeleteOperation(
+@@ @@
+      * Configure context get method for schedulable fields.
+      *
+      * @param MockObject&ValidationContextInterface $context
+-     * @param mixed $schedulableId
+-     * @param string|null $schedulableType
+      */
+     private function configureContextGetMethod(
+         MockObject $context,
     ----------- end diff -----------
 
 Applied rules:
- * CatchExceptionNameMatchingTypeRector
- * RenameParamToMatchTypeRector
+ * RemoveUselessParamTagRector
+ * RemoveUselessReturnTagRector
 
 
-2) /home/andy-kani/pro/sites/packages/laravel-roster/src/Commands/InstallRosterCommand.php:10
+2) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Validation/Rules/TimeRangeRuleTest.php:22
 
     ---------- begin diff ----------
 @@ @@
- final class InstallRosterCommand extends Command
- {
-     protected $signature = 'roster:install {--force : Force publish without confirmation}';
-+
-     protected $description = 'Install the Roster package';
+     use RefreshDatabase;
 
--    public function handle(RosterInstallerService $installer): int
-+    public function handle(RosterInstallerService $rosterInstallerService): int
+     private AvailabilityService|MockInterface $availabilityService;
++
+     private TimeRangeRule $rule;
++
+     private Model|MockInterface $schedulable;
+
+     /**
+    ----------- end diff -----------
+
+Applied rules:
+ * NewlineBetweenClassLikeStmtsRector
+
+
+3) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Validation/Rules/TimeSlotDateTimeRuleTest.php:23
+
+    ---------- begin diff ----------
+@@ @@
+ final class TimeSlotDateTimeRuleTest extends TestCase
+ {
+     private TimeSlotDateTimeRule $rule;
++
+     private Model|MockInterface $schedulable;
+
+     /**
+@@ @@
+      * @param string|null $startDatetime The start datetime string or null if not provided
+      * @param string|null $endDatetime The end datetime string or null if not provided
+      * @param object|null $currentEntity The current entity for UPDATE operations
+-     *
+-     * @return ValidationContext
+      */
+     private function createValidationContext(
+         OperationType $operationType,
+@@ @@
+      *
+      * @param string|null $startDatetime The start datetime string or null
+      * @param string|null $endDatetime The end datetime string or null
+-     *
+-     * @return object
+      */
+     private function createMockEntity(?string $startDatetime, ?string $endDatetime): object
      {
--        $installer->install($this, (bool) $this->option('force'));
-+        $rosterInstallerService->install($this, (bool) $this->option('force'));
-         return self::SUCCESS;
+    ----------- end diff -----------
+
+Applied rules:
+ * NewlineBetweenClassLikeStmtsRector
+ * RemoveUselessReturnTagRector
+
+
+4) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Validation/ValidationContextTest.php:4
+
+    ---------- begin diff ----------
+@@ @@
+
+ namespace Tests\Unit\Validation\Context;
+
+-use Exception;
+ use Illuminate\Foundation\Testing\RefreshDatabase;
+ use Illuminate\Database\Eloquent\Model;
+ use Illuminate\Support\Facades\Schema;
+@@ @@
+     use RefreshDatabase;
+
+     private TestSchedulable $schedulable;
++
+     private Availability $availability;
+
+     /**
+@@ @@
+         $this->createTestTable('test_entity_for_update');
+         $currentEntity = new class extends Model {
+             protected $table = 'test_entity_for_update';
++
+             protected $guarded = [];
++
+             public $timestamps = false;
+
+             protected $attributes = [
+@@ @@
+     public function test_resolves_owner_from_current_entity_with_availability_method(): void
+     {
+         // Arrange: Create entity with availability relationship
+-        $this->createTestTable('test_entity_with_availability', function ($table) {
++        $this->createTestTable('test_entity_with_availability', function ($table): void {
+             $table->foreignId('availability_id')->nullable()->constrained('roster_availabilities')->nullOnDelete();
+         });
+
+         $currentEntity = new class extends Model {
+             protected $table = 'test_entity_with_availability';
++
+             protected $guarded = [];
++
+             public $timestamps = false;
+
+             public function availability()
+@@ @@
+         $this->createTestTable('test_partial_updates');
+         $currentEntity = new class extends Model {
+             protected $table = 'test_partial_updates';
++
+             protected $guarded = [];
++
+             public $timestamps = false;
+
+             protected $attributes = [
+@@ @@
+     private function createTestTable(string $tableName, ?callable $callback = null): void
+     {
+         if (!Schema::hasTable($tableName)) {
+-            Schema::create($tableName, function ($table) use ($callback) {
++            Schema::create($tableName, function ($table) use ($callback): void {
+                 $table->id();
+                 $table->string('name')->nullable();
+                 $table->integer('count')->nullable();
+
+-                if ($callback) {
++                if ($callback !== null) {
+                     $callback($table);
+                 }
+             });
+@@ @@
+     {
+         $entity = new class extends Model {
+             protected $guarded = [];
++
+             public $timestamps = false;
+         };
+    ----------- end diff -----------
+
+Applied rules:
+ * NewlineBetweenClassLikeStmtsRector
+ * NullableCompareToNullRector
+ * AddClosureVoidReturnTypeWhereNoReturnRector
+
+
+5) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Validation/ValidatorTest.php:4
+
+    ---------- begin diff ----------
+@@ @@
+
+ namespace Tests\Unit\Validation;
+
++use ReflectionClass;
+ use Exception;
+ use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
+ use PHPUnit\Framework\MockObject\MockObject;
+@@ @@
+ use Roster\Enums\EntityType;
+ use Roster\Enums\OperationType;
+ use Roster\Validation\RuleScanner;
+-use Roster\Validation\ValidationResult;
+ use Roster\Validation\Validator;
+ use Tests\TestCase;
+
+@@ @@
+         // Assert: Verify both rules are registered by class name
+         $this->assertTrue($validator->hasRule(TestRule1::class));
+         $this->assertTrue($validator->hasRule(TestRule2::class));
+-        $this->assertEquals(2, $validator->getRuleCount());
++        $this->assertSame(2, $validator->getRuleCount());
      }
+
+     /**
+@@ @@
+
+         // Assert: Verify rule is registered and accessible by class name
+         $this->assertTrue($this->validator->hasRule(CustomRule::class));
+-        $this->assertEquals(1, $this->validator->getRuleCount());
++        $this->assertSame(1, $this->validator->getRuleCount());
+     }
+
+     /**
+@@ @@
+             {
+                 return 'LowPriorityRule';
+             }
++
+             public function getPriority(): int
+             {
+                 return 10;
+             }
++
+             public function supports(OperationType $operation, EntityType $entity): bool
+             {
+                 return $operation === OperationType::CREATE && $entity === EntityType::AVAILABILITY;
+             }
++
+             public function validate(ValidationContextInterface $context): void {}
+         };
+
+@@ @@
+             {
+                 return 'MediumPriorityRule';
+             }
++
+             public function getPriority(): int
+             {
+                 return 50;
+             }
++
+             public function supports(OperationType $operation, EntityType $entity): bool
+             {
+                 return $operation === OperationType::CREATE && $entity === EntityType::AVAILABILITY;
+             }
++
+             public function validate(ValidationContextInterface $context): void {}
+         };
+
+@@ @@
+             {
+                 return 'HighPriorityRule';
+             }
++
+             public function getPriority(): int
+             {
+                 return 100;
+             }
++
+             public function supports(OperationType $operation, EntityType $entity): bool
+             {
+                 return $operation === OperationType::CREATE && $entity === EntityType::AVAILABILITY;
+             }
++
+             public function validate(ValidationContextInterface $context): void {}
+         };
+
+@@ @@
+             {
+                 return 'PassingRule';
+             }
++
+             public function getPriority(): int
+             {
+                 return 50;
+             }
++
+             public function supports(OperationType $operation, EntityType $entity): bool
+             {
+                 return $operation === OperationType::CREATE && $entity === EntityType::SCHEDULE;
+             }
++
+             public function validate(ValidationContextInterface $context): void {}
+         };
+
+@@ @@
+             {
+                 return 'BaseRule';
+             }
++
+             public function getPriority(): int
+             {
+                 return 50;
+             }
++
+             public function supports(OperationType $operation, EntityType $entity): bool
+             {
+                 return $operation === OperationType::UPDATE && $entity === EntityType::IMPEDIMENT;
+             }
++
+             public function validate(ValidationContextInterface $context): void
+             {
+                 $context->setViolation('base', 'Base rule violation');
+@@ @@
+             {
+                 return 'AdditionalRule';
+             }
++
+             public function getPriority(): int
+             {
+                 return 50;
+             }
++
+             public function supports(OperationType $operation, EntityType $entity): bool
+             {
+                 return $operation === OperationType::UPDATE && $entity === EntityType::IMPEDIMENT;
+             }
++
+             public function validate(ValidationContextInterface $context): void
+             {
+                 $context->setViolation('additional', 'Additional rule violation');
+@@ @@
+             {
+                 return 'ExceptionRule';
+             }
++
+             public function getPriority(): int
+             {
+                 return 50;
+             }
++
+             public function supports(OperationType $operation, EntityType $entity): bool
+             {
+                 return $operation === OperationType::CREATE && $entity === EntityType::SCHEDULE;
+             }
++
+             public function validate(ValidationContextInterface $context): void
+             {
+                 throw new Exception('Rule processing failed');
+@@ @@
+             {
+                 return 'AvailabilityRule';
+             }
++
+             public function getPriority(): int
+             {
+                 return 50;
+             }
++
+             public function supports(OperationType $operation, EntityType $entity): bool
+             {
+                 return $entity === EntityType::AVAILABILITY &&
+                     ($operation === OperationType::CREATE || $operation === OperationType::UPDATE);
+             }
++
+             public function validate(ValidationContextInterface $context): void {}
+         };
+
+@@ @@
+             {
+                 return 'ScheduleRule';
+             }
++
+             public function getPriority(): int
+             {
+                 return 50;
+             }
++
+             public function supports(OperationType $operation, EntityType $entity): bool
+             {
+                 return $entity === EntityType::SCHEDULE && $operation === OperationType::CREATE;
+             }
++
+             public function validate(ValidationContextInterface $context): void {}
+         };
+
+@@ @@
+             {
+                 return 'TestRule';
+             }
++
+             public function getPriority(): int
+             {
+                 return 50;
+             }
++
+             public function supports(OperationType $operation, EntityType $entity): bool
+             {
+                 return $operation === OperationType::CREATE && $entity === EntityType::AVAILABILITY;
+             }
++
+             public function validate(ValidationContextInterface $context): void {}
+         };
+
+@@ @@
+             {
+                 return 'Rule1';
+             }
++
+             public function getPriority(): int
+             {
+                 return 50;
+             }
++
+             public function supports(OperationType $operation, EntityType $entity): bool
+             {
+                 return true;
+             }
++
+             public function validate(ValidationContextInterface $context): void {}
+         };
+
+@@ @@
+             {
+                 return 'Rule2';
+             }
++
+             public function getPriority(): int
+             {
+                 return 50;
+             }
++
+             public function supports(OperationType $operation, EntityType $entity): bool
+             {
+                 return true;
+             }
++
+             public function validate(ValidationContextInterface $context): void {}
+         };
+
+@@ @@
+             {
+                 return 'Rule3';
+             }
++
+             public function getPriority(): int
+             {
+                 return 50;
+             }
++
+             public function supports(OperationType $operation, EntityType $entity): bool
+             {
+                 return true;
+             }
++
+             public function validate(ValidationContextInterface $context): void {}
+         };
+
+@@ @@
+         // Assert: Verify all rules are returned
+         $this->assertCount(3, $allRules);
+
+-        $ruleNames = array_map(fn($rule) => $rule->getName(), $allRules);
++        $ruleNames = array_map(fn(RuleInterface $rule): string => $rule->getName(), $allRules);
+         $this->assertContains('Rule1', $ruleNames);
+         $this->assertContains('Rule2', $ruleNames);
+         $this->assertContains('Rule3', $ruleNames);
+@@ @@
+             {
+                 return 'Rule1';
+             }
++
+             public function getPriority(): int
+             {
+                 return 50;
+             }
++
+             public function supports(OperationType $operation, EntityType $entity): bool
+             {
+                 return $operation === OperationType::CREATE && $entity === EntityType::AVAILABILITY;
+             }
++
+             public function validate(ValidationContextInterface $context): void
+             {
+                 $context->setViolation('rule1', 'Violation from Rule1');
+@@ @@
+             {
+                 return 'Rule2';
+             }
++
+             public function getPriority(): int
+             {
+                 return 50;
+             }
++
+             public function supports(OperationType $operation, EntityType $entity): bool
+             {
+                 return $operation === OperationType::CREATE && $entity === EntityType::AVAILABILITY;
+             }
++
+             public function validate(ValidationContextInterface $context): void
+             {
+                 $context->setViolation('rule2', 'Violation from Rule2');
+@@ @@
+             {
+                 return 'Rule3';
+             }
++
+             public function getPriority(): int
+             {
+                 return 50;
+             }
++
+             public function supports(OperationType $operation, EntityType $entity): bool
+             {
+                 return $operation === OperationType::CREATE && $entity === EntityType::AVAILABILITY;
+             }
++
+             public function validate(ValidationContextInterface $context): void
+             {
+                 $context->setViolation('rule3', 'Violation from Rule3');
+@@ @@
+     public function test_generates_correct_cache_keys_for_rule_indexing(): void
+     {
+         // Arrange: Use reflection to access private method
+-        $reflection = new \ReflectionClass($this->validator);
++        $reflection = new ReflectionClass($this->validator);
+         $method = $reflection->getMethod('createCacheKey');
+         $method->setAccessible(true);
+
+@@ @@
+             {
+                 return 'InvalidAttributeRule';
+             }
++
+             public function getPriority(): int
+             {
+                 return 50;
+             }
++
+             public function supports(OperationType $operation, EntityType $entity): bool
+             {
+                 return false;
+             }
++
+             public function validate(ValidationContextInterface $context): void {}
+         };
+
+@@ @@
+             {
+                 return 'CountRule1';
+             }
++
+             public function getPriority(): int
+             {
+                 return 50;
+             }
++
+             public function supports(OperationType $operation, EntityType $entity): bool
+             {
+                 return true;
+             }
++
+             public function validate(ValidationContextInterface $context): void {}
+         };
+
+@@ @@
+             {
+                 return 'CountRule2';
+             }
++
+             public function getPriority(): int
+             {
+                 return 50;
+             }
++
+             public function supports(OperationType $operation, EntityType $entity): bool
+             {
+                 return true;
+             }
++
+             public function validate(ValidationContextInterface $context): void {}
+         };
+
+         // Act: Register rules and check counts
+-        $this->assertEquals(0, $this->validator->getRuleCount());
++        $this->assertSame(0, $this->validator->getRuleCount());
+
+         $this->validator->registerRule($rule1);
+-        $this->assertEquals(1, $this->validator->getRuleCount());
++        $this->assertSame(1, $this->validator->getRuleCount());
+
+         $this->validator->registerRule($rule2);
+-        $this->assertEquals(2, $this->validator->getRuleCount());
++        $this->assertSame(2, $this->validator->getRuleCount());
+
+         // Register same instance again (should increase count - duplicates are allowed)
+         $this->validator->registerRule($rule1);
+-        $this->assertEquals(3, $this->validator->getRuleCount());
++        $this->assertSame(3, $this->validator->getRuleCount());
+     }
+
+     /**
+@@ @@
+             {
+                 return 'DuplicateRule';
+             }
++
+             public function getPriority(): int
+             {
+                 return 50;
+             }
++
+             public function supports(OperationType $operation, EntityType $entity): bool
+             {
+                 return true;
+             }
++
+             public function validate(ValidationContextInterface $context): void {}
+         };
+
+@@ @@
+         $this->validator->registerRule($rule);
+
+         // Assert: All registrations are counted
+-        $this->assertEquals(3, $this->validator->getRuleCount());
++        $this->assertSame(3, $this->validator->getRuleCount());
+         $this->assertTrue($this->validator->hasRule(get_class($rule)));
+     }
+ }
+@@ @@
+     {
+         return 'TestRule1';
+     }
++
+     public function getPriority(): int
+     {
+         return 50;
+     }
++
+     public function supports(OperationType $operation, EntityType $entity): bool
+     {
+         return true;
+     }
++
+     public function validate(ValidationContextInterface $context): void {}
+ }
+
+@@ @@
+     {
+         return 'TestRule2';
+     }
++
+     public function getPriority(): int
+     {
+         return 50;
+     }
++
+     public function supports(OperationType $operation, EntityType $entity): bool
+     {
+         return true;
+     }
++
+     public function validate(ValidationContextInterface $context): void {}
+ }
+
+@@ @@
+     {
+         return 'CustomRule';
+     }
++
+     public function getPriority(): int
+     {
+         return 50;
+     }
++
+     public function supports(OperationType $operation, EntityType $entity): bool
+     {
+         return true;
+     }
++
+     public function validate(ValidationContextInterface $context): void {}
  }
     ----------- end diff -----------
 
 Applied rules:
  * NewlineBetweenClassLikeStmtsRector
- * RenameParamToMatchTypeRector
+ * AssertEqualsToSameRector
+ * AddArrowFunctionReturnTypeRector
+ * AddArrayFunctionClosureParamTypeRector
 
 
-3) /home/andy-kani/pro/sites/packages/laravel-roster/src/Contracts/Repository/AvailabilityRepositoryInterface.php:46
+6) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Feature/Integration/CompleteRosterIntegrationTest.php:954
 
     ---------- begin diff ----------
 @@ @@
-     /**
-      * Get all availabilities for a specific date.
-      *
--     * @param Model $schedulable The schedulable resource model
-+     * @param Model $model The schedulable resource model
-      * @param Carbon $date The date to check
-      * @param string|null $type Optional availability type filter
-      * @return Collection<int, Availability> Collection of availabilities for the date
-      */
--    public function getForDate(Model $schedulable, Carbon $date, ?string $type = null): Collection;
-+    public function getForDate(Model $model, Carbon $date, ?string $type = null): Collection;
+         foreach ($createdSchedules as $createdSchedule) {
+             $scheduleAvailability = $availabilityByScheduleId[$createdSchedule->id] ?? null;
 
+-            if ($scheduleAvailability) {
++            if ($scheduleAvailability instanceof AvailabilityModel) {
+                 try {
+                     schedule_for($scheduleAvailability)->delete($createdSchedule->id);
+                 } catch (Exception $e) {
+@@ @@
      /**
-      * Check if an availability is valid for a specific date.
+      * Create multiple impediments for a given availability.
+      *
+-     * @param AvailabilityModel $availability
+      * @return array<int, ImpedimentModel>
+      */
+     private function createImpedimentsForAvailability(AvailabilityModel $availability): array
+@@ @@
+     /**
+      * Create multiple schedules for a given availability.
+      *
+-     * @param AvailabilityModel $availability
+      * @param array<int, AvailabilityModel> $availabilityByScheduleId
+      * @return array<int, ScheduleModel>
+      */
     ----------- end diff -----------
 
 Applied rules:
- * RenameParamToMatchTypeRector
+ * FlipTypeControlToUseExclusiveTypeRector
+ * NullableCompareToNullRector
+ * RemoveUselessParamTagRector
 
 
-4) /home/andy-kani/pro/sites/packages/laravel-roster/src/Contracts/Services/ServiceInterface.php:87
+7) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Integration/Database/AvailabilityIntegrationTest.php:4
 
     ---------- begin diff ----------
 @@ @@
-      * Set data for operations.
-      *
-      * @param array $data Operation data
--     * @return self
-      */
-     public function setData(array $data): self;
+
+ namespace Integration\Database;
+
+-use PHPUnit\Framework\Attributes\Group;
+ use Illuminate\Foundation\Testing\RefreshDatabase;
+ use Illuminate\Support\Collection;
+ use Roster\Models\Availability as AvailabilityModel;
+    ----------- end diff -----------
+
+Applied rules:
+
+
+8) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Domain/MutationContextAllowsMutationTest.php:47
+
+    ---------- begin diff ----------
+@@ @@
+         ];
+
+         // Act: Create availability within mutation context
+-        $availability = RosterMutationContext::allow(function () use ($testData) {
++        $availability = RosterMutationContext::allow(function () use ($testData): Availability {
+             return $this->createAvailability($testData);
+         });
 
 @@ @@
-      * Replace all filters.
+     public function test_update_inside_context_is_allowed(): void
+     {
+         // Arrange: Create initial availability
+-        $availability = RosterMutationContext::allow(function () {
++        $availability = RosterMutationContext::allow(function (): Availability {
+             return $this->createAvailability([
+                 'schedulable_id' => 1,
+                 'schedulable_type' => TestSchedulable::class,
+@@ @@
+     public function test_delete_inside_context_is_allowed(): void
+     {
+         // Arrange: Create availability
+-        $availability = RosterMutationContext::allow(function () {
++        $availability = RosterMutationContext::allow(function (): Availability {
+             return $this->createAvailability([
+                 'schedulable_id' => 1,
+                 'schedulable_type' => TestSchedulable::class,
+@@ @@
+      * Create an availability with the given data.
       *
-      * @param array $filters New filters
--     * @return self
+      * @param array<string, mixed> $data
+-     * @return Availability
       */
-     public function setFilters(array $filters): self;
+     private function createAvailability(array $data): Availability
+     {
+    ----------- end diff -----------
+
+Applied rules:
+ * RemoveUselessReturnTagRector
+ * ClosureReturnTypeRector
+
+
+9) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/HelpersTest.php:336
+
+    ---------- begin diff ----------
+@@ @@
 
      /**
-      * Clear all filters.
+      * Create a mock schedulable model for testing.
 -     *
--     * @return self
+-     * @return Model
       */
-     public function resetFilters(): self;
-
-@@ @@
-      *
-      * @param string $key Filter key
-      * @param mixed $value Filter value
--     * @return self
-      */
-     public function setFilter(string $key, mixed $value): self;
-
-@@ @@
-      * Set the schedulable entity context.
-      *
-      * @param Model $model Schedulable entity
--     * @return self
-      */
-     public function setSchedulable(Model $model): self;
-
-@@ @@
-
-     /**
-      * Clear all contextual data (filters, data, schedulable).
--     *
--     * @return self
-      */
-     public function clear(): self;
- }
+     private function createMockSchedulable(): Model
+     {
     ----------- end diff -----------
 
 Applied rules:
  * RemoveUselessReturnTagRector
 
 
-5) /home/andy-kani/pro/sites/packages/laravel-roster/src/DTOs/AbstractData.php:4
+10) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Models/ScheduleTest.php:155
 
     ---------- begin diff ----------
 @@ @@
-
- namespace Roster\DTOs;
-
--use Illuminate\Database\Eloquent\Model;
-+use InvalidArgumentException;
- use Illuminate\Support\Carbon;
-
- /**
+             // Act: Create schedule with specific status
+             $schedule = schedule_for($this->testAvailability)->create([
+                 'title' => 'Test Schedule',
+-                'start_datetime' => "2038-07-01 {$startTimes[$index]}:00",
+-                'end_datetime'   => "2038-07-01 {$endTimes[$index]}:00",
++                'start_datetime' => sprintf('2038-07-01 %s:00', $startTimes[$index]),
++                'end_datetime'   => sprintf('2038-07-01 %s:00', $endTimes[$index]),
+                 'status' => ScheduleStatus::from($testCase['input']),
+                 'metadata' => null,
+             ]);
 @@ @@
-      * @param string|Carbon|null $datetime Datetime input to parse
-      * @return Carbon|null Parsed Carbon instance or null
-      *
--     * @throws \InvalidArgumentException If the input is not null, string, or Carbon
-+     * @throws InvalidArgumentException If the input is not null, string, or Carbon
-      */
-     final protected static function parseDateTime(string|Carbon|null $datetime): ?Carbon
-     {
-@@ @@
-             $datetime === null => null,
-             $datetime instanceof Carbon => $datetime,
-             is_string($datetime) => Carbon::parse($datetime),
--            default => throw new \InvalidArgumentException(
-+            default => throw new InvalidArgumentException(
-                 'Datetime must be null, string or instance of Carbon'
-             ),
-         };
-    ----------- end diff -----------
+         $schedule = $this->createScheduleModelInstance();
 
-Applied rules:
-
-
-6) /home/andy-kani/pro/sites/packages/laravel-roster/src/DTOs/AvailabilityData.php:4
-
-    ---------- begin diff ----------
-@@ @@
-
- namespace Roster\DTOs;
-
-+use Exception;
- use Illuminate\Database\Eloquent\Model;
- use Illuminate\Support\Carbon;
- use Roster\Domain\Helpers\TimeSlotHelper;
--use Roster\Enums\DaysOfWeek;
- use Roster\Models\Availability;
- use Roster\Support\RosterMutationContext;
+         // Act: Soft delete schedule inside allowed mutation context
+-        RosterMutationContext::allow(function () use ($schedule) {
++        RosterMutationContext::allow(function () use ($schedule): void {
+             $schedule->delete();
+         });
 
 @@ @@
-  */
- class AvailabilityData extends AbstractData
- {
--    private ?Availability $existingEntity = null;
-+    private ?Availability $availability = null;
+         ]);
 
-     /**
-      * @param int|null $id Unique identifier of the availability
-@@ @@
-     /**
-      * Creates an AvailabilityData instance from an Availability Eloquent model.
-      *
--     * @param Availability $availability Eloquent model instance
-+     * @param Availability $model Eloquent model instance
-      * @return self New immutable AvailabilityData instance
-      */
--    public static function fromModel(Model $availability): self
-+    public static function fromModel(Model $model): self
-     {
-         return new self(
--            id: $availability->id,
--            type: $availability->type,
--            days: $availability->days,
--            validityStart: $availability->validity_start,
--            validityEnd: $availability->validity_end,
--            dailyStart: $availability->daily_start,
--            dailyEnd: $availability->daily_end,
--            schedulableId: $availability->schedulable_id,
--            schedulableType: $availability->schedulable_type
-+            id: $model->id,
-+            type: $model->type,
-+            days: $model->days,
-+            validityStart: $model->validity_start,
-+            validityEnd: $model->validity_end,
-+            dailyStart: $model->daily_start,
-+            dailyEnd: $model->daily_end,
-+            schedulableId: $model->schedulable_id,
-+            schedulableType: $model->schedulable_type
-         );
-     }
+         // Restore the schedule inside allowed mutation context
+-        RosterMutationContext::allow(function () use ($schedule) {
++        RosterMutationContext::allow(function () use ($schedule): void {
+             $schedule->restore();
+         });
 
 @@ @@
-         $data = $this->toArray();
-         $data['days'] = $days;
-
--        return static::fromArray($data);
-+        return self::fromArray($data);
-     }
-
-     /**
-@@ @@
-     private function getAdjustedDays(): array
-     {
-         // Déterminer si c'est une mise à jour (entité existante chargée)
--        $isUpdate = $this->existingEntity !== null;
-+        $isUpdate = $this->availability !== null;
-
-         // Récupérer les données existantes si disponible
--        $existingDays = $this->existingEntity?->days;
--        $existingValidityStart = $this->existingEntity?->validity_start;
--        $existingValidityEnd = $this->existingEntity?->validity_end;
-+        $existingDays = $this->availability?->days;
-+        $existingValidityStart = $this->availability?->validity_start;
-+        $existingValidityEnd = $this->availability?->validity_end;
-
-         // Utiliser TimeSlotHelper pour le calcul des jours ajustés
-         return TimeSlotHelper::getAdjustedDays(
-@@ @@
-
-         try {
-             // Utiliser le contexte de mutation pour charger l'entité
--            $this->existingEntity = RosterMutationContext::allow(function () {
-+            $this->availability = RosterMutationContext::allow(function () {
-                 return Availability::find($this->id);
-             });
--        } catch (\Exception) {
--            $this->existingEntity = null;
-+        } catch (Exception) {
-+            $this->availability = null;
-         }
-     }
-
-@@ @@
-      */
-     public function isUpdateOperation(): bool
-     {
--        return $this->existingEntity !== null;
-+        return $this->availability !== null;
-     }
-
-     /**
-@@ @@
-      */
-     public function getExistingEntity(): ?Availability
-     {
--        return $this->existingEntity;
-+        return $this->availability;
-     }
- }
-    ----------- end diff -----------
-
-Applied rules:
- * ConvertStaticToSelfRector
- * RenameParamToMatchTypeRector
- * RenamePropertyToMatchTypeRector
-
-
-7) /home/andy-kani/pro/sites/packages/laravel-roster/src/DTOs/DataInterface.php:5
-
-    ---------- begin diff ----------
-@@ @@
- namespace Roster\DTOs;
-
- use Illuminate\Database\Eloquent\Model;
--use Illuminate\Support\Carbon;
-
- /**
-  * Interface for all Data Transfer Objects.
-    ----------- end diff -----------
-
-Applied rules:
-
-
-8) /home/andy-kani/pro/sites/packages/laravel-roster/src/DTOs/ImpedimentData.php:69
-
-    ---------- begin diff ----------
-@@ @@
-     /**
-      * Create an ImpedimentData instance from an Impediment Eloquent model.
-      *
--     * @param Impediment $impediment Eloquent model instance
-+     * @param Impediment $model Eloquent model instance
-      * @return self New immutable ImpedimentData instance
-      */
--    public static function fromModel(Model $impediment): self
-+    public static function fromModel(Model $model): self
-     {
-         return new self(
--            id: $impediment->id,
--            availabilityId: $impediment->availability_id,
--            startDatetime: self::parseDateTime($impediment->start_datetime),
--            endDatetime: self::parseDateTime($impediment->end_datetime),
--            reason: $impediment->reason,
--            metadata: $impediment->metadata ?? [],
--            schedulableId: $impediment->schedulable_id,
--            schedulableType: $impediment->schedulable_type
-+            id: $model->id,
-+            availabilityId: $model->availability_id,
-+            startDatetime: self::parseDateTime($model->start_datetime),
-+            endDatetime: self::parseDateTime($model->end_datetime),
-+            reason: $model->reason,
-+            metadata: $model->metadata ?? [],
-+            schedulableId: $model->schedulable_id,
-+            schedulableType: $model->schedulable_type
-         );
-     }
-    ----------- end diff -----------
-
-Applied rules:
- * RenameParamToMatchTypeRector
-
-
-9) /home/andy-kani/pro/sites/packages/laravel-roster/src/DTOs/ScheduleData.php:78
-
-    ---------- begin diff ----------
-@@ @@
-     /**
-      * Create a ScheduleData instance from a Schedule Eloquent model.
-      *
--     * @param Schedule $schedule Eloquent model instance
-+     * @param Schedule $model Eloquent model instance
-      * @return self New immutable ScheduleData instance
-      */
--    public static function fromModel(Model $schedule): self
-+    public static function fromModel(Model $model): self
-     {
-         return new self(
--            id: $schedule->id,
--            availabilityId: $schedule->availability_id,
--            title: $schedule->title,
--            description: $schedule->description,
--            startDatetime: self::parseDateTime($schedule->start_datetime),
--            endDatetime: self::parseDateTime($schedule->end_datetime),
--            metadata: $schedule->metadata ?? [],
--            status: $schedule->status,
--            schedulableId: $schedule->schedulable_id,
--            schedulableType: $schedule->schedulable_type
-+            id: $model->id,
-+            availabilityId: $model->availability_id,
-+            title: $model->title,
-+            description: $model->description,
-+            startDatetime: self::parseDateTime($model->start_datetime),
-+            endDatetime: self::parseDateTime($model->end_datetime),
-+            metadata: $model->metadata ?? [],
-+            status: $model->status,
-+            schedulableId: $model->schedulable_id,
-+            schedulableType: $model->schedulable_type
-         );
-     }
-    ----------- end diff -----------
-
-Applied rules:
- * RenameParamToMatchTypeRector
-
-
-10) /home/andy-kani/pro/sites/packages/laravel-roster/src/Domain/DTOs/CacheStats.php:4
-
-    ---------- begin diff ----------
-@@ @@
-
- namespace Roster\Domain\DTOs;
-
-+use RuntimeException;
-+
- /**
-  * Data Transfer Object representing cache statistics.
-  *
-@@ @@
-      *
-      * @param string $path Path to the cache file
-      * @param float $generationTimeMs Optional generation time for new caches
--     * @return self
--     * @throws \RuntimeException When cache file is missing or has invalid format
-+     * @throws RuntimeException When cache file is missing or has invalid format
-      */
-     public static function fromPath(
-         string $path,
-@@ @@
-         float $generationTimeMs = 0.0
-     ): self {
-         if (! file_exists($path)) {
--            throw new \RuntimeException("Cache file not found: {$path}");
-+            throw new RuntimeException('Cache file not found: ' . $path);
-         }
-
-         $rules = require $path;
-
-         if (! is_array($rules)) {
--            throw new \RuntimeException('Invalid cache format');
-+            throw new RuntimeException('Invalid cache format');
-         }
-
-         return new self(
-@@ @@
-
-         while ($bytes >= 1024 && $unitIndex < count($units) - 1) {
-             $bytes /= 1024;
--            $unitIndex++;
-+            ++$unitIndex;
-         }
-
-         return round($bytes, 2) . ' ' . $units[$unitIndex];
+             // Act: Create schedule with specific status
+             $schedule = schedule_for($this->testAvailability)->create([
+                 'title' => $testCase['title'],
+-                'start_datetime' => "2038-07-01 {$startTimes[$index]}:00",
+-                'end_datetime' => "2038-07-01 {$endTimes[$index]}:00",
++                'start_datetime' => sprintf('2038-07-01 %s:00', $startTimes[$index]),
++                'end_datetime' => sprintf('2038-07-01 %s:00', $endTimes[$index]),
+                 'status' => $testCase['status'],
+                 'metadata' => null,
+             ]);
     ----------- end diff -----------
 
 Applied rules:
  * EncapsedStringsToSprintfRector
- * PostIncDecToPreIncDecRector
- * RemoveUselessReturnTagRector
+ * AddClosureVoidReturnTypeWhereNoReturnRector
 
 
-11) /home/andy-kani/pro/sites/packages/laravel-roster/src/Domain/DTOs/ConflictResult.php:95
+11) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Validation/Rules/AvailabilityDateRangeRuleTest.php:95
 
     ---------- begin diff ----------
 @@ @@
+             ->willReturnCallback(function (string $field, string $message) use (&$violationCount): void {
+                 ++$violationCount;
+                 if ($violationCount === 1) {
+-                    $this->assertEquals('daily_time_range', $field);
+-                    $this->assertEquals('End time must be after start time', $message);
++                    $this->assertSame('daily_time_range', $field);
++                    $this->assertSame('End time must be after start time', $message);
+                 } else {
+-                    $this->assertEquals('min_duration', $field);
+-                    $this->assertEquals('Minimum duration must be at least 15 minutes', $message);
++                    $this->assertSame('min_duration', $field);
++                    $this->assertSame('Minimum duration must be at least 15 minutes', $message);
+                 }
+             });
+
+@@ @@
+     /**
+      * Create a validation context mock for UPDATE operation.
+      *
+-     * @param Model|null $existingEntity
+      * @return MockObject&ValidationContextInterface
       */
-     public function hasScheduleConflicts(): bool
-     {
--        return !empty($this->conflictingSchedules);
-+        return $this->conflictingSchedules !== [];
+     private function createValidationContextWithUpdateOperation(?Model $existingEntity): MockObject
+@@ @@
+      * Configure context with all data fields.
+      *
+      * @param MockObject&ValidationContextInterface $context
+-     * @param string $validityStart
+-     * @param string $validityEnd
+-     * @param string $dailyStart
+-     * @param string $dailyEnd
+      */
+     private function configureContextWithData(
+         MockObject $context,
+@@ @@
+      *
+      * @param MockObject&ValidationContextInterface $context
+      * @param array<int, string> $fieldsToProvide
+-     * @param string|null $validityStart
+-     * @param string|null $validityEnd
+-     * @param string|null $dailyStart
+-     * @param string|null $dailyEnd
+      */
+     private function configureContextWithPartialData(
+         MockObject $context,
+@@ @@
+     /**
+      * Create a stub entity with the given date and time values.
+      *
+-     * @param string $validityStart
+-     * @param string $validityEnd
+-     * @param string $dailyStart
+-     * @param string $dailyEnd
+      *
+-     * @return Model
+      */
+     private function createEntityStub(
+         string $validityStart,
+@@ @@
+     ): Model {
+         $entity = new class extends Model {
+             public $validity_start;
++
+             public $validity_end;
++
+             public $daily_start;
++
+             public $daily_end;
+
+             public function __construct()
+    ----------- end diff -----------
+
+Applied rules:
+ * NewlineBetweenClassLikeStmtsRector
+ * RemoveUselessParamTagRector
+ * RemoveUselessReturnTagRector
+ * AssertEqualsToSameRector
+
+
+12) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Validation/Rules/AvailabilityDaysCoherenceRuleTest.php:129
+
+    ---------- begin diff ----------
+@@ @@
+         $context->expects($this->exactly(2))
+             ->method('setViolation')
+             ->willReturnCallback(function (string $field, string $message) use (&$violationCount): void {
+-                $this->assertEquals('days', $field);
++                $this->assertSame('days', $field);
+                 $this->assertStringContainsString('is not within the validity period', $message);
+                 ++$violationCount;
+             });
+@@ @@
+         $this->rule->validate($context);
+
+         // Assert: Two violations should be recorded for two out-of-period days
+-        $this->assertEquals(2, $violationCount);
++        $this->assertSame(2, $violationCount);
      }
 
      /**
 @@ @@
-      */
-     public function hasImpedimentConflicts(): bool
+             ->method('setViolation')
+             ->willReturnCallback(function (string $field, string $message) use (&$capturedMessages): void {
+                 $capturedMessages[] = $message;
+-                $this->assertEquals('days', $field);
++                $this->assertSame('days', $field);
+                 $this->assertStringContainsString('is not within the validity period', $message);
+             });
+
+@@ @@
      {
--        return !empty($this->conflictingImpediments);
-+        return $this->conflictingImpediments !== [];
+         $entity = new class extends Model {
+             public $validity_start;
++
+             public $validity_end;
+
+             public function __construct()
+             {
+-                parent::__construct([]);
++                parent::__construct();
+             }
+         };
+    ----------- end diff -----------
+
+Applied rules:
+ * NewlineBetweenClassLikeStmtsRector
+ * RemoveArgumentFromDefaultParentCallRector
+ * AssertEqualsToSameRector
+
+
+13) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Validation/Rules/AvailabilityOverlapRuleTest.php:569
+
+    ---------- begin diff ----------
+@@ @@
+     {
+         return new class {
+             public $id = 123;
++
+             public $daily_start = '09:00:00';
++
+             public $daily_end = '17:00:00';
++
+             public $days = ['monday', 'tuesday'];
++
+             public $validity_start = '2038-01-01';
++
+             public $validity_end = '2038-12-31';
++
+             public $type = 'consultation';
+         };
      }
+    ----------- end diff -----------
+
+Applied rules:
+ * NewlineBetweenClassLikeStmtsRector
+
+
+14) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Validation/Rules/AvailabilityOwnershipRuleTest.php:146
+
+    ---------- begin diff ----------
+@@ @@
+     {
+         // Arrange: Create context with null schedulable
+         $context = $this->createValidationContext(
+-            operationType: OperationType::CREATE,
+-            schedulable: null
++            operationType: OperationType::CREATE
+         );
+
+         $this->configureContextHasMethod($context, hasAvailabilityId: true);
+@@ @@
+
+         $context = $this->createValidationContext(
+             operationType: OperationType::UPDATE,
+-            schedulable: $schedulable,
+-            currentEntity: null
++            schedulable: $schedulable
+         );
+
+         $this->configureContextHasMethod($context, hasAvailabilityId: false);
+@@ @@
+
+     /**
+      * Create a schedulable model mock.
+-     *
+-     * @param int $id
+-     * @return Model
+      */
+     private function createSchedulableMock(int $id): Model
+     {
+@@ @@
+
+     /**
+      * Create an availability model mock.
+-     *
+-     * @param int $id
+-     * @param int $schedulableId
+-     * @param string|null $schedulableClass
+-     * @return Availability
+      */
+     private function createAvailabilityMock(int $id, int $schedulableId, ?string $schedulableClass = null): Availability
+     {
+@@ @@
+
+     /**
+      * Create a stub schedule entity.
+-     *
+-     * @param int|null $availabilityId
+-     * @return object
+      */
+     private function createScheduleEntityStub(?int $availabilityId): object
+     {
+         return new class($availabilityId) {
++            /**
++             * @var int|null
++             */
+             public $availability_id;
+
+             public function __construct(?int $availabilityId)
+@@ @@
+     /**
+      * Create a validation context mock with given parameters.
+      *
+-     * @param OperationType $operationType
+-     * @param Model|null $schedulable
+-     * @param object|null $currentEntity
+-     * @param AvailabilityService|null $availabilityService
+      * @return MockObject&ValidationContextInterface
+      */
+     private function createValidationContext(
+@@ @@
+         $context->method('getSchedulable')->willReturn($schedulable);
+         $context->method('getCurrentEntity')->willReturn($currentEntity);
+
+-        if ($availabilityService !== null) {
++        if ($availabilityService instanceof AvailabilityService) {
+             $context->method('getAvailabilityService')->willReturn($availabilityService);
+         }
+
+@@ @@
+      * Configure the has() method on the validation context.
+      *
+      * @param MockObject&ValidationContextInterface $context
+-     * @param bool $hasAvailabilityId
+      */
+     private function configureContextHasMethod(MockObject $context, bool $hasAvailabilityId): void
+     {
+@@ @@
+      * Configure the get() method on the validation context.
+      *
+      * @param MockObject&ValidationContextInterface $context
+-     * @param int|null $availabilityId
+      */
+     private function configureContextGetMethod(MockObject $context, ?int $availabilityId): void
+     {
+@@ @@
+
+     /**
+      * Configure an availability service mock with find() method expectation.
+-     *
+-     * @param int $availabilityId
+-     * @param Availability|null $returnValue
+-     * @return AvailabilityService
+      */
+     private function configureAvailabilityServiceWithFind(int $availabilityId, ?Availability $returnValue): AvailabilityService
+     {
+    ----------- end diff -----------
+
+Applied rules:
+ * FlipTypeControlToUseExclusiveTypeRector
+ * RemoveUselessParamTagRector
+ * RemoveUselessReturnTagRector
+ * RemoveNullArgOnNullDefaultParamRector
+ * TypedPropertyFromStrictConstructorRector
+
+
+15) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Validation/Rules/AvailabilityRulesTest.php:21
+
+    ---------- begin diff ----------
+@@ @@
+ final class AvailabilityRulesTest extends TestCase
+ {
+     private RequiredFieldsRule $requiredFieldsRule;
++
+     private AvailabilityOverlapRule $availabilityOverlapRule;
++
+     private TestSchedulable $testSchedulable;
 
      /**
     ----------- end diff -----------
 
 Applied rules:
- * SimplifyEmptyCheckOnEmptyArrayRector
+ * NewlineBetweenClassLikeStmtsRector
 
 
-12) /home/andy-kani/pro/sites/packages/laravel-roster/src/Domain/Helpers/TimeSlotHelper.php:256
+16) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Validation/Rules/DateRangeRulesTest.php:24
 
     ---------- begin diff ----------
 @@ @@
-         // 3️⃣ Auto-adjust days from period
-         return roster_days_in_period($validityStart, $validityEnd);
-     }
+ final class DateRangeRulesTest extends TestCase
+ {
+     private AvailabilityDateRangeRule $availabilityDateRangeRule;
++
+     private TimeSlotDateTimeRule $timeSlotDateTimeRule;
++
+     private TestSchedulable $testSchedulable;
+
+     /**
+    ----------- end diff -----------
+
+Applied rules:
+ * NewlineBetweenClassLikeStmtsRector
+
+
+17) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Validation/Rules/DurationRuleTest.php:5
+
+    ---------- begin diff ----------
+@@ @@
+ namespace Tests\Unit\Validation\Rules;
+
+ use Illuminate\Support\Carbon;
+-use PHPUnit\Framework\MockObject\MockObject;
+ use Roster\Contracts\Validation\ValidationContextInterface;
+ use Roster\Enums\EntityType;
+ use Roster\Enums\OperationType;
+@@ @@
+         $this->rule->validate($context);
+
+         // Assert: No violations expected for partial update
+-    }
 -
 -    /**
--     * Determine whether automatic adjustment of days should be performed.
+-     * Create a mock validation context with specific configuration.
 -     *
--     * @param Carbon|null $start Validity start date
--     * @param Carbon|null $end Validity end date
--     * @return bool True if auto-adjustment should occur
+-     * @param EntityType $entityType
+-     * @param OperationType $operationType
+-     * @param array<string, mixed> $data
+-     * @return MockObject&ValidationContextInterface
 -     */
--    private static function shouldAutoAdjustDays(?Carbon $start, ?Carbon $end): bool
--    {
--        return $start instanceof Carbon
--            && $end instanceof Carbon
--            && roster_should_auto_adjust_days($start, $end);
--    }
+-    private function createValidationContext(
+-        EntityType $entityType,
+-        OperationType $operationType,
+-        array $data = []
+-    ): MockObject {
+-        $context = $this->createMock(ValidationContextInterface::class);
+-        $context->method('getEntityType')->willReturn($entityType);
+-        $context->method('getOperation')->willReturn($operationType);
+-        $context->method('safeData')->willReturn($data);
+-
+-        return $context;
+     }
  }
     ----------- end diff -----------
 
@@ -553,3755 +1235,47 @@ Applied rules:
  * RemoveUnusedPrivateMethodRector
 
 
-13) /home/andy-kani/pro/sites/packages/laravel-roster/src/Domain/Services/CacheRulesService.php:1
+18) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Validation/Rules/ImpedimentScheduleDaysCoherenceRuleTest.php:27
 
     ---------- begin diff ----------
 @@ @@
- <?php
-
-+declare(strict_types=1);
-+
- namespace Roster\Domain\Services;
-
-+use RuntimeException;
- use Illuminate\Console\Command;
- use Roster\Domain\DTOs\CacheStats;
- use Roster\Validation\Cache\RuleCacheGenerator;
-@@ @@
- class CacheRulesService
- {
-     /**
--     * @param RuleCacheGenerator $generator Service for generating rule cache files
-+     * @param RuleCacheGenerator $ruleCacheGenerator Service for generating rule cache files
-      */
-     public function __construct(
--        private RuleCacheGenerator $generator
-+        private RuleCacheGenerator $ruleCacheGenerator
-     ) {}
-
-     /**
-@@ @@
-      * Generate a new cache file with all validation rules.
-      *
-      * @return CacheStats Statistics about the generated cache
--     * @throws \RuntimeException When cache generation fails
-+     * @throws RuntimeException When cache generation fails
-      */
-     public function generate(): CacheStats
-     {
--        if (! $this->generator->generate()) {
--            throw new \RuntimeException('Cache generation failed');
-+        if (! $this->ruleCacheGenerator->generate()) {
-+            throw new RuntimeException('Cache generation failed');
-         }
-
--        return CacheStats::fromPath($this->generator->getCachePath());
-+        return CacheStats::fromPath($this->ruleCacheGenerator->getCachePath());
-     }
-
-     /**
-@@ @@
-      *
-      * @param bool $force When true, regenerate cache after clearing
-      * @return CacheStats|null Cache statistics if regenerated, null otherwise
--     * @throws \RuntimeException When cache clearing fails
-+     * @throws RuntimeException When cache clearing fails
-      */
-     public function clear(bool $force = false): ?CacheStats
-     {
--        if (! $this->generator->clear()) {
--            throw new \RuntimeException('Cache clear failed');
-+        if (! $this->ruleCacheGenerator->clear()) {
-+            throw new RuntimeException('Cache clear failed');
-         }
-
-         if ($force) {
-@@ @@
-      */
-     public function show(): CacheStats
-     {
--        $path = $this->generator->getCachePath();
-+        $path = $this->ruleCacheGenerator->getCachePath();
-
-         if (! file_exists($path)) {
-             return $this->generate();
-@@ @@
-         $cacheFile = config('roster.cache.cache_file');
-
-         if (! file_exists($cacheFile)) {
--            $command->error("Cache file not found: $cacheFile");
-+            $command->error('Cache file not found: ' . $cacheFile);
-             return;
-         }
-    ----------- end diff -----------
-
-Applied rules:
- * EncapsedStringsToSprintfRector
- * RenamePropertyToMatchTypeRector
- * DeclareStrictTypesRector
-
-
-14) /home/andy-kani/pro/sites/packages/laravel-roster/src/Domain/Services/RosterInstallerService.php:1
-
-    ---------- begin diff ----------
-@@ @@
- <?php
-
-+declare(strict_types=1);
-+
- namespace Roster\Domain\Services;
-
- use Illuminate\Console\Command;
-    ----------- end diff -----------
-
-Applied rules:
- * DeclareStrictTypesRector
-
-
-15) /home/andy-kani/pro/sites/packages/laravel-roster/src/Domain/Services/TemporalConflictService.php:60
-
-    ---------- begin diff ----------
-@@ @@
-             return ConflictResult::noConflict();
-         }
-
--        $firstConflict = $conflictingAvailabilities->first();
-+        $availability = $conflictingAvailabilities->first();
-         return new ConflictResult(
-             hasConflicts: true,
-             conflictingSchedules: [],
-             conflictingImpediments: [],
--            message: $this->generateAvailabilityConflictMessage($firstConflict)
-+            message: $this->generateAvailabilityConflictMessage($availability)
-         );
-     }
-
-@@ @@
-         ?int $excludeScheduleId = null,
-         ?int $excludeImpedimentId = null
-     ): ConflictResult {
--        $scheduleConflict = $this->checkScheduleConflicts(
-+        $conflictResult = $this->checkScheduleConflicts(
-             availabilityId: $availabilityId,
-             start: $start,
-             end: $end,
-@@ @@
-             excludeScheduleId: $excludeScheduleId
-         );
-
--        if ($scheduleConflict->hasConflicts) {
--            return $scheduleConflict;
-+        if ($conflictResult->hasConflicts) {
-+            return $conflictResult;
-         }
-
-         $impedimentConflict = $this->checkImpedimentConflicts(
-@@ @@
-      *     validityEnd: Carbon|null,
-      *     type: string|null
-      * } $period
--     * @return bool
-      */
-     private function isValidAvailabilityPeriod(array $period): bool
-     {
-    ----------- end diff -----------
-
-Applied rules:
- * RemoveUselessReturnTagRector
- * RenameVariableToMatchMethodCallReturnTypeRector
-
-
-16) /home/andy-kani/pro/sites/packages/laravel-roster/src/Exceptions/InvalidServiceContextException.php:20
-
-    ---------- begin diff ----------
-@@ @@
-
-         $message = match (true) {
-             str_contains($serviceClass, 'AvailabilityService') =>
--            "{$serviceName} requires a valid schedulable context.\n\n" .
-+            $serviceName . ' requires a valid schedulable context.
-+
-+' .
-                 "This usually happens because you are calling the service without providing a schedulable model.\n\n" .
-                 "How to fix:\n" .
-                 "- Always use the availability_for() helper with a schedulable model.\n" .
-@@ @@
-                 "availability_for(\$schedulable)->create([...]);",
-
-             str_contains($serviceClass, 'ScheduleService') || str_contains($serviceClass, 'ImpedimentService') =>
--            "{$serviceName} requires both schedulable and owner context.\n\n" .
-+            $serviceName . ' requires both schedulable and owner context.
-+
-+' .
-                 "This usually happens because:\n" .
-                 "1. You are calling the service without providing an availability as owner.\n" .
-                 "2. You are using the wrong helper function.\n\n" .
-@@ @@
-                 "impediment_for(\$availability)->create([...]);",
-
-             default =>
--            "{$serviceName} requires a valid context.\n\n" .
-+            $serviceName . ' requires a valid context.
-+
-+' .
-                 "This usually happens because you are using the service incorrectly.\n\n" .
-                 "How to fix:\n" .
-                 "- Use the appropriate helper function instead of instantiating the service directly.\n" .
-    ----------- end diff -----------
-
-Applied rules:
- * EncapsedStringsToSprintfRector
-
-
-17) /home/andy-kani/pro/sites/packages/laravel-roster/src/Validation/Rules/AvailabilityTemporalCoherenceRule.php:168
-
-    ---------- begin diff ----------
-@@ @@
-             ->where('end_datetime', '>=', $referenceTime)
-             ->get();
-
--        foreach ($futureEntities as $entity) {
-+        foreach ($futureEntities as $futureEntity) {
-             $this->validateDateBoundary(
-                 boundaryType: 'start',
--                entity: $entity,
-+                entity: $futureEntity,
-                 newDate: $newStart,
-                 entityClass: $entityClass,
-                 validationContext: $validationContext
-@@ @@
-
-             $this->validateDateBoundary(
-                 boundaryType: 'end',
--                entity: $entity,
-+                entity: $futureEntity,
-                 newDate: $newEnd,
-                 entityClass: $entityClass,
-                 validationContext: $validationContext
-@@ @@
-             );
-
-             $this->validateDayAvailability(
--                entity: $entity,
-+                entity: $futureEntity,
-                 newDays: $newDays,
-                 entityClass: $entityClass,
-                 validationContext: $validationContext
-@@ @@
-
-         $entityDays = $this->extractDaysFromPeriod($startString, $endString);
-
--        foreach ($entityDays as $day) {
--            if (!in_array($day, $newDays, true)) {
-+        foreach ($entityDays as $entityDay) {
-+            if (!in_array($entityDay, $newDays, true)) {
-                 $validationContext->setViolation(
-                     'days',
-                     sprintf(
-                         "Cannot remove '%s' from days because it is used by a future %s from '%s' to '%s'",
--                        ucfirst($day),
-+                        ucfirst($entityDay),
-                         strtolower(class_basename($entityClass)),
-                         $entity->start_datetime,
-                         $entity->end_datetime
-@@ @@
-                 if (!in_array($day, $days, true)) {
-                     $days[] = $day;
-                 }
-+
-                 $current->addDay();
-             }
-    ----------- end diff -----------
-
-Applied rules:
- * NewlineAfterStatementRector
- * RenameForeachValueVariableToMatchExprVariableRector
-
-
-18) /home/andy-kani/pro/sites/packages/laravel-roster/src/Validation/Rules/AvailabilityTypeRule.php:26
-
-    ---------- begin diff ----------
-@@ @@
-      * Validates the availability type.
-      *
-      * @param ValidationContextInterface $validationContext Validation context with data
--     * @return void
-      */
-     public function validate(ValidationContextInterface $validationContext): void
-     {
-    ----------- end diff -----------
-
-Applied rules:
- * RemoveUselessReturnTagRector
-
-
-19) /home/andy-kani/pro/sites/packages/laravel-roster/src/Validation/Rules/DaysValidationRule.php:27
-
-    ---------- begin diff ----------
-@@ @@
-      * Validates days configuration based on operation type.
-      *
-      * @param ValidationContextInterface $validationContext Validation context with data
--     * @return void
-      */
-     public function validate(ValidationContextInterface $validationContext): void
-     {
-@@ @@
-      * Validates days array for creation operations.
-      *
-      * @param ValidationContextInterface $validationContext Validation context
--     * @return void
-      */
-     private function validateForCreate(ValidationContextInterface $validationContext): void
-     {
-@@ @@
-      *
-      * @param mixed $days Days data to validate
-      * @param ValidationContextInterface $validationContext Validation context
--     * @return void
-      */
-     private function validateDaysArray(mixed $days, ValidationContextInterface $validationContext): void
-     {
-    ----------- end diff -----------
-
-Applied rules:
- * RemoveUselessReturnTagRector
-
-
-20) /home/andy-kani/pro/sites/packages/laravel-roster/src/Validation/Rules/RequiredFieldsRule.php:47
-
-    ---------- begin diff ----------
-@@ @@
-      * Validates that ownership fields cannot be modified during updates.
-      *
-      * @param ValidationContextInterface $validationContext Validation context
--     * @param array $safeData Validated input data
-+     * @param array<string, mixed> $safeData Validated input data
-      * @param OperationType $operationType Current operation
-      */
-     private function validateOwnershipFields(
-@@ @@
-
-         $ownershipFields = ['schedulable_id', 'schedulable_type'];
-
--        foreach ($ownershipFields as $field) {
--            if (array_key_exists($field, $safeData)) {
-+        foreach ($ownershipFields as $ownershipField) {
-+            if (array_key_exists($ownershipField, $safeData)) {
-                 $validationContext->setViolation(
--                    $field,
--                    sprintf("Field '%s' cannot be changed. Ownership cannot be modified.", $field)
-+                    $ownershipField,
-+                    sprintf("Field '%s' cannot be changed. Ownership cannot be modified.", $ownershipField)
-                 );
-             }
-         }
-@@ @@
-      * Validates all required fields are present for creation operations.
-      *
-      * @param ValidationContextInterface $validationContext Validation context
--     * @param array $safeData Validated input data
-+     * @param array<string, mixed> $safeData Validated input data
-      */
-     private function validateRequiredFields(
-         ValidationContextInterface $validationContext,
-@@ @@
-         $entityType = $validationContext->getEntityType();
-         $requiredFields = $this->getRequiredFields($entityType);
-
--        foreach ($requiredFields as $field) {
--            if (!array_key_exists($field, $safeData)) {
-+        foreach ($requiredFields as $requiredField) {
-+            if (!array_key_exists($requiredField, $safeData)) {
-                 $validationContext->setViolation(
--                    $field,
--                    sprintf("Field '%s' is required", $field)
-+                    $requiredField,
-+                    sprintf("Field '%s' is required", $requiredField)
-                 );
-             }
-         }
-    ----------- end diff -----------
-
-Applied rules:
- * RenameForeachValueVariableToMatchExprVariableRector
- * ClassMethodArrayDocblockParamFromLocalCallsRector
-
-
-21) /home/andy-kani/pro/sites/packages/laravel-roster/src/Validation/Rules/SchedulableConsistencyRule.php:4
-
-    ---------- begin diff ----------
-@@ @@
-
- namespace Roster\Validation\Rules;
-
--use Illuminate\Database\Eloquent\Model;
- use Illuminate\Support\Facades\App;
- use Roster\Contracts\Repository\AvailabilityRepositoryInterface;
- use Roster\Contracts\Validation\ValidationContextInterface;
-@@ @@
-      * 3. Both entities belong to the same schedulable
-      *
-      * @param ValidationContextInterface $validationContext Validation context with entity data
--     * @return void
-      */
-     public function validate(ValidationContextInterface $validationContext): void
-     {
-@@ @@
-      * Adds a violation for schedulable mismatch.
-      *
-      * @param ValidationContextInterface $validationContext Validation context
--     * @return void
-      */
-     private function addSchedulableMismatchViolation(ValidationContextInterface $validationContext): void
-     {
-    ----------- end diff -----------
-
-Applied rules:
- * RemoveUselessReturnTagRector
-
-
-22) /home/andy-kani/pro/sites/packages/laravel-roster/src/Validation/Rules/SchedulableValidationRule.php:75
-
-    ---------- begin diff ----------
-@@ @@
-      * Validates schedulable consistency for create and delete operations.
-      *
-      * @param ValidationContextInterface $validationContext Validation context
--     * @param Model $schedulable Schedulable entity
-+     * @param Model $model Schedulable entity
-      * @param EntityType $entityType Type of entity being validated
-      */
-     private function validateSchedulableConsistency(
-         ValidationContextInterface $validationContext,
--        Model $schedulable,
-+        Model $model,
-         EntityType $entityType
-     ): void {
-         if (in_array($entityType, [EntityType::SCHEDULE, EntityType::IMPEDIMENT])) {
--            $this->validateChildEntitySchedulable($validationContext, $schedulable);
-+            $this->validateChildEntitySchedulable($validationContext, $model);
-             return;
-         }
-
--        if ($entityType === EntityType::AVAILABILITY) {
--            $this->validateAvailabilitySchedulable($validationContext, $schedulable);
--        }
-+        $this->validateAvailabilitySchedulable($validationContext, $model);
-     }
-
-     /**
-@@ @@
-      * Validates schedulable consistency for child entities (Schedule, Impediment).
-      *
-      * @param ValidationContextInterface $validationContext Validation context
--     * @param Model $schedulable Schedulable entity
-+     * @param Model $model Schedulable entity
-      */
-     private function validateChildEntitySchedulable(
-         ValidationContextInterface $validationContext,
--        Model $schedulable
-+        Model $model
-     ): void {
-         $schedulableId = $validationContext->get('schedulable_id');
-         $schedulableType = $validationContext->get('schedulable_type');
-@@ @@
-             return;
-         }
-
--        $this->validateSchedulableId($validationContext, $schedulable, $schedulableId);
--        $this->validateSchedulableType($validationContext, $schedulable, $schedulableType);
-+        $this->validateSchedulableId($validationContext, $model, $schedulableId);
-+        $this->validateSchedulableType($validationContext, $model, $schedulableType);
-     }
-
-     /**
-@@ @@
-      * Validates schedulable identifier matches expected value.
-      *
-      * @param ValidationContextInterface $validationContext Validation context
--     * @param Model $schedulable Expected schedulable entity
-+     * @param Model $model Expected schedulable entity
-      * @param mixed $providedId Provided schedulable identifier
-      */
-     private function validateSchedulableId(
-         ValidationContextInterface $validationContext,
--        Model $schedulable,
-+        Model $model,
-         mixed $providedId
-     ): void {
--        if ($providedId != $schedulable->getKey()) {
-+        if ($providedId != $model->getKey()) {
-             $validationContext->setViolation(
-                 'schedulable_id',
-                 sprintf(
-                     'Schedulable ID mismatch. Expected: %d, Got: %d',
--                    $schedulable->getKey(),
-+                    $model->getKey(),
-                     $providedId
-                 )
-             );
-@@ @@
-      * Validates schedulable type matches expected value.
-      *
-      * @param ValidationContextInterface $validationContext Validation context
--     * @param Model $schedulable Expected schedulable entity
-+     * @param Model $model Expected schedulable entity
-      * @param string|null $providedType Provided schedulable type
-      */
-     private function validateSchedulableType(
-         ValidationContextInterface $validationContext,
--        Model $schedulable,
-+        Model $model,
-         ?string $providedType
-     ): void {
--        if ($providedType !== get_class($schedulable)) {
-+        if ($providedType !== get_class($model)) {
-             $validationContext->setViolation(
-                 'schedulable_type',
-                 sprintf(
-                     'Schedulable type mismatch. Expected: %s, Got: %s',
--                    get_class($schedulable),
-+                    get_class($model),
-                     $providedType
-                 )
-             );
-@@ @@
-      * Validates schedulable consistency for Availability entities.
-      *
-      * @param ValidationContextInterface $validationContext Validation context
--     * @param Model $schedulable Schedulable entity
-+     * @param Model $model Schedulable entity
-      */
-     private function validateAvailabilitySchedulable(
-         ValidationContextInterface $validationContext,
--        Model $schedulable
-+        Model $model
-     ): void {
-         $schedulableId = $validationContext->get('schedulable_id');
-         $schedulableType = $validationContext->get('schedulable_type');
-
-         if ($schedulableId !== null) {
--            $this->validateSchedulableId($validationContext, $schedulable, $schedulableId);
-+            $this->validateSchedulableId($validationContext, $model, $schedulableId);
-         }
-
-         if ($schedulableType !== null) {
--            $this->validateSchedulableType($validationContext, $schedulable, $schedulableType);
-+            $this->validateSchedulableType($validationContext, $model, $schedulableType);
-         }
-     }
- }
-    ----------- end diff -----------
-
-Applied rules:
- * RemoveAlwaysTrueIfConditionRector
- * RenameParamToMatchTypeRector
-
-
-23) /home/andy-kani/pro/sites/packages/laravel-roster/src/Validation/Rules/TimeSlotDateTimeRule.php:139
-
-    ---------- begin diff ----------
-@@ @@
-     /**
-      * Resolves datetime value from update context or existing entity.
-      *
--     * @param ValidationContextInterface $context Validation context
-+     * @param ValidationContextInterface $validationContext Validation context
-      * @param string $fieldName Datetime field name
-      * @param bool $hasUpdate Whether field is being updated
-      * @param mixed $entityValue Existing entity value
-@@ @@
-      * @return mixed Resolved datetime value
-      */
-     private function resolveDateTimeValue(
--        ValidationContextInterface $context,
-+        ValidationContextInterface $validationContext,
-         string $fieldName,
-         bool $hasUpdate,
-         mixed $entityValue
-     ): mixed {
--        return $hasUpdate ? $context->get($fieldName) : $entityValue;
-+        return $hasUpdate ? $validationContext->get($fieldName) : $entityValue;
-     }
- }
-    ----------- end diff -----------
-
-Applied rules:
- * RenameParamToMatchTypeRector
-
-
-24) /home/andy-kani/pro/sites/packages/laravel-roster/src/Validation/ValidationResult.php:64
-
-    ---------- begin diff ----------
-@@ @@
-      */
-     public function hasViolations(): bool
-     {
--        return !empty($this->violations);
-+        return $this->violations !== [];
-     }
-
-     /**
-    ----------- end diff -----------
-
-Applied rules:
- * SimplifyEmptyCheckOnEmptyArrayRector
-
-
-25) /home/andy-kani/pro/sites/packages/laravel-roster/src/Validation/Validator.php:77
-
-    ---------- begin diff ----------
-@@ @@
-
-         $this->sortRulesByPriority($applicableRules);
-
--        foreach ($applicableRules as $rule) {
-+        foreach ($applicableRules as $applicableRule) {
-             try {
--                $rule->validate($validationContext);
-+                $applicableRule->validate($validationContext);
-             } catch (Throwable $exception) {
--                $this->handleRuleException($validationContext, $rule, $exception);
-+                $this->handleRuleException($validationContext, $applicableRule, $exception);
-             }
-         }
-
-@@ @@
-      */
-     public function hasRule(string $ruleClass): bool
-     {
--        foreach ($this->allRules as $rule) {
--            if (get_class($rule) === $ruleClass) {
-+        foreach ($this->allRules as $allRule) {
-+            if (get_class($allRule) === $ruleClass) {
-                 return true;
-             }
-         }
-@@ @@
-      *
-      * @param ValidationContextInterface $validationContext Current validation context
-      * @param RuleInterface $rule The rule that failed
--     * @param Throwable $exception The thrown exception
-+     * @param Throwable $throwable The thrown exception
-      */
-     private function handleRuleException(
-         ValidationContextInterface $validationContext,
-         RuleInterface $rule,
--        Throwable $exception
-+        Throwable $throwable
-     ): void {
-         $validationContext->setViolation(
-             '_system',
-@@ @@
-             sprintf(
-                 'Validation rule %s failed: %s',
-                 $rule->getName(),
--                $exception->getMessage()
-+                $throwable->getMessage()
-             )
-         );
-     }
-@@ @@
-      * Indexes a rule using its ValidationRule attribute metadata.
-      *
-      * @param RuleInterface $rule The rule to index
--     * @param ValidationRule $attribute The validation rule attribute
-+     * @param ValidationRule $validationRule The validation rule attribute
-      */
--    private function indexRuleByAttribute(RuleInterface $rule, ValidationRule $attribute): void
-+    private function indexRuleByAttribute(RuleInterface $rule, ValidationRule $validationRule): void
-     {
--        foreach ($attribute->entities as $entity) {
-+        foreach ($validationRule->entities as $entity) {
-             if (!$entity instanceof EntityType) {
-                 continue;
-             }
-
--            foreach ($attribute->operations as $operation) {
-+            foreach ($validationRule->operations as $operation) {
-                 if (!$operation instanceof OperationType) {
-                     continue;
-                 }
-@@ @@
-      * Adds a rule to the index for quick lookup.
-      *
-      * @param RuleInterface $rule The rule to add
--     * @param OperationType $operation The operation type
--     * @param EntityType $entity The entity type
-+     * @param OperationType $operationType The operation type
-+     * @param EntityType $entityType The entity type
-      */
-     private function registerRuleToIndex(
-         RuleInterface $rule,
--        OperationType $operation,
--        EntityType $entity
-+        OperationType $operationType,
-+        EntityType $entityType
-     ): void {
--        $key = $this->createCacheKey($operation, $entity);
-+        $key = $this->createCacheKey($operationType, $entityType);
-
-         if (!isset($this->rulesByEntityOperation[$key])) {
-             $this->rulesByEntityOperation[$key] = [];
-    ----------- end diff -----------
-
-Applied rules:
- * RenameParamToMatchTypeRector
- * RenameForeachValueVariableToMatchExprVariableRector
-
-
-26) /home/andy-kani/pro/sites/packages/laravel-roster/src/helpers.php:6
-
-    ---------- begin diff ----------
-@@ @@
-  * Collection of helper functions for the Roster package.
-  * Provides date and day-related utilities and service instantiation helpers.
-  */
--
-+use Roster\Services\AvailabilityService;
-+use Roster\Services\ImpedimentService;
-+use Roster\Services\ScheduleService;
- use Carbon\Carbon;
- use Carbon\WeekDay;
- use Carbon\Month;
-@@ @@
-      */
-     function roster_format_period_days_for_display(array $days): string
-     {
--        if (empty($days)) {
-+        if ($days === []) {
-             return '';
-         }
-
-@@ @@
-         $dayIndices = array_map(fn($day): false|int => array_search($day, $dayOrder, true), $days);
-
-         $isContinuousSequence = true;
--        for ($i = 0; $i < count($dayIndices) - 1; $i++) {
-+        for ($i = 0; $i < count($dayIndices) - 1; ++$i) {
-             $currentIndex = $dayIndices[$i];
-             $nextIndex = $dayIndices[$i + 1];
-
-@@ @@
-      */
-     function roster_format_days_for_display(array $days): string
-     {
--        if (empty($days)) {
-+        if ($days === []) {
-             return '';
-         }
-
-@@ @@
-     /**
-      * Creates an Availability service instance for a given schedulable model.
-      *
--     * @param Model $schedulable The schedulable model instance
--     * @return \Roster\Services\AvailabilityService
-+     * @param Model $model The schedulable model instance
-      * @throws BindingResolutionException If the service cannot be resolved from the container
-      */
--    function availability_for(Model $schedulable): \Roster\Services\AvailabilityService
-+    function availability_for(Model $model): AvailabilityService
-     {
--        return RosterServiceContext::allowViaHelper(function () use ($schedulable) {
--            /** @var \Roster\Services\AvailabilityService $service */
-+        return RosterServiceContext::allowViaHelper(function () use ($model) {
-+            /** @var AvailabilityService $service */
-             $service = app('roster.availability');
--            return $service->for($schedulable);
-+            return $service->for($model);
-         });
-     }
- }
-@@ @@
-      * Creates an Impediment service instance for a given availability.
-      * Automatically extracts the schedulable from the availability's polymorphic relationship.
-      *
--     * @param ModelsAvailability $availability The availability model instance
--     * @return \Roster\Services\ImpedimentService
--     * @throws \InvalidArgumentException If the availability has no schedulable relationship
-+     * @param ModelsAvailability $modelsAvailability The availability model instance
-+     * @throws InvalidArgumentException If the availability has no schedulable relationship
-      * @throws BindingResolutionException If the service cannot be resolved from the container
-      */
--    function impediment_for(ModelsAvailability $availability): \Roster\Services\ImpedimentService
-+    function impediment_for(ModelsAvailability $modelsAvailability): ImpedimentService
-     {
--        return RosterServiceContext::allowViaHelper(function () use ($availability) {
--            $schedulable = $availability->schedulable;
-+        return RosterServiceContext::allowViaHelper(function () use ($modelsAvailability) {
-+            $schedulable = $modelsAvailability->schedulable;
-
-             if (!$schedulable) {
--                throw new \InvalidArgumentException(
-+                throw new InvalidArgumentException(
-                     'The provided availability does not have a schedulable relationship.'
-                 );
-             }
-
--            /** @var \Roster\Services\ImpedimentService $service */
-+            /** @var ImpedimentService $service */
-             $service = app('roster.impediment');
--            return $service->for($schedulable)->owner($availability);
-+            return $service->for($schedulable)->owner($modelsAvailability);
-         });
-     }
- }
-@@ @@
-      * Creates a Schedule service instance for a given availability.
-      * Automatically extracts the schedulable from the availability's polymorphic relationship.
-      *
--     * @param ModelsAvailability $availability The availability model instance
--     * @return \Roster\Services\ScheduleService
--     * @throws \InvalidArgumentException If the availability has no schedulable relationship
-+     * @param ModelsAvailability $modelsAvailability The availability model instance
-+     * @throws InvalidArgumentException If the availability has no schedulable relationship
-      * @throws BindingResolutionException If the service cannot be resolved from the container
-      */
--    function schedule_for(ModelsAvailability $availability): \Roster\Services\ScheduleService
-+    function schedule_for(ModelsAvailability $modelsAvailability): ScheduleService
-     {
--        return RosterServiceContext::allowViaHelper(function () use ($availability) {
--            $schedulable = $availability->schedulable;
-+        return RosterServiceContext::allowViaHelper(function () use ($modelsAvailability) {
-+            $schedulable = $modelsAvailability->schedulable;
-
-             if (!$schedulable) {
--                throw new \InvalidArgumentException(
-+                throw new InvalidArgumentException(
-                     'The provided availability does not have a schedulable relationship.'
-                 );
-             }
-
--            /** @var \Roster\Services\ScheduleService $service */
-+            /** @var ScheduleService $service */
-             $service = app('roster.schedule');
--            return $service->for($schedulable)->owner($availability);
-+            return $service->for($schedulable)->owner($modelsAvailability);
-         });
-     }
- }
-    ----------- end diff -----------
-
-Applied rules:
- * SimplifyEmptyCheckOnEmptyArrayRector
- * PostIncDecToPreIncDecRector
- * RemoveUselessReturnTagRector
- * RenameParamToMatchTypeRector
-
-
-27) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Feature/Services/AvailabilityServiceDaysCoherenceTest.php:6
-
-    ---------- begin diff ----------
-@@ @@
-
- use Illuminate\Database\Eloquent\Model;
- use Illuminate\Foundation\Testing\RefreshDatabase;
--use Illuminate\Support\Carbon;
- use Roster\Enums\DaysOfWeek;
--use Roster\Models\Availability as AvailabilityModel;
- use Roster\Validation\Exceptions\ValidationFailedException;
- use Tests\Support\TestSchedulable;
- use Tests\TestCase;
-@@ @@
- {
      use RefreshDatabase;
 
--    private Model $testSchedulable;
-+    private Model $model;
-
-     /**
-      * Set up test environment.
-@@ @@
-     {
-         parent::setUp();
-
--        $this->testSchedulable = TestSchedulable::create();
-+        $this->model = TestSchedulable::create();
-     }
-
-     /**
-@@ @@
-         $validityEnd = '2038-07-04';
-
-         // Act
--        $availability = availability_for($this->testSchedulable)->create([
-+        $availability = availability_for($this->model)->create([
-             'type' => 'consultation',
-             'daily_start' => '09:00:00',
-             'daily_end' => '17:00:00',
-@@ @@
-         $providedDays = ['thursday', 'friday'];
-
-         // Act
--        $availability = availability_for($this->testSchedulable)->create([
-+        $availability = availability_for($this->model)->create([
-             'type' => 'consultation',
-             'daily_start' => '09:00:00',
-             'daily_end' => '17:00:00',
-@@ @@
-         $this->expectExceptionMessageMatches("/Day 'monday' is not within the validity period/");
-
-         // Act
--        availability_for($this->testSchedulable)->create([
-+        availability_for($this->model)->create([
-             'type' => 'consultation',
-             'daily_start' => '09:00:00',
-             'daily_end' => '17:00:00',
-@@ @@
-         $validityEnd = '2038-07-07';
-
-         // Act
--        $availability = availability_for($this->testSchedulable)->create([
-+        $availability = availability_for($this->model)->create([
-             'type' => 'consultation',
-             'daily_start' => '09:00:00',
-             'daily_end' => '17:00:00',
-@@ @@
-         $validityEnd = '2038-07-15';
-
-         // Act
--        $availability = availability_for($this->testSchedulable)->create([
-+        $availability = availability_for($this->model)->create([
-             'type' => 'consultation',
-             'daily_start' => '09:00:00',
-             'daily_end' => '17:00:00',
-@@ @@
-         $originalValidityEnd = '2038-07-18';
-         $newValidityEnd = '2038-07-10';
-
--        $availability = availability_for($this->testSchedulable)->create([
-+        $availability = availability_for($this->model)->create([
-             'type' => 'consultation',
-             'daily_start' => '09:00:00',
-             'daily_end' => '17:00:00',
-@@ @@
-         ]);
-
-         // Act
--        $result = availability_for($this->testSchedulable)->update(
-+        $result = availability_for($this->model)->update(
-             id: $availability->id,
-             data: ['validity_end' => $newValidityEnd]
-         );
-@@ @@
-         $originalValidityEnd = '2038-07-11';
-         $newValidityEnd = '2038-07-18';
-
--        $availability = availability_for($this->testSchedulable)->create([
-+        $availability = availability_for($this->model)->create([
-             'type' => 'consultation',
-             'daily_start' => '09:00:00',
-             'daily_end' => '17:00:00',
-@@ @@
-         ]);
-
-         // Act
--        $result = availability_for($this->testSchedulable)->update(
-+        $result = availability_for($this->model)->update(
-             id: $availability->id,
-             data: ['validity_end' => $newValidityEnd]
-         );
-@@ @@
-         $originalValidityEnd = '2038-07-18';
-         $newValidityEnd = '2038-07-09';
-
--        $availability = availability_for($this->testSchedulable)->create([
-+        $availability = availability_for($this->model)->create([
-             'type' => 'consultation',
-             'daily_start' => '09:00:00',
-             'daily_end' => '17:00:00',
-@@ @@
-         $this->expectExceptionMessageMatches("/Day 'saturday' is not within the validity period/");
-
-         // Act
--        availability_for($this->testSchedulable)->update(
-+        availability_for($this->model)->update(
-             id: $availability->id,
-             data: [
-                 'days' => $invalidNewDays,
-@@ @@
-         $validityEnd = '2038-07-01';
-
-         // Act
--        $availability = availability_for($this->testSchedulable)->create([
-+        $availability = availability_for($this->model)->create([
-             'type' => 'consultation',
-             'daily_start' => '09:00:00',
-             'daily_end' => '17:00:00',
-@@ @@
-         $explicitDays = ['thursday', 'friday'];
-
-         // Act
--        $availability = availability_for($this->testSchedulable)->create([
-+        $availability = availability_for($this->model)->create([
-             'type' => 'consultation',
-             'daily_start' => '09:00:00',
-             'daily_end' => '17:00:00',
-@@ @@
-         $originalDays = ['monday', 'wednesday', 'friday'];
-         $newDays = ['tuesday', 'thursday'];
-
--        $availability = availability_for($this->testSchedulable)->create([
-+        $availability = availability_for($this->model)->create([
-             'type' => 'consultation',
-             'daily_start' => '09:00:00',
-             'daily_end' => '17:00:00',
-@@ @@
-         ]);
-
-         // Act
--        $result = availability_for($this->testSchedulable)->update(
-+        $result = availability_for($this->model)->update(
-             id: $availability->id,
-             data: ['days' => $newDays]
-         );
-@@ @@
-         $validityEnd = '2038-07-10';
-
-         // Act
--        $availability = availability_for($this->testSchedulable)->create([
-+        $availability = availability_for($this->model)->create([
-             'type' => 'consultation',
-             'daily_start' => '09:00:00',
-             'daily_end' => '17:00:00',
-    ----------- end diff -----------
-
-Applied rules:
- * RenamePropertyToMatchTypeRector
-
-
-28) /home/andy-kani/pro/sites/packages/laravel-roster/src/Models/Availability.php:60
-
-    ---------- begin diff ----------
-@@ @@
-
-     /**
-      * Get the schedulable resource that owns this availability.
--     *
--     * @return MorphTo
-      */
-     public function schedulable(): MorphTo
-     {
-@@ @@
-
-     /**
-      * Get the schedules associated with this availability.
--     *
--     * @return HasMany
-      */
-     public function schedules(): HasMany
-     {
-@@ @@
-
-     /**
-      * Get the impediments associated with this availability.
--     *
--     * @return HasMany
-      */
-     public function impediments(): HasMany
-     {
-    ----------- end diff -----------
-
-Applied rules:
- * RemoveUselessReturnTagRector
-
-
-29) /home/andy-kani/pro/sites/packages/laravel-roster/src/Repositories/AbstractRepository.php:4
-
-    ---------- begin diff ----------
-@@ @@
-
- namespace Roster\Repositories;
-
-+use InvalidArgumentException;
- use Illuminate\Contracts\Pagination\LengthAwarePaginator;
- use Illuminate\Database\Eloquent\Builder;
- use Illuminate\Database\Eloquent\Model;
-@@ @@
-                 ->whereKey($id);
-
-             $query = $this->applyOwnerScope($query, $owner);
+     private Model $schedulable;
 +
-             $model = $query->first();
-
-             if (!$model) {
-@@ @@
-                 ->whereKey($id);
-
-             $query = $this->applyOwnerScope($query, $owner);
-+
-             $model = $query->first();
-
-             return $model instanceof Model && (bool) $model->delete();
-@@ @@
-      * @param Carbon $start Start time
-      * @param Carbon $end End time
-      * @return Collection<int, Impediment> Overlapping impediments
--     * @throws \InvalidArgumentException When the time window is invalid
-+     * @throws InvalidArgumentException When the time window is invalid
-      */
-     public function findForTimeSlot(int $availabilityId, Carbon $start, Carbon $end): Collection
-     {
-@@ @@
-     /**
-      * Builds a query with schedulable scope and applied filters.
-      *
--     * @param Model $schedulable Schedulable entity
-+     * @param Model $model Schedulable entity
-      * @param array<string, mixed> $filters Query filters
-      * @return Builder Query builder
-      * @throws MissingSchedulableException If schedulable not provided
-      */
--    public function buildQueryWithFilters(Model $schedulable, array $filters): Builder
-+    public function buildQueryWithFilters(Model $model, array $filters): Builder
-     {
--        $this->validateSchedulable($schedulable);
-+        $this->validateSchedulable($model);
-
--        $builder = $this->buildSchedulableScopedQuery($schedulable);
-+        $builder = $this->buildSchedulableScopedQuery($model);
-         return $this->applyFilters($builder, $filters);
-     }
-
-@@ @@
-     /**
-      * Validates that a schedulable entity is provided.
-      *
--     * @param Model|null $schedulable Schedulable entity
-+     * @param Model|null $model Schedulable entity
-      * @throws MissingSchedulableException When no schedulable is provided
-      */
--    private function validateSchedulable(?Model $schedulable): void
-+    private function validateSchedulable(?Model $model): void
-     {
--        if (!$schedulable instanceof Model) {
-+        if (!$model instanceof Model) {
-             throw MissingSchedulableException::create();
-         }
-     }
-@@ @@
-     /**
-      * Validates that no owner is provided for Availability models.
-      *
--     * @param Model|null $owner Owning entity
-+     * @param Model|null $model Owning entity
-      * @throws InvalidOwnerException When owner is provided for Availability model
-      */
--    private function validateOwnerForAvailability(?Model $owner): void
-+    private function validateOwnerForAvailability(?Model $model): void
-     {
--        if ($owner instanceof Model && $this->isAvailabilityModel()) {
-+        if ($model instanceof Model && $this->isAvailabilityModel()) {
-             throw InvalidOwnerException::forAvailability();
-         }
-     }
-@@ @@
-     /**
-      * Validates that an owner is provided for non-Availability models.
-      *
--     * @param Model|null $owner Owning entity
-+     * @param Model|null $model Owning entity
-      * @throws MissingOwnerException When owner is not provided for non-Availability model
-      */
--    private function validateOwnerForNonAvailability(?Model $owner): void
-+    private function validateOwnerForNonAvailability(?Model $model): void
-     {
--        if (!$this->isAvailabilityModel() && !$owner instanceof Model) {
-+        if (!$this->isAvailabilityModel() && !$model instanceof Model) {
-             throw MissingOwnerException::create($this->getModelClass());
-         }
-     }
-@@ @@
-      * Applies owner constraint to a query builder for non-Availability models.
-      *
-      * @param Builder $builder Query builder
--     * @param Model|null $owner Owning entity
-+     * @param Model|null $model Owning entity
-      * @return Builder Modified query builder
-      */
--    private function applyOwnerScope(Builder $builder, ?Model $owner): Builder
-+    private function applyOwnerScope(Builder $builder, ?Model $model): Builder
-     {
--        if ($owner instanceof Model && !$this->isAvailabilityModel()) {
--            $builder->where('availability_id', $owner->id);
-+        if ($model instanceof Model && !$this->isAvailabilityModel()) {
-+            $builder->where('availability_id', $model->id);
-         }
-
-         return $builder;
-@@ @@
-      * Injects owner relationship into data array for non-Availability models.
-      *
-      * @param array<string, mixed> $data Entity data
--     * @param Model|null $owner Owning entity
-+     * @param Model|null $model Owning entity
-      * @return array<string, mixed> Modified data
-      * @throws MissingOwnerException When owner is required but not provided
-      */
--    private function injectOwnerIntoData(array $data, ?Model $owner): array
-+    private function injectOwnerIntoData(array $data, ?Model $model): array
-     {
--        $this->validateOwnerForNonAvailability($owner);
-+        $this->validateOwnerForNonAvailability($model);
-
--        if ($owner instanceof Model && !$this->isAvailabilityModel()) {
--            $data['availability_id'] = $owner->id;
-+        if ($model instanceof Model && !$this->isAvailabilityModel()) {
-+            $data['availability_id'] = $model->id;
-         }
-
-         return $data;
-    ----------- end diff -----------
-
-Applied rules:
- * NewlineBeforeNewAssignSetRector
- * RenameParamToMatchTypeRector
-
-
-30) /home/andy-kani/pro/sites/packages/laravel-roster/src/Repositories/AvailabilityRepository.php:23
-
-    ---------- begin diff ----------
-@@ @@
-     /**
-      * Retrieves a query builder for availabilities of a specific schedulable entity.
-      *
--     * @param Model $schedulable The schedulable entity (e.g., User, Team)
-+     * @param Model $model The schedulable entity (e.g., User, Team)
-      * @param string|null $type Optional availability type filter
-      *
-      * @return Builder Query builder for availabilities
-      */
--    public function findForSchedulable(Model $schedulable, ?string $type = null): Builder
-+    public function findForSchedulable(Model $model, ?string $type = null): Builder
-     {
--        $builder = $this->buildBaseQuery($schedulable);
-+        $builder = $this->buildBaseQuery($model);
-
-         if ($type !== null) {
-             $builder->where('type', $type);
-@@ @@
-     /**
-      * Retrieves availabilities valid within a specific date range.
-      *
--     * @param Model $schedulable The schedulable entity
-+     * @param Model $model The schedulable entity
-      * @param Carbon $start Start date of the range
-      * @param Carbon $end End date of the range
-      * @param string|null $type Optional availability type filter
-@@ @@
-      * @return Collection<int, Availability> Collection of matching availabilities
-      */
-     public function getForDateRange(
--        Model $schedulable,
-+        Model $model,
-         Carbon $start,
-         Carbon $end,
-         ?string $type = null
-     ): Collection {
--        $builder = $this->buildBaseQuery($schedulable)
-+        $builder = $this->buildBaseQuery($model)
-             ->where(function ($query) use ($end): void {
-                 $query->whereNull('validity_start')
-                     ->orWhere('validity_start', '<=', $end);
-@@ @@
-     /**
-      * Retrieves availabilities applicable to a specific date.
-      *
--     * @param Model $schedulable The schedulable entity
-+     * @param Model $model The schedulable entity
-      * @param Carbon $date Target date
-      * @param string|null $type Optional availability type filter
-      *
-@@ @@
-      * @return Collection<int, Availability> Collection of availabilities for the date
-      */
-     public function getForDate(
--        Model $schedulable,
-+        Model $model,
-         Carbon $date,
-         ?string $type = null
-     ): Collection {
--        $builder = $this->buildBaseQuery($schedulable)
-+        $builder = $this->buildBaseQuery($model)
-             ->whereJsonContains('days', strtolower($date->englishDayOfWeek));
-
-         if ($type !== null) {
-@@ @@
-     /**
-      * Finds an availability for a time slot with conflict detection information.
-      *
--     * @param Model $schedulable The schedulable entity
-+     * @param Model $model The schedulable entity
-      * @param Carbon $start Start time of the slot
-      * @param Carbon $end End time of the slot
-      * @param string|null $type Optional availability type filter
-@@ @@
-      * @return Availability|null Matching availability with conflict flags or null
-      */
-     public function findForTimeSlotWithConflictInfo(
--        Model $schedulable,
-+        Model $model,
-         Carbon $start,
-         Carbon $end,
-         ?string $type = null
-     ): ?Availability {
--        return Availability::where('schedulable_id', $schedulable->id)
--            ->where('schedulable_type', get_class($schedulable))
-+        return Availability::where('schedulable_id', $model->id)
-+            ->where('schedulable_type', get_class($model))
-             ->when($type !== null, function ($query) use ($type): void {
-                 $query->where('type', $type);
-             })
-@@ @@
-     /**
-      * Builds a base query for availabilities of a schedulable entity.
-      *
--     * @param Model $schedulable The schedulable entity
-+     * @param Model $model The schedulable entity
-      *
-      * @return Builder Base query builder
-      */
--    private function buildBaseQuery(Model $schedulable): Builder
-+    private function buildBaseQuery(Model $model): Builder
-     {
--        return Availability::where('schedulable_id', $schedulable->id)
--            ->where('schedulable_type', get_class($schedulable));
-+        return Availability::where('schedulable_id', $model->id)
-+            ->where('schedulable_type', get_class($model));
-     }
-
-     /**
-    ----------- end diff -----------
-
-Applied rules:
- * RenameParamToMatchTypeRector
-
-
-31) /home/andy-kani/pro/sites/packages/laravel-roster/src/RosterServiceProvider.php:36
-
-    ---------- begin diff ----------
-@@ @@
- {
-     /**
-      * Bootstrap package services.
--     *
--     * @return void
-      */
-     public function boot(): void
-     {
-@@ @@
-
-     /**
-      * Register package services and dependencies.
--     *
--     * @return void
-      */
-     public function register(): void
-     {
-@@ @@
-
-     /**
-      * Register observers for domain models.
--     *
--     * @return void
-      */
-     protected function registerModelObservers(): void
-     {
-@@ @@
-
-     /**
-      * Load package helper functions.
--     *
--     * @return void
-      */
-     protected function loadHelpers(): void
-     {
-@@ @@
-
-     /**
-      * Register repository interfaces with their implementations.
--     *
--     * @return void
-      */
-     protected function registerRepositories(): void
-     {
-@@ @@
-
-     /**
-      * Register validation system components.
--     *
--     * @return void
-      */
-     protected function registerValidationSystem(): void
-     {
-@@ @@
-
-     /**
-      * Register domain services with dependency injection container.
--     *
--     * @return void
-      */
-     protected function registerDomainServices(): void
-     {
-@@ @@
-
-     /**
-      * Publish package resources for user customization.
--     *
--     * @return void
-      */
-     private function publishResources(): void
-     {
-    ----------- end diff -----------
-
-Applied rules:
- * RemoveUselessReturnTagRector
-
-
-32) /home/andy-kani/pro/sites/packages/laravel-roster/src/Services/AvailabilityService.php:4
-
-    ---------- begin diff ----------
-@@ @@
-
- namespace Roster\Services;
-
--use Roster\DTOs\AvailabilityData;
- use Roster\Enums\EntityType;
- use Roster\Enums\OperationType;
- use Roster\Models\Availability;
-    ----------- end diff -----------
-
-Applied rules:
-
-
-33) /home/andy-kani/pro/sites/packages/laravel-roster/src/Services/Core/AbstractService.php:4
-
-    ---------- begin diff ----------
-@@ @@
-
- namespace Roster\Services\Core;
-
-+use Roster\DTOs\AvailabilityData;
-+use Roster\DTOs\ScheduleData;
-+use Roster\DTOs\ImpedimentData;
- use BadMethodCallException;
- use Illuminate\Contracts\Pagination\LengthAwarePaginator;
- use Illuminate\Database\Eloquent\Model;
-@@ @@
-
-     /**
-      * Active filters for query operations.
-+     * @var mixed[]
-      */
-     protected array $filters = [];
-
-     /**
-      * Current operation data.
-+     * @var mixed[]
-      */
-     protected array $data = [];
-
-@@ @@
-     final protected function createDTOFromArray(array $data, OperationType $operationType): mixed
-     {
-         return match ($this->getEntityTypeEnum()) {
--            EntityType::AVAILABILITY => \Roster\DTOs\AvailabilityData::fromArray($data),
--            EntityType::SCHEDULE => \Roster\DTOs\ScheduleData::fromArray($data),
--            EntityType::IMPEDIMENT => \Roster\DTOs\ImpedimentData::fromArray($data),
-+            EntityType::AVAILABILITY => AvailabilityData::fromArray($data),
-+            EntityType::SCHEDULE => ScheduleData::fromArray($data),
-+            EntityType::IMPEDIMENT => ImpedimentData::fromArray($data),
-             default => throw new LogicException('Unsupported entity type for DTO creation')
-         };
-     }
-@@ @@
-     /**
-      * Gets current operation data.
-      *
--     * @return array Current data
-+     * @return mixed[] Current data
-      */
-     public function getData(): array
-     {
-@@ @@
-     /**
-      * Gets active filters.
-      *
--     * @return array Current filters
-+     * @return mixed[] Current filters
-      */
-     public function getFilters(): array
-     {
-    ----------- end diff -----------
-
-Applied rules:
- * DocblockGetterReturnArrayFromPropertyDocblockVarRector
- * DocblockVarArrayFromGetterReturnRector
-
-
-34) /home/andy-kani/pro/sites/packages/laravel-roster/src/Services/ImpedimentService.php:4
-
-    ---------- begin diff ----------
-@@ @@
-
- namespace Roster\Services;
-
--use Illuminate\Database\Eloquent\Model;
- use Illuminate\Support\Carbon;
- use Illuminate\Support\Collection;
- use Roster\Domain\Helpers\TimeSlotHelper;
- use Roster\Domain\Helpers\TimeWindowHelper;
--use Roster\DTOs\ImpedimentData;
- use Roster\Enums\EntityType;
- use Roster\Enums\OperationType;
- use Roster\Models\Availability;
-    ----------- end diff -----------
-
-Applied rules:
-
-
-35) /home/andy-kani/pro/sites/packages/laravel-roster/src/Services/ScheduleService.php:7
-
-    ---------- begin diff ----------
-@@ @@
- use Illuminate\Support\Carbon;
- use Illuminate\Support\Collection;
- use Roster\Contracts\Repository\AvailabilityRepositoryInterface;
--use Roster\DTOs\ScheduleData;
- use Roster\Enums\EntityType;
--use Roster\Enums\OperationType;
- use Roster\Models\Availability;
- use Roster\Services\Core\AbstractService;
--use Roster\Validation\Exceptions\ValidationFailedException;
-
- /**
-  * Service for managing Schedule entities and time slot availability.
-@@ @@
-             availabilityEnd: $availabilityEnd
-         );
-
--        if ($slotStart === null) {
-+        if (!$slotStart instanceof Carbon) {
-             return null;
-         }
-
-@@ @@
-         Carbon $availabilityStart,
-         Carbon $availabilityEnd
-     ): ?Carbon {
--        if ($searchStart === null || !$searchStart->isSameDay($day)) {
-+        if (!$searchStart instanceof Carbon || !$searchStart->isSameDay($day)) {
-             return $availabilityStart->copy();
-         }
-    ----------- end diff -----------
-
-Applied rules:
- * FlipTypeControlToUseExclusiveTypeRector
-
-
-36) /home/andy-kani/pro/sites/packages/laravel-roster/src/Traits/BelongsToSchedulable.php:19
-
-    ---------- begin diff ----------
-@@ @@
- {
-     /**
-      * Boots the trait with event listeners and global scopes.
--     *
--     * @return void
-      */
-     protected static function bootBelongsToSchedulable(): void
-     {
-@@ @@
-      * Validates that a schedulable reference is present before persistence.
-      *
-      * @param Model $model The model being created or updated
--     * @return void
-      * @throws MissingSchedulableException If schedulable reference is incomplete
-      */
-     protected static function validateSchedulable(Model $model): void
-    ----------- end diff -----------
-
-Applied rules:
- * RemoveUselessReturnTagRector
-
-
-37) /home/andy-kani/pro/sites/packages/laravel-roster/src/Validation/Context/ValidationContext.php:33
-
-    ---------- begin diff ----------
-@@ @@
-      */
-     private array $data;
-
--    private ?Model $schedulable;
-+    private ?Model $model;
-
-     private mixed $currentEntity;
-
-@@ @@
-         OperationType $operationType,
-         EntityType $entityType,
-         array $data,
--        ?Model $schedulable = null,
-+        ?Model $model = null,
-         mixed $currentEntity = null
-     ) {
-         $this->operationType = $operationType;
-         $this->entityType = $entityType;
-         $this->data = $data;
--        $this->schedulable = $schedulable;
-+        $this->model = $model;
-         $this->currentEntity = $currentEntity;
-     }
-
-@@ @@
-      */
-     public function getSchedulable(): ?Model
-     {
--        return $this->schedulable;
-+        return $this->model;
-     }
-
-     /**
-@@ @@
-
-         return match ($this->getEntityType()) {
-             EntityType::AVAILABILITY => availability_for($schedulable),
--            EntityType::SCHEDULE => $this->buildScheduleService($schedulable),
--            EntityType::IMPEDIMENT => $this->buildImpedimentService($schedulable),
-+            EntityType::SCHEDULE => $this->buildScheduleService(),
-+            EntityType::IMPEDIMENT => $this->buildImpedimentService(),
-         };
-     }
-
-@@ @@
-     /**
-      * Build Schedule service with the appropriate context.
-      *
--     * @param Model $schedulable The schedulable entity
-      *
-      * @return ServiceInterface Configured Schedule service
--     *
-      * @throws RuntimeException When owner is required but not available
-      */
--    private function buildScheduleService(Model $schedulable): ServiceInterface
-+    private function buildScheduleService(): ServiceInterface
-     {
-         $owner = $this->resolveOwner();
--
-         if (!$owner instanceof Model) {
-             throw new RuntimeException(
-                 'Cannot get Schedule service: owner is required but not available in validation context'
-             );
-         }
--
-         return schedule_for($owner);
-     }
-
-@@ @@
-     /**
-      * Build Impediment service with the appropriate context.
-      *
--     * @param Model $schedulable The schedulable entity
-      *
-      * @return ServiceInterface Configured Impediment service
--     *
-      * @throws RuntimeException When owner is required but not available
-      */
--    private function buildImpedimentService(Model $schedulable): ServiceInterface
-+    private function buildImpedimentService(): ServiceInterface
-     {
-         $owner = $this->resolveOwner();
--
-         if (!$owner instanceof Model) {
-             throw new RuntimeException(
-                 'Cannot get Impediment service: owner is required but not available in validation context'
-             );
-         }
--
-         return impediment_for($owner);
-     }
-
-@@ @@
-      */
-     private function resolveOwner(): ?Model
-     {
--        if (isset($this->data['availability_id']) && $this->schedulable instanceof Model) {
-+        if (isset($this->data['availability_id']) && $this->model instanceof Model) {
-             try {
-                 return AvailabilityModel::find($this->data['availability_id']);
-             } catch (Exception $exception) {
-    ----------- end diff -----------
-
-Applied rules:
- * RemoveUnusedPrivateMethodParameterRector
- * RenameParamToMatchTypeRector
- * RenamePropertyToMatchTypeRector
-
-
-38) /home/andy-kani/pro/sites/packages/laravel-roster/src/Validation/RuleScanner.php:180
-
-    ---------- begin diff ----------
-@@ @@
-
-         $rules = [];
-
--        foreach ($this->directories as $ruleDirectory) {
--            if (!is_dir($ruleDirectory)) {
-+        foreach ($this->directories as $directory) {
-+            if (!is_dir($directory)) {
-                 continue;
-             }
-
-             $finder = new Finder();
--            $finder->files()->in($ruleDirectory)->name('*Rule.php');
-+            $finder->files()->in($directory)->name('*Rule.php');
-
-             foreach ($finder as $file) {
-                 $className = $this->extractClassNameFromFile($file->getPathname());
-@@ @@
-                     if ($reflection->implementsInterface(RuleInterface::class)) {
-                         $validationRule = $this->extractValidationRule($className, $reflection);
-
--                        if ($validationRule !== null) {
-+                        if ($validationRule instanceof ValidationRule) {
-                             $rules[$className] = $validationRule;
-                         }
-                     }
-@@ @@
-      * Extracts the ValidationRule attribute from a rule class.
-      *
-      * @param string $className The fully qualified class name
--     * @param ReflectionClass $reflection Reflection of the class
-+     * @param ReflectionClass $reflectionClass Reflection of the class
-      *
-      * @return ValidationRule|null The validation rule attribute, or null if not found
-      */
--    private function extractValidationRule(string $className, ReflectionClass $reflection): ?ValidationRule
-+    private function extractValidationRule(string $className, ReflectionClass $reflectionClass): ?ValidationRule
-     {
-         try {
-             $ruleInstance = app()->make($className);
-@@ @@
-             if ($attribute) {
-                 return $attribute;
-             }
--        } catch (Throwable $e) {
--            $attributes = $reflection->getAttributes(ValidationRule::class);
-+        } catch (Throwable $throwable) {
-+            $attributes = $reflectionClass->getAttributes(ValidationRule::class);
-
--            if (!empty($attributes)) {
-+            if ($attributes !== []) {
-                 return $attributes[0]->newInstance();
-             }
-         }
-    ----------- end diff -----------
-
-Applied rules:
- * SimplifyEmptyCheckOnEmptyArrayRector
- * FlipTypeControlToUseExclusiveTypeRector
- * CatchExceptionNameMatchingTypeRector
- * RenameParamToMatchTypeRector
- * RenameForeachValueVariableToMatchExprVariableRector
-
-
-39) /home/andy-kani/pro/sites/packages/laravel-roster/src/Validation/Rules/AbstractRule.php:58
-
-    ---------- begin diff ----------
-@@ @@
-     {
-         $ruleAttribute = $this->getValidationRuleAttribute();
-
--        if ($ruleAttribute === null) {
-+        if (!$ruleAttribute instanceof ValidationRule) {
-             // Default behavior for rules without attribute
-             return true;
-         }
-@@ @@
-      * Checks if an operation type is supported by the rule attribute.
-      *
-      * @param OperationType $operationType Operation to check
--     * @param ValidationRule $ruleAttribute Rule configuration attribute
-+     * @param ValidationRule $validationRule Rule configuration attribute
-      * @return bool True if operation supported
-      */
--    private function isOperationSupported(OperationType $operationType, ValidationRule $ruleAttribute): bool
-+    private function isOperationSupported(OperationType $operationType, ValidationRule $validationRule): bool
-     {
--        foreach ($ruleAttribute->operations as $supportedOperation) {
-+        foreach ($validationRule->operations as $supportedOperation) {
-             if ($supportedOperation === $operationType) {
-                 return true;
-             }
-         }
-+
-         return false;
-     }
-
-@@ @@
-      * Checks if an entity type is supported by the rule attribute.
-      *
-      * @param EntityType $entityType Entity to check
--     * @param ValidationRule $ruleAttribute Rule configuration attribute
-+     * @param ValidationRule $validationRule Rule configuration attribute
-      * @return bool True if entity supported
-      */
--    private function isEntitySupported(EntityType $entityType, ValidationRule $ruleAttribute): bool
-+    private function isEntitySupported(EntityType $entityType, ValidationRule $validationRule): bool
-     {
--        foreach ($ruleAttribute->entities as $supportedEntity) {
-+        foreach ($validationRule->entities as $supportedEntity) {
-             if ($supportedEntity === $entityType) {
-                 return true;
-             }
-         }
-+
-         return false;
-     }
- }
-    ----------- end diff -----------
-
-Applied rules:
- * FlipTypeControlToUseExclusiveTypeRector
- * NewlineAfterStatementRector
- * RenameParamToMatchTypeRector
-
-
-40) /home/andy-kani/pro/sites/packages/laravel-roster/src/Validation/Rules/AvailabilityDateRangeRule.php:43
-
-    ---------- begin diff ----------
-@@ @@
-      * Validates validity start and end dates.
-      *
-      * @param ValidationContextInterface $validationContext The validation context
--     * @param Model|null $entity The entity being validated
-+     * @param Model|null $model The entity being validated
-      * @param OperationType $operationType The operation type
-      */
-     private function validateValidityDates(
-         ValidationContextInterface $validationContext,
--        ?Model $entity,
-+        ?Model $model,
-         OperationType $operationType
-     ): void {
-         if ($operationType === OperationType::CREATE) {
-             $this->validateCreateValidityDates($validationContext);
-         } else {
--            $this->validateUpdateValidityDates($validationContext, $entity);
-+            $this->validateUpdateValidityDates($validationContext, $model);
-         }
-     }
-
-@@ @@
-      * Validates validity dates for UPDATE operations.
-      *
-      * @param ValidationContextInterface $validationContext The validation context
--     * @param Model|null $entity The entity being validated
-+     * @param Model|null $model The entity being validated
-      */
-     private function validateUpdateValidityDates(
-         ValidationContextInterface $validationContext,
--        ?Model $entity
-+        ?Model $model
-     ): void {
-         $hasStart = $validationContext->has('validity_start');
-         $hasEnd = $validationContext->has('validity_end');
-@@ @@
-
-         $startValue = $hasStart
-             ? $validationContext->get('validity_start')
--            : ($entity?->validity_start ?? null);
-+            : ($model?->validity_start ?? null);
-
-         $endValue = $hasEnd
-             ? $validationContext->get('validity_end')
--            : ($entity?->validity_end ?? null);
-+            : ($model?->validity_end ?? null);
-
-         $this->validateDateRange(
-             validationContext: $validationContext,
-@@ @@
-      * Validates daily start and end times.
-      *
-      * @param ValidationContextInterface $validationContext The validation context
--     * @param Model|null $entity The entity being validated
-+     * @param Model|null $model The entity being validated
-      * @param OperationType $operationType The operation type
-      */
-     private function validateDailyTimes(
-         ValidationContextInterface $validationContext,
--        ?Model $entity,
-+        ?Model $model,
-         OperationType $operationType
-     ): void {
-         if ($operationType === OperationType::CREATE) {
-             $this->validateCreateDailyTimes($validationContext);
-         } else {
--            $this->validateUpdateDailyTimes($validationContext, $entity);
-+            $this->validateUpdateDailyTimes($validationContext, $model);
-         }
-     }
-
-@@ @@
-      * Validates daily times for UPDATE operations.
-      *
-      * @param ValidationContextInterface $validationContext The validation context
--     * @param Model|null $entity The entity being validated
-+     * @param Model|null $model The entity being validated
-      */
-     private function validateUpdateDailyTimes(
-         ValidationContextInterface $validationContext,
--        ?Model $entity
-+        ?Model $model
-     ): void {
-         $hasStart = $validationContext->has('daily_start');
-         $hasEnd = $validationContext->has('daily_end');
-@@ @@
-
-         $startValue = $hasStart
-             ? $validationContext->get('daily_start')
--            : ($entity?->daily_start ?? null);
-+            : ($model?->daily_start ?? null);
-
-         $endValue = $hasEnd
-             ? $validationContext->get('daily_end')
--            : ($entity?->daily_end ?? null);
-+            : ($model?->daily_end ?? null);
-
-         $this->validateTimeRange(
-             validationContext: $validationContext,
-    ----------- end diff -----------
-
-Applied rules:
- * RenameParamToMatchTypeRector
-
-
-41) /home/andy-kani/pro/sites/packages/laravel-roster/src/Validation/Rules/AvailabilityDaysCoherenceRule.php:4
-
-    ---------- begin diff ----------
-@@ @@
-
- namespace Roster\Validation\Rules;
-
-+use Exception;
- use Carbon\Carbon;
- use Roster\Contracts\Validation\ValidationContextInterface;
- use Roster\Enums\DaysOfWeek;
-@@ @@
-      * fall within the specified validity start and end dates.
-      *
-      * @param ValidationContextInterface $validationContext Validation context
--     * @return void
-      */
-     public function validate(ValidationContextInterface $validationContext): void
-     {
-@@ @@
-             if ($end->lte($start)) {
-                 return;
-             }
--        } catch (\Exception) {
-+        } catch (Exception) {
-             return;
-         }
-    ----------- end diff -----------
-
-Applied rules:
- * RemoveUselessReturnTagRector
-
-
-42) /home/andy-kani/pro/sites/packages/laravel-roster/src/Validation/Rules/AvailabilityOverlapRule.php:34
-
-    ---------- begin diff ----------
-@@ @@
-      * daily schedules, active days, and validity ranges.
-      *
-      * @param ValidationContextInterface $validationContext Validation context
--     * @return void
-      */
-     public function validate(ValidationContextInterface $validationContext): void
-     {
-@@ @@
-     {
-         $requiredFields = ['daily_start', 'daily_end', 'days'];
-
--        foreach ($requiredFields as $field) {
--            if (empty($data[$field])) {
-+        foreach ($requiredFields as $requiredField) {
-+            if (empty($data[$requiredField])) {
-                 return false;
-             }
-         }
-    ----------- end diff -----------
-
-Applied rules:
- * RemoveUselessReturnTagRector
- * RenameForeachValueVariableToMatchExprVariableRector
-
-
-43) /home/andy-kani/pro/sites/packages/laravel-roster/src/Validation/Rules/AvailabilityOwnershipRule.php:28
-
-    ---------- begin diff ----------
-@@ @@
-      * Validates availability ownership for schedule and impediment entities.
-      *
-      * @param ValidationContextInterface $validationContext Validation context with entity data
--     * @return void
-      */
-     public function validate(ValidationContextInterface $validationContext): void
-     {
-@@ @@
-      *
-      * @param ValidationContextInterface $validationContext Validation context
-      * @param mixed $availabilityId Availability identifier
--     * @param Model $schedulable Schedulable entity
--     * @return void
-+     * @param Model $model Schedulable entity
-      */
-     private function validateAvailabilityOwnership(
-         ValidationContextInterface $validationContext,
-         mixed $availabilityId,
--        Model $schedulable
-+        Model $model
-     ): void {
-         $availability = $validationContext->getAvailabilityService()->find($availabilityId);
-
-@@ @@
-             return;
-         }
-
--        $isOwner = $availability->schedulable_id === $schedulable->id
--            && $availability->schedulable_type === get_class($schedulable);
-+        $isOwner = $availability->schedulable_id === $model->id
-+            && $availability->schedulable_type === get_class($model);
-
-         if (!$isOwner) {
-             $validationContext->setViolation(
-    ----------- end diff -----------
-
-Applied rules:
- * RemoveUselessReturnTagRector
- * RenameParamToMatchTypeRector
-
-
-44) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Commands/CacheRulesCommandTest.php:4
-
-    ---------- begin diff ----------
-@@ @@
-
- namespace Tests\Unit\Commands;
-
--use Illuminate\Foundation\Testing\RefreshDatabase;
-+use RuntimeException;
- use Illuminate\Support\Facades\File;
- use Mockery;
- use Roster\Commands\CacheRulesCommand;
-@@ @@
-
-     public function test_command_can_be_instantiated(): void
-     {
--        $command = new CacheRulesCommand;
-+        $cacheRulesCommand = new CacheRulesCommand;
-
--        $this->assertSame('roster:cache-rules', $command->getName());
--        $this->assertSame('Manage Roster validation rules cache', $command->getDescription());
-+        $this->assertSame('roster:cache-rules', $cacheRulesCommand->getName());
-+        $this->assertSame('Manage Roster validation rules cache', $cacheRulesCommand->getDescription());
-
--        $definition = $command->getDefinition();
--        $this->assertTrue($definition->hasOption('clear'));
--        $this->assertTrue($definition->hasOption('force'));
--        $this->assertTrue($definition->hasOption('show'));
--        $this->assertTrue($definition->hasOption('list'));
-+        $inputDefinition = $cacheRulesCommand->getDefinition();
-+        $this->assertTrue($inputDefinition->hasOption('clear'));
-+        $this->assertTrue($inputDefinition->hasOption('force'));
-+        $this->assertTrue($inputDefinition->hasOption('show'));
-+        $this->assertTrue($inputDefinition->hasOption('list'));
-     }
-
-     public function test_command_generates_cache_successfully(): void
-     {
--        $mockStats = new CacheStats(
-+        $cacheStats = new CacheStats(
-             path: $this->cacheFilePath,
-             rulesCount: 1,
-             sizeBytes: 123,
-@@ @@
-         );
-
-         $mockService = Mockery::mock(CacheRulesService::class);
--        $mockService->shouldReceive('generate')->once()->andReturn($mockStats);
-+        $mockService->shouldReceive('generate')->once()->andReturn($cacheStats);
-
-         $this->app->instance(CacheRulesService::class, $mockService);
-
-@@ @@
-
-     public function test_command_clears_and_regenerates_with_force(): void
-     {
--        $mockStats = new CacheStats(
-+        $cacheStats = new CacheStats(
-             path: $this->cacheFilePath,
-             rulesCount: 1,
-             sizeBytes: 123,
-@@ @@
-         );
-
-         $mockService = Mockery::mock(CacheRulesService::class);
--        $mockService->shouldReceive('clear')->once()->andReturn($mockStats);
-+        $mockService->shouldReceive('clear')->once()->andReturn($cacheStats);
-
-         $this->app->instance(CacheRulesService::class, $mockService);
-
-@@ @@
-
-     public function test_command_shows_cache_successfully(): void
-     {
--        $mockStats = new CacheStats(
-+        $cacheStats = new CacheStats(
-             path: $this->cacheFilePath,
-             rulesCount: 2,
-             sizeBytes: 456,
-@@ @@
-         );
-
-         $mockService = Mockery::mock(CacheRulesService::class);
--        $mockService->shouldReceive('show')->once()->andReturn($mockStats);
-+        $mockService->shouldReceive('show')->once()->andReturn($cacheStats);
-
-         $this->app->instance(CacheRulesService::class, $mockService);
-
-@@ @@
-
-         File::put($this->cacheFilePath, '<?php return ' . var_export($rules, true) . ';');
-
--        $mockService = Mockery::mock(CacheRulesService::class)->makePartial();
--        $mockService->shouldAllowMockingProtectedMethods();
-+        $legacyMock = Mockery::mock(CacheRulesService::class)->makePartial();
-+        $legacyMock->shouldAllowMockingProtectedMethods();
-
--        $this->app->instance(CacheRulesService::class, $mockService);
-+        $this->app->instance(CacheRulesService::class, $legacyMock);
-
-         $this->artisan('roster:cache-rules', ['--list' => true])
-             ->expectsTable(
-@@ @@
-     public function test_command_fails_when_generation_fails(): void
-     {
-         $mockService = Mockery::mock(CacheRulesService::class);
--        $mockService->shouldReceive('generate')->once()->andThrow(new \RuntimeException('Cache generation failed'));
-+        $mockService->shouldReceive('generate')->once()->andThrow(new RuntimeException('Cache generation failed'));
-
-         $this->app->instance(CacheRulesService::class, $mockService);
-
-@@ @@
-     public function test_command_fails_when_clear_fails(): void
-     {
-         $mockService = Mockery::mock(CacheRulesService::class);
--        $mockService->shouldReceive('clear')->once()->andThrow(new \RuntimeException('Cache clear failed'));
-+        $mockService->shouldReceive('clear')->once()->andThrow(new RuntimeException('Cache clear failed'));
-
-         $this->app->instance(CacheRulesService::class, $mockService);
-    ----------- end diff -----------
-
-Applied rules:
- * RenameVariableToMatchMethodCallReturnTypeRector
- * RenameVariableToMatchNewTypeRector
-
-
-45) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Commands/InstallRosterCommandTest.php:13
-
-    ---------- begin diff ----------
-@@ @@
- {
-     public function test_command_can_be_instantiated(): void
-     {
--        $command = new InstallRosterCommand;
--        $this->assertSame('roster:install', $command->getName());
--        $this->assertSame('Install the Roster package', $command->getDescription());
-+        $installRosterCommand = new InstallRosterCommand;
-+        $this->assertSame('roster:install', $installRosterCommand->getName());
-+        $this->assertSame('Install the Roster package', $installRosterCommand->getDescription());
-     }
-
-     public function test_handle_calls_installer_service_with_force_option(): void
-@@ @@
-         $mockService = Mockery::mock(RosterInstallerService::class);
-         $mockService->shouldReceive('install')
-             ->once()
--            ->withArgs(function ($command, $force) {
-+            ->withArgs(function ($command, $force): bool {
-                 return $command instanceof InstallRosterCommand && $force === true;
-             });
-
--        $command = new InstallRosterCommand;
-+        new InstallRosterCommand;
-         $this->app->instance(RosterInstallerService::class, $mockService);
-
-         $this->artisan('roster:install', ['--force' => true])
-@@ @@
-         $mockService = Mockery::mock(RosterInstallerService::class);
-         $mockService->shouldReceive('install')
-             ->once()
--            ->withArgs(function ($command, $force) {
-+            ->withArgs(function ($command, $force): bool {
-                 return $command instanceof InstallRosterCommand && $force === false;
-             });
-
--        $command = new InstallRosterCommand;
-+        new InstallRosterCommand;
-         $this->app->instance(RosterInstallerService::class, $mockService);
-
-         $this->artisan('roster:install')
-    ----------- end diff -----------
-
-Applied rules:
- * RemoveUnusedVariableAssignRector
- * RenameVariableToMatchNewTypeRector
- * ClosureReturnTypeRector
-
-
-46) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Domain/RepositoryMutationTest.php:6
-
-    ---------- begin diff ----------
-@@ @@
-
- use Illuminate\Database\Eloquent\Model;
- use Illuminate\Foundation\Testing\RefreshDatabase;
--use Illuminate\Support\Carbon;
- use Roster\Exceptions\ForbiddenModelMutationException;
- use Roster\Exceptions\InvalidOwnerException;
- use Roster\Exceptions\MissingOwnerException;
-@@ @@
- {
-     use RefreshDatabase;
-
--    private Model $testSchedulable;
-+    private Model $model;
-
-     /**
-      * Set up test environment.
-@@ @@
-     protected function setUp(): void
-     {
-         parent::setUp();
--        $this->testSchedulable = TestSchedulable::create();
-+        $this->model = TestSchedulable::create();
-     }
-
-     /**
-@@ @@
-         ];
-
-         // Act
--        $availability = availability_for($this->testSchedulable)->create($availabilityData);
-+        $availability = availability_for($this->model)->create($availabilityData);
-
-         // Assert
-         $this->assertInstanceOf(AvailabilityModel::class, $availability);
--        $this->assertSame($this->testSchedulable->id, $availability->schedulable_id);
-+        $this->assertSame($this->model->id, $availability->schedulable_id);
-         $this->assertSame(TestSchedulable::class, $availability->schedulable_type);
-     }
-
-@@ @@
-         $endDate = now()->addDays(30)->startOfDay();
-         $day = strtolower($startDate->format('l'));
-
--        $availability = availability_for($this->testSchedulable)->create([
-+        $availability = availability_for($this->model)->create([
-             'type' => 'consultation',
-             'daily_start' => '09:00:00',
-             'daily_end' => '17:00:00',
-@@ @@
-         ]);
-
-         // Act
--        $updated = availability_for($this->testSchedulable)->update($availability->id, [
-+        $updated = availability_for($this->model)->update($availability->id, [
-             'daily_start' => '10:00:00',
-         ]);
-
-@@ @@
-         $endDate = now()->addDays(30)->startOfDay();
-         $day = strtolower($startDate->format('l'));
-
--        $availability = availability_for($this->testSchedulable)->create([
-+        $availability = availability_for($this->model)->create([
-             'type' => 'consultation',
-             'daily_start' => '09:00:00',
-             'daily_end' => '17:00:00',
-@@ @@
-         ]);
-
-         // Act
--        $deleted = availability_for($this->testSchedulable)->delete($availability->id);
-+        $deleted = availability_for($this->model)->delete($availability->id);
-
-         // Assert
-         $this->assertTrue($deleted);
-@@ @@
-         $endDate = now()->addDays(30)->startOfDay();
-         $day = strtolower($startDate->format('l'));
-
--        $availability = availability_for($this->testSchedulable)->create([
-+        $availability = availability_for($this->model)->create([
-             'type' => 'consultation',
-             'daily_start' => '09:00:00',
-             'daily_end' => '17:00:00',
-@@ @@
-         $endDate1 = now()->addDays(30)->startOfDay();
-         $day1 = strtolower($startDate1->format('l'));
-
--        availability_for($this->testSchedulable)->create([
-+        availability_for($this->model)->create([
-             'type' => 'consultation',
-             'daily_start' => '09:00:00',
-             'daily_end' => '17:00:00',
-@@ @@
-         $endDate2 = now()->addDays(32)->startOfDay();
-         $day2 = strtolower($startDate2->format('l'));
-
--        $availability2 = availability_for($this->testSchedulable)->create([
-+        $availability2 = availability_for($this->model)->create([
-             'type' => 'consultation',
-             'daily_start' => '08:00:00',
-             'daily_end' => '18:00:00',
-@@ @@
-
-         // Act
-         $availabilityRepository->all(
--            schedulable: $this->testSchedulable,
-+            schedulable: $this->model,
-             owner: $availability2
-         );
-     }
-@@ @@
-         $endDate = now()->addDays(30)->startOfDay();
-         $day = strtolower($startDate->format('l'));
-
--        availability_for($this->testSchedulable)->create([
-+        availability_for($this->model)->create([
-             'type' => 'consultation',
-             'daily_start' => '09:00:00',
-             'daily_end' => '17:00:00',
-@@ @@
-                 'start_datetime' => $startDate->copy()->setTime(10, 0),
-                 'end_datetime' => $startDate->copy()->setTime(11, 0),
-             ],
--            schedulable: $this->testSchedulable
-+            schedulable: $this->model
-         );
-     }
-
-@@ @@
-         $endDate = now()->addDays(30)->startOfDay();
-         $day = strtolower($startDate->format('l'));
-
--        $availability = availability_for($this->testSchedulable)->create([
-+        $availability = availability_for($this->model)->create([
-             'type' => 'consultation',
-             'daily_start' => '09:00:00',
-             'daily_end' => '17:00:00',
-@@ @@
-         // Assert
-         $this->assertInstanceOf(ScheduleModel::class, $schedule);
-         $this->assertSame($availability->id, $schedule->availability_id);
--        $this->assertSame($this->testSchedulable->id, $schedule->schedulable_id);
-+        $this->assertSame($this->model->id, $schedule->schedulable_id);
-     }
-
-     /**
-@@ @@
-         $endDate = now()->addDays(30)->startOfDay();
-         $day = strtolower($startDate->format('l'));
-
--        $availability = availability_for($this->testSchedulable)->create([
-+        $availability = availability_for($this->model)->create([
-             'type' => 'consultation',
-             'daily_start' => '09:00:00',
-             'daily_end' => '17:00:00',
-@@ @@
-         $endDate = now()->addDays(30)->startOfDay();
-         $day = strtolower($startDate->format('l'));
-
--        $availability = availability_for($this->testSchedulable)->create([
-+        $availability = availability_for($this->model)->create([
-             'type' => 'consultation',
-             'daily_start' => '09:00:00',
-             'daily_end' => '17:00:00',
-@@ @@
-         $endDate = now()->addDays(30)->startOfDay();
-         $day = strtolower($startDate->format('l'));
-
--        $availability = availability_for($this->testSchedulable)->create([
-+        $availability = availability_for($this->model)->create([
-             'type' => 'consultation',
-             'daily_start' => '09:00:00',
-             'daily_end' => '17:00:00',
-@@ @@
-         // Act
-         $scheduleRepository->find(
-             id: $schedule->id,
--            schedulable: $this->testSchedulable
-+            schedulable: $this->model
-         );
-     }
-
-@@ @@
-         $endDate = now()->addDays(30)->startOfDay();
-         $day = strtolower($startDate->format('l'));
-
--        $availability = availability_for($this->testSchedulable)->create([
-+        $availability = availability_for($this->model)->create([
-             'type' => 'consultation',
-             'daily_start' => '09:00:00',
-             'daily_end' => '17:00:00',
-@@ @@
-         // Act
-         $foundSchedule = $scheduleRepository->find(
-             id: $schedule->id,
--            schedulable: $this->testSchedulable,
-+            schedulable: $this->model,
-             owner: $availability
-         );
-
-@@ @@
-         $endDate = now()->addDays(30)->startOfDay();
-         $day = strtolower($startDate->format('l'));
-
--        availability_for($this->testSchedulable)->create([
-+        availability_for($this->model)->create([
-             'type' => 'consultation',
-             'daily_start' => '09:00:00',
-             'daily_end' => '17:00:00',
-@@ @@
-         $this->expectException(MissingOwnerException::class);
-
-         // Act
--        $scheduleRepository->all(schedulable: $this->testSchedulable);
-+        $scheduleRepository->all(schedulable: $this->model);
-     }
- }
-    ----------- end diff -----------
-
-Applied rules:
- * RenamePropertyToMatchTypeRector
-
-
-47) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Models/AvailabilityTest.php:19
-
-    ---------- begin diff ----------
-@@ @@
- {
-     use RefreshDatabase;
-
--    private Model $testSchedulable;
-+    private Model $model;
-
-     /**
-      * Set up the test environment.
-@@ @@
-     {
-         parent::setUp();
-
--        $this->testSchedulable = TestSchedulable::create();
-+        $this->model = TestSchedulable::create();
-     }
-
-     /**
-@@ @@
-             'validity_end' => '2038-07-31 23:59:59',
-         ];
-
--        return availability_for($this->testSchedulable)
-+        return availability_for($this->model)
-             ->create(array_merge($defaultAttributes, $attributes));
-     }
-
-@@ @@
-
-         // Assert
-         $this->assertInstanceOf(AvailabilityModel::class, $availability);
--        $this->assertSame($this->testSchedulable->id, $availability->schedulable_id);
-+        $this->assertSame($this->model->id, $availability->schedulable_id);
-         $this->assertSame(TestSchedulable::class, $availability->schedulable_type);
-         $this->assertSame('training', $availability->type);
-         $this->assertSame(['monday', 'wednesday', 'friday'], $availability->days);
-@@ @@
-     {
-         // Arrange
-         $availability = new AvailabilityModel([
--            'schedulable_id' => $this->testSchedulable->id,
-+            'schedulable_id' => $this->model->id,
-             'schedulable_type' => TestSchedulable::class,
-             'type' => 'consultation',
-             'daily_start' => '09:00:00',
-@@ @@
-     {
-         // Arrange
-         $availability = new AvailabilityModel([
--            'schedulable_id' => $this->testSchedulable->id,
-+            'schedulable_id' => $this->model->id,
-             'schedulable_type' => TestSchedulable::class,
-             'type' => 'consultation',
-             'daily_start' => '09:00:00',
-@@ @@
-     {
-         // Arrange
-         $availability = new AvailabilityModel([
--            'schedulable_id' => $this->testSchedulable->id,
-+            'schedulable_id' => $this->model->id,
-             'schedulable_type' => TestSchedulable::class,
-             'type' => 'consultation',
-             'daily_start' => '09:00:00',
-@@ @@
-     {
-         // Arrange
-         $availability = new AvailabilityModel([
--            'schedulable_id' => $this->testSchedulable->id,
-+            'schedulable_id' => $this->model->id,
-             'schedulable_type' => TestSchedulable::class,
-             'type' => 'consultation',
-             'daily_start' => '09:00:00',
-@@ @@
-
-         // Act & Assert
-         $this->assertInstanceOf(TestSchedulable::class, $availability->schedulable);
--        $this->assertSame($this->testSchedulable->id, $availability->schedulable->id);
-+        $this->assertSame($this->model->id, $availability->schedulable->id);
-     }
-
-     /**
-    ----------- end diff -----------
-
-Applied rules:
- * RenamePropertyToMatchTypeRector
-
-
-48) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Models/ImpedimentTest.php:24
-
-    ---------- begin diff ----------
-@@ @@
-     /**
-      * Test schedulable instance.
-      */
--    private Model $testSchedulable;
-+    private Model $model;
-
-     /**
-      * Test availability instance.
-@@ @@
-     {
-         parent::setUp();
-
--        $this->testSchedulable = TestSchedulable::create();
-+        $this->model = TestSchedulable::create();
-         $this->availability = $this->createAvailability();
-     }
-
-@@ @@
-      */
-     private function createAvailability(): Availability
-     {
--        return availability_for($this->testSchedulable)->create([
-+        return availability_for($this->model)->create([
-             'type' => 'consultation',
-             'daily_start' => '09:00:00',
-             'daily_end' => '17:00:00',
-@@ @@
-
-         // Assert
-         $this->assertInstanceOf(ImpedimentModel::class, $impediment);
--        $this->assertSame($this->testSchedulable->id, $impediment->schedulable_id);
-+        $this->assertSame($this->model->id, $impediment->schedulable_id);
-         $this->assertSame(TestSchedulable::class, $impediment->schedulable_type);
-         $this->assertSame($this->availability->id, $impediment->availability_id);
-         $this->assertSame('Vacation', $impediment->reason);
-@@ @@
-
-         // Assert
-         $this->assertInstanceOf(TestSchedulable::class, $schedulable);
--        $this->assertSame($this->testSchedulable->id, $schedulable->id);
-+        $this->assertSame($this->model->id, $schedulable->id);
-     }
-
-     /**
-    ----------- end diff -----------
-
-Applied rules:
- * RenamePropertyToMatchTypeRector
-
-
-49) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Services/AvailabilityServiceTest.php:21
-
-    ---------- begin diff ----------
-@@ @@
- {
-     use RefreshDatabase;
-
--    private Model $testSchedulable;
-+    private Model $model;
-
-     /**
-      * Set up test environment.
-@@ @@
-     {
-         parent::setUp();
-
--        $this->testSchedulable = TestSchedulable::create();
-+        $this->model = TestSchedulable::create();
-     }
-
-     /**
-@@ @@
-         ];
-
-         // Act
--        $availability = availability_for($this->testSchedulable)->create($availabilityData);
-+        $availability = availability_for($this->model)->create($availabilityData);
-
-         // Assert
-         $this->assertInstanceOf(AvailabilityModel::class, $availability);
-@@ @@
-         $this->assertDatabaseHas('roster_availabilities', [
-             'id' => $availability->id,
-             'type' => 'consultation',
--            'schedulable_id' => $this->testSchedulable->id,
-+            'schedulable_id' => $this->model->id,
-             'schedulable_type' => TestSchedulable::class,
-         ]);
-
-         $this->assertSame('consultation', $availability->type);
-         $this->assertSame(['monday', 'wednesday', 'friday'], $availability->days);
--        $this->assertSame($this->testSchedulable->id, $availability->schedulable_id);
-+        $this->assertSame($this->model->id, $availability->schedulable_id);
-         $this->assertSame(TestSchedulable::class, $availability->schedulable_type);
-     }
-
-@@ @@
-         ];
-
-         // Act
--        $availability = availability_for($this->testSchedulable)->create($availabilityData);
-+        $availability = availability_for($this->model)->create($availabilityData);
-
-         // Assert
-         $this->assertNotEmpty($availability->days);
-@@ @@
-     public function test_can_update_an_existing_availability(): void
-     {
-         // Arrange
--        $availability = availability_for($this->testSchedulable)->create([
-+        $availability = availability_for($this->model)->create([
-             'type' => 'consultation',
-             'daily_start' => '09:00:00',
-             'daily_end' => '17:00:00',
-@@ @@
-         ];
-
-         // Act
--        $result = availability_for($this->testSchedulable)->update($availability->id, $updateData);
-+        $result = availability_for($this->model)->update($availability->id, $updateData);
-
-         // Assert
-         $this->assertTrue($result);
-@@ @@
-         );
-
-         // Act
--        availability_for($this->testSchedulable)->update($availabilityId, $updateData);
-+        availability_for($this->model)->update($availabilityId, $updateData);
-     }
-
-     /**
-@@ @@
-     public function test_can_delete_an_availability(): void
-     {
-         // Arrange
--        $availability = availability_for($this->testSchedulable)->create([
-+        $availability = availability_for($this->model)->create([
-             'type' => 'consultation',
-             'daily_start' => '09:00:00',
-             'daily_end' => '17:00:00',
-@@ @@
-         ]);
-
-         // Act
--        $result = availability_for($this->testSchedulable)->delete($availability->id);
-+        $result = availability_for($this->model)->delete($availability->id);
-
-         // Assert
-         $this->assertTrue($result);
-@@ @@
-         );
-
-         // Act
--        availability_for($this->testSchedulable)->delete($availabilityId);
-+        availability_for($this->model)->delete($availabilityId);
-     }
-
-     /**
-@@ @@
-     public function test_can_find_an_availability_by_id(): void
-     {
-         // Arrange
--        $availability = availability_for($this->testSchedulable)->create([
-+        $availability = availability_for($this->model)->create([
-             'type' => 'consultation',
-             'daily_start' => '09:00:00',
-             'daily_end' => '17:00:00',
-@@ @@
-         ]);
-
-         // Act
--        $result = availability_for($this->testSchedulable)->find($availability->id);
-+        $result = availability_for($this->model)->find($availability->id);
-
-         // Assert
-         $this->assertInstanceOf(AvailabilityModel::class, $result);
-@@ @@
-         $availabilityId = 999;
-
-         // Act
--        $result = availability_for($this->testSchedulable)->find($availabilityId);
-+        $result = availability_for($this->model)->find($availabilityId);
-
-         // Assert
-         $this->assertNull($result);
-@@ @@
-     public function test_can_get_all_availabilities_with_filters(): void
-     {
-         // Arrange
--        availability_for($this->testSchedulable)->create([
-+        availability_for($this->model)->create([
-             'type' => 'consultation',
-             'daily_start' => '09:00:00',
-             'daily_end' => '12:00:00',
-@@ @@
-             'validity_end' => '2038-07-31',
-         ]);
-
--        availability_for($this->testSchedulable)->create([
-+        availability_for($this->model)->create([
-             'type' => 'training',
-             'daily_start' => '14:00:00',
-             'daily_end' => '17:00:00',
-@@ @@
-         ]);
-
-         // Act
--        $result = availability_for($this->testSchedulable)
-+        $result = availability_for($this->model)
-             ->whereType('consultation')
-             ->all();
-
-@@ @@
-         $this->expectException(ValidationFailedException::class);
-
-         // Act
--        availability_for($this->testSchedulable)->create($availabilityData);
-+        availability_for($this->model)->create($availabilityData);
-     }
-
-     /**
-@@ @@
-     public function test_handles_validation_failure_during_update(): void
-     {
-         // Arrange
--        $availability = availability_for($this->testSchedulable)->create([
-+        $availability = availability_for($this->model)->create([
-             'type' => 'consultation',
-             'daily_start' => '09:00:00',
-             'daily_end' => '17:00:00',
-@@ @@
-         $this->expectException(ValidationFailedException::class);
-
-         // Act
--        availability_for($this->testSchedulable)->update($availability->id, $updateData);
-+        availability_for($this->model)->update($availability->id, $updateData);
-     }
-
-     /**
-@@ @@
-     public function test_validate_partial_date_update_fails_when_end_before_existing_start(): void
-     {
-         // Arrange
--        $availability = availability_for($this->testSchedulable)->create([
-+        $availability = availability_for($this->model)->create([
-             'type' => 'consultation',
-             'daily_start' => '09:00:00',
-             'daily_end' => '17:00:00',
-@@ @@
-         $this->expectException(ValidationFailedException::class);
-
-         // Act
--        availability_for($this->testSchedulable)->update($availability->id, $updateData);
-+        availability_for($this->model)->update($availability->id, $updateData);
-     }
-
-     /**
-@@ @@
-         $this->expectException(ValidationFailedException::class);
-
-         // Act
--        availability_for($this->testSchedulable)->create($availabilityData);
-+        availability_for($this->model)->create($availabilityData);
-     }
-
-     /**
-@@ @@
-     public function test_sets_and_gets_filters_correctly(): void
-     {
-         // Arrange
--        $availabilityService = availability_for($this->testSchedulable);
-+        $availabilityService = availability_for($this->model);
-         $filters = [
-             'type' => 'consultation',
-             'day' => 'monday',
-@@ @@
-     public function test_does_not_merge_non_adjacent_availabilities(): void
-     {
-         // Arrange
--        $existingAvailability = availability_for($this->testSchedulable)->create([
-+        $existingAvailability = availability_for($this->model)->create([
-             'type' => 'consultation',
-             'daily_start' => '09:00:00',
-             'daily_end' => '12:00:00',
-@@ @@
-         ];
-
-         // Act
--        $availability = availability_for($this->testSchedulable)->create($newData);
-+        $availability = availability_for($this->model)->create($newData);
-
-         // Assert
-         $this->assertDatabaseHas('roster_availabilities', [
-@@ @@
-         $this->expectExceptionMessageMatches('/Minimum duration/');
-
-         // Act
--        availability_for($this->testSchedulable)->create($availabilityData);
-+        availability_for($this->model)->create($availabilityData);
-     }
-
-     /**
-@@ @@
-         $this->expectException(ValidationFailedException::class);
-
-         // Act
--        availability_for($this->testSchedulable)->create($availabilityData);
-+        availability_for($this->model)->create($availabilityData);
-     }
-
-     /**
-@@ @@
-     public function test_cannot_update_schedulable_fields(): void
-     {
-         // Arrange
--        $availability = availability_for($this->testSchedulable)->create([
-+        $availability = availability_for($this->model)->create([
-             'type' => 'consultation',
-             'daily_start' => '09:00:00',
-             'daily_end' => '17:00:00',
-@@ @@
-         $this->expectExceptionMessageMatches("/cannot be changed/");
-
-         // Act
--        availability_for($this->testSchedulable)->update($availability->id, $updateData);
-+        availability_for($this->model)->update($availability->id, $updateData);
-     }
-
-     /**
-@@ @@
-     public function test_can_get_availabilities_by_type_filter(): void
-     {
-         // Arrange
--        availability_for($this->testSchedulable)->create([
-+        availability_for($this->model)->create([
-             'type' => 'consultation',
-             'daily_start' => '09:00:00',
-             'daily_end' => '12:00:00',
-@@ @@
-             'validity_end' => '2038-07-31',
-         ]);
-
--        availability_for($this->testSchedulable)->create([
-+        availability_for($this->model)->create([
-             'type' => 'training',
-             'daily_start' => '14:00:00',
-             'daily_end' => '17:00:00',
-@@ @@
-         ]);
-
-         // Act
--        $result = availability_for($this->testSchedulable)
-+        $result = availability_for($this->model)
-             ->whereType('consultation')
-             ->all();
-
-@@ @@
-     public function test_can_reset_filters(): void
-     {
-         // Arrange
--        $availabilityService = availability_for($this->testSchedulable);
-+        $availabilityService = availability_for($this->model);
-         $availabilityService->setFilters(['type' => 'consultation']);
-         $availabilityService->setFilter('day', 'monday');
-
-         // Act
-         $availabilityService->resetFilters();
-+
-         $filters = $availabilityService->getFilters();
-
-         // Assert
-@@ @@
-     public function test_can_filter_by_availability_id(): void
-     {
-         // Arrange
--        $availability = availability_for($this->testSchedulable)->create([
-+        $availability = availability_for($this->model)->create([
-             'type' => 'consultation',
-             'daily_start' => '09:00:00',
-             'daily_end' => '17:00:00',
-@@ @@
-         ]);
-
-         // Act
--        $result = availability_for($this->testSchedulable)->find($availability->id);
-+        $result = availability_for($this->model)->find($availability->id);
-
-         // Assert
-         $this->assertSame($availability->id, $result->id);
-@@ @@
-         $this->expectExceptionMessage("Day 'not-an-array' is not a valid day of week");
-
-         // Act
--        availability_for($this->testSchedulable)->create($availabilityData);
-+        availability_for($this->model)->create($availabilityData);
-     }
-
-     /**
-@@ @@
-         $this->expectExceptionMessage('Days array cannot be empty');
-
-         // Act
--        availability_for($this->testSchedulable)->create($availabilityData);
-+        availability_for($this->model)->create($availabilityData);
-     }
-
-     /**
-@@ @@
-     public function test_partial_update_allowed(): void
-     {
-         // Arrange
--        $availability = availability_for($this->testSchedulable)->create([
-+        $availability = availability_for($this->model)->create([
-             'type' => 'consultation',
-             'daily_start' => '09:00:00',
-             'daily_end' => '17:00:00',
-@@ @@
-         ];
-
-         // Act
--        $result = availability_for($this->testSchedulable)->update($availability->id, $updateData);
-+        $result = availability_for($this->model)->update($availability->id, $updateData);
-
-         // Assert
-         $this->assertTrue($result);
-@@ @@
-         $this->expectExceptionMessage("Day 'invalid-day' is not a valid day of week");
-
-         // Act
--        availability_for($this->testSchedulable)->create($availabilityData);
-+        availability_for($this->model)->create($availabilityData);
-     }
-
-     /**
-@@ @@
-         $this->expectExceptionMessageMatches("/Invalid type 'invalid-type'/");
-
-         // Act
--        availability_for($this->testSchedulable)->create($availabilityData);
-+        availability_for($this->model)->create($availabilityData);
-     }
-
-     /**
-@@ @@
-         config()->set('roster.allowed_types', []);
-
-         // Act
--        $availability = availability_for($this->testSchedulable)->create([
-+        $availability = availability_for($this->model)->create([
-             'type' => 'anything',
-             'daily_start' => '09:00:00',
-             'daily_end' => '17:00:00',
-@@ @@
-     public function test_update_does_not_trigger_merge(): void
-     {
-         // Arrange
--        $availability1 = availability_for($this->testSchedulable)->create([
-+        $availability1 = availability_for($this->model)->create([
-             'type' => 'consultation',
-             'daily_start' => '09:00:00',
-             'daily_end' => '12:00:00',
-@@ @@
-             'validity_end' => '2038-07-31',
-         ]);
-
--        $availability2 = availability_for($this->testSchedulable)->create([
-+        $availability2 = availability_for($this->model)->create([
-             'type' => 'consultation',
-             'daily_start' => '14:00:00',
-             'daily_end' => '17:00:00',
-@@ @@
-         ];
-
-         // Act
--        $result = availability_for($this->testSchedulable)->update($availability2->id, $updateData);
-+        $result = availability_for($this->model)->update($availability2->id, $updateData);
-
-         // Assert
-         $this->assertTrue($result);
-    ----------- end diff -----------
-
-Applied rules:
- * NewlineBeforeNewAssignSetRector
- * RenamePropertyToMatchTypeRector
-
-
-50) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Services/ImpedimentServiceTest.php:25
-
-    ---------- begin diff ----------
-@@ @@
- {
-     use RefreshDatabase;
-
--    private Model $testSchedulable;
-+    private Model $model;
-+
-     private AvailabilityModel $availabilityModel;
-
-     /**
-@@ @@
-     {
-         parent::setUp();
-
--        $this->testSchedulable = TestSchedulable::create();
-+        $this->model = TestSchedulable::create();
-
-         Config::set('roster.durations.default_slot_interval_minutes', 15);
-         Config::set('roster.durations.max_search_period_days', 30);
-
--        $this->availabilityModel = availability_for($this->testSchedulable)->create([
-+        $this->availabilityModel = availability_for($this->model)->create([
-             'type' => 'consultation',
-             'daily_start' => '09:00:00',
-             'daily_end' => '17:00:00',
-@@ @@
-         $this->assertInstanceOf(ImpedimentModel::class, $impediment);
-         $this->assertSame('System maintenance', $impediment->reason);
-         $this->assertSame($this->availabilityModel->id, $impediment->availability_id);
--        $this->assertSame($this->testSchedulable->id, $impediment->schedulable_id);
-+        $this->assertSame($this->model->id, $impediment->schedulable_id);
-         $this->assertSame(['priority' => 'high'], $impediment->metadata);
-     }
-
-@@ @@
-     public function test_is_time_slot_blocked_with_type_filter(): void
-     {
-         // Arrange
--        $otherAvailability = availability_for($this->testSchedulable)->create([
-+        $otherAvailability = availability_for($this->model)->create([
-             'type' => 'emergency',
-             'daily_start' => '18:00:00',
-             'daily_end' => '21:00:00',
-@@ @@
-         ]);
-
-         // Assert
--        $this->assertSame(150.0, $impediment->duration_minutes);
-+        $this->assertEqualsWithDelta(150.0, $impediment->duration_minutes, PHP_FLOAT_EPSILON);
-     }
-
-     /**
-@@ @@
-         $dailyEnd   = $now->copy()->addMinutes(20);
-         $validityEnd = $now->copy()->addHour();
-
--        $availability = availability_for($this->testSchedulable)->create([
-+        $availability = availability_for($this->model)->create([
-             'type' => 'instant-test',
-             'daily_start' => $dailyStart->format('H:i:s'),
-             'daily_end' => $dailyEnd->format('H:i:s'),
-@@ @@
-     public function test_impediment_on_non_availability_day(): void
-     {
-         // Arrange
--        $mondayOnlyAvailability = availability_for($this->testSchedulable)->create([
-+        $mondayOnlyAvailability = availability_for($this->model)->create([
-             'type' => 'monday-only',
-             'daily_start' => '20:00:00',
-             'daily_end' => '22:00:00',
-@@ @@
-     public function test_impediment_outside_availability_hours(): void
-     {
-         // Arrange
--        $limitedAvailability = availability_for($this->testSchedulable)->create([
-+        $limitedAvailability = availability_for($this->model)->create([
-             'type' => 'limited',
-             'daily_start' => '20:00:00',
-             'daily_end' => '23:00:00',
-@@ @@
-         }
-
-         // Act
--        $paginator = impediment_for($this->availabilityModel)->paginate(10);
-+        $lengthAwarePaginator = impediment_for($this->availabilityModel)->paginate(10);
-
-         // Assert
--        $this->assertSame(25, $paginator->total());
--        $this->assertSame(10, $paginator->perPage());
--        $this->assertSame(3, $paginator->lastPage());
--        $this->assertCount(10, $paginator->items());
-+        $this->assertSame(25, $lengthAwarePaginator->total());
-+        $this->assertSame(10, $lengthAwarePaginator->perPage());
-+        $this->assertSame(3, $lengthAwarePaginator->lastPage());
-+        $this->assertCount(10, $lengthAwarePaginator->items());
-     }
+     private ImpedimentScheduleDaysCoherenceRule $rule;
 
      /**
     ----------- end diff -----------
 
 Applied rules:
  * NewlineBetweenClassLikeStmtsRector
- * RenameVariableToMatchMethodCallReturnTypeRector
- * RenamePropertyToMatchTypeRector
- * AssertEqualsOrAssertSameFloatParameterToSpecificMethodsTypeRector
 
 
-51) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Services/ScheduleServiceTest.php:11
+19) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Validation/Rules/RequiredFieldsRuleTest.php:4
 
     ---------- begin diff ----------
 @@ @@
- use Illuminate\Support\Facades\Config;
- use Roster\Enums\ScheduleStatus;
- use Roster\Models\Schedule as ScheduleModel;
--use Roster\Models\Availability as AvailabilityModel;
- use Roster\Validation\Exceptions\ValidationFailedException;
- use Tests\TestCase;
- use Tests\Support\TestSchedulable;
-@@ @@
- {
-     use RefreshDatabase;
 
--    private Model $testSchedulable;
-+    private Model $model;
+ namespace Tests\Unit\Validation\Rules;
 
-     /**
-      * Set up test environment.
+-use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
+ use PHPUnit\Framework\MockObject\MockObject;
+ use Roster\Contracts\Validation\ValidationContextInterface;
+ use Roster\Enums\EntityType;
 @@ @@
-     {
-         parent::setUp();
-
--        $this->testSchedulable = TestSchedulable::create();
-+        $this->model = TestSchedulable::create();
-
-         Config::set('roster.durations.default_slot_interval_minutes', 15);
-         Config::set('roster.durations.max_search_period_days', 30);
-@@ @@
-     public function test_create_schedule_successfully(): void
-     {
-         // Arrange
--        $availability = availability_for($this->testSchedulable)->create([
-+        $availability = availability_for($this->model)->create([
-             'type' => 'consultation',
-             'daily_start' => '09:00:00',
-             'daily_end' => '17:00:00',
-@@ @@
-     public function test_create_schedule_with_default_status(): void
-     {
-         // Arrange
--        $availability = availability_for($this->testSchedulable)->create([
-+        $availability = availability_for($this->model)->create([
-             'type' => 'consultation',
-             'daily_start' => '09:00:00',
-             'daily_end' => '17:00:00',
-@@ @@
-     public function test_create_schedule_fails_when_end_before_start(): void
-     {
-         // Arrange
--        $availability = availability_for($this->testSchedulable)->create([
-+        $availability = availability_for($this->model)->create([
-             'type' => 'consultation',
-             'daily_start' => '09:00:00',
-             'daily_end' => '17:00:00',
-@@ @@
-     public function test_create_schedule_fails_when_too_short(): void
-     {
-         // Arrange
--        $availability = availability_for($this->testSchedulable)->create([
-+        $availability = availability_for($this->model)->create([
-             'type' => 'consultation',
-             'daily_start' => '09:00:00',
-             'daily_end' => '17:00:00',
-@@ @@
-     public function test_update_schedule_successfully(): void
-     {
-         // Arrange
--        $availability = availability_for($this->testSchedulable)->create([
-+        $availability = availability_for($this->model)->create([
-             'type' => 'consultation',
-             'daily_start' => '09:00:00',
-             'daily_end' => '17:00:00',
-@@ @@
-     public function test_update_schedule_with_datetime_changes(): void
-     {
-         // Arrange
--        $availability = availability_for($this->testSchedulable)->create([
-+        $availability = availability_for($this->model)->create([
-             'type' => 'consultation',
-             'daily_start' => '09:00:00',
-             'daily_end' => '17:00:00',
-@@ @@
-     public function test_update_schedule_fails_when_overlap(): void
-     {
-         // Arrange
--        $availability = availability_for($this->testSchedulable)->create([
-+        $availability = availability_for($this->model)->create([
-             'type' => 'consultation',
-             'daily_start' => '09:00:00',
-             'daily_end' => '17:00:00',
-@@ @@
-     public function test_create_schedule_fails_when_overlap(): void
-     {
-         // Arrange
--        $availability = availability_for($this->testSchedulable)->create([
-+        $availability = availability_for($this->model)->create([
-             'type' => 'consultation',
-             'daily_start' => '09:00:00',
-             'daily_end' => '17:00:00',
-@@ @@
-     public function test_update_schedule_fails_when_not_found(): void
-     {
-         // Arrange
--        $availability = availability_for($this->testSchedulable)->create([
-+        $availability = availability_for($this->model)->create([
-             'type' => 'consultation',
-             'daily_start' => '09:00:00',
-             'daily_end' => '17:00:00',
-@@ @@
-     public function test_delete_schedule_successfully(): void
-     {
-         // Arrange
--        $availability = availability_for($this->testSchedulable)->create([
-+        $availability = availability_for($this->model)->create([
-             'type' => 'consultation',
-             'daily_start' => '09:00:00',
-             'daily_end' => '17:00:00',
-@@ @@
-     public function test_delete_schedule_fails_when_not_found(): void
-     {
-         // Arrange
--        $availability = availability_for($this->testSchedulable)->create([
-+        $availability = availability_for($this->model)->create([
-             'type' => 'consultation',
-             'daily_start' => '09:00:00',
-             'daily_end' => '17:00:00',
-@@ @@
-     public function test_find_schedule_by_id(): void
-     {
-         // Arrange
--        $availability = availability_for($this->testSchedulable)->create([
-+        $availability = availability_for($this->model)->create([
-             'type' => 'consultation',
-             'daily_start' => '09:00:00',
-             'daily_end' => '17:00:00',
-@@ @@
-     public function test_all_schedules(): void
-     {
-         // Arrange
--        $availability = availability_for($this->testSchedulable)->create([
-+        $availability = availability_for($this->model)->create([
-             'type' => 'consultation',
-             'daily_start' => '09:00:00',
-             'daily_end' => '17:00:00',
-@@ @@
-     public function test_get_schedules_with_filters(): void
-     {
-         // Arrange
--        $availability = availability_for($this->testSchedulable)->create([
-+        $availability = availability_for($this->model)->create([
-             'type' => 'consultation',
-             'daily_start' => '09:00:00',
-             'daily_end' => '17:00:00',
-@@ @@
-     public function test_get_schedules_with_datetime_range_filter(): void
-     {
-         // Arrange
--        $availability = availability_for($this->testSchedulable)->create([
-+        $availability = availability_for($this->model)->create([
-             'type' => 'consultation',
-             'daily_start' => '09:00:00',
-             'daily_end' => '17:00:00',
-@@ @@
-     public function test_find_next_slot_without_conflicts(): void
-     {
-         // Arrange
--        $availability = availability_for($this->testSchedulable)->create([
-+        $availability = availability_for($this->model)->create([
-             'type' => 'consultation',
-             'daily_start' => '09:00:00',
-             'daily_end' => '17:00:00',
-@@ @@
-     public function test_find_next_slot_return_start_only(): void
-     {
-         // Arrange
--        $availability = availability_for($this->testSchedulable)->create([
-+        $availability = availability_for($this->model)->create([
-             'type' => 'consultation',
-             'daily_start' => '09:00:00',
-             'daily_end' => '17:00:00',
-@@ @@
-     public function test_find_next_slot_respects_availability_hours(): void
-     {
-         // Arrange
--        $availability = availability_for($this->testSchedulable)->create([
-+        $availability = availability_for($this->model)->create([
-             'type' => 'consultation',
-             'daily_start' => '09:00:00',
-             'daily_end' => '17:00:00',
-@@ @@
-     public function test_find_next_slot_returns_null_when_no_availability(): void
-     {
-         // Arrange
--        $availability = availability_for($this->testSchedulable)->create([
-+        $availability = availability_for($this->model)->create([
-             'type' => 'limited',
-             'daily_start' => '09:00:00',
-             'daily_end' => '12:00:00',
-@@ @@
-     public function test_is_time_slot_available_returns_true(): void
-     {
-         // Arrange
--        $availability = availability_for($this->testSchedulable)->create([
-+        $availability = availability_for($this->model)->create([
-             'type' => 'consultation',
-             'daily_start' => '09:00:00',
-             'daily_end' => '17:00:00',
-@@ @@
-     public function test_is_time_slot_available_returns_false_when_schedule_overlap(): void
-     {
-         // Arrange
--        $availability = availability_for($this->testSchedulable)->create([
-+        $availability = availability_for($this->model)->create([
-             'type' => 'consultation',
-             'daily_start' => '09:00:00',
-             'daily_end' => '17:00:00',
-@@ @@
-     public function test_is_time_slot_available_returns_false_when_impediment_overlap(): void
-     {
-         // Arrange
--        $availability = availability_for($this->testSchedulable)->create([
-+        $availability = availability_for($this->model)->create([
-             'type' => 'consultation',
-             'daily_start' => '09:00:00',
-             'daily_end' => '17:00:00',
-@@ @@
-     public function test_is_time_slot_available_returns_false_when_outside_availability(): void
-     {
-         // Arrange
--        $availability = availability_for($this->testSchedulable)->create([
-+        $availability = availability_for($this->model)->create([
-             'type' => 'consultation',
-             'daily_start' => '09:00:00',
-             'daily_end' => '17:00:00',
-@@ @@
-     public function test_is_time_slot_available_with_type_filter(): void
-     {
-         // Arrange
--        $availabilityConsultation = availability_for($this->testSchedulable)->create([
-+        $availabilityConsultation = availability_for($this->model)->create([
-             'type' => 'consultation',
-             'daily_start' => '09:00:00',
-             'daily_end' => '12:00:00',
-@@ @@
-             'validity_end' => '2038-01-31',
-         ]);
-
--        $availabilityTraining = availability_for($this->testSchedulable)->create([
-+        $availabilityTraining = availability_for($this->model)->create([
-             'type' => 'training',
-             'daily_start' => '13:00:00',
-             'daily_end' => '17:00:00',
-@@ @@
-     public function test_find_available_slots_in_range(): void
-     {
-         // Arrange
--        $availability = availability_for($this->testSchedulable)->create([
-+        $availability = availability_for($this->model)->create([
-             'type' => 'consultation',
-             'daily_start' => '09:00:00',
-             'daily_end' => '17:00:00',
-@@ @@
-     public function test_is_period_available_returns_true(): void
-     {
-         // Arrange
--        $availability = availability_for($this->testSchedulable)->create([
-+        $availability = availability_for($this->model)->create([
-             'type' => 'consultation',
-             'daily_start' => '09:00:00',
-             'daily_end' => '17:00:00',
-@@ @@
-     public function test_is_period_available_returns_false_when_schedule_conflict(): void
-     {
-         // Arrange
--        $availability = availability_for($this->testSchedulable)->create([
-+        $availability = availability_for($this->model)->create([
-             'type' => 'consultation',
-             'daily_start' => '09:00:00',
-             'daily_end' => '17:00:00',
-@@ @@
-     public function test_is_period_available_returns_false_when_impediment_conflict(): void
-     {
-         // Arrange
--        $availability = availability_for($this->testSchedulable)->create([
-+        $availability = availability_for($this->model)->create([
-             'type' => 'consultation',
-             'daily_start' => '09:00:00',
-             'daily_end' => '17:00:00',
-@@ @@
-     public function test_is_period_available_returns_false_when_no_availability(): void
-     {
-         // Arrange
--        $availability = availability_for($this->testSchedulable)->create([
-+        $availability = availability_for($this->model)->create([
-             'type' => 'consultation',
-             'daily_start' => '09:00:00',
-             'daily_end' => '17:00:00',
-@@ @@
-     public function test_concurrent_schedule_creation_prevents_double_booking(): void
-     {
-         // Arrange
--        $availability = availability_for($this->testSchedulable)->create([
-+        $availability = availability_for($this->model)->create([
-             'type' => 'consultation',
-             'daily_start' => '09:00:00',
-             'daily_end' => '17:00:00',
-@@ @@
-     public function test_schedule_on_non_availability_day(): void
-     {
-         // Arrange
--        $mondayOnlyAvailability = availability_for($this->testSchedulable)->create([
-+        $mondayOnlyAvailability = availability_for($this->model)->create([
-             'type' => 'monday-only',
-             'daily_start' => '09:00:00',
-             'daily_end' => '17:00:00',
-@@ @@
-     public function test_schedule_outside_availability_hours(): void
-     {
-         // Arrange
--        $availability = availability_for($this->testSchedulable)->create([
-+        $availability = availability_for($this->model)->create([
-             'type' => 'consultation',
-             'daily_start' => '09:00:00',
-             'daily_end' => '17:00:00',
-@@ @@
-     public function test_schedule_exact_boundary_not_overlap(): void
-     {
-         // Arrange
--        $availability = availability_for($this->testSchedulable)->create([
-+        $availability = availability_for($this->model)->create([
-             'type' => 'consultation',
-             'daily_start' => '09:00:00',
-             'daily_end' => '17:00:00',
-@@ @@
-     public function test_find_next_slot_with_adjacent_impediments(): void
-     {
-         // Arrange
--        $availability = availability_for($this->testSchedulable)->create([
-+        $availability = availability_for($this->model)->create([
-             'type' => 'consultation',
-             'daily_start' => '09:00:00',
-             'daily_end' => '17:00:00',
-@@ @@
-     public function test_schedule_metadata_serialization(): void
-     {
-         // Arrange
--        $availability = availability_for($this->testSchedulable)->create([
-+        $availability = availability_for($this->model)->create([
-             'type' => 'consultation',
-             'daily_start' => '09:00:00',
-             'daily_end' => '17:00:00',
-@@ @@
-     public function test_schedule_duration_calculation(): void
-     {
-         // Arrange
--        $availability = availability_for($this->testSchedulable)->create([
-+        $availability = availability_for($this->model)->create([
-             'type' => 'consultation',
-             'daily_start' => '09:00:00',
-             'daily_end' => '17:00:00',
-@@ @@
-         ]);
-
-         // Assert
--        $this->assertSame(90.0, $schedule->duration_minutes);
-+        $this->assertEqualsWithDelta(90.0, $schedule->duration_minutes, PHP_FLOAT_EPSILON);
+         $expectedFields = ['daily_start', 'daily_end', 'days', 'validity_start', 'validity_end'];
+         foreach ($expectedFields as $field) {
+             $this->assertArrayHasKey($field, $violations);
+-            $this->assertSame("Field '{$field}' is required", $violations[$field]);
++            $this->assertSame(sprintf("Field '%s' is required", $field), $violations[$field]);
+         }
      }
-
-     /**
-@@ @@
-     public function test_full_booking_scenario(): void
-     {
-         // Arrange
--        $availability = availability_for($this->testSchedulable)->create([
-+        $availability = availability_for($this->model)->create([
-             'type' => 'consultation',
-             'daily_start' => '09:00:00',
-             'daily_end' => '17:00:00',
-@@ @@
-     public function test_reschedule_scenario(): void
-     {
-         // Arrange
--        $availability = availability_for($this->testSchedulable)->create([
-+        $availability = availability_for($this->model)->create([
-             'type' => 'consultation',
-             'daily_start' => '09:00:00',
-             'daily_end' => '17:00:00',
-@@ @@
-     public function test_complex_availability_scenario(): void
-     {
-         // Arrange
--        $morningAvailability = availability_for($this->testSchedulable)->create([
-+        $morningAvailability = availability_for($this->model)->create([
-             'type' => 'consultation',
-             'daily_start' => '09:00:00',
-             'daily_end' => '12:00:00',
-@@ @@
-             'validity_end' => '2038-01-31',
-         ]);
-
--        $afternoonAvailability = availability_for($this->testSchedulable)->create([
-+        $afternoonAvailability = availability_for($this->model)->create([
-             'type' => 'training',
-             'daily_start' => '13:00:00',
-             'daily_end' => '17:00:00',
     ----------- end diff -----------
 
 Applied rules:
- * RenamePropertyToMatchTypeRector
- * AssertEqualsOrAssertSameFloatParameterToSpecificMethodsTypeRector
+ * EncapsedStringsToSprintfRector
 
 
-52) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Validation/Rules/AvailabilityTemporalCoherenceRuleTest.php:20
-
-    ---------- begin diff ----------
-@@ @@
- {
-     use RefreshDatabase;
-
--    private Model $testSchedulable;
-+    private Model $model;
-
-     /**
-      * Set up test environment.
-@@ @@
-     protected function setUp(): void
-     {
-         parent::setUp();
--        $this->testSchedulable = TestSchedulable::create();
-+        $this->model = TestSchedulable::create();
-     }
-
-     /**
-@@ @@
-     public function test_cannot_shorten_availability_before_existing_future_schedule(): void
-     {
-         // Arrange
--        $availability = availability_for($this->testSchedulable)->create([
-+        $availability = availability_for($this->model)->create([
-             'type' => 'consultation',
-             'daily_start' => '09:00:00',
-             'daily_end' => '17:00:00',
-@@ @@
-         $this->expectExceptionMessageMatches("/Cannot set validity_start/");
-
-         // Act
--        availability_for($this->testSchedulable)->update($availability->id, [
-+        availability_for($this->model)->update($availability->id, [
-             'validity_start' => '2038-01-05',
-         ]);
-     }
-@@ @@
-     public function test_cannot_extend_availability_end_before_existing_future_schedule(): void
-     {
-         // Arrange
--        $availability = availability_for($this->testSchedulable)->create([
-+        $availability = availability_for($this->model)->create([
-             'type' => 'consultation',
-             'daily_start' => '09:00:00',
-             'daily_end' => '17:00:00',
-@@ @@
-         $this->expectExceptionMessageMatches("/Cannot set validity_end/");
-
-         // Act
--        availability_for($this->testSchedulable)->update($availability->id, [
-+        availability_for($this->model)->update($availability->id, [
-             'validity_end' => '2038-01-05',
-         ]);
-     }
-@@ @@
-     public function test_cannot_remove_days_with_future_impediments(): void
-     {
-         // Arrange
--        $availability = availability_for($this->testSchedulable)->create([
-+        $availability = availability_for($this->model)->create([
-             'type' => 'consultation',
-             'daily_start' => '09:00:00',
-             'daily_end' => '17:00:00',
-@@ @@
-         );
-
-         // Act
--        availability_for($this->testSchedulable)->update($availability->id, [
-+        availability_for($this->model)->update($availability->id, [
-             'days' => ['monday'],
-         ]);
-     }
-@@ @@
-     public function test_can_update_availability_without_conflict(): void
-     {
-         // Arrange
--        $availability = availability_for($this->testSchedulable)->create([
-+        $availability = availability_for($this->model)->create([
-             'type' => 'consultation',
-             'daily_start' => '09:00:00',
-             'daily_end' => '17:00:00',
-@@ @@
-         ]);
-
-         // Act
--        $result = availability_for($this->testSchedulable)->update($availability->id, [
-+        $result = availability_for($this->model)->update($availability->id, [
-             'daily_end' => '18:00:00',
-         ]);
-
-@@ @@
-     public function test_cannot_delete_availability_with_future_schedules(): void
-     {
-         // Arrange
--        $availability = availability_for($this->testSchedulable)->create([
-+        $availability = availability_for($this->model)->create([
-             'type' => 'consultation',
-             'daily_start' => '09:00:00',
-             'daily_end' => '17:00:00',
-@@ @@
-         $this->expectExceptionMessageMatches("/Cannot delete availability with future schedules/");
-
-         // Act
--        availability_for($this->testSchedulable)->delete($availability->id);
-+        availability_for($this->model)->delete($availability->id);
-     }
-
-     /**
-@@ @@
-     public function test_cannot_delete_availability_with_future_impediments(): void
-     {
-         // Arrange
--        $availability = availability_for($this->testSchedulable)->create([
-+        $availability = availability_for($this->model)->create([
-             'type' => 'consultation',
-             'daily_start' => '09:00:00',
-             'daily_end' => '17:00:00',
-@@ @@
-         $this->expectExceptionMessageMatches("/Cannot delete availability with future impediments/");
-
-         // Act
--        availability_for($this->testSchedulable)->delete($availability->id);
-+        availability_for($this->model)->delete($availability->id);
-     }
-
-     /**
-@@ @@
-     public function test_can_delete_availability_without_future_conflict(): void
-     {
-         // Arrange
--        $availability = availability_for($this->testSchedulable)->create([
-+        $availability = availability_for($this->model)->create([
-             'type' => 'consultation',
-             'daily_start' => '09:00:00',
-             'daily_end' => '17:00:00',
-@@ @@
-         ]);
-
-         // Act
--        $result = availability_for($this->testSchedulable)->delete($availability->id);
-+        $result = availability_for($this->model)->delete($availability->id);
-
-         // Assert
-         $this->assertTrue($result);
-    ----------- end diff -----------
-
-Applied rules:
- * RenamePropertyToMatchTypeRector
-
-
-53) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Validation/Rules/ImpedimentScheduleDaysCoherenceRuleTest.php:20
-
-    ---------- begin diff ----------
-@@ @@
- {
-     use RefreshDatabase;
-
--    private Model $testSchedulable;
-+    private Model $model;
-
-     /**
-      * Set up test environment.
-@@ @@
-     protected function setUp(): void
-     {
-         parent::setUp();
--        $this->testSchedulable = TestSchedulable::create();
-+        $this->model = TestSchedulable::create();
-     }
-
-     /**
-@@ @@
-     public function test_cannot_create_impediment_on_non_availability_day(): void
-     {
-         // Arrange
--        $availability = availability_for($this->testSchedulable)->create([
-+        $availability = availability_for($this->model)->create([
-             'type' => 'consultation',
-             'daily_start' => '09:00:00',
-             'daily_end' => '17:00:00',
-@@ @@
-     public function test_cannot_create_schedule_on_non_availability_day(): void
-     {
-         // Arrange
--        $availability = availability_for($this->testSchedulable)->create([
-+        $availability = availability_for($this->model)->create([
-             'type' => 'consultation',
-             'daily_start' => '09:00:00',
-             'daily_end' => '17:00:00',
-@@ @@
-     public function test_can_create_impediment_on_allowed_day(): void
-     {
-         // Arrange
--        $availability = availability_for($this->testSchedulable)->create([
-+        $availability = availability_for($this->model)->create([
-             'type' => 'consultation',
-             'daily_start' => '09:00:00',
-             'daily_end' => '17:00:00',
-    ----------- end diff -----------
-
-Applied rules:
- * RenamePropertyToMatchTypeRector
-
-
- [OK] 53 files would have been changed (dry-run) by Rector                                                              
+ [OK] 19 files would have been changed (dry-run) by Rector                                                              
 

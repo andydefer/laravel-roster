@@ -6,9 +6,7 @@ namespace Tests\Feature\Services;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Carbon;
 use Roster\Enums\DaysOfWeek;
-use Roster\Models\Availability as AvailabilityModel;
 use Roster\Validation\Exceptions\ValidationFailedException;
 use Tests\Support\TestSchedulable;
 use Tests\TestCase;
@@ -23,7 +21,8 @@ final class AvailabilityServiceDaysCoherenceTest extends TestCase
 {
     use RefreshDatabase;
 
-    private Model $testSchedulable;
+    /** @var Model The schedulable model used for testing */
+    private Model $schedulable;
 
     /**
      * Set up test environment.
@@ -32,7 +31,7 @@ final class AvailabilityServiceDaysCoherenceTest extends TestCase
     {
         parent::setUp();
 
-        $this->testSchedulable = TestSchedulable::create();
+        $this->schedulable = TestSchedulable::create();
     }
 
     /**
@@ -40,12 +39,12 @@ final class AvailabilityServiceDaysCoherenceTest extends TestCase
      */
     public function test_auto_adjusts_days_when_not_provided_and_period_less_than_7_days(): void
     {
-        // Arrange
+        // Arrange: Period of 4 days without explicit days
         $validityStart = '2038-07-01';
         $validityEnd = '2038-07-04';
 
-        // Act
-        $availability = availability_for($this->testSchedulable)->create([
+        // Act: Create availability without specifying days
+        $availability = availability_for($this->schedulable)->create([
             'type' => 'consultation',
             'daily_start' => '09:00:00',
             'daily_end' => '17:00:00',
@@ -53,7 +52,7 @@ final class AvailabilityServiceDaysCoherenceTest extends TestCase
             'validity_end' => $validityEnd,
         ]);
 
-        // Assert
+        // Assert: Days should be auto-adjusted to match period days
         $expectedDays = ['thursday', 'friday', 'saturday', 'sunday'];
         $this->assertEquals($expectedDays, $availability->days);
     }
@@ -63,11 +62,11 @@ final class AvailabilityServiceDaysCoherenceTest extends TestCase
      */
     public function test_uses_provided_days_when_period_less_than_7_days(): void
     {
-        // Arrange
+        // Arrange: Explicit days for a short period
         $providedDays = ['thursday', 'friday'];
 
-        // Act
-        $availability = availability_for($this->testSchedulable)->create([
+        // Act: Create availability with specific days
+        $availability = availability_for($this->schedulable)->create([
             'type' => 'consultation',
             'daily_start' => '09:00:00',
             'daily_end' => '17:00:00',
@@ -76,7 +75,7 @@ final class AvailabilityServiceDaysCoherenceTest extends TestCase
             'validity_end' => '2038-07-04',
         ]);
 
-        // Assert
+        // Assert: Provided days should be used exactly
         $this->assertEquals($providedDays, $availability->days);
     }
 
@@ -85,17 +84,17 @@ final class AvailabilityServiceDaysCoherenceTest extends TestCase
      */
     public function test_validation_fails_when_provided_days_not_in_period(): void
     {
-        // Arrange
+        // Arrange: Invalid days outside validity period
         $invalidDays = ['monday', 'thursday'];
         $validityStart = '2038-07-01';
         $validityEnd = '2038-07-04';
 
-        // Assert
+        // Assert: Should throw validation exception
         $this->expectException(ValidationFailedException::class);
         $this->expectExceptionMessageMatches("/Day 'monday' is not within the validity period/");
 
-        // Act
-        availability_for($this->testSchedulable)->create([
+        // Act: Attempt to create with invalid days
+        availability_for($this->schedulable)->create([
             'type' => 'consultation',
             'daily_start' => '09:00:00',
             'daily_end' => '17:00:00',
@@ -110,12 +109,12 @@ final class AvailabilityServiceDaysCoherenceTest extends TestCase
      */
     public function test_auto_adjusts_days_for_exact_week_period(): void
     {
-        // Arrange
+        // Arrange: Exactly 7-day period
         $validityStart = '2038-07-01';
         $validityEnd = '2038-07-07';
 
-        // Act
-        $availability = availability_for($this->testSchedulable)->create([
+        // Act: Create availability without specifying days
+        $availability = availability_for($this->schedulable)->create([
             'type' => 'consultation',
             'daily_start' => '09:00:00',
             'daily_end' => '17:00:00',
@@ -123,7 +122,7 @@ final class AvailabilityServiceDaysCoherenceTest extends TestCase
             'validity_end' => $validityEnd,
         ]);
 
-        // Assert
+        // Assert: Should include all days of week
         $this->assertEquals(DaysOfWeek::values(), $availability->days);
     }
 
@@ -132,12 +131,12 @@ final class AvailabilityServiceDaysCoherenceTest extends TestCase
      */
     public function test_period_more_than_7_days_uses_all_days_by_default(): void
     {
-        // Arrange
+        // Arrange: Period longer than a week
         $validityStart = '2038-07-01';
         $validityEnd = '2038-07-15';
 
-        // Act
-        $availability = availability_for($this->testSchedulable)->create([
+        // Act: Create availability without specifying days
+        $availability = availability_for($this->schedulable)->create([
             'type' => 'consultation',
             'daily_start' => '09:00:00',
             'daily_end' => '17:00:00',
@@ -145,7 +144,7 @@ final class AvailabilityServiceDaysCoherenceTest extends TestCase
             'validity_end' => $validityEnd,
         ]);
 
-        // Assert
+        // Assert: Should include all days of week
         $this->assertEquals(DaysOfWeek::values(), $availability->days);
     }
 
@@ -154,12 +153,12 @@ final class AvailabilityServiceDaysCoherenceTest extends TestCase
      */
     public function test_update_removes_days_not_in_new_period(): void
     {
-        // Arrange
+        // Arrange: Availability with days spanning period
         $originalDays = ['monday', 'wednesday', 'friday', 'sunday'];
         $originalValidityEnd = '2038-07-18';
         $newValidityEnd = '2038-07-10';
 
-        $availability = availability_for($this->testSchedulable)->create([
+        $availability = availability_for($this->schedulable)->create([
             'type' => 'consultation',
             'daily_start' => '09:00:00',
             'daily_end' => '17:00:00',
@@ -168,14 +167,13 @@ final class AvailabilityServiceDaysCoherenceTest extends TestCase
             'validity_end' => $originalValidityEnd,
         ]);
 
-        // Act
-        $result = availability_for($this->testSchedulable)->update(
+        // Act: Update with shorter validity period
+        $result = availability_for($this->schedulable)->update(
             id: $availability->id,
             data: ['validity_end' => $newValidityEnd]
         );
 
-
-        // Assert
+        // Assert: Days outside new period should be removed
         $this->assertTrue($result);
 
         $availability->refresh();
@@ -190,12 +188,12 @@ final class AvailabilityServiceDaysCoherenceTest extends TestCase
      */
     public function test_update_does_not_add_new_days_even_if_in_period(): void
     {
-        // Arrange
+        // Arrange: Availability with limited days
         $originalDays = ['monday', 'wednesday'];
         $originalValidityEnd = '2038-07-11';
         $newValidityEnd = '2038-07-18';
 
-        $availability = availability_for($this->testSchedulable)->create([
+        $availability = availability_for($this->schedulable)->create([
             'type' => 'consultation',
             'daily_start' => '09:00:00',
             'daily_end' => '17:00:00',
@@ -204,13 +202,13 @@ final class AvailabilityServiceDaysCoherenceTest extends TestCase
             'validity_end' => $originalValidityEnd,
         ]);
 
-        // Act
-        $result = availability_for($this->testSchedulable)->update(
+        // Act: Extend validity period
+        $result = availability_for($this->schedulable)->update(
             id: $availability->id,
             data: ['validity_end' => $newValidityEnd]
         );
 
-        // Assert
+        // Assert: Original days should remain unchanged
         $this->assertTrue($result);
 
         $availability->refresh();
@@ -222,13 +220,13 @@ final class AvailabilityServiceDaysCoherenceTest extends TestCase
      */
     public function test_update_validation_fails_when_new_days_not_in_new_period(): void
     {
-        // Arrange
+        // Arrange: Existing availability and invalid new days
         $originalDays = ['monday', 'wednesday', 'friday'];
         $invalidNewDays = ['monday', 'saturday'];
         $originalValidityEnd = '2038-07-18';
         $newValidityEnd = '2038-07-09';
 
-        $availability = availability_for($this->testSchedulable)->create([
+        $availability = availability_for($this->schedulable)->create([
             'type' => 'consultation',
             'daily_start' => '09:00:00',
             'daily_end' => '17:00:00',
@@ -237,12 +235,12 @@ final class AvailabilityServiceDaysCoherenceTest extends TestCase
             'validity_end' => $originalValidityEnd,
         ]);
 
-        // Assert
+        // Assert: Should throw validation exception
         $this->expectException(ValidationFailedException::class);
         $this->expectExceptionMessageMatches("/Day 'saturday' is not within the validity period/");
 
-        // Act
-        availability_for($this->testSchedulable)->update(
+        // Act: Attempt update with invalid days
+        availability_for($this->schedulable)->update(
             id: $availability->id,
             data: [
                 'days' => $invalidNewDays,
@@ -256,12 +254,12 @@ final class AvailabilityServiceDaysCoherenceTest extends TestCase
      */
     public function test_auto_adjusts_days_for_single_day_period(): void
     {
-        // Arrange
+        // Arrange: Single day period
         $validityStart = '2038-07-01';
         $validityEnd = '2038-07-01';
 
-        // Act
-        $availability = availability_for($this->testSchedulable)->create([
+        // Act: Create availability for single day
+        $availability = availability_for($this->schedulable)->create([
             'type' => 'consultation',
             'daily_start' => '09:00:00',
             'daily_end' => '17:00:00',
@@ -269,7 +267,7 @@ final class AvailabilityServiceDaysCoherenceTest extends TestCase
             'validity_end' => $validityEnd,
         ]);
 
-        // Assert
+        // Assert: Should only include the specific day
         $this->assertEquals(['thursday'], $availability->days);
     }
 
@@ -278,11 +276,11 @@ final class AvailabilityServiceDaysCoherenceTest extends TestCase
      */
     public function test_no_auto_adjustment_when_days_explicitly_provided(): void
     {
-        // Arrange
+        // Arrange: Explicit days for period
         $explicitDays = ['thursday', 'friday'];
 
-        // Act
-        $availability = availability_for($this->testSchedulable)->create([
+        // Act: Create with explicit days
+        $availability = availability_for($this->schedulable)->create([
             'type' => 'consultation',
             'daily_start' => '09:00:00',
             'daily_end' => '17:00:00',
@@ -291,7 +289,7 @@ final class AvailabilityServiceDaysCoherenceTest extends TestCase
             'validity_end' => '2038-07-04',
         ]);
 
-        // Assert
+        // Assert: Should use exactly the provided days
         $this->assertEquals($explicitDays, $availability->days);
     }
 
@@ -300,11 +298,11 @@ final class AvailabilityServiceDaysCoherenceTest extends TestCase
      */
     public function test_update_with_days_array_replaces_all_days(): void
     {
-        // Arrange
+        // Arrange: Existing availability with days
         $originalDays = ['monday', 'wednesday', 'friday'];
         $newDays = ['tuesday', 'thursday'];
 
-        $availability = availability_for($this->testSchedulable)->create([
+        $availability = availability_for($this->schedulable)->create([
             'type' => 'consultation',
             'daily_start' => '09:00:00',
             'daily_end' => '17:00:00',
@@ -313,13 +311,13 @@ final class AvailabilityServiceDaysCoherenceTest extends TestCase
             'validity_end' => '2038-07-18',
         ]);
 
-        // Act
-        $result = availability_for($this->testSchedulable)->update(
+        // Act: Update with new days array
+        $result = availability_for($this->schedulable)->update(
             id: $availability->id,
             data: ['days' => $newDays]
         );
 
-        // Assert
+        // Assert: Days should be completely replaced
         $this->assertTrue($result);
 
         $availability->refresh();
@@ -331,12 +329,12 @@ final class AvailabilityServiceDaysCoherenceTest extends TestCase
      */
     public function test_period_spanning_multiple_weeks_with_auto_adjustment(): void
     {
-        // Arrange
+        // Arrange: 10-day period spanning multiple weeks
         $validityStart = '2038-07-01';
         $validityEnd = '2038-07-10';
 
-        // Act
-        $availability = availability_for($this->testSchedulable)->create([
+        // Act: Create availability without specifying days
+        $availability = availability_for($this->schedulable)->create([
             'type' => 'consultation',
             'daily_start' => '09:00:00',
             'daily_end' => '17:00:00',
@@ -344,7 +342,7 @@ final class AvailabilityServiceDaysCoherenceTest extends TestCase
             'validity_end' => $validityEnd,
         ]);
 
-        // Assert
+        // Assert: Should include all days present in the period
         $expectedDays = [
             'thursday',
             'friday',

@@ -25,15 +25,11 @@ final class BelongsToSchedulableTest extends TestCase
 {
     use RefreshDatabase;
 
-    /**
-     * Test model instance.
-     */
-    private Model $testSchedulable;
+    /** @var Model The primary schedulable model for testing */
+    private Model $primarySchedulable;
 
-    /**
-     * Second test schedulable for comparison.
-     */
-    private Model $secondSchedulable;
+    /** @var Model The secondary schedulable model for comparison testing */
+    private Model $secondarySchedulable;
 
     /**
      * Set up test environment.
@@ -42,8 +38,8 @@ final class BelongsToSchedulableTest extends TestCase
     {
         parent::setUp();
 
-        $this->testSchedulable = TestSchedulable::create();
-        $this->secondSchedulable = TestSchedulable::create();
+        $this->primarySchedulable = TestSchedulable::create();
+        $this->secondarySchedulable = TestSchedulable::create();
     }
 
     /**
@@ -51,7 +47,7 @@ final class BelongsToSchedulableTest extends TestCase
      */
     public function test_availability_creation_succeeds_with_proper_schedulable_context(): void
     {
-        // Arrange
+        // Arrange: Data for creating an availability
         $availabilityData = [
             'type' => 'consultation',
             'daily_start' => '09:00:00',
@@ -61,12 +57,12 @@ final class BelongsToSchedulableTest extends TestCase
             'validity_end' => '2038-07-31',
         ];
 
-        // Act
-        $availability = availability_for($this->testSchedulable)->create($availabilityData);
+        // Act: Create availability with schedulable context
+        $availability = availability_for($this->primarySchedulable)->create($availabilityData);
 
-        // Assert
+        // Assert: Availability should be created with correct relationships
         $this->assertInstanceOf(AvailabilityModel::class, $availability);
-        $this->assertSame($this->testSchedulable->id, $availability->schedulable_id);
+        $this->assertSame($this->primarySchedulable->id, $availability->schedulable_id);
         $this->assertSame(TestSchedulable::class, $availability->schedulable_type);
         $this->assertSame('consultation', $availability->type);
     }
@@ -76,8 +72,8 @@ final class BelongsToSchedulableTest extends TestCase
      */
     public function test_schedule_creation_fails_without_schedulable_context(): void
     {
-        // Arrange
-        availability_for($this->testSchedulable)->create([
+        // Arrange: Create availability first
+        availability_for($this->primarySchedulable)->create([
             'type' => 'consultation',
             'daily_start' => '09:00:00',
             'daily_end' => '17:00:00',
@@ -92,22 +88,21 @@ final class BelongsToSchedulableTest extends TestCase
             'end_datetime' => '2038-07-01 11:00:00',
         ];
 
-        // Assert
+        // Assert: Should throw type error due to missing availability context
         $this->expectException(TypeError::class);
         $this->expectExceptionMessageMatches('/must be of type .*Availability/');
 
-        // Act
-        schedule_for($this->testSchedulable)->create($scheduleData);
+        // Act: Attempt to create schedule without proper context chain
+        schedule_for($this->primarySchedulable)->create($scheduleData);
     }
-
 
     /**
      * Test schedule creation succeeds with proper context chain.
      */
     public function test_schedule_creation_succeeds_with_proper_context(): void
     {
-        // Arrange
-        $availability = availability_for($this->testSchedulable)->create([
+        // Arrange: Create availability as context
+        $availability = availability_for($this->primarySchedulable)->create([
             'type' => 'consultation',
             'daily_start' => '09:00:00',
             'daily_end' => '17:00:00',
@@ -122,12 +117,12 @@ final class BelongsToSchedulableTest extends TestCase
             'end_datetime' => '2038-07-01 11:00:00',
         ];
 
-        // Act
+        // Act: Create schedule with availability context
         $schedule = schedule_for($availability)->create($scheduleData);
 
-        // Assert
+        // Assert: Schedule should inherit proper relationships
         $this->assertInstanceOf(ScheduleModel::class, $schedule);
-        $this->assertSame($this->testSchedulable->id, $schedule->schedulable_id);
+        $this->assertSame($this->primarySchedulable->id, $schedule->schedulable_id);
         $this->assertSame(TestSchedulable::class, $schedule->schedulable_type);
         $this->assertSame($availability->id, $schedule->availability_id);
         $this->assertSame('Test Schedule', $schedule->title);
@@ -138,8 +133,8 @@ final class BelongsToSchedulableTest extends TestCase
      */
     public function test_impediment_creation_fails_without_proper_context(): void
     {
-        // Arrange
-        availability_for($this->testSchedulable)->create([
+        // Arrange: Create availability first
+        availability_for($this->primarySchedulable)->create([
             'type' => 'consultation',
             'daily_start' => '09:00:00',
             'daily_end' => '17:00:00',
@@ -154,22 +149,21 @@ final class BelongsToSchedulableTest extends TestCase
             'end_datetime' => '2038-07-01 12:00:00',
         ];
 
-        // Assert
+        // Assert: Should throw type error due to missing availability context
         $this->expectException(TypeError::class);
         $this->expectExceptionMessageMatches('/must be of type .*Availability/');
 
-        // Act
-        impediment_for($this->testSchedulable)->create($impedimentData);
+        // Act: Attempt to create impediment without proper context chain
+        impediment_for($this->primarySchedulable)->create($impedimentData);
     }
-
 
     /**
      * Test impediment creation succeeds with proper context chain.
      */
     public function test_impediment_creation_succeeds_with_proper_context(): void
     {
-        // Arrange
-        $availability = availability_for($this->testSchedulable)->create([
+        // Arrange: Create availability as context
+        $availability = availability_for($this->primarySchedulable)->create([
             'type' => 'consultation',
             'daily_start' => '09:00:00',
             'daily_end' => '17:00:00',
@@ -184,12 +178,12 @@ final class BelongsToSchedulableTest extends TestCase
             'end_datetime' => '2038-07-01 12:00:00',
         ];
 
-        // Act
+        // Act: Create impediment with availability context
         $impediment = impediment_for($availability)->create($impedimentData);
 
-        // Assert
+        // Assert: Impediment should inherit proper relationships
         $this->assertInstanceOf(ImpedimentModel::class, $impediment);
-        $this->assertSame($this->testSchedulable->id, $impediment->schedulable_id);
+        $this->assertSame($this->primarySchedulable->id, $impediment->schedulable_id);
         $this->assertSame(TestSchedulable::class, $impediment->schedulable_type);
         $this->assertSame($availability->id, $impediment->availability_id);
         $this->assertSame('Test Impediment', $impediment->reason);
@@ -200,8 +194,8 @@ final class BelongsToSchedulableTest extends TestCase
      */
     public function test_schedule_update_works_with_proper_context(): void
     {
-        // Arrange
-        $availability = availability_for($this->testSchedulable)->create([
+        // Arrange: Create availability and schedule
+        $availability = availability_for($this->primarySchedulable)->create([
             'type' => 'consultation',
             'daily_start' => '09:00:00',
             'daily_end' => '17:00:00',
@@ -220,10 +214,10 @@ final class BelongsToSchedulableTest extends TestCase
             'title' => 'Updated Title',
         ];
 
-        // Act
+        // Act: Update schedule with correct context
         $result = schedule_for($availability)->update($schedule->id, $updateData);
 
-        // Assert
+        // Assert: Schedule should be updated successfully
         $this->assertTrue($result);
         $schedule->refresh();
         $this->assertSame('Updated Title', $schedule->title);
@@ -234,8 +228,8 @@ final class BelongsToSchedulableTest extends TestCase
      */
     public function test_schedule_update_fails_with_wrong_schedulable(): void
     {
-        // Arrange
-        $availability = availability_for($this->testSchedulable)->create([
+        // Arrange: Create availability and schedule
+        $availability = availability_for($this->primarySchedulable)->create([
             'type' => 'consultation',
             'daily_start' => '09:00:00',
             'daily_end' => '17:00:00',
@@ -254,11 +248,11 @@ final class BelongsToSchedulableTest extends TestCase
             'title' => 'Updated Title',
         ];
 
-        // Assert
+        // Assert: Should throw validation exception for wrong schedulable
         $this->expectException(ValidationFailedException::class);
 
-        // Act
-        schedule_for($availability)->for($this->secondSchedulable)->update($schedule->id, $updateData);
+        // Act: Attempt update with incorrect schedulable context
+        schedule_for($availability)->for($this->secondarySchedulable)->update($schedule->id, $updateData);
     }
 
     /**
@@ -266,8 +260,8 @@ final class BelongsToSchedulableTest extends TestCase
      */
     public function test_availabilities_are_scoped_to_their_schedulable(): void
     {
-        // Arrange
-        $availability1 = availability_for($this->testSchedulable)->create([
+        // Arrange: Create availabilities for different schedulables
+        $availability1 = availability_for($this->primarySchedulable)->create([
             'type' => 'consultation',
             'daily_start' => '09:00:00',
             'daily_end' => '12:00:00',
@@ -276,7 +270,7 @@ final class BelongsToSchedulableTest extends TestCase
             'validity_end' => '2038-07-31',
         ]);
 
-        $availability2 = availability_for($this->secondSchedulable)->create([
+        $availability2 = availability_for($this->secondarySchedulable)->create([
             'type' => 'training',
             'daily_start' => '14:00:00',
             'daily_end' => '17:00:00',
@@ -285,18 +279,18 @@ final class BelongsToSchedulableTest extends TestCase
             'validity_end' => '2038-07-31',
         ]);
 
-        // Act
-        $firstSchedulableAvailabilities = availability_for($this->testSchedulable)->all();
-        $secondSchedulableAvailabilities = availability_for($this->secondSchedulable)->all();
+        // Act: Retrieve availabilities for each schedulable
+        $primaryAvailabilities = availability_for($this->primarySchedulable)->all();
+        $secondaryAvailabilities = availability_for($this->secondarySchedulable)->all();
 
-        // Assert
-        $this->assertCount(1, $firstSchedulableAvailabilities);
-        $this->assertSame($availability1->id, $firstSchedulableAvailabilities->first()->id);
-        $this->assertSame('consultation', $firstSchedulableAvailabilities->first()->type);
+        // Assert: Each schedulable should only see its own availabilities
+        $this->assertCount(1, $primaryAvailabilities);
+        $this->assertSame($availability1->id, $primaryAvailabilities->first()->id);
+        $this->assertSame('consultation', $primaryAvailabilities->first()->type);
 
-        $this->assertCount(1, $secondSchedulableAvailabilities);
-        $this->assertSame($availability2->id, $secondSchedulableAvailabilities->first()->id);
-        $this->assertSame('training', $secondSchedulableAvailabilities->first()->type);
+        $this->assertCount(1, $secondaryAvailabilities);
+        $this->assertSame($availability2->id, $secondaryAvailabilities->first()->id);
+        $this->assertSame('training', $secondaryAvailabilities->first()->type);
     }
 
     /**
@@ -304,8 +298,8 @@ final class BelongsToSchedulableTest extends TestCase
      */
     public function test_schedules_are_scoped_to_their_schedulable(): void
     {
-        // Arrange
-        $availability1 = availability_for($this->testSchedulable)->create([
+        // Arrange: Create availabilities and schedules for different schedulables
+        $availability1 = availability_for($this->primarySchedulable)->create([
             'type' => 'consultation',
             'daily_start' => '09:00:00',
             'daily_end' => '12:00:00',
@@ -314,7 +308,7 @@ final class BelongsToSchedulableTest extends TestCase
             'validity_end' => '2038-07-31',
         ]);
 
-        $availability2 = availability_for($this->secondSchedulable)->create([
+        $availability2 = availability_for($this->secondarySchedulable)->create([
             'type' => 'consultation',
             'daily_start' => '09:00:00',
             'daily_end' => '12:00:00',
@@ -335,11 +329,11 @@ final class BelongsToSchedulableTest extends TestCase
             'end_datetime' => '2038-07-01 11:00:00',
         ]);
 
-        // Act
+        // Act: Retrieve schedules for each availability context
         $firstSchedules = schedule_for($availability1)->all();
         $secondSchedules = schedule_for($availability2)->all();
 
-        // Assert
+        // Assert: Each context should only see its own schedules
         $this->assertCount(1, $firstSchedules);
         $this->assertSame($schedule1->id, $firstSchedules->first()->id);
         $this->assertSame('Schedule for First', $firstSchedules->first()->title);
@@ -354,8 +348,8 @@ final class BelongsToSchedulableTest extends TestCase
      */
     public function test_impediments_are_scoped_to_their_schedulable(): void
     {
-        // Arrange
-        $availability1 = availability_for($this->testSchedulable)->create([
+        // Arrange: Create availabilities and impediments for different schedulables
+        $availability1 = availability_for($this->primarySchedulable)->create([
             'type' => 'consultation',
             'daily_start' => '09:00:00',
             'daily_end' => '12:00:00',
@@ -364,7 +358,7 @@ final class BelongsToSchedulableTest extends TestCase
             'validity_end' => '2038-07-31',
         ]);
 
-        $availability2 = availability_for($this->secondSchedulable)->create([
+        $availability2 = availability_for($this->secondarySchedulable)->create([
             'type' => 'consultation',
             'daily_start' => '09:00:00',
             'daily_end' => '12:00:00',
@@ -385,11 +379,11 @@ final class BelongsToSchedulableTest extends TestCase
             'end_datetime' => '2038-07-01 12:00:00',
         ]);
 
-        // Act
+        // Act: Retrieve impediments for each availability context
         $firstImpediments = impediment_for($availability1)->all();
         $secondImpediments = impediment_for($availability2)->all();
 
-        // Assert
+        // Assert: Each context should only see its own impediments
         $this->assertCount(1, $firstImpediments);
         $this->assertSame($impediment1->id, $firstImpediments->first()->id);
         $this->assertSame('Impediment for First', $firstImpediments->first()->reason);
@@ -404,8 +398,8 @@ final class BelongsToSchedulableTest extends TestCase
      */
     public function test_find_respects_schedulable_scope(): void
     {
-        // Arrange
-        $availability = availability_for($this->testSchedulable)->create([
+        // Arrange: Create availability and schedule
+        $availability = availability_for($this->primarySchedulable)->create([
             'type' => 'consultation',
             'daily_start' => '09:00:00',
             'daily_end' => '12:00:00',
@@ -420,11 +414,11 @@ final class BelongsToSchedulableTest extends TestCase
             'end_datetime' => '2038-07-01 11:00:00',
         ]);
 
-        // Act
+        // Act: Find schedule with correct and incorrect contexts
         $foundSchedule = schedule_for($availability)->find($schedule->id);
-        $notFoundSchedule = schedule_for($availability)->for($this->secondSchedulable)->find($schedule->id);
+        $notFoundSchedule = schedule_for($availability)->for($this->secondarySchedulable)->find($schedule->id);
 
-        // Assert
+        // Assert: Schedule should only be found with correct context
         $this->assertInstanceOf(ScheduleModel::class, $foundSchedule);
         $this->assertSame($schedule->id, $foundSchedule->id);
         $this->assertNull($notFoundSchedule);
@@ -435,8 +429,8 @@ final class BelongsToSchedulableTest extends TestCase
      */
     public function test_delete_respects_schedulable_scope(): void
     {
-        // Arrange
-        $availability = availability_for($this->testSchedulable)->create([
+        // Arrange: Create availability and schedule
+        $availability = availability_for($this->primarySchedulable)->create([
             'type' => 'consultation',
             'daily_start' => '09:00:00',
             'daily_end' => '12:00:00',
@@ -451,19 +445,19 @@ final class BelongsToSchedulableTest extends TestCase
             'end_datetime' => '2038-07-01 11:00:00',
         ]);
 
-        // Assert
+        // Assert: Should throw validation exception for wrong schedulable
         $this->expectException(ValidationFailedException::class);
 
-        // Act - Try to delete with wrong schedulable
-        schedule_for($availability)->for($this->secondSchedulable)->delete($schedule->id);
+        // Act: Attempt delete with wrong schedulable context
+        schedule_for($availability)->for($this->secondarySchedulable)->delete($schedule->id);
 
-        // Assert - Schedule should still exist
+        // Assert: Schedule should still exist after failed delete attempt
         $this->assertDatabaseHas('roster_schedules', ['id' => $schedule->id]);
 
-        // Act - Delete with correct schedulable
+        // Act: Delete with correct schedulable context
         $result = schedule_for($availability)->delete($schedule->id);
 
-        // Assert
+        // Assert: Schedule should be deleted successfully
         $this->assertTrue($result);
         $this->assertDatabaseMissing('roster_schedules', ['id' => $schedule->id]);
     }
@@ -473,9 +467,9 @@ final class BelongsToSchedulableTest extends TestCase
      */
     public function test_direct_model_creation_fails(): void
     {
-        // Arrange
+        // Arrange: Model data for direct creation attempt
         $modelData = [
-            'schedulable_id' => $this->testSchedulable->id,
+            'schedulable_id' => $this->primarySchedulable->id,
             'schedulable_type' => TestSchedulable::class,
             'type' => 'consultation',
             'daily_start' => '09:00:00',
@@ -485,11 +479,11 @@ final class BelongsToSchedulableTest extends TestCase
             'validity_end' => '2038-07-31',
         ];
 
-        // Assert
+        // Assert: Should throw forbidden mutation exception
         $this->expectException(ForbiddenModelMutationException::class);
         $this->expectExceptionMessage('Direct mutation of Availability is forbidden');
 
-        // Act
+        // Act: Attempt direct model creation (bypassing service layer)
         AvailabilityModel::create($modelData);
     }
 
@@ -498,8 +492,8 @@ final class BelongsToSchedulableTest extends TestCase
      */
     public function test_direct_model_update_fails(): void
     {
-        // Arrange
-        $availability = availability_for($this->testSchedulable)->create([
+        // Arrange: Create availability through service
+        $availability = availability_for($this->primarySchedulable)->create([
             'type' => 'consultation',
             'daily_start' => '09:00:00',
             'daily_end' => '17:00:00',
@@ -508,11 +502,11 @@ final class BelongsToSchedulableTest extends TestCase
             'validity_end' => '2038-07-31',
         ]);
 
-        // Assert
+        // Assert: Should throw forbidden mutation exception
         $this->expectException(ForbiddenModelMutationException::class);
         $this->expectExceptionMessage('Direct mutation of Availability is forbidden');
 
-        // Act
+        // Act: Attempt direct model update (bypassing service layer)
         $availability->update(['daily_end' => '18:00:00']);
     }
 
@@ -521,8 +515,8 @@ final class BelongsToSchedulableTest extends TestCase
      */
     public function test_service_context_cloning(): void
     {
-        // Arrange
-        $availability1 = availability_for($this->testSchedulable)->create([
+        // Arrange: Create two different availabilities
+        $availability1 = availability_for($this->primarySchedulable)->create([
             'type' => 'consultation',
             'daily_start' => '09:00:00',
             'daily_end' => '12:00:00',
@@ -531,7 +525,7 @@ final class BelongsToSchedulableTest extends TestCase
             'validity_end' => '2038-07-31',
         ]);
 
-        $availability2 = availability_for($this->testSchedulable)->create([
+        $availability2 = availability_for($this->primarySchedulable)->create([
             'type' => 'training',
             'daily_start' => '14:00:00',
             'daily_end' => '17:00:00',
@@ -540,7 +534,7 @@ final class BelongsToSchedulableTest extends TestCase
             'validity_end' => '2038-07-31',
         ]);
 
-        // Act
+        // Act: Create schedules with different availability contexts
         $schedule1 = schedule_for($availability1)->create([
             'title' => 'Schedule 1',
             'start_datetime' => '2038-07-01 10:00:00',
@@ -553,7 +547,7 @@ final class BelongsToSchedulableTest extends TestCase
             'end_datetime' => '2038-07-01 16:00:00',
         ]);
 
-        // Assert
+        // Assert: Each schedule should be linked to its respective availability
         $this->assertSame($availability1->id, $schedule1->availability_id);
         $this->assertSame($availability2->id, $schedule2->availability_id);
     }
@@ -563,8 +557,8 @@ final class BelongsToSchedulableTest extends TestCase
      */
     public function test_service_cannot_be_reused_without_context(): void
     {
-        // Arrange
-        $availability = availability_for($this->testSchedulable)->create([
+        // Arrange: Create availability and schedule
+        $availability = availability_for($this->primarySchedulable)->create([
             'type' => 'consultation',
             'daily_start' => '09:00:00',
             'daily_end' => '17:00:00',
@@ -579,12 +573,12 @@ final class BelongsToSchedulableTest extends TestCase
             'end_datetime' => '2038-07-01 11:00:00',
         ]);
 
-        // Assert
+        // Assert: Should throw type error when missing availability context
         $this->expectException(TypeError::class);
         $this->expectExceptionMessageMatches('/must be of type .*Availability/');
 
-        // Act
-        schedule_for($this->testSchedulable)->create([
+        // Act: Attempt to create schedule without proper context
+        schedule_for($this->primarySchedulable)->create([
             'title' => 'Should Fail',
             'start_datetime' => '2038-07-01 14:00:00',
             'end_datetime' => '2038-07-01 15:00:00',

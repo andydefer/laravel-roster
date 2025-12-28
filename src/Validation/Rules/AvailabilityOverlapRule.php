@@ -34,7 +34,6 @@ class AvailabilityOverlapRule extends AbstractRule
      * daily schedules, active days, and validity ranges.
      *
      * @param ValidationContextInterface $validationContext Validation context
-     * @return void
      */
     public function validate(ValidationContextInterface $validationContext): void
     {
@@ -104,8 +103,8 @@ class AvailabilityOverlapRule extends AbstractRule
     {
         $requiredFields = ['daily_start', 'daily_end', 'days'];
 
-        foreach ($requiredFields as $field) {
-            if (empty($data[$field])) {
+        foreach ($requiredFields as $requiredField) {
+            if (empty($data[$requiredField])) {
                 return false;
             }
         }

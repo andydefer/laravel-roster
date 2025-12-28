@@ -7,6 +7,7 @@ namespace Roster\Models;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Carbon;
 use Roster\Domain\Helpers\TimeWindowHelper;
 use Roster\Enums\ScheduleStatus;
@@ -35,6 +36,7 @@ use Roster\Traits\BelongsToSchedulable;
 class Schedule extends Model
 {
     use BelongsToSchedulable;
+    use SoftDeletes;
 
     /**
      * The table associated with the model.

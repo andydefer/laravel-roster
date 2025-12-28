@@ -6,10 +6,10 @@ use Rector\Config\RectorConfig;
 
 return RectorConfig::configure()
     ->withPaths([
-        __DIR__.'/config',
-        __DIR__.'/routes',
-        __DIR__.'/src',
-        __DIR__.'/tests',
+        __DIR__ . '/config',
+        __DIR__ . '/routes',
+        __DIR__ . '/src',
+        __DIR__ . '/tests',
     ])
     ->withTypeCoverageLevel(63)
     ->withDeadCodeLevel(55)
@@ -17,11 +17,11 @@ return RectorConfig::configure()
     ->withCodingStyleLevel(27)
     ->withCodeQualityLevel(77)
     ->withBootstrapFiles([
-        __DIR__.'/vendor/autoload.php',
+        __DIR__ . '/vendor/autoload.php',
     ])
     ->withPhpVersion(\Rector\ValueObject\PhpVersion::PHP_83)
     ->withAutoloadPaths([
-        __DIR__.'/vendor/autoload.php',
+        __DIR__ . '/vendor/autoload.php',
     ])
     ->withAttributesSets(
         symfony: true,
@@ -36,7 +36,7 @@ return RectorConfig::configure()
         privatization: true,
         earlyReturn: true,
         rectorPreset: true,
-        naming: true,
+        naming: false,
         instanceOf: true,
         phpunitCodeQuality: true,
         doctrineCodeQuality: true,

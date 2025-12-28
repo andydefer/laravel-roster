@@ -23,14 +23,14 @@ class AvailabilityRepository extends AbstractRepository implements AvailabilityR
     /**
      * Retrieves a query builder for availabilities of a specific schedulable entity.
      *
-     * @param Model $schedulable The schedulable entity (e.g., User, Team)
+     * @param Model $model The schedulable entity (e.g., User, Team)
      * @param string|null $type Optional availability type filter
      *
      * @return Builder Query builder for availabilities
      */
-    public function findForSchedulable(Model $schedulable, ?string $type = null): Builder
+    public function findForSchedulable(Model $model, ?string $type = null): Builder
     {
-        $builder = $this->buildBaseQuery($schedulable);
+        $builder = $this->buildBaseQuery($model);
 
         if ($type !== null) {
             $builder->where('type', $type);
@@ -42,7 +42,7 @@ class AvailabilityRepository extends AbstractRepository implements AvailabilityR
     /**
      * Retrieves availabilities valid within a specific date range.
      *
-     * @param Model $schedulable The schedulable entity
+     * @param Model $model The schedulable entity
      * @param Carbon $start Start date of the range
      * @param Carbon $end End date of the range
      * @param string|null $type Optional availability type filter
@@ -50,12 +50,12 @@ class AvailabilityRepository extends AbstractRepository implements AvailabilityR
      * @return Collection<int, Availability> Collection of matching availabilities
      */
     public function getForDateRange(
-        Model $schedulable,
+        Model $model,
         Carbon $start,
         Carbon $end,
         ?string $type = null
     ): Collection {
-        $builder = $this->buildBaseQuery($schedulable)
+        $builder = $this->buildBaseQuery($model)
             ->where(function ($query) use ($end): void {
                 $query->whereNull('validity_start')
                     ->orWhere('validity_start', '<=', $end);
@@ -105,18 +105,18 @@ class AvailabilityRepository extends AbstractRepository implements AvailabilityR
     /**
      * Retrieves availabilities applicable to a specific date.
      *
-     * @param Model $schedulable The schedulable entity
+     * @param Model $model The schedulable entity
      * @param Carbon $date Target date
      * @param string|null $type Optional availability type filter
      *
      * @return Collection<int, Availability> Collection of availabilities for the date
      */
     public function getForDate(
-        Model $schedulable,
+        Model $model,
         Carbon $date,
         ?string $type = null
     ): Collection {
-        $builder = $this->buildBaseQuery($schedulable)
+        $builder = $this->buildBaseQuery($model)
             ->whereJsonContains('days', strtolower($date->englishDayOfWeek));
 
         if ($type !== null) {
@@ -159,7 +159,7 @@ class AvailabilityRepository extends AbstractRepository implements AvailabilityR
     /**
      * Finds an availability for a time slot with conflict detection information.
      *
-     * @param Model $schedulable The schedulable entity
+     * @param Model $model The schedulable entity
      * @param Carbon $start Start time of the slot
      * @param Carbon $end End time of the slot
      * @param string|null $type Optional availability type filter
@@ -167,13 +167,13 @@ class AvailabilityRepository extends AbstractRepository implements AvailabilityR
      * @return Availability|null Matching availability with conflict flags or null
      */
     public function findForTimeSlotWithConflictInfo(
-        Model $schedulable,
+        Model $model,
         Carbon $start,
         Carbon $end,
         ?string $type = null
     ): ?Availability {
-        return Availability::where('schedulable_id', $schedulable->id)
-            ->where('schedulable_type', get_class($schedulable))
+        return Availability::where('schedulable_id', $model->id)
+            ->where('schedulable_type', get_class($model))
             ->when($type !== null, function ($query) use ($type): void {
                 $query->where('type', $type);
             })
@@ -204,14 +204,14 @@ class AvailabilityRepository extends AbstractRepository implements AvailabilityR
     /**
      * Builds a base query for availabilities of a schedulable entity.
      *
-     * @param Model $schedulable The schedulable entity
+     * @param Model $model The schedulable entity
      *
      * @return Builder Base query builder
      */
-    private function buildBaseQuery(Model $schedulable): Builder
+    private function buildBaseQuery(Model $model): Builder
     {
-        return Availability::where('schedulable_id', $schedulable->id)
-            ->where('schedulable_type', get_class($schedulable));
+        return Availability::where('schedulable_id', $model->id)
+            ->where('schedulable_type', get_class($model));
     }
 
     /**

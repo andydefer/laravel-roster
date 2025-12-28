@@ -17,7 +17,7 @@ use Roster\Validation\Attributes\ValidationRule;
  */
 #[ValidationRule(
     priority: 100,
-    entities: [EntityType::AVAILABILITY],
+    entities: [EntityType::AVAILABILITY, EntityType::IMPEDIMENT, EntityType::SCHEDULE],
     operations: [OperationType::CREATE, OperationType::UPDATE]
 )]
 class RequiredFieldsRule extends AbstractRule
@@ -36,6 +36,7 @@ class RequiredFieldsRule extends AbstractRule
         $operationType = $validationContext->getOperation();
         $safeData = $validationContext->safeData();
 
+
         $this->validateOwnershipFields($validationContext, $safeData, $operationType);
 
         if ($operationType === OperationType::CREATE) {
@@ -47,7 +48,7 @@ class RequiredFieldsRule extends AbstractRule
      * Validates that ownership fields cannot be modified during updates.
      *
      * @param ValidationContextInterface $validationContext Validation context
-     * @param array $safeData Validated input data
+     * @param array<string, mixed> $safeData Validated input data
      * @param OperationType $operationType Current operation
      */
     private function validateOwnershipFields(
@@ -61,11 +62,11 @@ class RequiredFieldsRule extends AbstractRule
 
         $ownershipFields = ['schedulable_id', 'schedulable_type'];
 
-        foreach ($ownershipFields as $field) {
-            if (array_key_exists($field, $safeData)) {
+        foreach ($ownershipFields as $ownershipField) {
+            if (array_key_exists($ownershipField, $safeData)) {
                 $validationContext->setViolation(
-                    $field,
-                    sprintf("Field '%s' cannot be changed. Ownership cannot be modified.", $field)
+                    $ownershipField,
+                    sprintf("Field '%s' cannot be changed. Ownership cannot be modified.", $ownershipField)
                 );
             }
         }
@@ -75,7 +76,7 @@ class RequiredFieldsRule extends AbstractRule
      * Validates all required fields are present for creation operations.
      *
      * @param ValidationContextInterface $validationContext Validation context
-     * @param array $safeData Validated input data
+     * @param array<string, mixed> $safeData Validated input data
      */
     private function validateRequiredFields(
         ValidationContextInterface $validationContext,
@@ -84,11 +85,11 @@ class RequiredFieldsRule extends AbstractRule
         $entityType = $validationContext->getEntityType();
         $requiredFields = $this->getRequiredFields($entityType);
 
-        foreach ($requiredFields as $field) {
-            if (!array_key_exists($field, $safeData)) {
+        foreach ($requiredFields as $requiredField) {
+            if (!array_key_exists($requiredField, $safeData)) {
                 $validationContext->setViolation(
-                    $field,
-                    sprintf("Field '%s' is required", $field)
+                    $requiredField,
+                    sprintf("Field '%s' is required", $requiredField)
                 );
             }
         }

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Roster\Domain\Services;
 
 use Illuminate\Console\Command;

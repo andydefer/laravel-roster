@@ -27,7 +27,6 @@ class DaysValidationRule extends AbstractRule
      * Validates days configuration based on operation type.
      *
      * @param ValidationContextInterface $validationContext Validation context with data
-     * @return void
      */
     public function validate(ValidationContextInterface $validationContext): void
     {
@@ -42,7 +41,6 @@ class DaysValidationRule extends AbstractRule
      * Validates days array for creation operations.
      *
      * @param ValidationContextInterface $validationContext Validation context
-     * @return void
      */
     private function validateForCreate(ValidationContextInterface $validationContext): void
     {
@@ -59,7 +57,6 @@ class DaysValidationRule extends AbstractRule
      *
      * @param mixed $days Days data to validate
      * @param ValidationContextInterface $validationContext Validation context
-     * @return void
      */
     private function validateDaysArray(mixed $days, ValidationContextInterface $validationContext): void
     {

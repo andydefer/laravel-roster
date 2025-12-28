@@ -35,6 +35,7 @@ return new class extends Migration
             $table->json('metadata')->nullable()->comment('Optional additional data');
 
             $table->timestamps();
+            $table->softDeletes();
 
             $table->unique(
                 ['availability_id', 'start_datetime', 'end_datetime'],

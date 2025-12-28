@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Roster\Validation\Rules;
 
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\App;
 use Roster\Contracts\Repository\AvailabilityRepositoryInterface;
 use Roster\Contracts\Validation\ValidationContextInterface;
@@ -35,7 +34,6 @@ class SchedulableConsistencyRule extends AbstractRule
      * 3. Both entities belong to the same schedulable
      *
      * @param ValidationContextInterface $validationContext Validation context with entity data
-     * @return void
      */
     public function validate(ValidationContextInterface $validationContext): void
     {
@@ -119,7 +117,6 @@ class SchedulableConsistencyRule extends AbstractRule
      * Adds a violation for schedulable mismatch.
      *
      * @param ValidationContextInterface $validationContext Validation context
-     * @return void
      */
     private function addSchedulableMismatchViolation(ValidationContextInterface $validationContext): void
     {

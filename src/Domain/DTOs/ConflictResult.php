@@ -95,7 +95,7 @@ class ConflictResult
      */
     public function hasScheduleConflicts(): bool
     {
-        return !empty($this->conflictingSchedules);
+        return $this->conflictingSchedules !== [];
     }
 
     /**
@@ -105,7 +105,7 @@ class ConflictResult
      */
     public function hasImpedimentConflicts(): bool
     {
-        return !empty($this->conflictingImpediments);
+        return $this->conflictingImpediments !== [];
     }
 
     /**

@@ -75,14 +75,14 @@ class TimeSlotDateTimeRule extends AbstractRule
         }
 
         $startValue = $this->resolveDateTimeValue(
-            context: $validationContext,
+            validationContext: $validationContext,
             fieldName: 'start_datetime',
             hasUpdate: $hasStartUpdate,
             entityValue: $currentEntity?->start_datetime
         );
 
         $endValue = $this->resolveDateTimeValue(
-            context: $validationContext,
+            validationContext: $validationContext,
             fieldName: 'end_datetime',
             hasUpdate: $hasEndUpdate,
             entityValue: $currentEntity?->end_datetime
@@ -139,18 +139,18 @@ class TimeSlotDateTimeRule extends AbstractRule
     /**
      * Resolves datetime value from update context or existing entity.
      *
-     * @param ValidationContextInterface $context Validation context
+     * @param ValidationContextInterface $validationContext Validation context
      * @param string $fieldName Datetime field name
      * @param bool $hasUpdate Whether field is being updated
      * @param mixed $entityValue Existing entity value
      * @return mixed Resolved datetime value
      */
     private function resolveDateTimeValue(
-        ValidationContextInterface $context,
+        ValidationContextInterface $validationContext,
         string $fieldName,
         bool $hasUpdate,
         mixed $entityValue
     ): mixed {
-        return $hasUpdate ? $context->get($fieldName) : $entityValue;
+        return $hasUpdate ? $validationContext->get($fieldName) : $entityValue;
     }
 }

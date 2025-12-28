@@ -180,13 +180,13 @@ class RuleScanner
 
         $rules = [];
 
-        foreach ($this->directories as $ruleDirectory) {
-            if (!is_dir($ruleDirectory)) {
+        foreach ($this->directories as $directory) {
+            if (!is_dir($directory)) {
                 continue;
             }
 
             $finder = new Finder();
-            $finder->files()->in($ruleDirectory)->name('*Rule.php');
+            $finder->files()->in($directory)->name('*Rule.php');
 
             foreach ($finder as $file) {
                 $className = $this->extractClassNameFromFile($file->getPathname());
@@ -197,7 +197,7 @@ class RuleScanner
                     if ($reflection->implementsInterface(RuleInterface::class)) {
                         $validationRule = $this->extractValidationRule($className, $reflection);
 
-                        if ($validationRule !== null) {
+                        if ($validationRule instanceof ValidationRule) {
                             $rules[$className] = $validationRule;
                         }
                     }
@@ -215,11 +215,11 @@ class RuleScanner
      * Extracts the ValidationRule attribute from a rule class.
      *
      * @param string $className The fully qualified class name
-     * @param ReflectionClass $reflection Reflection of the class
+     * @param ReflectionClass $reflectionClass Reflection of the class
      *
      * @return ValidationRule|null The validation rule attribute, or null if not found
      */
-    private function extractValidationRule(string $className, ReflectionClass $reflection): ?ValidationRule
+    private function extractValidationRule(string $className, ReflectionClass $reflectionClass): ?ValidationRule
     {
         try {
             $ruleInstance = app()->make($className);
@@ -228,10 +228,10 @@ class RuleScanner
             if ($attribute) {
                 return $attribute;
             }
-        } catch (Throwable $e) {
-            $attributes = $reflection->getAttributes(ValidationRule::class);
+        } catch (Throwable $throwable) {
+            $attributes = $reflectionClass->getAttributes(ValidationRule::class);
 
-            if (!empty($attributes)) {
+            if ($attributes !== []) {
                 return $attributes[0]->newInstance();
             }
         }

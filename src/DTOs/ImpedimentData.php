@@ -69,20 +69,20 @@ class ImpedimentData extends AbstractData
     /**
      * Create an ImpedimentData instance from an Impediment Eloquent model.
      *
-     * @param Impediment $impediment Eloquent model instance
+     * @param Impediment $model Eloquent model instance
      * @return self New immutable ImpedimentData instance
      */
-    public static function fromModel(Model $impediment): self
+    public static function fromModel(Model $model): self
     {
         return new self(
-            id: $impediment->id,
-            availabilityId: $impediment->availability_id,
-            startDatetime: self::parseDateTime($impediment->start_datetime),
-            endDatetime: self::parseDateTime($impediment->end_datetime),
-            reason: $impediment->reason,
-            metadata: $impediment->metadata ?? [],
-            schedulableId: $impediment->schedulable_id,
-            schedulableType: $impediment->schedulable_type
+            id: $model->id,
+            availabilityId: $model->availability_id,
+            startDatetime: self::parseDateTime($model->start_datetime),
+            endDatetime: self::parseDateTime($model->end_datetime),
+            reason: $model->reason,
+            metadata: $model->metadata ?? [],
+            schedulableId: $model->schedulable_id,
+            schedulableType: $model->schedulable_type
         );
     }
 

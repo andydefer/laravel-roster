@@ -38,6 +38,7 @@ return new class extends Migration
                 ->default(ScheduleStatus::AVAILABLE->value);
 
             $table->timestamps();
+            $table->softDeletes();
 
             $table->index('availability_id');
             $table->index(['start_datetime', 'end_datetime']);

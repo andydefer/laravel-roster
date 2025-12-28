@@ -60,12 +60,12 @@ class TemporalConflictService
             return ConflictResult::noConflict();
         }
 
-        $firstConflict = $conflictingAvailabilities->first();
+        $availability = $conflictingAvailabilities->first();
         return new ConflictResult(
             hasConflicts: true,
             conflictingSchedules: [],
             conflictingImpediments: [],
-            message: $this->generateAvailabilityConflictMessage($firstConflict)
+            message: $this->generateAvailabilityConflictMessage($availability)
         );
     }
 
@@ -109,15 +109,15 @@ class TemporalConflictService
         ?int $excludeScheduleId = null,
         ?int $excludeImpedimentId = null
     ): ConflictResult {
-        $scheduleConflict = $this->checkScheduleConflicts(
+        $conflictResult = $this->checkScheduleConflicts(
             availabilityId: $availabilityId,
             start: $start,
             end: $end,
             excludeScheduleId: $excludeScheduleId
         );
 
-        if ($scheduleConflict->hasConflicts) {
-            return $scheduleConflict;
+        if ($conflictResult->hasConflicts) {
+            return $conflictResult;
         }
 
         $impedimentConflict = $this->checkImpedimentConflicts(
@@ -422,7 +422,6 @@ class TemporalConflictService
      *     validityEnd: Carbon|null,
      *     type: string|null
      * } $period
-     * @return bool
      */
     private function isValidAvailabilityPeriod(array $period): bool
     {

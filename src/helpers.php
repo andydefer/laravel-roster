@@ -7,6 +7,9 @@
  * Provides date and day-related utilities and service instantiation helpers.
  */
 
+use Roster\Services\AvailabilityService;
+use Roster\Services\ImpedimentService;
+use Roster\Services\ScheduleService;
 use Carbon\Carbon;
 use Carbon\WeekDay;
 use Carbon\Month;
@@ -72,7 +75,7 @@ if (!function_exists('roster_format_period_days_for_display')) {
      */
     function roster_format_period_days_for_display(array $days): string
     {
-        if (empty($days)) {
+        if ($days === []) {
             return '';
         }
 
@@ -90,7 +93,7 @@ if (!function_exists('roster_format_period_days_for_display')) {
         $dayIndices = array_map(fn($day): false|int => array_search($day, $dayOrder, true), $days);
 
         $isContinuousSequence = true;
-        for ($i = 0; $i < count($dayIndices) - 1; $i++) {
+        for ($i = 0; $i < count($dayIndices) - 1; ++$i) {
             $currentIndex = $dayIndices[$i];
             $nextIndex = $dayIndices[$i + 1];
 
@@ -127,7 +130,7 @@ if (!function_exists('roster_format_days_for_display')) {
      */
     function roster_format_days_for_display(array $days): string
     {
-        if (empty($days)) {
+        if ($days === []) {
             return '';
         }
 
@@ -200,7 +203,7 @@ if (!function_exists('roster_get_valid_days_in_period')) {
     function roster_get_valid_days_in_period(array $days, DateTimeInterface|WeekDay|Month|string|int|float|null $startDate, DateTimeInterface|WeekDay|Month|string|int|float|null $endDate): array
     {
         $daysInPeriod = roster_days_in_period($startDate, $endDate);
-        $validDays = array_intersect($days, $daysInPeriod);
+        $validDays = array_unique(array_intersect($days, $daysInPeriod));
 
         $dayOrder = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
         usort(
@@ -241,16 +244,15 @@ if (!function_exists('availability_for')) {
     /**
      * Creates an Availability service instance for a given schedulable model.
      *
-     * @param Model $schedulable The schedulable model instance
-     * @return \Roster\Services\AvailabilityService
+     * @param Model $model The schedulable model instance
      * @throws BindingResolutionException If the service cannot be resolved from the container
      */
-    function availability_for(Model $schedulable): \Roster\Services\AvailabilityService
+    function availability_for(Model $model): AvailabilityService
     {
-        return RosterServiceContext::allowViaHelper(function () use ($schedulable) {
-            /** @var \Roster\Services\AvailabilityService $service */
+        return RosterServiceContext::allowViaHelper(function () use ($model) {
+            /** @var AvailabilityService $service */
             $service = app('roster.availability');
-            return $service->for($schedulable);
+            return $service->for($model);
         });
     }
 }
@@ -260,25 +262,24 @@ if (!function_exists('impediment_for')) {
      * Creates an Impediment service instance for a given availability.
      * Automatically extracts the schedulable from the availability's polymorphic relationship.
      *
-     * @param ModelsAvailability $availability The availability model instance
-     * @return \Roster\Services\ImpedimentService
-     * @throws \InvalidArgumentException If the availability has no schedulable relationship
+     * @param ModelsAvailability $modelsAvailability The availability model instance
+     * @throws InvalidArgumentException If the availability has no schedulable relationship
      * @throws BindingResolutionException If the service cannot be resolved from the container
      */
-    function impediment_for(ModelsAvailability $availability): \Roster\Services\ImpedimentService
+    function impediment_for(ModelsAvailability $modelsAvailability): ImpedimentService
     {
-        return RosterServiceContext::allowViaHelper(function () use ($availability) {
-            $schedulable = $availability->schedulable;
+        return RosterServiceContext::allowViaHelper(function () use ($modelsAvailability) {
+            $schedulable = $modelsAvailability->schedulable;
 
             if (!$schedulable) {
-                throw new \InvalidArgumentException(
+                throw new InvalidArgumentException(
                     'The provided availability does not have a schedulable relationship.'
                 );
             }
 
-            /** @var \Roster\Services\ImpedimentService $service */
+            /** @var ImpedimentService $service */
             $service = app('roster.impediment');
-            return $service->for($schedulable)->owner($availability);
+            return $service->for($schedulable)->owner($modelsAvailability);
         });
     }
 }
@@ -288,25 +289,24 @@ if (!function_exists('schedule_for')) {
      * Creates a Schedule service instance for a given availability.
      * Automatically extracts the schedulable from the availability's polymorphic relationship.
      *
-     * @param ModelsAvailability $availability The availability model instance
-     * @return \Roster\Services\ScheduleService
-     * @throws \InvalidArgumentException If the availability has no schedulable relationship
+     * @param ModelsAvailability $modelsAvailability The availability model instance
+     * @throws InvalidArgumentException If the availability has no schedulable relationship
      * @throws BindingResolutionException If the service cannot be resolved from the container
      */
-    function schedule_for(ModelsAvailability $availability): \Roster\Services\ScheduleService
+    function schedule_for(ModelsAvailability $modelsAvailability): ScheduleService
     {
-        return RosterServiceContext::allowViaHelper(function () use ($availability) {
-            $schedulable = $availability->schedulable;
+        return RosterServiceContext::allowViaHelper(function () use ($modelsAvailability) {
+            $schedulable = $modelsAvailability->schedulable;
 
             if (!$schedulable) {
-                throw new \InvalidArgumentException(
+                throw new InvalidArgumentException(
                     'The provided availability does not have a schedulable relationship.'
                 );
             }
 
-            /** @var \Roster\Services\ScheduleService $service */
+            /** @var ScheduleService $service */
             $service = app('roster.schedule');
-            return $service->for($schedulable)->owner($availability);
+            return $service->for($schedulable)->owner($modelsAvailability);
         });
     }
 }

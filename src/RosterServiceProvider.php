@@ -36,8 +36,6 @@ class RosterServiceProvider extends ServiceProvider
 {
     /**
      * Bootstrap package services.
-     *
-     * @return void
      */
     public function boot(): void
     {
@@ -53,8 +51,6 @@ class RosterServiceProvider extends ServiceProvider
 
     /**
      * Register package services and dependencies.
-     *
-     * @return void
      */
     public function register(): void
     {
@@ -75,8 +71,6 @@ class RosterServiceProvider extends ServiceProvider
 
     /**
      * Register observers for domain models.
-     *
-     * @return void
      */
     protected function registerModelObservers(): void
     {
@@ -87,8 +81,6 @@ class RosterServiceProvider extends ServiceProvider
 
     /**
      * Load package helper functions.
-     *
-     * @return void
      */
     protected function loadHelpers(): void
     {
@@ -101,8 +93,6 @@ class RosterServiceProvider extends ServiceProvider
 
     /**
      * Register repository interfaces with their implementations.
-     *
-     * @return void
      */
     protected function registerRepositories(): void
     {
@@ -124,8 +114,6 @@ class RosterServiceProvider extends ServiceProvider
 
     /**
      * Register validation system components.
-     *
-     * @return void
      */
     protected function registerValidationSystem(): void
     {
@@ -178,8 +166,6 @@ class RosterServiceProvider extends ServiceProvider
 
     /**
      * Register domain services with dependency injection container.
-     *
-     * @return void
      */
     protected function registerDomainServices(): void
     {
@@ -220,8 +206,6 @@ class RosterServiceProvider extends ServiceProvider
 
     /**
      * Publish package resources for user customization.
-     *
-     * @return void
      */
     private function publishResources(): void
     {

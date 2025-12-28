@@ -4,28 +4,39 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Domain;
 
-use Roster\Support\RosterMutationContext;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Roster\Models\Availability;
 use Roster\Exceptions\ForbiddenModelMutationException;
-use Tests\Support\TestSchedulable;
+use Roster\Models\Availability;
+use Roster\Support\RosterMutationContext;
 use Tests\TestCase;
+use Tests\Support\TestSchedulable;
 
+/**
+ * Unit tests for model mutation protection mechanisms.
+ *
+ * Validates that direct model operations (create, update, delete)
+ * are properly restricted and can only be performed through authorized contexts.
+ */
 final class ModelMutationForbiddenTest extends TestCase
 {
     use RefreshDatabase;
 
+    /**
+     * Set up test environment and run migrations.
+     */
     protected function setUp(): void
     {
         parent::setUp();
         $this->artisan('migrate')->run();
     }
 
+    /**
+     * Test that direct creation of Availability model is forbidden.
+     */
     public function test_creation_direct_is_forbidden(): void
     {
-        $this->expectException(ForbiddenModelMutationException::class);
-
-        Availability::create([
+        // Arrange: Attempt to create Availability directly
+        $availabilityData = [
             'schedulable_id' => 1,
             'schedulable_type' => TestSchedulable::class,
             'type' => 'consultation',
@@ -34,11 +45,21 @@ final class ModelMutationForbiddenTest extends TestCase
             'days' => json_encode(['monday', 'tuesday']),
             'validity_start' => '2025-01-01',
             'validity_end' => '2025-12-31',
-        ]);
+        ];
+
+        // Assert: Should throw forbidden mutation exception
+        $this->expectException(ForbiddenModelMutationException::class);
+
+        // Act: Attempt direct creation
+        Availability::create($availabilityData);
     }
 
+    /**
+     * Test that direct update of Availability model is forbidden.
+     */
     public function test_update_direct_is_forbidden(): void
     {
+        // Arrange: Create a model instance without saving
         $availability = Availability::make([
             'schedulable_id' => 1,
             'schedulable_type' => TestSchedulable::class,
@@ -50,14 +71,19 @@ final class ModelMutationForbiddenTest extends TestCase
             'validity_end' => '2025-12-31',
         ]);
 
+        // Assert: Should throw forbidden mutation exception
         $this->expectException(ForbiddenModelMutationException::class);
 
+        // Act: Attempt to save the model directly
         $availability->save();
     }
 
+    /**
+     * Test that direct deletion of Availability model is forbidden.
+     */
     public function test_delete_direct_is_forbidden(): void
     {
-        // Crée le modèle **en DB via le context** pour bypasser le blocage de création
+        // Arrange: Create model through authorized context
         $availability = RosterMutationContext::allow(function () {
             return Availability::create([
                 'schedulable_id' => 1,
@@ -71,9 +97,10 @@ final class ModelMutationForbiddenTest extends TestCase
             ]);
         });
 
-        // Ici on teste la suppression directe
+        // Assert: Should throw forbidden mutation exception
         $this->expectException(ForbiddenModelMutationException::class);
 
+        // Act: Attempt direct deletion
         $availability->delete();
     }
 }

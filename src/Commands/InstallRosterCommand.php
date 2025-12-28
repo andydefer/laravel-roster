@@ -10,11 +10,12 @@ use Roster\Domain\Services\RosterInstallerService;
 final class InstallRosterCommand extends Command
 {
     protected $signature = 'roster:install {--force : Force publish without confirmation}';
+
     protected $description = 'Install the Roster package';
 
-    public function handle(RosterInstallerService $installer): int
+    public function handle(RosterInstallerService $rosterInstallerService): int
     {
-        $installer->install($this, (bool) $this->option('force'));
+        $rosterInstallerService->install($this, (bool) $this->option('force'));
         return self::SUCCESS;
     }
 }

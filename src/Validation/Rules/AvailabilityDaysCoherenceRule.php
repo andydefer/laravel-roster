@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Roster\Validation\Rules;
 
+use Exception;
 use Carbon\Carbon;
 use Roster\Contracts\Validation\ValidationContextInterface;
 use Roster\Enums\DaysOfWeek;
@@ -31,7 +32,6 @@ class AvailabilityDaysCoherenceRule extends AbstractRule
      * fall within the specified validity start and end dates.
      *
      * @param ValidationContextInterface $validationContext Validation context
-     * @return void
      */
     public function validate(ValidationContextInterface $validationContext): void
     {
@@ -91,7 +91,7 @@ class AvailabilityDaysCoherenceRule extends AbstractRule
             if ($end->lte($start)) {
                 return;
             }
-        } catch (\Exception) {
+        } catch (Exception) {
             return;
         }
 

@@ -33,7 +33,7 @@ class ValidationContext implements ValidationContextInterface
      */
     private array $data;
 
-    private ?Model $schedulable;
+    private ?Model $model;
 
     private mixed $currentEntity;
 
@@ -51,13 +51,13 @@ class ValidationContext implements ValidationContextInterface
         OperationType $operationType,
         EntityType $entityType,
         array $data,
-        ?Model $schedulable = null,
+        ?Model $model = null,
         mixed $currentEntity = null
     ) {
         $this->operationType = $operationType;
         $this->entityType = $entityType;
         $this->data = $data;
-        $this->schedulable = $schedulable;
+        $this->model = $model;
         $this->currentEntity = $currentEntity;
     }
 
@@ -88,7 +88,7 @@ class ValidationContext implements ValidationContextInterface
      */
     public function getSchedulable(): ?Model
     {
-        return $this->schedulable;
+        return $this->model;
     }
 
     /**
@@ -110,24 +110,21 @@ class ValidationContext implements ValidationContextInterface
 
         return match ($this->getEntityType()) {
             EntityType::AVAILABILITY => availability_for($schedulable),
-            EntityType::SCHEDULE => $this->buildScheduleService($schedulable),
-            EntityType::IMPEDIMENT => $this->buildImpedimentService($schedulable),
+            EntityType::SCHEDULE => $this->buildScheduleService(),
+            EntityType::IMPEDIMENT => $this->buildImpedimentService(),
         };
     }
 
     /**
      * Build Schedule service with the appropriate context.
      *
-     * @param Model $schedulable The schedulable entity
      *
      * @return ServiceInterface Configured Schedule service
-     *
      * @throws RuntimeException When owner is required but not available
      */
-    private function buildScheduleService(Model $schedulable): ServiceInterface
+    private function buildScheduleService(): ServiceInterface
     {
         $owner = $this->resolveOwner();
-
         if (!$owner instanceof Model) {
             throw new RuntimeException(
                 'Cannot get Schedule service: owner is required but not available in validation context'
@@ -140,16 +137,13 @@ class ValidationContext implements ValidationContextInterface
     /**
      * Build Impediment service with the appropriate context.
      *
-     * @param Model $schedulable The schedulable entity
      *
      * @return ServiceInterface Configured Impediment service
-     *
      * @throws RuntimeException When owner is required but not available
      */
-    private function buildImpedimentService(Model $schedulable): ServiceInterface
+    private function buildImpedimentService(): ServiceInterface
     {
         $owner = $this->resolveOwner();
-
         if (!$owner instanceof Model) {
             throw new RuntimeException(
                 'Cannot get Impediment service: owner is required but not available in validation context'
@@ -166,7 +160,7 @@ class ValidationContext implements ValidationContextInterface
      */
     private function resolveOwner(): ?Model
     {
-        if (isset($this->data['availability_id']) && $this->schedulable instanceof Model) {
+        if (isset($this->data['availability_id']) && $this->model instanceof Model) {
             try {
                 return AvailabilityModel::find($this->data['availability_id']);
             } catch (Exception $exception) {
@@ -261,18 +255,19 @@ class ValidationContext implements ValidationContextInterface
     {
         $data = $this->safeData();
 
-
         if (array_key_exists($key, $data)) {
             return $data[$key];
         }
 
         if ($this->operationType === OperationType::UPDATE && $this->currentEntity instanceof Model) {
+            // Utiliser getAttribute() d'Eloquent qui gère les accesseurs et attributs
+            $value = $this->currentEntity->getAttribute($key);
 
-
-            if (property_exists($this->currentEntity, $key)) {
-                return $this->currentEntity->{$key};
+            if ($value !== null) {
+                return $value;
             }
 
+            // Fallback pour les anciennes méthodes getter (pas Eloquent)
             $getter = 'get' . str_replace('_', '', ucwords($key, '_'));
             if (method_exists($this->currentEntity, $getter)) {
                 return $this->currentEntity->{$getter}();

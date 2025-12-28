@@ -7,8 +7,8 @@ namespace Tests\Unit\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
-use Roster\Models\Impediment as ImpedimentModel;
 use Roster\Models\Availability;
+use Roster\Models\Impediment as ImpedimentModel;
 use Tests\TestCase;
 use Tests\Support\TestSchedulable;
 
@@ -24,7 +24,7 @@ final class ImpedimentTest extends TestCase
     /**
      * Test schedulable instance.
      */
-    private Model $testSchedulable;
+    private Model $schedulable;
 
     /**
      * Test availability instance.
@@ -38,18 +38,16 @@ final class ImpedimentTest extends TestCase
     {
         parent::setUp();
 
-        $this->testSchedulable = TestSchedulable::create();
+        $this->schedulable = TestSchedulable::create();
         $this->availability = $this->createAvailability();
     }
 
     /**
      * Create an availability instance for testing.
-     *
-     * @return Availability Created availability instance
      */
     private function createAvailability(): Availability
     {
-        return availability_for($this->testSchedulable)->create([
+        return availability_for($this->schedulable)->create([
             'type' => 'consultation',
             'daily_start' => '09:00:00',
             'daily_end' => '17:00:00',
@@ -63,7 +61,6 @@ final class ImpedimentTest extends TestCase
      * Create an impediment model instance for testing model methods.
      *
      * @param array<string, Carbon> $attributes Additional attributes to set
-     * @return ImpedimentModel Created impediment instance
      */
     private function createImpedimentModelInstance(array $attributes = []): ImpedimentModel
     {
@@ -86,7 +83,7 @@ final class ImpedimentTest extends TestCase
      */
     public function test_impediment_can_be_created_with_valid_attributes(): void
     {
-        // Arrange
+        // Arrange: Define valid impediment data
         $creationData = [
             'reason' => 'Vacation',
             'start_datetime' => '2038-07-15 09:00:00',
@@ -94,12 +91,12 @@ final class ImpedimentTest extends TestCase
             'metadata' => ['type' => 'annual_leave'],
         ];
 
-        // Act
+        // Act: Create impediment
         $impediment = impediment_for($this->availability)->create($creationData);
 
-        // Assert
+        // Assert: Verify impediment properties
         $this->assertInstanceOf(ImpedimentModel::class, $impediment);
-        $this->assertSame($this->testSchedulable->id, $impediment->schedulable_id);
+        $this->assertSame($this->schedulable->id, $impediment->schedulable_id);
         $this->assertSame(TestSchedulable::class, $impediment->schedulable_type);
         $this->assertSame($this->availability->id, $impediment->availability_id);
         $this->assertSame('Vacation', $impediment->reason);
@@ -111,7 +108,7 @@ final class ImpedimentTest extends TestCase
      */
     public function test_datetime_attributes_are_properly_cast(): void
     {
-        // Arrange
+        // Arrange: Define impediment with specific datetime values
         $creationData = [
             'reason' => 'Meeting',
             'start_datetime' => '2038-07-01 14:30:00',
@@ -119,10 +116,10 @@ final class ImpedimentTest extends TestCase
             'metadata' => null,
         ];
 
-        // Act
+        // Act: Create impediment
         $impediment = impediment_for($this->availability)->create($creationData);
 
-        // Assert
+        // Assert: Verify datetime casting to Carbon instances
         $this->assertSame('2038-07-01 14:30:00', $impediment->start_datetime->format('Y-m-d H:i:s'));
         $this->assertSame('2038-07-01 16:45:00', $impediment->end_datetime->format('Y-m-d H:i:s'));
     }
@@ -132,7 +129,7 @@ final class ImpedimentTest extends TestCase
      */
     public function test_metadata_is_properly_cast_to_array(): void
     {
-        // Arrange
+        // Arrange: Define impediment with metadata array
         $creationData = [
             'reason' => 'Emergency',
             'start_datetime' => '2038-07-01 10:00:00',
@@ -140,10 +137,10 @@ final class ImpedimentTest extends TestCase
             'metadata' => ['type' => 'emergency', 'priority' => 'high'],
         ];
 
-        // Act
+        // Act: Create impediment
         $impediment = impediment_for($this->availability)->create($creationData);
 
-        // Assert
+        // Assert: Verify metadata is properly cast to array
         $this->assertIsArray($impediment->metadata);
         $this->assertSame(['type' => 'emergency', 'priority' => 'high'], $impediment->metadata);
     }
@@ -153,16 +150,16 @@ final class ImpedimentTest extends TestCase
      */
     public function test_metadata_handles_json_string_input(): void
     {
-        // Arrange
+        // Arrange: Create base impediment and set raw JSON string attribute
         $impediment = $this->createImpedimentModelInstance();
 
-        // Act
+        // Act: Simulate database JSON string input
         $impediment->setRawAttributes(array_merge(
             $impediment->getAttributes(),
             ['metadata' => '{"note":"Test note","category":"technical"}']
         ));
 
-        // Assert
+        // Assert: Verify JSON string is properly cast to array
         $this->assertIsArray($impediment->metadata);
         $this->assertSame(['note' => 'Test note', 'category' => 'technical'], $impediment->metadata);
     }
@@ -172,7 +169,7 @@ final class ImpedimentTest extends TestCase
      */
     public function test_metadata_returns_empty_array_when_null(): void
     {
-        // Arrange
+        // Arrange: Define impediment with null metadata
         $creationData = [
             'reason' => 'Test',
             'start_datetime' => '2038-07-01 10:00:00',
@@ -180,10 +177,10 @@ final class ImpedimentTest extends TestCase
             'metadata' => null,
         ];
 
-        // Act
+        // Act: Create impediment
         $impediment = impediment_for($this->availability)->create($creationData);
 
-        // Assert
+        // Assert: Verify null metadata returns empty array
         $this->assertIsArray($impediment->metadata);
         $this->assertEmpty($impediment->metadata);
     }
@@ -193,13 +190,13 @@ final class ImpedimentTest extends TestCase
      */
     public function test_availability_relationship_returns_correct_model(): void
     {
-        // Arrange
+        // Arrange: Create impediment instance
         $impediment = $this->createImpedimentModelInstance();
 
-        // Act
+        // Act: Access availability relationship
         $availability = $impediment->availability;
 
-        // Assert
+        // Assert: Verify correct availability model is returned
         $this->assertInstanceOf(Availability::class, $availability);
         $this->assertSame($this->availability->id, $availability->id);
     }
@@ -209,15 +206,15 @@ final class ImpedimentTest extends TestCase
      */
     public function test_schedulable_relationship_returns_correct_model(): void
     {
-        // Arrange
+        // Arrange: Create impediment instance
         $impediment = $this->createImpedimentModelInstance();
 
-        // Act
+        // Act: Access schedulable relationship
         $schedulable = $impediment->schedulable;
 
-        // Assert
+        // Assert: Verify correct schedulable model is returned
         $this->assertInstanceOf(TestSchedulable::class, $schedulable);
-        $this->assertSame($this->testSchedulable->id, $schedulable->id);
+        $this->assertSame($this->schedulable->id, $schedulable->id);
     }
 
     /**
@@ -225,15 +222,15 @@ final class ImpedimentTest extends TestCase
      */
     public function test_overlaps_with_returns_true_when_impediment_overlaps(): void
     {
-        // Arrange
+        // Arrange: Create impediment and overlapping period
         $impediment = $this->createImpedimentModelInstance();
         $overlapStart = Carbon::parse('2038-07-01 11:00:00');
         $overlapEnd = Carbon::parse('2038-07-01 13:00:00');
 
-        // Act
+        // Act: Check overlap
         $overlaps = $impediment->overlapsWith($overlapStart, $overlapEnd);
 
-        // Assert
+        // Assert: Verify overlap is detected
         $this->assertTrue($overlaps);
     }
 
@@ -242,14 +239,14 @@ final class ImpedimentTest extends TestCase
      */
     public function test_overlaps_with_returns_false_when_impediment_does_not_overlap(): void
     {
-        // Arrange
+        // Arrange: Create impediment and non-overlapping periods
         $impediment = $this->createImpedimentModelInstance();
         $beforeStart = Carbon::parse('2038-07-01 08:00:00');
         $beforeEnd = Carbon::parse('2038-07-01 09:00:00');
         $afterStart = Carbon::parse('2038-07-01 13:00:00');
         $afterEnd = Carbon::parse('2038-07-01 14:00:00');
 
-        // Act & Assert
+        // Act & Assert: Verify no overlap for periods before and after
         $this->assertFalse($impediment->overlapsWith($beforeStart, $beforeEnd));
         $this->assertFalse($impediment->overlapsWith($afterStart, $afterEnd));
     }
@@ -259,7 +256,7 @@ final class ImpedimentTest extends TestCase
      */
     public function test_duration_minutes_attribute_returns_correct_duration(): void
     {
-        // Arrange
+        // Arrange: Define impediment with specific duration
         $creationData = [
             'reason' => 'Long Meeting',
             'start_datetime' => '2038-07-01 10:00:00',
@@ -267,10 +264,10 @@ final class ImpedimentTest extends TestCase
             'metadata' => null,
         ];
 
-        // Act
+        // Act: Create impediment
         $impediment = impediment_for($this->availability)->create($creationData);
 
-        // Assert
+        // Assert: Verify correct duration calculation
         $this->assertEqualsWithDelta(150.0, $impediment->duration_minutes, PHP_FLOAT_EPSILON);
     }
 
@@ -279,7 +276,7 @@ final class ImpedimentTest extends TestCase
      */
     public function test_is_active_returns_true_for_currently_active_impediment(): void
     {
-        // Arrange
+        // Arrange: Create impediment active at test time
         $testTime = Carbon::parse('2038-07-01 11:00:00');
         $startTime = $testTime->copy()->subHour();
         $endTime = $testTime->copy()->addHour();
@@ -289,11 +286,11 @@ final class ImpedimentTest extends TestCase
             'end_datetime' => $endTime,
         ]);
 
-        // Act
+        // Act: Set test time and check active status
         Carbon::setTestNow($testTime);
         $isActive = $impediment->isActive();
 
-        // Assert
+        // Assert: Verify impediment is active
         $this->assertTrue($isActive);
         Carbon::setTestNow();
     }
@@ -303,7 +300,7 @@ final class ImpedimentTest extends TestCase
      */
     public function test_is_active_returns_false_for_past_impediment(): void
     {
-        // Arrange
+        // Arrange: Create past impediment
         $pastStart = Carbon::parse('2038-07-01 10:00:00');
         $pastEnd = Carbon::parse('2038-07-01 11:00:00');
         $currentTime = $pastEnd->copy()->addHour();
@@ -313,11 +310,11 @@ final class ImpedimentTest extends TestCase
             'end_datetime' => $pastEnd,
         ]);
 
-        // Act
+        // Act: Set test time and check active status
         Carbon::setTestNow($currentTime);
         $isActive = $impediment->isActive();
 
-        // Assert
+        // Assert: Verify impediment is not active
         $this->assertFalse($isActive);
         Carbon::setTestNow();
     }
@@ -327,7 +324,7 @@ final class ImpedimentTest extends TestCase
      */
     public function test_is_active_returns_false_for_future_impediment(): void
     {
-        // Arrange
+        // Arrange: Create future impediment
         $futureStart = Carbon::parse('2038-07-15 10:00:00');
         $futureEnd = Carbon::parse('2038-07-15 12:00:00');
         $currentTime = $futureStart->copy()->subHour();
@@ -337,11 +334,11 @@ final class ImpedimentTest extends TestCase
             'end_datetime' => $futureEnd,
         ]);
 
-        // Act
+        // Act: Set test time and check active status
         Carbon::setTestNow($currentTime);
         $isActive = $impediment->isActive();
 
-        // Assert
+        // Assert: Verify impediment is not active
         $this->assertFalse($isActive);
         Carbon::setTestNow();
     }
@@ -351,7 +348,7 @@ final class ImpedimentTest extends TestCase
      */
     public function test_is_upcoming_returns_true_for_future_impediment(): void
     {
-        // Arrange
+        // Arrange: Create future impediment
         $futureStart = Carbon::parse('2038-07-15 10:00:00');
         $futureEnd = Carbon::parse('2038-07-15 12:00:00');
         $currentTime = $futureStart->copy()->subHour();
@@ -361,11 +358,11 @@ final class ImpedimentTest extends TestCase
             'end_datetime' => $futureEnd,
         ]);
 
-        // Act
+        // Act: Set test time and check upcoming status
         Carbon::setTestNow($currentTime);
         $isUpcoming = $impediment->isUpcoming();
 
-        // Assert
+        // Assert: Verify impediment is upcoming
         $this->assertTrue($isUpcoming);
         Carbon::setTestNow();
     }
@@ -375,7 +372,7 @@ final class ImpedimentTest extends TestCase
      */
     public function test_is_upcoming_returns_false_for_past_impediment(): void
     {
-        // Arrange
+        // Arrange: Create past impediment
         $pastStart = Carbon::parse('2038-07-01 10:00:00');
         $pastEnd = Carbon::parse('2038-07-01 11:00:00');
         $currentTime = $pastEnd->copy()->addHour();
@@ -385,11 +382,11 @@ final class ImpedimentTest extends TestCase
             'end_datetime' => $pastEnd,
         ]);
 
-        // Act
+        // Act: Set test time and check upcoming status
         Carbon::setTestNow($currentTime);
         $isUpcoming = $impediment->isUpcoming();
 
-        // Assert
+        // Assert: Verify impediment is not upcoming
         $this->assertFalse($isUpcoming);
         Carbon::setTestNow();
     }
@@ -399,7 +396,7 @@ final class ImpedimentTest extends TestCase
      */
     public function test_is_upcoming_returns_false_for_active_impediment(): void
     {
-        // Arrange
+        // Arrange: Create active impediment
         $testTime = Carbon::parse('2038-07-01 11:00:00');
         $startTime = $testTime->copy()->subHour();
         $endTime = $testTime->copy()->addHour();
@@ -409,11 +406,11 @@ final class ImpedimentTest extends TestCase
             'end_datetime' => $endTime,
         ]);
 
-        // Act
+        // Act: Set test time and check upcoming status
         Carbon::setTestNow($testTime);
         $isUpcoming = $impediment->isUpcoming();
 
-        // Assert
+        // Assert: Verify active impediment is not upcoming
         $this->assertFalse($isUpcoming);
         Carbon::setTestNow();
     }
@@ -423,7 +420,7 @@ final class ImpedimentTest extends TestCase
      */
     public function test_is_past_returns_true_for_past_impediment(): void
     {
-        // Arrange
+        // Arrange: Create past impediment
         $pastStart = Carbon::parse('2038-07-01 10:00:00');
         $pastEnd = Carbon::parse('2038-07-01 11:00:00');
         $currentTime = $pastEnd->copy()->addHour();
@@ -433,11 +430,11 @@ final class ImpedimentTest extends TestCase
             'end_datetime' => $pastEnd,
         ]);
 
-        // Act
+        // Act: Set test time and check past status
         Carbon::setTestNow($currentTime);
         $isPast = $impediment->isPast();
 
-        // Assert
+        // Assert: Verify impediment is past
         $this->assertTrue($isPast);
         Carbon::setTestNow();
     }
@@ -447,7 +444,7 @@ final class ImpedimentTest extends TestCase
      */
     public function test_is_past_returns_false_for_future_impediment(): void
     {
-        // Arrange
+        // Arrange: Create future impediment
         $futureStart = Carbon::parse('2038-07-15 10:00:00');
         $futureEnd = Carbon::parse('2038-07-15 12:00:00');
         $currentTime = $futureStart->copy()->subHour();
@@ -457,11 +454,11 @@ final class ImpedimentTest extends TestCase
             'end_datetime' => $futureEnd,
         ]);
 
-        // Act
+        // Act: Set test time and check past status
         Carbon::setTestNow($currentTime);
         $isPast = $impediment->isPast();
 
-        // Assert
+        // Assert: Verify impediment is not past
         $this->assertFalse($isPast);
         Carbon::setTestNow();
     }
@@ -471,7 +468,7 @@ final class ImpedimentTest extends TestCase
      */
     public function test_is_past_returns_false_for_active_impediment(): void
     {
-        // Arrange
+        // Arrange: Create active impediment
         $testTime = Carbon::parse('2038-07-01 11:00:00');
         $startTime = $testTime->copy()->subHour();
         $endTime = $testTime->copy()->addHour();
@@ -481,11 +478,11 @@ final class ImpedimentTest extends TestCase
             'end_datetime' => $endTime,
         ]);
 
-        // Act
+        // Act: Set test time and check past status
         Carbon::setTestNow($testTime);
         $isPast = $impediment->isPast();
 
-        // Assert
+        // Assert: Verify active impediment is not past
         $this->assertFalse($isPast);
         Carbon::setTestNow();
     }
@@ -495,7 +492,7 @@ final class ImpedimentTest extends TestCase
      */
     public function test_impediment_duration_is_calculated_correctly(): void
     {
-        // Arrange
+        // Arrange: Define impediment with 90-minute duration
         $creationData = [
             'reason' => 'Training',
             'start_datetime' => '2038-07-01 09:00:00',
@@ -503,10 +500,10 @@ final class ImpedimentTest extends TestCase
             'metadata' => null,
         ];
 
-        // Act
+        // Act: Create impediment
         $impediment = impediment_for($this->availability)->create($creationData);
 
-        // Assert
+        // Assert: Verify correct duration calculation
         $this->assertEqualsWithDelta(90.0, $impediment->duration_minutes, PHP_FLOAT_EPSILON);
     }
 
@@ -515,7 +512,7 @@ final class ImpedimentTest extends TestCase
      */
     public function test_overlaps_with_handles_edge_cases(): void
     {
-        // Arrange
+        // Arrange: Create impediment with specific time range
         $impediment = $this->createImpedimentModelInstance([
             'start_datetime' => Carbon::parse('2038-07-01 10:00:00'),
             'end_datetime' => Carbon::parse('2038-07-01 12:00:00'),
@@ -526,7 +523,7 @@ final class ImpedimentTest extends TestCase
         $edgeStart2 = Carbon::parse('2038-07-01 09:00:00');
         $edgeEnd2 = Carbon::parse('2038-07-01 10:00:00');
 
-        // Act & Assert
+        // Act & Assert: Verify touching periods do not overlap
         $this->assertFalse($impediment->overlapsWith($edgeStart, $edgeEnd));
         $this->assertFalse($impediment->overlapsWith($edgeStart2, $edgeEnd2));
     }
@@ -536,7 +533,7 @@ final class ImpedimentTest extends TestCase
      */
     public function test_duration_minutes_for_exact_hours(): void
     {
-        // Arrange
+        // Arrange: Define impediment with exact 8-hour duration
         $creationData = [
             'reason' => 'Full Day',
             'start_datetime' => '2038-07-01 09:00:00',
@@ -544,10 +541,10 @@ final class ImpedimentTest extends TestCase
             'metadata' => null,
         ];
 
-        // Act
+        // Act: Create impediment
         $impediment = impediment_for($this->availability)->create($creationData);
 
-        // Assert
+        // Assert: Verify correct duration calculation for exact hours
         $this->assertEqualsWithDelta(480.0, $impediment->duration_minutes, PHP_FLOAT_EPSILON);
     }
 }

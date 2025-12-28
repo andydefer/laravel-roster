@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Roster\Services;
 
-use Roster\DTOs\AvailabilityData;
 use Roster\Enums\EntityType;
 use Roster\Enums\OperationType;
 use Roster\Models\Availability;

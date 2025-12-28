@@ -75,33 +75,31 @@ class SchedulableValidationRule extends AbstractRule
      * Validates schedulable consistency for create and delete operations.
      *
      * @param ValidationContextInterface $validationContext Validation context
-     * @param Model $schedulable Schedulable entity
+     * @param Model $model Schedulable entity
      * @param EntityType $entityType Type of entity being validated
      */
     private function validateSchedulableConsistency(
         ValidationContextInterface $validationContext,
-        Model $schedulable,
+        Model $model,
         EntityType $entityType
     ): void {
         if (in_array($entityType, [EntityType::SCHEDULE, EntityType::IMPEDIMENT])) {
-            $this->validateChildEntitySchedulable($validationContext, $schedulable);
+            $this->validateChildEntitySchedulable($validationContext, $model);
             return;
         }
 
-        if ($entityType === EntityType::AVAILABILITY) {
-            $this->validateAvailabilitySchedulable($validationContext, $schedulable);
-        }
+        $this->validateAvailabilitySchedulable($validationContext, $model);
     }
 
     /**
      * Validates schedulable consistency for child entities (Schedule, Impediment).
      *
      * @param ValidationContextInterface $validationContext Validation context
-     * @param Model $schedulable Schedulable entity
+     * @param Model $model Schedulable entity
      */
     private function validateChildEntitySchedulable(
         ValidationContextInterface $validationContext,
-        Model $schedulable
+        Model $model
     ): void {
         $schedulableId = $validationContext->get('schedulable_id');
         $schedulableType = $validationContext->get('schedulable_type');
@@ -114,28 +112,28 @@ class SchedulableValidationRule extends AbstractRule
             return;
         }
 
-        $this->validateSchedulableId($validationContext, $schedulable, $schedulableId);
-        $this->validateSchedulableType($validationContext, $schedulable, $schedulableType);
+        $this->validateSchedulableId($validationContext, $model, $schedulableId);
+        $this->validateSchedulableType($validationContext, $model, $schedulableType);
     }
 
     /**
      * Validates schedulable identifier matches expected value.
      *
      * @param ValidationContextInterface $validationContext Validation context
-     * @param Model $schedulable Expected schedulable entity
+     * @param Model $model Expected schedulable entity
      * @param mixed $providedId Provided schedulable identifier
      */
     private function validateSchedulableId(
         ValidationContextInterface $validationContext,
-        Model $schedulable,
+        Model $model,
         mixed $providedId
     ): void {
-        if ($providedId != $schedulable->getKey()) {
+        if ($providedId != $model->getKey()) {
             $validationContext->setViolation(
                 'schedulable_id',
                 sprintf(
                     'Schedulable ID mismatch. Expected: %d, Got: %d',
-                    $schedulable->getKey(),
+                    $model->getKey(),
                     $providedId
                 )
             );
@@ -146,20 +144,20 @@ class SchedulableValidationRule extends AbstractRule
      * Validates schedulable type matches expected value.
      *
      * @param ValidationContextInterface $validationContext Validation context
-     * @param Model $schedulable Expected schedulable entity
+     * @param Model $model Expected schedulable entity
      * @param string|null $providedType Provided schedulable type
      */
     private function validateSchedulableType(
         ValidationContextInterface $validationContext,
-        Model $schedulable,
+        Model $model,
         ?string $providedType
     ): void {
-        if ($providedType !== get_class($schedulable)) {
+        if ($providedType !== get_class($model)) {
             $validationContext->setViolation(
                 'schedulable_type',
                 sprintf(
                     'Schedulable type mismatch. Expected: %s, Got: %s',
-                    get_class($schedulable),
+                    get_class($model),
                     $providedType
                 )
             );
@@ -170,21 +168,21 @@ class SchedulableValidationRule extends AbstractRule
      * Validates schedulable consistency for Availability entities.
      *
      * @param ValidationContextInterface $validationContext Validation context
-     * @param Model $schedulable Schedulable entity
+     * @param Model $model Schedulable entity
      */
     private function validateAvailabilitySchedulable(
         ValidationContextInterface $validationContext,
-        Model $schedulable
+        Model $model
     ): void {
         $schedulableId = $validationContext->get('schedulable_id');
         $schedulableType = $validationContext->get('schedulable_type');
 
         if ($schedulableId !== null) {
-            $this->validateSchedulableId($validationContext, $schedulable, $schedulableId);
+            $this->validateSchedulableId($validationContext, $model, $schedulableId);
         }
 
         if ($schedulableType !== null) {
-            $this->validateSchedulableType($validationContext, $schedulable, $schedulableType);
+            $this->validateSchedulableType($validationContext, $model, $schedulableType);
         }
     }
 }

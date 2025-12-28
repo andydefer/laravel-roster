@@ -58,7 +58,7 @@ abstract class AbstractRule implements RuleInterface
     {
         $ruleAttribute = $this->getValidationRuleAttribute();
 
-        if ($ruleAttribute === null) {
+        if (!$ruleAttribute instanceof ValidationRule) {
             // Default behavior for rules without attribute
             return true;
         }
@@ -141,33 +141,23 @@ abstract class AbstractRule implements RuleInterface
      * Checks if an operation type is supported by the rule attribute.
      *
      * @param OperationType $operationType Operation to check
-     * @param ValidationRule $ruleAttribute Rule configuration attribute
+     * @param ValidationRule $validationRule Rule configuration attribute
      * @return bool True if operation supported
      */
-    private function isOperationSupported(OperationType $operationType, ValidationRule $ruleAttribute): bool
+    private function isOperationSupported(OperationType $operationType, ValidationRule $validationRule): bool
     {
-        foreach ($ruleAttribute->operations as $supportedOperation) {
-            if ($supportedOperation === $operationType) {
-                return true;
-            }
-        }
-        return false;
+        return in_array($operationType, $validationRule->operations, true);
     }
 
     /**
      * Checks if an entity type is supported by the rule attribute.
      *
      * @param EntityType $entityType Entity to check
-     * @param ValidationRule $ruleAttribute Rule configuration attribute
+     * @param ValidationRule $validationRule Rule configuration attribute
      * @return bool True if entity supported
      */
-    private function isEntitySupported(EntityType $entityType, ValidationRule $ruleAttribute): bool
+    private function isEntitySupported(EntityType $entityType, ValidationRule $validationRule): bool
     {
-        foreach ($ruleAttribute->entities as $supportedEntity) {
-            if ($supportedEntity === $entityType) {
-                return true;
-            }
-        }
-        return false;
+        return in_array($entityType, $validationRule->entities, true);
     }
 }

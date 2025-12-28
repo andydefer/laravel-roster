@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace Roster\Services\Core;
 
+use Roster\DTOs\AvailabilityData;
+use Roster\DTOs\ScheduleData;
+use Roster\DTOs\ImpedimentData;
 use BadMethodCallException;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Model;
@@ -45,11 +48,13 @@ abstract class AbstractService implements ServiceInterface
 
     /**
      * Active filters for query operations.
+     * @var mixed[]
      */
     protected array $filters = [];
 
     /**
      * Current operation data.
+     * @var mixed[]
      */
     protected array $data = [];
 
@@ -158,7 +163,7 @@ abstract class AbstractService implements ServiceInterface
      * @throws ValidationFailedException If validation fails or entity not found
      * @throws InvalidServiceContextException If service context is incomplete
      */
-    final public function delete(int $id): bool
+    public function delete(int $id): bool
     {
         $this->requireContext();
         $entity = $this->find($id);
@@ -202,7 +207,7 @@ abstract class AbstractService implements ServiceInterface
      * @param int $id Entity identifier
      * @return mixed The found entity or null
      */
-    final public function find(int $id): mixed
+    public function find(int $id): mixed
     {
         $repository = $this->getCurrentRepository();
 
@@ -231,7 +236,7 @@ abstract class AbstractService implements ServiceInterface
      *
      * @return Collection All entities matching current context and filters
      */
-    final public function all(): Collection
+    public function all(): Collection
     {
         return $this->getCurrentRepository()->all(
             schedulable: $this->schedulable,
@@ -249,7 +254,7 @@ abstract class AbstractService implements ServiceInterface
      * @param int|null $page Current page number
      * @return LengthAwarePaginator Paginated results
      */
-    final public function paginate(
+    public function paginate(
         int $perPage = 15,
         array $columns = ['*'],
         string $pageName = 'page',
@@ -277,9 +282,9 @@ abstract class AbstractService implements ServiceInterface
     final protected function createDTOFromArray(array $data, OperationType $operationType): mixed
     {
         return match ($this->getEntityTypeEnum()) {
-            EntityType::AVAILABILITY => \Roster\DTOs\AvailabilityData::fromArray($data),
-            EntityType::SCHEDULE => \Roster\DTOs\ScheduleData::fromArray($data),
-            EntityType::IMPEDIMENT => \Roster\DTOs\ImpedimentData::fromArray($data),
+            EntityType::AVAILABILITY => AvailabilityData::fromArray($data),
+            EntityType::SCHEDULE => ScheduleData::fromArray($data),
+            EntityType::IMPEDIMENT => ImpedimentData::fromArray($data),
             default => throw new LogicException('Unsupported entity type for DTO creation')
         };
     }
@@ -323,7 +328,7 @@ abstract class AbstractService implements ServiceInterface
             operationType: $operationType,
             entityType: $entityType,
             data: $data,
-            schedulable: $this->schedulable,
+            model: $this->schedulable,
             currentEntity: $currentEntity
         );
 
@@ -417,7 +422,7 @@ abstract class AbstractService implements ServiceInterface
     /**
      * Gets current operation data.
      *
-     * @return array Current data
+     * @return mixed[] Current data
      */
     public function getData(): array
     {
@@ -439,7 +444,7 @@ abstract class AbstractService implements ServiceInterface
     /**
      * Gets active filters.
      *
-     * @return array Current filters
+     * @return mixed[] Current filters
      */
     public function getFilters(): array
     {

@@ -168,10 +168,10 @@ class AvailabilityTemporalCoherenceRule extends AbstractRule
             ->where('end_datetime', '>=', $referenceTime)
             ->get();
 
-        foreach ($futureEntities as $entity) {
+        foreach ($futureEntities as $futureEntity) {
             $this->validateDateBoundary(
                 boundaryType: 'start',
-                entity: $entity,
+                entity: $futureEntity,
                 newDate: $newStart,
                 entityClass: $entityClass,
                 validationContext: $validationContext
@@ -179,14 +179,14 @@ class AvailabilityTemporalCoherenceRule extends AbstractRule
 
             $this->validateDateBoundary(
                 boundaryType: 'end',
-                entity: $entity,
+                entity: $futureEntity,
                 newDate: $newEnd,
                 entityClass: $entityClass,
                 validationContext: $validationContext
             );
 
             $this->validateDayAvailability(
-                entity: $entity,
+                entity: $futureEntity,
                 newDays: $newDays,
                 entityClass: $entityClass,
                 validationContext: $validationContext
@@ -271,13 +271,13 @@ class AvailabilityTemporalCoherenceRule extends AbstractRule
 
         $entityDays = $this->extractDaysFromPeriod($startString, $endString);
 
-        foreach ($entityDays as $day) {
-            if (!in_array($day, $newDays, true)) {
+        foreach ($entityDays as $entityDay) {
+            if (!in_array($entityDay, $newDays, true)) {
                 $validationContext->setViolation(
                     'days',
                     sprintf(
                         "Cannot remove '%s' from days because it is used by a future %s from '%s' to '%s'",
-                        ucfirst($day),
+                        ucfirst($entityDay),
                         strtolower(class_basename($entityClass)),
                         $entity->start_datetime,
                         $entity->end_datetime
@@ -307,6 +307,7 @@ class AvailabilityTemporalCoherenceRule extends AbstractRule
                 if (!in_array($day, $days, true)) {
                     $days[] = $day;
                 }
+
                 $current->addDay();
             }
 

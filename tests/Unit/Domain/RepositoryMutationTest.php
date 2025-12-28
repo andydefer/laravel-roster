@@ -6,7 +6,6 @@ namespace Tests\Unit\Domain;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Carbon;
 use Roster\Exceptions\ForbiddenModelMutationException;
 use Roster\Exceptions\InvalidOwnerException;
 use Roster\Exceptions\MissingOwnerException;
@@ -27,7 +26,10 @@ final class RepositoryMutationTest extends TestCase
 {
     use RefreshDatabase;
 
-    private Model $testSchedulable;
+    /**
+     * Schedulable model instance for testing.
+     */
+    private Model $schedulableModel;
 
     /**
      * Set up test environment.
@@ -35,7 +37,7 @@ final class RepositoryMutationTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->testSchedulable = TestSchedulable::create();
+        $this->schedulableModel = TestSchedulable::create();
     }
 
     /**
@@ -43,7 +45,7 @@ final class RepositoryMutationTest extends TestCase
      */
     public function test_repository_can_create_availability(): void
     {
-        // Arrange
+        // Arrange: Prepare availability data
         $startDate = now()->addDay()->startOfDay();
         $endDate = now()->addDays(30)->startOfDay();
         $day = strtolower($startDate->format('l'));
@@ -57,12 +59,12 @@ final class RepositoryMutationTest extends TestCase
             'validity_end' => $endDate->format('Y-m-d'),
         ];
 
-        // Act
-        $availability = availability_for($this->testSchedulable)->create($availabilityData);
+        // Act: Create availability through service
+        $availability = availability_for($this->schedulableModel)->create($availabilityData);
 
-        // Assert
+        // Assert: Availability created with correct relationships
         $this->assertInstanceOf(AvailabilityModel::class, $availability);
-        $this->assertSame($this->testSchedulable->id, $availability->schedulable_id);
+        $this->assertSame($this->schedulableModel->id, $availability->schedulable_id);
         $this->assertSame(TestSchedulable::class, $availability->schedulable_type);
     }
 
@@ -71,12 +73,12 @@ final class RepositoryMutationTest extends TestCase
      */
     public function test_repository_can_update_availability(): void
     {
-        // Arrange
+        // Arrange: Create availability
         $startDate = now()->addDay()->startOfDay();
         $endDate = now()->addDays(30)->startOfDay();
         $day = strtolower($startDate->format('l'));
 
-        $availability = availability_for($this->testSchedulable)->create([
+        $availability = availability_for($this->schedulableModel)->create([
             'type' => 'consultation',
             'daily_start' => '09:00:00',
             'daily_end' => '17:00:00',
@@ -85,12 +87,12 @@ final class RepositoryMutationTest extends TestCase
             'validity_end' => $endDate->format('Y-m-d'),
         ]);
 
-        // Act
-        $updated = availability_for($this->testSchedulable)->update($availability->id, [
+        // Act: Update availability through service
+        $updated = availability_for($this->schedulableModel)->update($availability->id, [
             'daily_start' => '10:00:00',
         ]);
 
-        // Assert
+        // Assert: Update successful and database reflects changes
         $this->assertTrue($updated);
         $this->assertDatabaseHas('roster_availabilities', [
             'id' => $availability->id,
@@ -103,12 +105,12 @@ final class RepositoryMutationTest extends TestCase
      */
     public function test_repository_can_delete_availability(): void
     {
-        // Arrange
+        // Arrange: Create availability
         $startDate = now()->addDay()->startOfDay();
         $endDate = now()->addDays(30)->startOfDay();
         $day = strtolower($startDate->format('l'));
 
-        $availability = availability_for($this->testSchedulable)->create([
+        $availability = availability_for($this->schedulableModel)->create([
             'type' => 'consultation',
             'daily_start' => '09:00:00',
             'daily_end' => '17:00:00',
@@ -117,12 +119,19 @@ final class RepositoryMutationTest extends TestCase
             'validity_end' => $endDate->format('Y-m-d'),
         ]);
 
-        // Act
-        $deleted = availability_for($this->testSchedulable)->delete($availability->id);
+        // Act: Delete availability through service
+        $deleted = availability_for($this->schedulableModel)->delete($availability->id);
 
-        // Assert
+        // Assert: Soft delete successful
         $this->assertTrue($deleted);
-        $this->assertDatabaseMissing('roster_availabilities', ['id' => $availability->id]);
+        $this->assertSoftDeleted('roster_availabilities', [
+            'id' => $availability->id,
+        ]);
+
+        // Verify record exists in trash
+        $trashed = AvailabilityModel::withTrashed()->find($availability->id);
+        $this->assertNotNull($trashed);
+        $this->assertNotNull($trashed->deleted_at);
     }
 
     /**
@@ -130,12 +139,12 @@ final class RepositoryMutationTest extends TestCase
      */
     public function test_direct_delete_still_forbidden(): void
     {
-        // Arrange
+        // Arrange: Create availability
         $startDate = now()->addDay()->startOfDay();
         $endDate = now()->addDays(30)->startOfDay();
         $day = strtolower($startDate->format('l'));
 
-        $availability = availability_for($this->testSchedulable)->create([
+        $availability = availability_for($this->schedulableModel)->create([
             'type' => 'consultation',
             'daily_start' => '09:00:00',
             'daily_end' => '17:00:00',
@@ -144,10 +153,8 @@ final class RepositoryMutationTest extends TestCase
             'validity_end' => $endDate->format('Y-m-d'),
         ]);
 
-        // Assert
+        // Act & Assert: Direct model deletion should fail
         $this->expectException(ForbiddenModelMutationException::class);
-
-        // Act
         $availability->delete();
     }
 
@@ -156,42 +163,40 @@ final class RepositoryMutationTest extends TestCase
      */
     public function test_availability_throws_exception_when_owner_provided(): void
     {
-        // Arrange
-        $startDate1 = now()->addDay()->startOfDay();
-        $endDate1 = now()->addDays(30)->startOfDay();
-        $day1 = strtolower($startDate1->format('l'));
+        // Arrange: Create multiple availabilities
+        $firstStartDate = now()->addDay()->startOfDay();
+        $firstEndDate = now()->addDays(30)->startOfDay();
+        $firstDay = strtolower($firstStartDate->format('l'));
 
-        availability_for($this->testSchedulable)->create([
+        availability_for($this->schedulableModel)->create([
             'type' => 'consultation',
             'daily_start' => '09:00:00',
             'daily_end' => '17:00:00',
-            'days' => [$day1],
-            'validity_start' => $startDate1->format('Y-m-d'),
-            'validity_end' => $endDate1->format('Y-m-d'),
+            'days' => [$firstDay],
+            'validity_start' => $firstStartDate->format('Y-m-d'),
+            'validity_end' => $firstEndDate->format('Y-m-d'),
         ]);
 
-        $startDate2 = now()->addDays(2)->startOfDay();
-        $endDate2 = now()->addDays(32)->startOfDay();
-        $day2 = strtolower($startDate2->format('l'));
+        $secondStartDate = now()->addDays(2)->startOfDay();
+        $secondEndDate = now()->addDays(32)->startOfDay();
+        $secondDay = strtolower($secondStartDate->format('l'));
 
-        $availability2 = availability_for($this->testSchedulable)->create([
+        $secondAvailability = availability_for($this->schedulableModel)->create([
             'type' => 'consultation',
             'daily_start' => '08:00:00',
             'daily_end' => '18:00:00',
-            'days' => [$day2],
-            'validity_start' => $startDate2->format('Y-m-d'),
-            'validity_end' => $endDate2->format('Y-m-d'),
+            'days' => [$secondDay],
+            'validity_start' => $secondStartDate->format('Y-m-d'),
+            'validity_end' => $secondEndDate->format('Y-m-d'),
         ]);
 
         $availabilityRepository = app(AvailabilityRepository::class);
 
-        // Assert
+        // Act & Assert: Availability repository should reject owner parameter
         $this->expectException(InvalidOwnerException::class);
-
-        // Act
         $availabilityRepository->all(
-            schedulable: $this->testSchedulable,
-            owner: $availability2
+            schedulable: $this->schedulableModel,
+            owner: $secondAvailability
         );
     }
 
@@ -200,12 +205,12 @@ final class RepositoryMutationTest extends TestCase
      */
     public function test_schedule_requires_owner(): void
     {
-        // Arrange
+        // Arrange: Create availability
         $startDate = now()->addDay()->startOfDay();
         $endDate = now()->addDays(30)->startOfDay();
         $day = strtolower($startDate->format('l'));
 
-        availability_for($this->testSchedulable)->create([
+        availability_for($this->schedulableModel)->create([
             'type' => 'consultation',
             'daily_start' => '09:00:00',
             'daily_end' => '17:00:00',
@@ -216,17 +221,15 @@ final class RepositoryMutationTest extends TestCase
 
         $scheduleRepository = app(ScheduleRepository::class);
 
-        // Assert
+        // Act & Assert: Schedule creation without owner should fail
         $this->expectException(MissingOwnerException::class);
-
-        // Act
         $scheduleRepository->create(
             data: [
                 'title' => 'Test Schedule',
                 'start_datetime' => $startDate->copy()->setTime(10, 0),
                 'end_datetime' => $startDate->copy()->setTime(11, 0),
             ],
-            schedulable: $this->testSchedulable
+            schedulable: $this->schedulableModel
         );
     }
 
@@ -235,12 +238,12 @@ final class RepositoryMutationTest extends TestCase
      */
     public function test_schedule_can_be_created_with_owner(): void
     {
-        // Arrange
+        // Arrange: Create availability and schedule data
         $startDate = now()->addDay()->startOfDay();
         $endDate = now()->addDays(30)->startOfDay();
         $day = strtolower($startDate->format('l'));
 
-        $availability = availability_for($this->testSchedulable)->create([
+        $availability = availability_for($this->schedulableModel)->create([
             'type' => 'consultation',
             'daily_start' => '09:00:00',
             'daily_end' => '17:00:00',
@@ -255,13 +258,13 @@ final class RepositoryMutationTest extends TestCase
             'end_datetime' => $startDate->copy()->setTime(11, 0),
         ];
 
-        // Act
+        // Act: Create schedule through service
         $schedule = schedule_for($availability)->create($scheduleData);
 
-        // Assert
+        // Assert: Schedule created with correct relationships
         $this->assertInstanceOf(ScheduleModel::class, $schedule);
         $this->assertSame($availability->id, $schedule->availability_id);
-        $this->assertSame($this->testSchedulable->id, $schedule->schedulable_id);
+        $this->assertSame($this->schedulableModel->id, $schedule->schedulable_id);
     }
 
     /**
@@ -269,12 +272,12 @@ final class RepositoryMutationTest extends TestCase
      */
     public function test_schedule_update_with_owner(): void
     {
-        // Arrange
+        // Arrange: Create availability and schedule
         $startDate = now()->addDay()->startOfDay();
         $endDate = now()->addDays(30)->startOfDay();
         $day = strtolower($startDate->format('l'));
 
-        $availability = availability_for($this->testSchedulable)->create([
+        $availability = availability_for($this->schedulableModel)->create([
             'type' => 'consultation',
             'daily_start' => '09:00:00',
             'daily_end' => '17:00:00',
@@ -289,12 +292,12 @@ final class RepositoryMutationTest extends TestCase
             'end_datetime' => $startDate->copy()->setTime(11, 0),
         ]);
 
-        // Act
+        // Act: Update schedule through service
         $updated = schedule_for($availability)->update($schedule->id, [
             'title' => 'Updated Schedule',
         ]);
 
-        // Assert
+        // Assert: Update successful and database reflects changes
         $this->assertTrue($updated);
         $this->assertDatabaseHas('roster_schedules', [
             'id' => $schedule->id,
@@ -308,12 +311,12 @@ final class RepositoryMutationTest extends TestCase
      */
     public function test_schedule_delete_with_owner(): void
     {
-        // Arrange
+        // Arrange: Create availability and schedule
         $startDate = now()->addDay()->startOfDay();
         $endDate = now()->addDays(30)->startOfDay();
         $day = strtolower($startDate->format('l'));
 
-        $availability = availability_for($this->testSchedulable)->create([
+        $availability = availability_for($this->schedulableModel)->create([
             'type' => 'consultation',
             'daily_start' => '09:00:00',
             'daily_end' => '17:00:00',
@@ -328,12 +331,19 @@ final class RepositoryMutationTest extends TestCase
             'end_datetime' => $startDate->copy()->setTime(11, 0),
         ]);
 
-        // Act
+        // Act: Delete schedule through service
         $deleted = schedule_for($availability)->delete($schedule->id);
 
-        // Assert
+        // Assert: Soft delete successful
         $this->assertTrue($deleted);
-        $this->assertDatabaseMissing('roster_schedules', ['id' => $schedule->id]);
+        $this->assertSoftDeleted('roster_schedules', [
+            'id' => $schedule->id,
+        ]);
+
+        // Verify record exists in trash
+        $trashed = ScheduleModel::withTrashed()->find($schedule->id);
+        $this->assertNotNull($trashed);
+        $this->assertNotNull($trashed->deleted_at);
     }
 
     /**
@@ -341,12 +351,12 @@ final class RepositoryMutationTest extends TestCase
      */
     public function test_find_schedule_without_owner_throws_exception(): void
     {
-        // Arrange
+        // Arrange: Create availability and schedule
         $startDate = now()->addDay()->startOfDay();
         $endDate = now()->addDays(30)->startOfDay();
         $day = strtolower($startDate->format('l'));
 
-        $availability = availability_for($this->testSchedulable)->create([
+        $availability = availability_for($this->schedulableModel)->create([
             'type' => 'consultation',
             'daily_start' => '09:00:00',
             'daily_end' => '17:00:00',
@@ -363,13 +373,11 @@ final class RepositoryMutationTest extends TestCase
 
         $scheduleRepository = app(ScheduleRepository::class);
 
-        // Assert
+        // Act & Assert: Schedule find without owner should fail
         $this->expectException(MissingOwnerException::class);
-
-        // Act
         $scheduleRepository->find(
             id: $schedule->id,
-            schedulable: $this->testSchedulable
+            schedulable: $this->schedulableModel
         );
     }
 
@@ -378,12 +386,12 @@ final class RepositoryMutationTest extends TestCase
      */
     public function test_find_schedule_with_owner_succeeds(): void
     {
-        // Arrange
+        // Arrange: Create availability and schedule
         $startDate = now()->addDay()->startOfDay();
         $endDate = now()->addDays(30)->startOfDay();
         $day = strtolower($startDate->format('l'));
 
-        $availability = availability_for($this->testSchedulable)->create([
+        $availability = availability_for($this->schedulableModel)->create([
             'type' => 'consultation',
             'daily_start' => '09:00:00',
             'daily_end' => '17:00:00',
@@ -400,14 +408,14 @@ final class RepositoryMutationTest extends TestCase
 
         $scheduleRepository = app(ScheduleRepository::class);
 
-        // Act
+        // Act: Find schedule with owner through repository
         $foundSchedule = $scheduleRepository->find(
             id: $schedule->id,
-            schedulable: $this->testSchedulable,
+            schedulable: $this->schedulableModel,
             owner: $availability
         );
 
-        // Assert
+        // Assert: Schedule found successfully
         $this->assertInstanceOf(ScheduleModel::class, $foundSchedule);
         $this->assertSame($schedule->id, $foundSchedule->id);
     }
@@ -417,12 +425,12 @@ final class RepositoryMutationTest extends TestCase
      */
     public function test_all_schedules_without_owner_throws_exception(): void
     {
-        // Arrange
+        // Arrange: Create availability
         $startDate = now()->addDay()->startOfDay();
         $endDate = now()->addDays(30)->startOfDay();
         $day = strtolower($startDate->format('l'));
 
-        availability_for($this->testSchedulable)->create([
+        availability_for($this->schedulableModel)->create([
             'type' => 'consultation',
             'daily_start' => '09:00:00',
             'daily_end' => '17:00:00',
@@ -433,10 +441,8 @@ final class RepositoryMutationTest extends TestCase
 
         $scheduleRepository = app(ScheduleRepository::class);
 
-        // Assert
+        // Act & Assert: Schedule retrieval without owner should fail
         $this->expectException(MissingOwnerException::class);
-
-        // Act
-        $scheduleRepository->all(schedulable: $this->testSchedulable);
+        $scheduleRepository->all(schedulable: $this->schedulableModel);
     }
 }

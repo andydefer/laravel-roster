@@ -87,7 +87,6 @@ interface ServiceInterface
      * Set data for operations.
      *
      * @param array $data Operation data
-     * @return self
      */
     public function setData(array $data): self;
 
@@ -102,14 +101,11 @@ interface ServiceInterface
      * Replace all filters.
      *
      * @param array $filters New filters
-     * @return self
      */
     public function setFilters(array $filters): self;
 
     /**
      * Clear all filters.
-     *
-     * @return self
      */
     public function resetFilters(): self;
 
@@ -118,7 +114,6 @@ interface ServiceInterface
      *
      * @param string $key Filter key
      * @param mixed $value Filter value
-     * @return self
      */
     public function setFilter(string $key, mixed $value): self;
 
@@ -135,7 +130,6 @@ interface ServiceInterface
      * Set the schedulable entity context.
      *
      * @param Model $model Schedulable entity
-     * @return self
      */
     public function setSchedulable(Model $model): self;
 
@@ -157,8 +151,6 @@ interface ServiceInterface
 
     /**
      * Clear all contextual data (filters, data, schedulable).
-     *
-     * @return self
      */
     public function clear(): self;
 }

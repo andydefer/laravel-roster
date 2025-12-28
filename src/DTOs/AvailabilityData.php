@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace Roster\DTOs;
 
+use Exception;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Carbon;
 use Roster\Domain\Helpers\TimeSlotHelper;
-use Roster\Enums\DaysOfWeek;
 use Roster\Models\Availability;
 use Roster\Support\RosterMutationContext;
 
@@ -19,7 +19,7 @@ use Roster\Support\RosterMutationContext;
  */
 class AvailabilityData extends AbstractData
 {
-    private ?Availability $existingEntity = null;
+    private ?Availability $availability = null;
 
     /**
      * @param int|null $id Unique identifier of the availability
@@ -83,21 +83,21 @@ class AvailabilityData extends AbstractData
     /**
      * Creates an AvailabilityData instance from an Availability Eloquent model.
      *
-     * @param Availability $availability Eloquent model instance
+     * @param Availability $model Eloquent model instance
      * @return self New immutable AvailabilityData instance
      */
-    public static function fromModel(Model $availability): self
+    public static function fromModel(Model $model): self
     {
         return new self(
-            id: $availability->id,
-            type: $availability->type,
-            days: $availability->days,
-            validityStart: $availability->validity_start,
-            validityEnd: $availability->validity_end,
-            dailyStart: $availability->daily_start,
-            dailyEnd: $availability->daily_end,
-            schedulableId: $availability->schedulable_id,
-            schedulableType: $availability->schedulable_type
+            id: $model->id,
+            type: $model->type,
+            days: $model->days,
+            validityStart: $model->validity_start,
+            validityEnd: $model->validity_end,
+            dailyStart: $model->daily_start,
+            dailyEnd: $model->daily_end,
+            schedulableId: $model->schedulable_id,
+            schedulableType: $model->schedulable_type
         );
     }
 
@@ -135,7 +135,7 @@ class AvailabilityData extends AbstractData
         $data = $this->toArray();
         $data['days'] = $days;
 
-        return static::fromArray($data);
+        return self::fromArray($data);
     }
 
     /**
@@ -146,12 +146,12 @@ class AvailabilityData extends AbstractData
     private function getAdjustedDays(): array
     {
         // Déterminer si c'est une mise à jour (entité existante chargée)
-        $isUpdate = $this->existingEntity !== null;
+        $isUpdate = $this->availability instanceof Availability;
 
         // Récupérer les données existantes si disponible
-        $existingDays = $this->existingEntity?->days;
-        $existingValidityStart = $this->existingEntity?->validity_start;
-        $existingValidityEnd = $this->existingEntity?->validity_end;
+        $existingDays = $this->availability?->days;
+        $existingValidityStart = $this->availability?->validity_start;
+        $existingValidityEnd = $this->availability?->validity_end;
 
         // Utiliser TimeSlotHelper pour le calcul des jours ajustés
         return TimeSlotHelper::getAdjustedDays(
@@ -177,11 +177,11 @@ class AvailabilityData extends AbstractData
 
         try {
             // Utiliser le contexte de mutation pour charger l'entité
-            $this->existingEntity = RosterMutationContext::allow(function () {
+            $this->availability = RosterMutationContext::allow(function () {
                 return Availability::find($this->id);
             });
-        } catch (\Exception) {
-            $this->existingEntity = null;
+        } catch (Exception) {
+            $this->availability = null;
         }
     }
 
@@ -224,7 +224,7 @@ class AvailabilityData extends AbstractData
      */
     public function isUpdateOperation(): bool
     {
-        return $this->existingEntity !== null;
+        return $this->availability instanceof Availability;
     }
 
     /**
@@ -234,6 +234,6 @@ class AvailabilityData extends AbstractData
      */
     public function getExistingEntity(): ?Availability
     {
-        return $this->existingEntity;
+        return $this->availability;
     }
 }

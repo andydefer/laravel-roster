@@ -256,18 +256,4 @@ class TimeSlotHelper
         // 3️⃣ Auto-adjust days from period
         return roster_days_in_period($validityStart, $validityEnd);
     }
-
-    /**
-     * Determine whether automatic adjustment of days should be performed.
-     *
-     * @param Carbon|null $start Validity start date
-     * @param Carbon|null $end Validity end date
-     * @return bool True if auto-adjustment should occur
-     */
-    private static function shouldAutoAdjustDays(?Carbon $start, ?Carbon $end): bool
-    {
-        return $start instanceof Carbon
-            && $end instanceof Carbon
-            && roster_should_auto_adjust_days($start, $end);
-    }
 }

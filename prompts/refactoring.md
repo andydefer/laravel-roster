@@ -143,6 +143,18 @@ public function mergeWithAdjacent(array $data, object $schedulable): array; //NO
 
 NE MODIFIE PAS DES NOMS DES METHODES OU PROPRIERE PUBLIC !!! PROPOSE ET MOI MEME JE CHOISIRAIS!!!
 
+POUR LES FICHIERS DE TEST, UTILISE LA STRUCTURE AAA -> Arrange Act Assert
+Ainsi
+Arrange Phrase explicative en anglais
+Code
+Act // Phrase explicative en anglais
+code
+Assert // phrase explicative en anglais
+code
+
+SI TU VOiS DU CODE REPETITIF TU PEUX PEUX LES ENCAPSULER DANS UN HELPERS MAIS TOUJOURS BIEN DOCUMENT COMME UNE METHODE PRIVATE
+DONC UNE ACTION QUI SE REFAIT A PLUSIEURS ENDROIT PEUX ETRE ENCAPSULER DANS UNE FONCTION HELPER POUR REDUIRE LA REPETITION DE CODE ET FAIRE DU REUTILISABLE
+
 ### ▶️ DÉMARRAGE
 
 Voici le code à analyser et améliorer :

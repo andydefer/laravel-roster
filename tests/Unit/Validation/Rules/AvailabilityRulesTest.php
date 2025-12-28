@@ -12,14 +12,21 @@ use Roster\Validation\Rules\AvailabilityOverlapRule;
 use Tests\Support\TestSchedulable;
 use Tests\TestCase;
 
+/**
+ * Unit tests for availability validation rules.
+ *
+ * Tests RequiredFieldsRule and AvailabilityOverlapRule validation logic
+ * for availability entities in different operations and scenarios.
+ */
 final class AvailabilityRulesTest extends TestCase
 {
     private RequiredFieldsRule $requiredFieldsRule;
-
     private AvailabilityOverlapRule $availabilityOverlapRule;
-
     private TestSchedulable $testSchedulable;
 
+    /**
+     * Set up the test case with fresh rule instances.
+     */
     protected function setUp(): void
     {
         parent::setUp();
@@ -29,9 +36,12 @@ final class AvailabilityRulesTest extends TestCase
         $this->testSchedulable = TestSchedulable::create();
     }
 
-
+    /**
+     * Test that required fields rule passes for complete availability data on CREATE operation.
+     */
     public function test_required_fields_rule_valid_for_availability_create(): void
     {
+        // Arrange: Create context with complete availability data
         $data = [
             'type' => 'consultation',
             'days' => ['monday'],
@@ -42,19 +52,25 @@ final class AvailabilityRulesTest extends TestCase
         ];
 
         $validationContext = new ValidationContext(
-            OperationType::CREATE,
-            EntityType::AVAILABILITY,
-            $data,
-            $this->testSchedulable
+            operationType: OperationType::CREATE,
+            entityType: EntityType::AVAILABILITY,
+            data: $data,
+            model: $this->testSchedulable
         );
 
+        // Act: Execute required fields validation
         $this->requiredFieldsRule->validate($validationContext);
 
+        // Assert: No violations should be present
         $this->assertFalse($validationContext->hasViolations());
     }
 
+    /**
+     * Test that required fields rule fails when mandatory fields are missing for CREATE operation.
+     */
     public function test_required_fields_rule_fails_when_missing_fields_for_availability_create(): void
     {
+        // Arrange: Create context with incomplete availability data
         $data = [
             'type' => 'consultation',
             'days' => ['monday'],
@@ -65,15 +81,18 @@ final class AvailabilityRulesTest extends TestCase
         ];
 
         $validationContext = new ValidationContext(
-            OperationType::CREATE,
-            EntityType::AVAILABILITY,
-            $data,
-            $this->testSchedulable
+            operationType: OperationType::CREATE,
+            entityType: EntityType::AVAILABILITY,
+            data: $data,
+            model: $this->testSchedulable
         );
 
+        // Act: Execute required fields validation
         $this->requiredFieldsRule->validate($validationContext);
 
+        // Assert: Violations should be present for missing fields
         $this->assertTrue($validationContext->hasViolations());
+
         $violations = $validationContext->getViolations();
         $this->assertArrayHasKey('validity_start', $violations);
         $this->assertArrayHasKey('daily_end', $violations);
@@ -81,42 +100,54 @@ final class AvailabilityRulesTest extends TestCase
         $this->assertStringContainsString('required', (string) $violations['daily_end']);
     }
 
+    /**
+     * Test that required fields rule allows partial fields for UPDATE operation.
+     */
     public function test_required_fields_rule_allows_partial_fields_for_availability_update(): void
     {
+        // Arrange: Create context with partial update data
         $data = [
-            'daily_end' => '18:00:00', // Seulement un champ modifié
+            'daily_end' => '18:00:00', // Only one field modified
         ];
 
         $validationContext = new ValidationContext(
-            OperationType::UPDATE,
-            EntityType::AVAILABILITY,
-            $data,
-            $this->testSchedulable
+            operationType: OperationType::UPDATE,
+            entityType: EntityType::AVAILABILITY,
+            data: $data,
+            model: $this->testSchedulable
         );
 
+        // Act: Execute required fields validation
         $this->requiredFieldsRule->validate($validationContext);
 
-        // Ne devrait pas avoir d'erreur de champ requis
+        // Assert: No violations should be present for partial update
         $this->assertFalse($validationContext->hasViolations());
     }
 
+    /**
+     * Test that required fields rule prevents changing schedulable owner on UPDATE operation.
+     */
     public function test_required_fields_rule_prevents_owner_change_on_update(): void
     {
+        // Arrange: Create context with attempt to change owner
         $data = [
-            'schedulable_id' => 999, // Tentative de changer le propriétaire
+            'schedulable_id' => 999, // Attempt to change owner ID
             'schedulable_type' => 'DifferentSchedulable',
         ];
 
         $validationContext = new ValidationContext(
-            OperationType::UPDATE,
-            EntityType::AVAILABILITY,
-            $data,
-            $this->testSchedulable
+            operationType: OperationType::UPDATE,
+            entityType: EntityType::AVAILABILITY,
+            data: $data,
+            model: $this->testSchedulable
         );
 
+        // Act: Execute required fields validation
         $this->requiredFieldsRule->validate($validationContext);
 
+        // Assert: Violations should be present for owner change attempt
         $this->assertTrue($validationContext->hasViolations());
+
         $violations = $validationContext->getViolations();
         $this->assertArrayHasKey('schedulable_id', $violations);
         $this->assertArrayHasKey('schedulable_type', $violations);
@@ -124,8 +155,12 @@ final class AvailabilityRulesTest extends TestCase
         $this->assertStringContainsString('cannot be changed', (string) $violations['schedulable_type']);
     }
 
+    /**
+     * Test that availability overlap rule skips validation when data is incomplete.
+     */
     public function test_availability_overlap_rule_skips_when_incomplete_data(): void
     {
+        // Arrange: Create context with incomplete overlap validation data
         $data = [
             'daily_start' => '09:00:00',
             'daily_end' => '17:00:00',
@@ -133,20 +168,25 @@ final class AvailabilityRulesTest extends TestCase
         ];
 
         $validationContext = new ValidationContext(
-            OperationType::CREATE,
-            EntityType::AVAILABILITY,
-            $data,
-            $this->testSchedulable
+            operationType: OperationType::CREATE,
+            entityType: EntityType::AVAILABILITY,
+            data: $data,
+            model: $this->testSchedulable
         );
 
+        // Act: Execute overlap validation
         $this->availabilityOverlapRule->validate($validationContext);
 
-        // Doit passer sans erreur car données incomplètes
+        // Assert: No violations should be present for incomplete data (skipped validation)
         $this->assertFalse($validationContext->hasViolations());
     }
 
+    /**
+     * Test that availability overlap rule requires all fields for validation.
+     */
     public function test_availability_overlap_rule_requires_all_fields_for_validation(): void
     {
+        // Arrange: Create context with complete overlap validation data
         $data = [
             'daily_start' => '09:00:00',
             'daily_end' => '17:00:00',
@@ -157,41 +197,52 @@ final class AvailabilityRulesTest extends TestCase
         ];
 
         $validationContext = new ValidationContext(
-            OperationType::CREATE,
-            EntityType::AVAILABILITY,
-            $data,
-            $this->testSchedulable
+            operationType: OperationType::CREATE,
+            entityType: EntityType::AVAILABILITY,
+            data: $data,
+            model: $this->testSchedulable
         );
 
+        // Act: Execute overlap validation
         $this->availabilityOverlapRule->validate($validationContext);
 
-        // Pas d'erreur car toutes les données nécessaires sont présentes
-        // (note: le test réel dépendrait du repository pour trouver les chevauchements)
+        // Assert: No violations should be present when all required data is available
+        // Note: Actual overlap detection depends on repository implementation
         $this->assertFalse($validationContext->hasViolations());
     }
 
+    /**
+     * Test that required fields rule validates schedule entity correctly.
+     */
     public function test_required_fields_for_schedule_create(): void
     {
+        // Arrange: Create context with complete schedule data
         $data = [
-            'title' => "Title de la schedule",
+            'title' => "Schedule title",
             'start_datetime' => '2038-07-01 10:00:00',
             'end_datetime' => '2038-07-01 11:00:00',
         ];
 
         $validationContext = new ValidationContext(
-            OperationType::CREATE,
-            EntityType::SCHEDULE,
-            $data,
-            $this->testSchedulable
+            operationType: OperationType::CREATE,
+            entityType: EntityType::SCHEDULE,
+            data: $data,
+            model: $this->testSchedulable
         );
 
+        // Act: Execute required fields validation
         $this->requiredFieldsRule->validate($validationContext);
 
+        // Assert: No violations should be present for schedule creation
         $this->assertFalse($validationContext->hasViolations());
     }
 
+    /**
+     * Test that required fields rule validates impediment entity correctly.
+     */
     public function test_required_fields_for_impediment_create(): void
     {
+        // Arrange: Create context with complete impediment data
         $data = [
             'start_datetime' => '2038-07-01 11:00:00',
             'end_datetime' => '2038-07-01 12:00:00',
@@ -199,14 +250,16 @@ final class AvailabilityRulesTest extends TestCase
         ];
 
         $validationContext = new ValidationContext(
-            OperationType::CREATE,
-            EntityType::IMPEDIMENT,
-            $data,
-            $this->testSchedulable
+            operationType: OperationType::CREATE,
+            entityType: EntityType::IMPEDIMENT,
+            data: $data,
+            model: $this->testSchedulable
         );
 
+        // Act: Execute required fields validation
         $this->requiredFieldsRule->validate($validationContext);
 
+        // Assert: No violations should be present for impediment creation
         $this->assertFalse($validationContext->hasViolations());
     }
 }

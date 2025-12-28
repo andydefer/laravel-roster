@@ -7,12 +7,9 @@ namespace Roster\Services;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Roster\Contracts\Repository\AvailabilityRepositoryInterface;
-use Roster\DTOs\ScheduleData;
 use Roster\Enums\EntityType;
-use Roster\Enums\OperationType;
 use Roster\Models\Availability;
 use Roster\Services\Core\AbstractService;
-use Roster\Validation\Exceptions\ValidationFailedException;
 
 /**
  * Service for managing Schedule entities and time slot availability.
@@ -189,7 +186,7 @@ class ScheduleService extends AbstractService
     ): ?array {
         /** @var Collection<Availability> $availabilities */
         $availabilities = $this->getAvailabilityRepository()->getForDate(
-            schedulable: $this->schedulable,
+            model: $this->schedulable,
             date: $day,
             type: $type
         );
@@ -247,7 +244,7 @@ class ScheduleService extends AbstractService
             availabilityEnd: $availabilityEnd
         );
 
-        if ($slotStart === null) {
+        if (!$slotStart instanceof Carbon) {
             return null;
         }
 
@@ -282,7 +279,7 @@ class ScheduleService extends AbstractService
         Carbon $availabilityStart,
         Carbon $availabilityEnd
     ): ?Carbon {
-        if ($searchStart === null || !$searchStart->isSameDay($day)) {
+        if (!$searchStart instanceof Carbon || !$searchStart->isSameDay($day)) {
             return $availabilityStart->copy();
         }
 

@@ -49,6 +49,8 @@ return new class extends Migration
             $table->timestamp('validity_end')->comment('End timestamp of the availability validity period');
 
             $table->timestamps();
+            $table->softDeletes();
+
 
             $table->index('type');
             $table->index(['validity_start', 'validity_end']);

@@ -64,7 +64,7 @@ class ValidationResult
      */
     public function hasViolations(): bool
     {
-        return !empty($this->violations);
+        return $this->violations !== [];
     }
 
     /**

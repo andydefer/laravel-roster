@@ -43,18 +43,18 @@ class AvailabilityDateRangeRule extends AbstractRule
      * Validates validity start and end dates.
      *
      * @param ValidationContextInterface $validationContext The validation context
-     * @param Model|null $entity The entity being validated
+     * @param Model|null $model The entity being validated
      * @param OperationType $operationType The operation type
      */
     private function validateValidityDates(
         ValidationContextInterface $validationContext,
-        ?Model $entity,
+        ?Model $model,
         OperationType $operationType
     ): void {
         if ($operationType === OperationType::CREATE) {
             $this->validateCreateValidityDates($validationContext);
         } else {
-            $this->validateUpdateValidityDates($validationContext, $entity);
+            $this->validateUpdateValidityDates($validationContext, $model);
         }
     }
 
@@ -86,11 +86,11 @@ class AvailabilityDateRangeRule extends AbstractRule
      * Validates validity dates for UPDATE operations.
      *
      * @param ValidationContextInterface $validationContext The validation context
-     * @param Model|null $entity The entity being validated
+     * @param Model|null $model The entity being validated
      */
     private function validateUpdateValidityDates(
         ValidationContextInterface $validationContext,
-        ?Model $entity
+        ?Model $model
     ): void {
         $hasStart = $validationContext->has('validity_start');
         $hasEnd = $validationContext->has('validity_end');
@@ -101,11 +101,11 @@ class AvailabilityDateRangeRule extends AbstractRule
 
         $startValue = $hasStart
             ? $validationContext->get('validity_start')
-            : ($entity?->validity_start ?? null);
+            : ($model?->validity_start ?? null);
 
         $endValue = $hasEnd
             ? $validationContext->get('validity_end')
-            : ($entity?->validity_end ?? null);
+            : ($model?->validity_end ?? null);
 
         $this->validateDateRange(
             validationContext: $validationContext,
@@ -121,18 +121,18 @@ class AvailabilityDateRangeRule extends AbstractRule
      * Validates daily start and end times.
      *
      * @param ValidationContextInterface $validationContext The validation context
-     * @param Model|null $entity The entity being validated
+     * @param Model|null $model The entity being validated
      * @param OperationType $operationType The operation type
      */
     private function validateDailyTimes(
         ValidationContextInterface $validationContext,
-        ?Model $entity,
+        ?Model $model,
         OperationType $operationType
     ): void {
         if ($operationType === OperationType::CREATE) {
             $this->validateCreateDailyTimes($validationContext);
         } else {
-            $this->validateUpdateDailyTimes($validationContext, $entity);
+            $this->validateUpdateDailyTimes($validationContext, $model);
         }
     }
 
@@ -163,11 +163,11 @@ class AvailabilityDateRangeRule extends AbstractRule
      * Validates daily times for UPDATE operations.
      *
      * @param ValidationContextInterface $validationContext The validation context
-     * @param Model|null $entity The entity being validated
+     * @param Model|null $model The entity being validated
      */
     private function validateUpdateDailyTimes(
         ValidationContextInterface $validationContext,
-        ?Model $entity
+        ?Model $model
     ): void {
         $hasStart = $validationContext->has('daily_start');
         $hasEnd = $validationContext->has('daily_end');
@@ -178,11 +178,11 @@ class AvailabilityDateRangeRule extends AbstractRule
 
         $startValue = $hasStart
             ? $validationContext->get('daily_start')
-            : ($entity?->daily_start ?? null);
+            : ($model?->daily_start ?? null);
 
         $endValue = $hasEnd
             ? $validationContext->get('daily_end')
-            : ($entity?->daily_end ?? null);
+            : ($model?->daily_end ?? null);
 
         $this->validateTimeRange(
             validationContext: $validationContext,

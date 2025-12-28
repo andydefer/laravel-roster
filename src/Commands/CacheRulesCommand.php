@@ -33,23 +33,23 @@ class CacheRulesCommand extends Command
     /**
      * Execute the console command.
      *
-     * @param CacheRulesService $service The cache rules service
+     * @param CacheRulesService $cacheRulesService The cache rules service
      * @return int Command exit code (SUCCESS or FAILURE)
      */
-    public function handle(CacheRulesService $service): int
+    public function handle(CacheRulesService $cacheRulesService): int
     {
         try {
             if ($this->option('clear')) {
-                $stats = $service->clear(
+                $stats = $cacheRulesService->clear(
                     force: (bool) $this->option('force')
                 );
             } elseif ($this->option('list')) {
-                $service->displayRulesTable($this);
+                $cacheRulesService->displayRulesTable($this);
                 return self::SUCCESS;
             } elseif ($this->option('show')) {
-                $stats = $service->show();
+                $stats = $cacheRulesService->show();
             } else {
-                $stats = $service->generate();
+                $stats = $cacheRulesService->generate();
             }
 
             if ($stats instanceof CacheStats) {
@@ -57,8 +57,8 @@ class CacheRulesCommand extends Command
             }
 
             return self::SUCCESS;
-        } catch (Throwable $exception) {
-            $this->error($exception->getMessage());
+        } catch (Throwable $throwable) {
+            $this->error($throwable->getMessage());
             return self::FAILURE;
         }
     }
@@ -66,17 +66,17 @@ class CacheRulesCommand extends Command
     /**
      * Display cache statistics in a formatted way.
      *
-     * @param CacheStats $stats Cache statistics to display
+     * @param CacheStats $cacheStats Cache statistics to display
      */
-    protected function displayCacheStats(CacheStats $stats): void
+    protected function displayCacheStats(CacheStats $cacheStats): void
     {
         $this->line('📊 Cache stats:');
-        $this->line('   Path: ' . $stats->path);
-        $this->line('   Rules: ' . $stats->rulesCount);
-        $this->line('   Size: ' . $stats->formattedSize());
+        $this->line('   Path: ' . $cacheStats->path);
+        $this->line('   Rules: ' . $cacheStats->rulesCount);
+        $this->line('   Size: ' . $cacheStats->formattedSize());
 
-        if ($stats->generationTimeMs > 0) {
-            $this->line('   Duration: ' . $stats->generationTimeMs . ' ms');
+        if ($cacheStats->generationTimeMs > 0) {
+            $this->line('   Duration: ' . $cacheStats->generationTimeMs . ' ms');
         }
     }
 }

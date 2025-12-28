@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Roster\Repositories;
 
+use InvalidArgumentException;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
@@ -90,6 +91,7 @@ abstract class AbstractRepository implements RepositoryInterface
                 ->whereKey($id);
 
             $query = $this->applyOwnerScope($query, $owner);
+
             $model = $query->first();
 
             if (!$model) {
@@ -120,6 +122,7 @@ abstract class AbstractRepository implements RepositoryInterface
                 ->whereKey($id);
 
             $query = $this->applyOwnerScope($query, $owner);
+
             $model = $query->first();
 
             return $model instanceof Model && (bool) $model->delete();
@@ -223,7 +226,7 @@ abstract class AbstractRepository implements RepositoryInterface
      * @param Carbon $start Start time
      * @param Carbon $end End time
      * @return Collection<int, Impediment> Overlapping impediments
-     * @throws \InvalidArgumentException When the time window is invalid
+     * @throws InvalidArgumentException When the time window is invalid
      */
     public function findForTimeSlot(int $availabilityId, Carbon $start, Carbon $end): Collection
     {
@@ -241,16 +244,16 @@ abstract class AbstractRepository implements RepositoryInterface
     /**
      * Builds a query with schedulable scope and applied filters.
      *
-     * @param Model $schedulable Schedulable entity
+     * @param Model $model Schedulable entity
      * @param array<string, mixed> $filters Query filters
      * @return Builder Query builder
      * @throws MissingSchedulableException If schedulable not provided
      */
-    public function buildQueryWithFilters(Model $schedulable, array $filters): Builder
+    public function buildQueryWithFilters(Model $model, array $filters): Builder
     {
-        $this->validateSchedulable($schedulable);
+        $this->validateSchedulable($model);
 
-        $builder = $this->buildSchedulableScopedQuery($schedulable);
+        $builder = $this->buildSchedulableScopedQuery($model);
         return $this->applyFilters($builder, $filters);
     }
 
@@ -407,12 +410,12 @@ abstract class AbstractRepository implements RepositoryInterface
     /**
      * Validates that a schedulable entity is provided.
      *
-     * @param Model|null $schedulable Schedulable entity
+     * @param Model|null $model Schedulable entity
      * @throws MissingSchedulableException When no schedulable is provided
      */
-    private function validateSchedulable(?Model $schedulable): void
+    private function validateSchedulable(?Model $model): void
     {
-        if (!$schedulable instanceof Model) {
+        if (!$model instanceof Model) {
             throw MissingSchedulableException::create();
         }
     }
@@ -420,12 +423,12 @@ abstract class AbstractRepository implements RepositoryInterface
     /**
      * Validates that no owner is provided for Availability models.
      *
-     * @param Model|null $owner Owning entity
+     * @param Model|null $model Owning entity
      * @throws InvalidOwnerException When owner is provided for Availability model
      */
-    private function validateOwnerForAvailability(?Model $owner): void
+    private function validateOwnerForAvailability(?Model $model): void
     {
-        if ($owner instanceof Model && $this->isAvailabilityModel()) {
+        if ($model instanceof Model && $this->isAvailabilityModel()) {
             throw InvalidOwnerException::forAvailability();
         }
     }
@@ -433,12 +436,12 @@ abstract class AbstractRepository implements RepositoryInterface
     /**
      * Validates that an owner is provided for non-Availability models.
      *
-     * @param Model|null $owner Owning entity
+     * @param Model|null $model Owning entity
      * @throws MissingOwnerException When owner is not provided for non-Availability model
      */
-    private function validateOwnerForNonAvailability(?Model $owner): void
+    private function validateOwnerForNonAvailability(?Model $model): void
     {
-        if (!$this->isAvailabilityModel() && !$owner instanceof Model) {
+        if (!$this->isAvailabilityModel() && !$model instanceof Model) {
             throw MissingOwnerException::create($this->getModelClass());
         }
     }
@@ -480,13 +483,13 @@ abstract class AbstractRepository implements RepositoryInterface
      * Applies owner constraint to a query builder for non-Availability models.
      *
      * @param Builder $builder Query builder
-     * @param Model|null $owner Owning entity
+     * @param Model|null $model Owning entity
      * @return Builder Modified query builder
      */
-    private function applyOwnerScope(Builder $builder, ?Model $owner): Builder
+    private function applyOwnerScope(Builder $builder, ?Model $model): Builder
     {
-        if ($owner instanceof Model && !$this->isAvailabilityModel()) {
-            $builder->where('availability_id', $owner->id);
+        if ($model instanceof Model && !$this->isAvailabilityModel()) {
+            $builder->where('availability_id', $model->id);
         }
 
         return $builder;
@@ -496,16 +499,16 @@ abstract class AbstractRepository implements RepositoryInterface
      * Injects owner relationship into data array for non-Availability models.
      *
      * @param array<string, mixed> $data Entity data
-     * @param Model|null $owner Owning entity
+     * @param Model|null $model Owning entity
      * @return array<string, mixed> Modified data
      * @throws MissingOwnerException When owner is required but not provided
      */
-    private function injectOwnerIntoData(array $data, ?Model $owner): array
+    private function injectOwnerIntoData(array $data, ?Model $model): array
     {
-        $this->validateOwnerForNonAvailability($owner);
+        $this->validateOwnerForNonAvailability($model);
 
-        if ($owner instanceof Model && !$this->isAvailabilityModel()) {
-            $data['availability_id'] = $owner->id;
+        if ($model instanceof Model && !$this->isAvailabilityModel()) {
+            $data['availability_id'] = $model->id;
         }
 
         return $data;

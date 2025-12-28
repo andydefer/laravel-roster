@@ -77,11 +77,11 @@ class Validator implements ValidatorInterface
 
         $this->sortRulesByPriority($applicableRules);
 
-        foreach ($applicableRules as $rule) {
+        foreach ($applicableRules as $applicableRule) {
             try {
-                $rule->validate($validationContext);
+                $applicableRule->validate($validationContext);
             } catch (Throwable $exception) {
-                $this->handleRuleException($validationContext, $rule, $exception);
+                $this->handleRuleException($validationContext, $applicableRule, $exception);
             }
         }
 
@@ -157,8 +157,8 @@ class Validator implements ValidatorInterface
      */
     public function hasRule(string $ruleClass): bool
     {
-        foreach ($this->allRules as $rule) {
-            if (get_class($rule) === $ruleClass) {
+        foreach ($this->allRules as $allRule) {
+            if (get_class($allRule) === $ruleClass) {
                 return true;
             }
         }
@@ -194,19 +194,19 @@ class Validator implements ValidatorInterface
      *
      * @param ValidationContextInterface $validationContext Current validation context
      * @param RuleInterface $rule The rule that failed
-     * @param Throwable $exception The thrown exception
+     * @param Throwable $throwable The thrown exception
      */
     private function handleRuleException(
         ValidationContextInterface $validationContext,
         RuleInterface $rule,
-        Throwable $exception
+        Throwable $throwable
     ): void {
         $validationContext->setViolation(
             '_system',
             sprintf(
                 'Validation rule %s failed: %s',
                 $rule->getName(),
-                $exception->getMessage()
+                $throwable->getMessage()
             )
         );
     }
@@ -215,16 +215,16 @@ class Validator implements ValidatorInterface
      * Indexes a rule using its ValidationRule attribute metadata.
      *
      * @param RuleInterface $rule The rule to index
-     * @param ValidationRule $attribute The validation rule attribute
+     * @param ValidationRule $validationRule The validation rule attribute
      */
-    private function indexRuleByAttribute(RuleInterface $rule, ValidationRule $attribute): void
+    private function indexRuleByAttribute(RuleInterface $rule, ValidationRule $validationRule): void
     {
-        foreach ($attribute->entities as $entity) {
+        foreach ($validationRule->entities as $entity) {
             if (!$entity instanceof EntityType) {
                 continue;
             }
 
-            foreach ($attribute->operations as $operation) {
+            foreach ($validationRule->operations as $operation) {
                 if (!$operation instanceof OperationType) {
                     continue;
                 }
@@ -254,15 +254,15 @@ class Validator implements ValidatorInterface
      * Adds a rule to the index for quick lookup.
      *
      * @param RuleInterface $rule The rule to add
-     * @param OperationType $operation The operation type
-     * @param EntityType $entity The entity type
+     * @param OperationType $operationType The operation type
+     * @param EntityType $entityType The entity type
      */
     private function registerRuleToIndex(
         RuleInterface $rule,
-        OperationType $operation,
-        EntityType $entity
+        OperationType $operationType,
+        EntityType $entityType
     ): void {
-        $key = $this->createCacheKey($operation, $entity);
+        $key = $this->createCacheKey($operationType, $entityType);
 
         if (!isset($this->rulesByEntityOperation[$key])) {
             $this->rulesByEntityOperation[$key] = [];

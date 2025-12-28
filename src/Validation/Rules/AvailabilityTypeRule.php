@@ -9,12 +9,6 @@ use Roster\Enums\EntityType;
 use Roster\Enums\OperationType;
 use Roster\Validation\Attributes\ValidationRule;
 
-/**
- * Validates availability type against configured allowed types.
- *
- * Ensures that availability types match the predefined configuration
- * while handling partial updates gracefully.
- */
 #[ValidationRule(
     priority: 80,
     entities: [EntityType::AVAILABILITY],
@@ -22,12 +16,6 @@ use Roster\Validation\Attributes\ValidationRule;
 )]
 class AvailabilityTypeRule extends AbstractRule
 {
-    /**
-     * Validates the availability type.
-     *
-     * @param ValidationContextInterface $validationContext Validation context with data
-     * @return void
-     */
     public function validate(ValidationContextInterface $validationContext): void
     {
         if (!$validationContext->has('type')) {
@@ -47,10 +35,36 @@ class AvailabilityTypeRule extends AbstractRule
         }
 
         if (!in_array($type, $allowedTypes, true)) {
-            $validationContext->setViolation(
-                'type',
-                sprintf("Invalid type '%s'", $type)
+            $this->setTypeViolation(
+                $validationContext,
+                $type,
+                $allowedTypes
             );
         }
+    }
+
+    private function setTypeViolation(
+        ValidationContextInterface $validationContext,
+        string $type,
+        array $allowedTypes
+    ): void {
+        $maxPreview = 10;
+
+        $previewTypes = array_slice($allowedTypes, 0, $maxPreview);
+        $preview = implode(', ', $previewTypes);
+
+        $suffix = count($allowedTypes) > $maxPreview
+            ? ' (see more in configuration: roster.allowed_types)'
+            : '';
+
+        $validationContext->setViolation(
+            'type',
+            sprintf(
+                "Invalid type '%s'. Allowed types: %s%s",
+                $type,
+                $preview,
+                $suffix
+            )
+        );
     }
 }

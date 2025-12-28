@@ -5,171 +5,367 @@ declare(strict_types=1);
 namespace Tests\Unit;
 
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Model;
+use InvalidArgumentException;
+use Roster\Models\Availability;
+use Roster\Services\AvailabilityService;
+use Roster\Services\ImpedimentService;
+use Roster\Services\ScheduleService;
 use Tests\TestCase;
 
+/**
+ * Unit tests for Roster package helper functions.
+ *
+ * Tests all helper functions including date calculations, day formatting,
+ * and service factory functions.
+ */
 final class HelpersTest extends TestCase
 {
-
+    /**
+     * Test roster_day_of_week function returns correct day names.
+     */
     public function test_roster_day_of_week(): void
     {
+        // Arrange: Test with specific dates
+        // Act & Assert: Verify day names
         $this->assertSame('thursday', roster_day_of_week('2038-07-01'));
         $this->assertSame('friday', roster_day_of_week('2038-07-02'));
         $this->assertSame('saturday', roster_day_of_week('2038-07-03'));
         $this->assertSame('sunday', roster_day_of_week('2038-07-04'));
 
-        // Test avec DateTime
+        // Act & Assert: Test with DateTime object
         $date = Carbon::parse('2038-07-01');
         $this->assertSame('thursday', roster_day_of_week($date));
 
-        // Test avec date invalide
+        // Act & Assert: Test with invalid date
         $this->assertNull(roster_day_of_week('invalid-date'));
     }
 
+    /**
+     * Test roster_format_period_days_for_display formats consecutive days as ranges.
+     */
     public function test_roster_format_period_days_for_display(): void
     {
-        // Séquence continue
+        // Arrange & Act & Assert: Continuous sequences
         $this->assertSame('Thursday to Sunday', roster_format_period_days_for_display(['thursday', 'friday', 'saturday', 'sunday']));
         $this->assertSame('Monday to Wednesday', roster_format_period_days_for_display(['monday', 'tuesday', 'wednesday']));
 
-        // Séquence qui traverse le weekend - CE TEST VA ÉCHOUER CAR CE N'EST PAS CONTINU
-        // 'saturday' (5) → 'sunday' (6) → 'monday' (0) : 6→0 n'est pas +1
-        // $this->assertEquals('Saturday to Monday', roster_format_period_days_for_display(['saturday', 'sunday', 'monday']));
-
-        // Correction : Ce n'est PAS une séquence continue, donc format normal
+        // Arrange & Act & Assert: Non-consecutive days across weekend
         $this->assertSame('Monday, Saturday and Sunday', roster_format_period_days_for_display(['saturday', 'sunday', 'monday']));
 
-        // Jours non consécutifs
+        // Arrange & Act & Assert: Non-consecutive weekdays
         $this->assertSame('Monday, Wednesday and Friday', roster_format_period_days_for_display(['monday', 'wednesday', 'friday']));
         $this->assertSame('Monday and Thursday', roster_format_period_days_for_display(['monday', 'thursday']));
 
-        // Un seul jour
+        // Arrange & Act & Assert: Single day
         $this->assertSame('Monday', roster_format_period_days_for_display(['monday']));
 
-        // Tous les jours (traverse le weekend)
+        // Arrange & Act & Assert: All days (continuous range)
         $this->assertSame('Monday to Sunday', roster_format_period_days_for_display(['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']));
 
-        // Test avec dimanche en premier (cas spécial)
+        // Arrange & Act & Assert: All days starting with Sunday
         $this->assertSame('Monday to Sunday', roster_format_period_days_for_display(['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday']));
     }
 
+    /**
+     * Test roster_days_in_period returns all days between two dates.
+     */
     public function test_roster_days_in_period(): void
     {
-        // Période de 4 jours (Jeudi à Dimanche)
-        $days = roster_days_in_period('2038-07-01', '2038-07-04');
-        $expected = ['thursday', 'friday', 'saturday', 'sunday'];
-        sort($expected);
-        sort($days);
-        $this->assertEquals($expected, $days);
+        // Arrange: 4-day period (Thursday to Sunday)
+        $startDate = '2038-07-01';
+        $endDate = '2038-07-04';
 
-        // Période d'un seul jour
+        // Act: Get days in period
+        $days = roster_days_in_period($startDate, $endDate);
+
+        // Assert: All expected days present
+        $expectedDays = ['thursday', 'friday', 'saturday', 'sunday'];
+        $this->assertEquals(
+            $this->sortDays($expectedDays),
+            $this->sortDays($days)
+        );
+
+        // Arrange & Act & Assert: Single day period
         $this->assertSame(['thursday'], roster_days_in_period('2038-07-01', '2038-07-01'));
 
-        // Période de 7 jours (tous les jours)
+        // Arrange & Act & Assert: 7-day period (all days)
         $days = roster_days_in_period('2038-07-01', '2038-07-07');
-        $expected = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
-        sort($expected);
-        sort($days);
-        $this->assertEquals($expected, $days);
+        $expectedDays = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+        $this->assertEquals(
+            $this->sortDays($expectedDays),
+            $this->sortDays($days)
+        );
 
-        // Période qui traverse le weekend
-        $days = roster_days_in_period('2038-07-03', '2038-07-05'); // Samedi à Lundi
-        $expected = ['saturday', 'sunday', 'monday'];
-        sort($expected);
-        sort($days);
-        $this->assertEquals($expected, $days);
+        // Arrange & Act & Assert: Period crossing weekend
+        $days = roster_days_in_period('2038-07-03', '2038-07-05'); // Saturday to Monday
+        $expectedDays = ['saturday', 'sunday', 'monday'];
+        $this->assertEquals(
+            $this->sortDays($expectedDays),
+            $this->sortDays($days)
+        );
 
-        // Dates invalides
+        // Arrange & Act & Assert: Invalid dates
         $this->assertSame([], roster_days_in_period('invalid', '2038-07-01'));
     }
 
-
+    /**
+     * Test roster_format_days_for_display formats day lists with proper grammar.
+     */
     public function test_roster_format_days_for_display(): void
     {
+        // Arrange & Act & Assert: Single day
         $this->assertSame('Monday', roster_format_days_for_display(['monday']));
+
+        // Arrange & Act & Assert: Two days
         $this->assertSame('Monday and Tuesday', roster_format_days_for_display(['monday', 'tuesday']));
+
+        // Arrange & Act & Assert: Three days
         $this->assertSame('Monday, Tuesday and Wednesday', roster_format_days_for_display(['monday', 'tuesday', 'wednesday']));
+
+        // Arrange & Act & Assert: Four days
         $this->assertSame('Monday, Tuesday, Wednesday and Thursday', roster_format_days_for_display(['monday', 'tuesday', 'wednesday', 'thursday']));
+
+        // Arrange & Act & Assert: Empty array
         $this->assertSame('', roster_format_days_for_display([]));
     }
 
-
+    /**
+     * Test roster_period_duration_in_days calculates correct duration.
+     */
     public function test_roster_period_duration_in_days(): void
     {
+        // Arrange & Act & Assert: Single day
         $this->assertSame(1, roster_period_duration_in_days('2038-07-01', '2038-07-01'));
+
+        // Arrange & Act & Assert: 4 days
         $this->assertSame(4, roster_period_duration_in_days('2038-07-01', '2038-07-04'));
+
+        // Arrange & Act & Assert: 7 days
         $this->assertSame(7, roster_period_duration_in_days('2038-07-01', '2038-07-07'));
+
+        // Arrange & Act & Assert: 10 days
         $this->assertSame(10, roster_period_duration_in_days('2038-07-01', '2038-07-10'));
+
+        // Arrange & Act & Assert: Invalid start date
         $this->assertNull(roster_period_duration_in_days('invalid', '2038-07-01'));
     }
 
-
+    /**
+     * Test roster_is_day_in_period checks if day falls within date range.
+     */
     public function test_roster_is_day_in_period(): void
     {
-        $this->assertTrue(roster_is_day_in_period('thursday', '2038-07-01', '2038-07-04'));
-        $this->assertTrue(roster_is_day_in_period('friday', '2038-07-01', '2038-07-04'));
-        $this->assertTrue(roster_is_day_in_period('saturday', '2038-07-01', '2038-07-04'));
-        $this->assertTrue(roster_is_day_in_period('sunday', '2038-07-01', '2038-07-04'));
+        $startDate = '2038-07-01';
+        $endDate = '2038-07-04';
 
-        $this->assertFalse(roster_is_day_in_period('monday', '2038-07-01', '2038-07-04'));
-        $this->assertFalse(roster_is_day_in_period('tuesday', '2038-07-01', '2038-07-04'));
-        $this->assertFalse(roster_is_day_in_period('wednesday', '2038-07-01', '2038-07-04'));
+        // Arrange & Act & Assert: Days within period
+        $this->assertTrue(roster_is_day_in_period('thursday', $startDate, $endDate));
+        $this->assertTrue(roster_is_day_in_period('friday', $startDate, $endDate));
+        $this->assertTrue(roster_is_day_in_period('saturday', $startDate, $endDate));
+        $this->assertTrue(roster_is_day_in_period('sunday', $startDate, $endDate));
 
-        // Jour dans une période d'un jour
+        // Arrange & Act & Assert: Days outside period
+        $this->assertFalse(roster_is_day_in_period('monday', $startDate, $endDate));
+        $this->assertFalse(roster_is_day_in_period('tuesday', $startDate, $endDate));
+        $this->assertFalse(roster_is_day_in_period('wednesday', $startDate, $endDate));
+
+        // Arrange & Act & Assert: Single day period
         $this->assertTrue(roster_is_day_in_period('thursday', '2038-07-01', '2038-07-01'));
         $this->assertFalse(roster_is_day_in_period('friday', '2038-07-01', '2038-07-01'));
     }
 
-
+    /**
+     * Test roster_get_valid_days_in_period filters and sorts days within date range.
+     */
     public function test_roster_get_valid_days_in_period(): void
     {
-        $days = ['monday', 'thursday', 'friday', 'sunday'];
-        $validDays = roster_get_valid_days_in_period($days, '2038-07-01', '2038-07-04');
+        $startDate = '2038-07-01';
+        $endDate = '2038-07-04';
+        $inputDays = ['monday', 'thursday', 'friday', 'sunday'];
 
-        // Seuls jeudi, vendredi et dimanche sont dans la période
-        $expected = ['thursday', 'friday', 'sunday'];
-        $this->assertSame($expected, $validDays);
+        // Act: Get valid days in period
+        $validDays = roster_get_valid_days_in_period($inputDays, $startDate, $endDate);
 
-        // Tous les jours sont valides
-        $days = ['thursday', 'friday', 'saturday', 'sunday'];
-        $validDays = roster_get_valid_days_in_period($days, '2038-07-01', '2038-07-04');
-        $this->assertSame($days, $validDays);
+        // Assert: Only days within period, sorted by weekday order
+        $expectedDays = ['thursday', 'friday', 'sunday'];
+        $this->assertSame($expectedDays, $validDays);
 
-        // Aucun jour n'est valide
-        $days = ['monday', 'tuesday', 'wednesday'];
-        $validDays = roster_get_valid_days_in_period($days, '2038-07-01', '2038-07-01');
+        // Arrange & Act & Assert: All days are valid
+        $inputDays = ['thursday', 'friday', 'saturday', 'sunday'];
+        $validDays = roster_get_valid_days_in_period($inputDays, $startDate, $endDate);
+        $this->assertSame($inputDays, $validDays);
+
+        // Arrange & Act & Assert: No valid days
+        $inputDays = ['monday', 'tuesday', 'wednesday'];
+        $validDays = roster_get_valid_days_in_period($inputDays, '2038-07-01', '2038-07-01');
         $this->assertSame([], $validDays);
 
-        // Tri correct selon l'ordre des jours
-        $days = ['sunday', 'thursday', 'friday', 'saturday'];
-        $validDays = roster_get_valid_days_in_period($days, '2038-07-01', '2038-07-04');
-        $expected = ['thursday', 'friday', 'saturday', 'sunday'];
-        $this->assertSame($expected, $validDays);
+        // Arrange & Act & Assert: Proper sorting with custom order
+        $inputDays = ['sunday', 'thursday', 'friday', 'saturday'];
+        $validDays = roster_get_valid_days_in_period($inputDays, $startDate, $endDate);
+        $expectedDays = ['thursday', 'friday', 'saturday', 'sunday'];
+        $this->assertSame($expectedDays, $validDays);
     }
 
-
+    /**
+     * Test roster_should_auto_adjust_days determines when to auto-adjust days based on period length.
+     */
     public function test_roster_should_auto_adjust_days(): void
     {
-        // Période de moins de 7 jours
+        // Arrange & Act & Assert: Periods less than 7 days
         $this->assertTrue(roster_should_auto_adjust_days('2038-07-01', '2038-07-04'));
         $this->assertTrue(roster_should_auto_adjust_days('2038-07-01', '2038-07-01'));
         $this->assertTrue(roster_should_auto_adjust_days('2038-07-01', '2038-07-06'));
 
-        // Période de 7 jours ou plus
+        // Arrange & Act & Assert: Periods of 7 days or more
         $this->assertFalse(roster_should_auto_adjust_days('2038-07-01', '2038-07-07'));
         $this->assertFalse(roster_should_auto_adjust_days('2038-07-01', '2038-07-10'));
         $this->assertFalse(roster_should_auto_adjust_days('2038-07-01', '2038-07-14'));
 
-        // Dates invalides
+        // Arrange & Act & Assert: Invalid dates
         $this->assertFalse(roster_should_auto_adjust_days(null, '2038-07-01'));
         $this->assertFalse(roster_should_auto_adjust_days('2038-07-01', null));
         $this->assertFalse(roster_should_auto_adjust_days('invalid', '2038-07-01'));
 
-        // Période avec DateTime
+        // Arrange & Act & Assert: DateTime objects
         $start = Carbon::parse('2038-07-01');
         $end = Carbon::parse('2038-07-04');
         $this->assertTrue(roster_should_auto_adjust_days($start, $end));
 
         $end = Carbon::parse('2038-07-07');
         $this->assertFalse(roster_should_auto_adjust_days($start, $end));
+    }
+
+    /**
+     * Test roster_get_valid_days_in_period removes duplicates.
+     */
+    public function test_roster_get_valid_days_in_period_with_duplicates(): void
+    {
+        // Arrange: Input with duplicate days
+        $inputDays = ['monday', 'monday', 'thursday', 'thursday'];
+        $startDate = '2038-07-01';
+        $endDate = '2038-07-04';
+
+        // Act: Get valid days
+        $validDays = roster_get_valid_days_in_period($inputDays, $startDate, $endDate);
+
+        // Assert: Duplicates removed, only valid days returned
+        $expectedDays = ['thursday'];
+        $this->assertSame($expectedDays, $validDays);
+    }
+
+    /**
+     * Test schedule_for returns ScheduleService instance.
+     */
+    public function test_schedule_for_returns_service(): void
+    {
+        // Arrange: Create availability with schedulable
+        $availability = new Availability();
+        $availability->schedulable = $this->createMockSchedulable();
+
+        // Act: Get schedule service
+        $service = schedule_for($availability);
+
+        // Assert: Correct service type returned
+        $this->assertInstanceOf(ScheduleService::class, $service);
+    }
+
+    /**
+     * Test schedule_for throws exception when schedulable is missing.
+     */
+    public function test_schedule_for_throws_if_no_schedulable(): void
+    {
+        // Arrange: Create availability without schedulable
+        $availability = new Availability();
+        $availability->schedulable = null;
+
+        // Assert: Exception expected
+        $this->expectException(InvalidArgumentException::class);
+
+        // Act: Attempt to get service
+        schedule_for($availability);
+    }
+
+    /**
+     * Test impediment_for returns ImpedimentService instance.
+     */
+    public function test_impediment_for_returns_service(): void
+    {
+        // Arrange: Create availability with schedulable
+        $availability = new Availability();
+        $availability->schedulable = $this->createMockSchedulable();
+
+        // Act: Get impediment service
+        $service = impediment_for($availability);
+
+        // Assert: Correct service type returned
+        $this->assertInstanceOf(ImpedimentService::class, $service);
+    }
+
+    /**
+     * Test impediment_for throws exception when schedulable is missing.
+     */
+    public function test_impediment_for_throws_if_no_schedulable(): void
+    {
+        // Arrange: Create availability without schedulable
+        $availability = new Availability();
+        $availability->schedulable = null;
+
+        // Assert: Exception expected
+        $this->expectException(InvalidArgumentException::class);
+
+        // Act: Attempt to get service
+        impediment_for($availability);
+    }
+
+    /**
+     * Test availability_for returns AvailabilityService instance.
+     */
+    public function test_availability_for_returns_service(): void
+    {
+        // Arrange: Create mock schedulable
+        $mockModel = $this->createMockSchedulable();
+
+        // Act: Get availability service
+        $service = availability_for($mockModel);
+
+        // Assert: Correct service type returned
+        $this->assertInstanceOf(AvailabilityService::class, $service);
+    }
+
+    /**
+     * Create a mock schedulable model for testing.
+     *
+     * @return Model
+     */
+    private function createMockSchedulable(): Model
+    {
+        return new class extends Model {};
+    }
+
+    /**
+     * Sort days according to their natural order.
+     *
+     * @param array<string> $days
+     * @return array<string>
+     */
+    private function sortDays(array $days): array
+    {
+        $dayOrder = [
+            'monday' => 1,
+            'tuesday' => 2,
+            'wednesday' => 3,
+            'thursday' => 4,
+            'friday' => 5,
+            'saturday' => 6,
+            'sunday' => 7,
+        ];
+
+        usort($days, function (string $a, string $b) use ($dayOrder): int {
+            return ($dayOrder[$a] ?? 8) <=> ($dayOrder[$b] ?? 8);
+        });
+
+        return $days;
     }
 }

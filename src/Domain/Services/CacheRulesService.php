@@ -1,7 +1,10 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Roster\Domain\Services;
 
+use RuntimeException;
 use Illuminate\Console\Command;
 use Roster\Domain\DTOs\CacheStats;
 use Roster\Validation\Cache\RuleCacheGenerator;
@@ -15,25 +18,25 @@ use Roster\Validation\Cache\RuleCacheGenerator;
 class CacheRulesService
 {
     /**
-     * @param RuleCacheGenerator $generator Service for generating rule cache files
+     * @param RuleCacheGenerator $ruleCacheGenerator Service for generating rule cache files
      */
     public function __construct(
-        private RuleCacheGenerator $generator
+        private RuleCacheGenerator $ruleCacheGenerator
     ) {}
 
     /**
      * Generate a new cache file with all validation rules.
      *
      * @return CacheStats Statistics about the generated cache
-     * @throws \RuntimeException When cache generation fails
+     * @throws RuntimeException When cache generation fails
      */
     public function generate(): CacheStats
     {
-        if (! $this->generator->generate()) {
-            throw new \RuntimeException('Cache generation failed');
+        if (! $this->ruleCacheGenerator->generate()) {
+            throw new RuntimeException('Cache generation failed');
         }
 
-        return CacheStats::fromPath($this->generator->getCachePath());
+        return CacheStats::fromPath($this->ruleCacheGenerator->getCachePath());
     }
 
     /**
@@ -41,12 +44,12 @@ class CacheRulesService
      *
      * @param bool $force When true, regenerate cache after clearing
      * @return CacheStats|null Cache statistics if regenerated, null otherwise
-     * @throws \RuntimeException When cache clearing fails
+     * @throws RuntimeException When cache clearing fails
      */
     public function clear(bool $force = false): ?CacheStats
     {
-        if (! $this->generator->clear()) {
-            throw new \RuntimeException('Cache clear failed');
+        if (! $this->ruleCacheGenerator->clear()) {
+            throw new RuntimeException('Cache clear failed');
         }
 
         if ($force) {
@@ -63,7 +66,7 @@ class CacheRulesService
      */
     public function show(): CacheStats
     {
-        $path = $this->generator->getCachePath();
+        $path = $this->ruleCacheGenerator->getCachePath();
 
         if (! file_exists($path)) {
             return $this->generate();
@@ -82,7 +85,7 @@ class CacheRulesService
         $cacheFile = config('roster.cache.cache_file');
 
         if (! file_exists($cacheFile)) {
-            $command->error("Cache file not found: $cacheFile");
+            $command->error('Cache file not found: ' . $cacheFile);
             return;
         }
 

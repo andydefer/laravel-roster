@@ -4,12 +4,10 @@ declare(strict_types=1);
 
 namespace Roster\Services;
 
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Roster\Domain\Helpers\TimeSlotHelper;
 use Roster\Domain\Helpers\TimeWindowHelper;
-use Roster\DTOs\ImpedimentData;
 use Roster\Enums\EntityType;
 use Roster\Enums\OperationType;
 use Roster\Models\Availability;

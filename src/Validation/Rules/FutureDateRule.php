@@ -31,6 +31,10 @@ class FutureDateRule extends AbstractRule
      */
     public function validate(ValidationContextInterface $validationContext): void
     {
+        if ($validationContext->getOperation() !== OperationType::CREATE) {
+            return;
+        }
+
         if (!$this->shouldValidateFutureDates()) {
             return;
         }

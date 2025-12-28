@@ -19,8 +19,6 @@ trait BelongsToSchedulable
 {
     /**
      * Boots the trait with event listeners and global scopes.
-     *
-     * @return void
      */
     protected static function bootBelongsToSchedulable(): void
     {
@@ -42,7 +40,6 @@ trait BelongsToSchedulable
      * Validates that a schedulable reference is present before persistence.
      *
      * @param Model $model The model being created or updated
-     * @return void
      * @throws MissingSchedulableException If schedulable reference is incomplete
      */
     protected static function validateSchedulable(Model $model): void

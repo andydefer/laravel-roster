@@ -28,7 +28,6 @@ class AvailabilityOwnershipRule extends AbstractRule
      * Validates availability ownership for schedule and impediment entities.
      *
      * @param ValidationContextInterface $validationContext Validation context with entity data
-     * @return void
      */
     public function validate(ValidationContextInterface $validationContext): void
     {
@@ -37,14 +36,17 @@ class AvailabilityOwnershipRule extends AbstractRule
         $schedulable = $validationContext->getSchedulable();
 
         if (!$schedulable instanceof Model) {
-            return; // SchedulableValidationRule handles this case
+            return;
         }
 
-        $availabilityId = $this->resolveAvailabilityId(
+        $resolved = $this->resolveAvailabilityId(
             operationType: $operationType,
             providedAvailabilityId: $availabilityId,
             currentEntity: $validationContext->getCurrentEntity()
         );
+
+        $availabilityId = is_array($resolved) ? $resolved['id'] : $resolved;
+        $fromExisting = is_array($resolved) ? $resolved['from_existing'] : false;
 
         if ($operationType === OperationType::CREATE && !$availabilityId) {
             $validationContext->setViolation(
@@ -55,14 +57,16 @@ class AvailabilityOwnershipRule extends AbstractRule
         }
 
         if (!$availabilityId) {
-            return; // No availability to validate
+            return;
         }
 
-        $this->validateAvailabilityOwnership(
-            validationContext: $validationContext,
-            availabilityId: $availabilityId,
-            schedulable: $schedulable
-        );
+        if (!$fromExisting) {
+            $this->validateAvailabilityOwnership(
+                validationContext: $validationContext,
+                availabilityId: $availabilityId,
+                model: $schedulable
+            );
+        }
     }
 
     /**
@@ -79,7 +83,10 @@ class AvailabilityOwnershipRule extends AbstractRule
         mixed $currentEntity
     ): mixed {
         if ($operationType === OperationType::UPDATE && !$providedAvailabilityId && $currentEntity) {
-            return $currentEntity->availability_id ?? null;
+            return [
+                'id' => $currentEntity->availability_id ?? null,
+                'from_existing' => true
+            ];
         }
 
         return $providedAvailabilityId;
@@ -90,13 +97,12 @@ class AvailabilityOwnershipRule extends AbstractRule
      *
      * @param ValidationContextInterface $validationContext Validation context
      * @param mixed $availabilityId Availability identifier
-     * @param Model $schedulable Schedulable entity
-     * @return void
+     * @param Model $model Schedulable entity
      */
     private function validateAvailabilityOwnership(
         ValidationContextInterface $validationContext,
         mixed $availabilityId,
-        Model $schedulable
+        Model $model
     ): void {
         $availability = $validationContext->getAvailabilityService()->find($availabilityId);
 
@@ -108,8 +114,8 @@ class AvailabilityOwnershipRule extends AbstractRule
             return;
         }
 
-        $isOwner = $availability->schedulable_id === $schedulable->id
-            && $availability->schedulable_type === get_class($schedulable);
+        $isOwner = $availability->schedulable_id === $model->id
+            && $availability->schedulable_type === get_class($model);
 
         if (!$isOwner) {
             $validationContext->setViolation(

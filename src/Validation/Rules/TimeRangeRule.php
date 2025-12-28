@@ -12,12 +12,6 @@ use Roster\Enums\OperationType;
 use Roster\Models\Availability;
 use Roster\Validation\Attributes\ValidationRule;
 
-/**
- * Validates time ranges for Schedule and Impediment entities against their associated Availability.
- *
- * Ensures that start and end times are within the permitted days, daily time windows,
- * and validity periods of the parent Availability.
- */
 #[ValidationRule(
     priority: 85,
     entities: [EntityType::SCHEDULE, EntityType::IMPEDIMENT],
@@ -25,184 +19,99 @@ use Roster\Validation\Attributes\ValidationRule;
 )]
 class TimeRangeRule extends AbstractRule
 {
-    /**
-     * Validates time range constraints for Schedule and Impediment entities.
-     *
-     * @param ValidationContextInterface $validationContext Validation context with entity data
-     * @throws Exception If date parsing fails (handled internally)
-     */
-    public function validate(ValidationContextInterface $validationContext): void
+    public function validate(ValidationContextInterface $context): void
     {
-        $currentEntity = $validationContext->getCurrentEntity();
+        $entity = $context->getCurrentEntity();
 
         try {
-            $start = $this->resolveDateTimeValue($validationContext, 'start_datetime', $currentEntity);
-            $end = $this->resolveDateTimeValue($validationContext, 'end_datetime', $currentEntity);
+            $start = $this->resolveDateTimeValue($context, 'start_datetime', $entity);
+            $end   = $this->resolveDateTimeValue($context, 'end_datetime', $entity);
 
-            if (!$start instanceof Carbon && !$end instanceof Carbon) {
+            // ⛔ Dates invalides → une autre règle s’en occupe
+            if (!$start instanceof Carbon || !$end instanceof Carbon) {
                 return;
             }
 
-            $availabilityId = $this->resolveAvailabilityId($validationContext, $currentEntity);
+            // ⛔ End <= Start
+            if ($start->gte($end)) {
+                $context->setViolation(
+                    'end_datetime',
+                    'The end datetime must be after the start datetime'
+                );
+                return;
+            }
 
+            // 🔒 RÈGLE ABSOLUE : PAS DE PROGRAMME MULTI-JOURS
+            if (!$start->isSameDay($end)) {
+                $context->setViolation(
+                    'end_datetime',
+                    'Events cannot span across multiple days'
+                );
+                return;
+            }
+
+            $availabilityId = $this->resolveAvailabilityId($context, $entity);
             if (!$availabilityId) {
                 return;
             }
 
-            $availability = $validationContext->getAvailabilityService()->find($availabilityId);
-
+            $availability = $context->getAvailabilityService()->find($availabilityId);
             if (!$availability) {
                 return;
             }
 
-            $this->validateTimeRange($validationContext, $availability, $start, $end);
-        } catch (Exception $exception) {
-            // Date format validation is handled by other rules
+            $this->validateStart($context, $availability, $start);
+            $this->validateEnd($context, $availability, $end);
+        } catch (Exception) {
+            // Les erreurs de parsing sont gérées ailleurs
         }
     }
 
-    /**
-     * Resolves a datetime value from validation context or existing entity.
-     *
-     * @param ValidationContextInterface $validationContext Validation context
-     * @param string $field Datetime field name
-     * @param object|null $existingEntity Existing entity for update operations
-     * @return Carbon|null Parsed datetime or null if not present/invalid
+    /* -----------------------------------------------------------------
+     |  Start validation
+     | -----------------------------------------------------------------
      */
-    private function resolveDateTimeValue(
-        ValidationContextInterface $validationContext,
-        string $field,
-        ?object $existingEntity
-    ): ?Carbon {
-        if ($validationContext->has($field)) {
-            $value = $validationContext->get($field);
 
-            if ($value === null) {
-                return null;
-            }
-
-            try {
-                return Carbon::parse($value);
-            } catch (Exception $exception) {
-                return null;
-            }
-        }
-
-        if ($validationContext->getOperation() === OperationType::UPDATE && $existingEntity !== null) {
-            $value = $existingEntity->$field ?? null;
-
-            if ($value === null) {
-                return null;
-            }
-
-            try {
-                return $value instanceof Carbon ? $value : Carbon::parse($value);
-            } catch (Exception $exception) {
-                return null;
-            }
-        }
-
-        return null;
-    }
-
-    /**
-     * Resolves availability identifier from validation context or existing entity.
-     *
-     * @param ValidationContextInterface $validationContext Validation context
-     * @param object|null $existingEntity Existing entity for update operations
-     * @return int|null Availability identifier or null if not present
-     */
-    private function resolveAvailabilityId(
-        ValidationContextInterface $validationContext,
-        ?object $existingEntity
-    ): ?int {
-        if ($validationContext->has('availability_id')) {
-            $value = $validationContext->get('availability_id');
-            return $value !== null ? (int) $value : null;
-        }
-
-        if ($validationContext->getOperation() === OperationType::UPDATE && $existingEntity !== null) {
-            return $existingEntity->availability_id ?? null;
-        }
-
-        return null;
-    }
-
-    /**
-     * Validates time range against availability constraints.
-     *
-     * @param ValidationContextInterface $validationContext Validation context
-     * @param Availability $availability Parent availability entity
-     * @param Carbon|null $start Start datetime
-     * @param Carbon|null $end End datetime
-     */
-    private function validateTimeRange(
-        ValidationContextInterface $validationContext,
-        Availability $availability,
-        ?Carbon $start,
-        ?Carbon $end
-    ): void {
-        if ($start instanceof Carbon && $end instanceof Carbon && $start->gte($end)) {
-            $validationContext->setViolation(
-                'end_datetime',
-                'The end datetime must be after the start datetime'
-            );
-        }
-
-        if ($start instanceof Carbon) {
-            $this->validateStartDateTime($validationContext, $availability, $start);
-        }
-
-        if ($end instanceof Carbon) {
-            $this->validateEndDateTime($validationContext, $availability, $end, $start);
-        }
-    }
-
-    /**
-     * Validates start datetime against availability constraints.
-     *
-     * @param ValidationContextInterface $validationContext Validation context
-     * @param Availability $availability Parent availability entity
-     * @param Carbon $start Start datetime to validate
-     */
-    private function validateStartDateTime(
-        ValidationContextInterface $validationContext,
+    private function validateStart(
+        ValidationContextInterface $context,
         Availability $availability,
         Carbon $start
     ): void {
-        $dayOfWeek = strtolower($start->englishDayOfWeek);
+        $day = strtolower($start->englishDayOfWeek);
 
-        if (!in_array($dayOfWeek, $availability->days, true)) {
-            $validationContext->setViolation(
+        if (!in_array($day, $availability->days, true)) {
+            $context->setViolation(
                 'start_datetime',
                 sprintf(
-                    'The selected date %s (%s) is not allowed because this availability only permits the following days: %s',
+                    'The selected date %s (%s) is not allowed. Allowed days: %s',
                     $start->toDateString(),
-                    $dayOfWeek,
+                    $day,
                     implode(', ', $availability->days)
                 )
             );
+            return;
         }
 
-        $availabilityStartTime = Carbon::parse($availability->daily_start);
-        $availabilityStart = $start->copy()->setTimeFrom($availabilityStartTime);
+        $dailyStart = Carbon::parse($availability->daily_start);
+        $startLimit = $start->copy()->setTimeFrom($dailyStart);
 
-        if ($start->lt($availabilityStart)) {
-            $validationContext->setViolation(
+        if ($start->lt($startLimit)) {
+            $context->setViolation(
                 'start_datetime',
                 sprintf(
                     'The selected start time %s is before the availability start time %s',
                     $start->format('H:i'),
-                    $availabilityStartTime->format('H:i')
+                    $dailyStart->format('H:i')
                 )
             );
+            return;
         }
 
         if ($availability->validity_start) {
             $validityStart = Carbon::parse($availability->validity_start)->startOfDay();
 
             if ($start->lt($validityStart)) {
-                $validationContext->setViolation(
+                $context->setViolation(
                     'start_datetime',
                     sprintf(
                         'The selected start datetime %s is before the availability start datetime %s',
@@ -210,43 +119,41 @@ class TimeRangeRule extends AbstractRule
                         $validityStart->toDateTimeString()
                     )
                 );
+                return;
             }
         }
     }
 
-    /**
-     * Validates end datetime against availability constraints.
-     *
-     * @param ValidationContextInterface $validationContext Validation context
-     * @param Availability $availability Parent availability entity
-     * @param Carbon $end End datetime to validate
-     * @param Carbon|null $start Start datetime for cross-day validation
+    /* -----------------------------------------------------------------
+     |  End validation
+     | -----------------------------------------------------------------
      */
-    private function validateEndDateTime(
-        ValidationContextInterface $validationContext,
-        Availability $availability,
-        Carbon $end,
-        ?Carbon $start
-    ): void {
-        $availabilityEndTime = Carbon::parse($availability->daily_end);
-        $availabilityEnd = $end->copy()->setTimeFrom($availabilityEndTime);
 
-        if ($end->gt($availabilityEnd)) {
-            $validationContext->setViolation(
+    private function validateEnd(
+        ValidationContextInterface $context,
+        Availability $availability,
+        Carbon $end
+    ): void {
+        $dailyEnd = Carbon::parse($availability->daily_end);
+        $endLimit = $end->copy()->setTimeFrom($dailyEnd);
+
+        if ($end->gt($endLimit)) {
+            $context->setViolation(
                 'end_datetime',
                 sprintf(
                     'The selected end time %s is after the availability end time %s',
                     $end->format('H:i'),
-                    $availabilityEndTime->format('H:i')
+                    $dailyEnd->format('H:i')
                 )
             );
+            return;
         }
 
         if ($availability->validity_end) {
             $validityEnd = Carbon::parse($availability->validity_end)->endOfDay();
 
             if ($end->gt($validityEnd)) {
-                $validationContext->setViolation(
+                $context->setViolation(
                     'end_datetime',
                     sprintf(
                         'The selected end datetime %s is after the availability end datetime %s',
@@ -254,27 +161,52 @@ class TimeRangeRule extends AbstractRule
                         $validityEnd->toDateTimeString()
                     )
                 );
+                return;
+            }
+        }
+    }
+
+    /* -----------------------------------------------------------------
+     |  Helpers
+     | -----------------------------------------------------------------
+     */
+
+    private function resolveDateTimeValue(
+        ValidationContextInterface $context,
+        string $field,
+        ?object $entity
+    ): ?Carbon {
+        if ($context->has($field)) {
+            try {
+                return Carbon::parse($context->get($field));
+            } catch (Exception) {
+                return null;
             }
         }
 
-        if ($start instanceof Carbon) {
-            if ($end->lte($start)) {
-                $validationContext->setViolation(
-                    'end_datetime',
-                    'The end datetime must be after the start datetime'
-                );
-            }
-
-            if (
-                !$start->isSameDay($end)
-                && $availabilityEndTime->format('H:i') === '00:00'
-                && $end->copy()->startOfDay()->gt($start->copy()->startOfDay())
-            ) {
-                $validationContext->setViolation(
-                    'end_datetime',
-                    'Events cannot span across midnight when availability ends at 00:00'
-                );
+        if ($context->getOperation() === OperationType::UPDATE && $entity) {
+            try {
+                return Carbon::parse($entity->$field);
+            } catch (Exception) {
+                return null;
             }
         }
+
+        return null;
+    }
+
+    private function resolveAvailabilityId(
+        ValidationContextInterface $context,
+        ?object $entity
+    ): ?int {
+        if ($context->has('availability_id')) {
+            return (int) $context->get('availability_id');
+        }
+
+        if ($context->getOperation() === OperationType::UPDATE && $entity) {
+            return $entity->availability_id ?? null;
+        }
+
+        return null;
     }
 }

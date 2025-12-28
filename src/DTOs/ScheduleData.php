@@ -78,22 +78,22 @@ class ScheduleData extends AbstractData
     /**
      * Create a ScheduleData instance from a Schedule Eloquent model.
      *
-     * @param Schedule $schedule Eloquent model instance
+     * @param Schedule $model Eloquent model instance
      * @return self New immutable ScheduleData instance
      */
-    public static function fromModel(Model $schedule): self
+    public static function fromModel(Model $model): self
     {
         return new self(
-            id: $schedule->id,
-            availabilityId: $schedule->availability_id,
-            title: $schedule->title,
-            description: $schedule->description,
-            startDatetime: self::parseDateTime($schedule->start_datetime),
-            endDatetime: self::parseDateTime($schedule->end_datetime),
-            metadata: $schedule->metadata ?? [],
-            status: $schedule->status,
-            schedulableId: $schedule->schedulable_id,
-            schedulableType: $schedule->schedulable_type
+            id: $model->id,
+            availabilityId: $model->availability_id,
+            title: $model->title,
+            description: $model->description,
+            startDatetime: self::parseDateTime($model->start_datetime),
+            endDatetime: self::parseDateTime($model->end_datetime),
+            metadata: $model->metadata ?? [],
+            status: $model->status,
+            schedulableId: $model->schedulable_id,
+            schedulableType: $model->schedulable_type
         );
     }
 

@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Roster\Domain\DTOs;
 
+use RuntimeException;
+
 /**
  * Data Transfer Object representing cache statistics.
  *
@@ -29,21 +31,20 @@ final class CacheStats
      *
      * @param string $path Path to the cache file
      * @param float $generationTimeMs Optional generation time for new caches
-     * @return self
-     * @throws \RuntimeException When cache file is missing or has invalid format
+     * @throws RuntimeException When cache file is missing or has invalid format
      */
     public static function fromPath(
         string $path,
         float $generationTimeMs = 0.0
     ): self {
         if (! file_exists($path)) {
-            throw new \RuntimeException("Cache file not found: {$path}");
+            throw new RuntimeException('Cache file not found: ' . $path);
         }
 
         $rules = require $path;
 
         if (! is_array($rules)) {
-            throw new \RuntimeException('Invalid cache format');
+            throw new RuntimeException('Invalid cache format');
         }
 
         return new self(
@@ -72,7 +73,7 @@ final class CacheStats
 
         while ($bytes >= 1024 && $unitIndex < count($units) - 1) {
             $bytes /= 1024;
-            $unitIndex++;
+            ++$unitIndex;
         }
 
         return round($bytes, 2) . ' ' . $units[$unitIndex];
