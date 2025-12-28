@@ -1,11 +1,11 @@
 # Pint Formatting Test Report
-*Generated: dim. 28 déc. 2025 13:41:05 WAT*
+*Generated: dim. 28 déc. 2025 15:06:20 WAT*
 
 
-  ⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯..⨯....⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯...⨯....⨯⨯⨯⨯⨯⨯⨯.⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯.⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯.⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯.⨯..⨯.
+  ⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯..⨯....⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯...⨯....⨯⨯⨯⨯⨯⨯⨯.⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯.⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯.⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯.⨯..⨯.
 
   ──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────── Laravel  
-    FAIL   ............................................................................................................................................... 134 files, 114 style issues  
+    FAIL   ............................................................................................................................................... 137 files, 117 style issues  
   ⨯ database/migrations/2024_01_01_000001_create_roster_availabilities_table.php class_definition, no_superfluous_phpdoc_tags, braces_position, phpdoc_trim, no_unused_imports, no_ex…  
   ⨯ rector.php                                                                                                                                                            concat_space  
   ⨯ src/Commands/CacheRulesCommand.php                                                                                         concat_space, blank_line_before_statement, phpdoc_align  
@@ -89,6 +89,9 @@
   ⨯ tests/Unit/Commands/CacheRulesCommandTest.php                                                                    new_with_parentheses, concat_space, ordered_imports, phpdoc_align  
   ⨯ tests/Unit/Commands/CapturesOutput.php                                                                                                                                phpdoc_align  
   ⨯ tests/Unit/Commands/InstallRosterCommandTest.php                                                                 function_declaration, no_multiline_whitespace_around_double_arrow  
+  ⨯ tests/Unit/DTOs/AvailabilityDataTest.php                                                                                         no_unused_imports, phpdoc_single_line_var_spacing  
+  ⨯ tests/Unit/DTOs/ImpedimentDataTest.php                                                                                                              phpdoc_single_line_var_spacing  
+  ⨯ tests/Unit/DTOs/ScheduleDataTest.php                                                                                                                phpdoc_single_line_var_spacing  
   ⨯ tests/Unit/Domain/ModelMutationForbiddenTest.php                                                                                                                   ordered_imports  
   ⨯ tests/Unit/Domain/MutationContextAllowsMutationTest.php                                                                  no_superfluous_phpdoc_tags, ordered_imports, phpdoc_align  
   ⨯ tests/Unit/Domain/RepositoryMutationTest.php                                                                                                                       ordered_imports  

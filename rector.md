@@ -1,11 +1,36 @@
 # Rector Refactoring Report
-*Generated: dim. 28 déc. 2025 13:41:10 WAT*
+*Generated: dim. 28 déc. 2025 15:06:27 WAT*
 
 
-19 files with changes
+22 files with changes
 =====================
 
-1) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Validation/Rules/SchedulableValidationRuleTest.php:688
+1) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Validation/Rules/RequiredFieldsRuleTest.php:4
+
+    ---------- begin diff ----------
+@@ @@
+
+ namespace Tests\Unit\Validation\Rules;
+
+-use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
+ use PHPUnit\Framework\MockObject\MockObject;
+ use Roster\Contracts\Validation\ValidationContextInterface;
+ use Roster\Enums\EntityType;
+@@ @@
+         $expectedFields = ['daily_start', 'daily_end', 'days', 'validity_start', 'validity_end'];
+         foreach ($expectedFields as $field) {
+             $this->assertArrayHasKey($field, $violations);
+-            $this->assertSame("Field '{$field}' is required", $violations[$field]);
++            $this->assertSame(sprintf("Field '%s' is required", $field), $violations[$field]);
+         }
+     }
+    ----------- end diff -----------
+
+Applied rules:
+ * EncapsedStringsToSprintfRector
+
+
+2) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Validation/Rules/SchedulableValidationRuleTest.php:688
 
     ---------- begin diff ----------
 @@ @@
@@ -61,7 +86,7 @@ Applied rules:
  * RemoveUselessReturnTagRector
 
 
-2) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Validation/Rules/TimeRangeRuleTest.php:22
+3) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Validation/Rules/TimeRangeRuleTest.php:22
 
     ---------- begin diff ----------
 @@ @@
@@ -80,7 +105,7 @@ Applied rules:
  * NewlineBetweenClassLikeStmtsRector
 
 
-3) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Validation/Rules/TimeSlotDateTimeRuleTest.php:23
+4) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Validation/Rules/TimeSlotDateTimeRuleTest.php:23
 
     ---------- begin diff ----------
 @@ @@
@@ -116,7 +141,7 @@ Applied rules:
  * RemoveUselessReturnTagRector
 
 
-4) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Validation/ValidationContextTest.php:4
+5) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Validation/ValidationContextTest.php:4
 
     ---------- begin diff ----------
 @@ @@
@@ -202,7 +227,7 @@ Applied rules:
  * AddClosureVoidReturnTypeWhereNoReturnRector
 
 
-5) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Validation/ValidatorTest.php:4
+6) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Validation/ValidatorTest.php:4
 
     ---------- begin diff ----------
 @@ @@
@@ -708,7 +733,7 @@ Applied rules:
  * AddArrayFunctionClosureParamTypeRector
 
 
-6) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Feature/Integration/CompleteRosterIntegrationTest.php:954
+7) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Feature/Integration/CompleteRosterIntegrationTest.php:954
 
     ---------- begin diff ----------
 @@ @@
@@ -744,7 +769,7 @@ Applied rules:
  * RemoveUselessParamTagRector
 
 
-7) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Integration/Database/AvailabilityIntegrationTest.php:4
+8) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Integration/Database/AvailabilityIntegrationTest.php:4
 
     ---------- begin diff ----------
 @@ @@
@@ -760,7 +785,543 @@ Applied rules:
 Applied rules:
 
 
-8) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Domain/MutationContextAllowsMutationTest.php:47
+9) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/DTOs/AvailabilityDataTest.php:4
+
+    ---------- begin diff ----------
+@@ @@
+
+ namespace Tests\Unit\DTOs;
+
+-use Carbon\Carbon;
+-use Illuminate\Database\Eloquent\Model;
++use Illuminate\Support\Carbon;
+ use Roster\DTOs\AvailabilityData;
+ use Roster\Models\Availability;
+ use Roster\Support\RosterMutationContext;
+@@ @@
+         $availabilityData = AvailabilityData::fromArray($rawData);
+
+         // Assert: Verify all properties are correctly set
+-        $this->assertEquals(123, $availabilityData->id);
+-        $this->assertEquals('consultation', $availabilityData->type);
+-        $this->assertEquals(['monday', 'wednesday', 'friday'], $availabilityData->days);
+-        $this->assertEquals('2038-01-01', $availabilityData->validityStart?->format('Y-m-d'));
+-        $this->assertEquals('2038-12-31', $availabilityData->validityEnd?->format('Y-m-d'));
+-        $this->assertEquals('09:00:00', $availabilityData->dailyStart?->format('H:i:s'));
+-        $this->assertEquals('17:00:00', $availabilityData->dailyEnd?->format('H:i:s'));
+-        $this->assertEquals(456, $availabilityData->schedulableId);
+-        $this->assertEquals('user', $availabilityData->schedulableType);
++        $this->assertSame(123, $availabilityData->id);
++        $this->assertSame('consultation', $availabilityData->type);
++        $this->assertSame(['monday', 'wednesday', 'friday'], $availabilityData->days);
++        $this->assertSame('2038-01-01', $availabilityData->validityStart?->format('Y-m-d'));
++        $this->assertSame('2038-12-31', $availabilityData->validityEnd?->format('Y-m-d'));
++        $this->assertSame('09:00:00', $availabilityData->dailyStart?->format('H:i:s'));
++        $this->assertSame('17:00:00', $availabilityData->dailyEnd?->format('H:i:s'));
++        $this->assertSame(456, $availabilityData->schedulableId);
++        $this->assertSame('user', $availabilityData->schedulableType);
+     }
+
+     /**
+@@ @@
+
+         // Assert: Verify provided properties are set, others are null
+         $this->assertNull($availabilityData->id);
+-        $this->assertEquals('training', $availabilityData->type);
++        $this->assertSame('training', $availabilityData->type);
+         $this->assertNull($availabilityData->days);
+-        $this->assertNull($availabilityData->validityStart);
+-        $this->assertNull($availabilityData->validityEnd);
+-        $this->assertEquals('08:00:00', $availabilityData->dailyStart?->format('H:i:s'));
+-        $this->assertEquals('16:00:00', $availabilityData->dailyEnd?->format('H:i:s'));
++        $this->assertNotInstanceOf(Carbon::class, $availabilityData->validityStart);
++        $this->assertNotInstanceOf(Carbon::class, $availabilityData->validityEnd);
++        $this->assertSame('08:00:00', $availabilityData->dailyStart?->format('H:i:s'));
++        $this->assertSame('16:00:00', $availabilityData->dailyEnd?->format('H:i:s'));
+     }
+
+     /**
+@@ @@
+         $updatedData = $originalData->withDays(['tuesday', 'thursday']);
+
+         // Assert: Verify new instance has updated days, original unchanged
+-        $this->assertEquals(['tuesday', 'thursday'], $updatedData->days);
+-        $this->assertEquals(['monday'], $originalData->days);
+-        $this->assertEquals('consultation', $updatedData->type);
+-        $this->assertEquals('09:00:00', $updatedData->dailyStart?->format('H:i:s'));
++        $this->assertSame(['tuesday', 'thursday'], $updatedData->days);
++        $this->assertSame(['monday'], $originalData->days);
++        $this->assertSame('consultation', $updatedData->type);
++        $this->assertSame('09:00:00', $updatedData->dailyStart?->format('H:i:s'));
+     }
+
+     /**
+@@ @@
+
+         // Act & Assert: Verify isUpdateOperation returns false
+         $this->assertFalse($availabilityData->isUpdateOperation());
+-        $this->assertNull($availabilityData->getExistingEntity());
++        $this->assertNotInstanceOf(Availability::class, $availabilityData->getExistingEntity());
+     }
+
+     /**
+@@ @@
+
+         // Act & Assert: Verify getExistingEntity returns null
+         $this->assertFalse($availabilityData->isUpdateOperation());
+-        $this->assertNull($availabilityData->getExistingEntity());
++        $this->assertNotInstanceOf(Availability::class, $availabilityData->getExistingEntity());
+     }
+
+     /**
+@@ @@
+
+         // Assert: Verify string days are treated as array with single element
+
+-        $this->assertEquals(['monday,tuesday'], $days);
++        $this->assertSame(['monday,tuesday'], $days);
+         $this->assertEquals(['monday,tuesday'], $arrayData['days']);
+     }
+
+@@ @@
+         ]);
+
+         // Assert: Verify correctly parsed days
+-        $this->assertEquals(['monday', 'tuesday', 'wednesday'], $availabilityData->days);
++        $this->assertSame(['monday', 'tuesday', 'wednesday'], $availabilityData->days);
+     }
+
+     /**
+@@ @@
+         ]);
+
+         // Act: Create new DTO with schedulable info
+-        /**  @var \Roster\DTOs\AvailabilityData $updatedData */
++        /** @var AvailabilityData $updatedData */
+         $updatedData = $originalData->withSchedulable(123, 'user');
+
+         // Assert: Verify new instance has schedulable info, original unchanged
+    ----------- end diff -----------
+
+Applied rules:
+ * AssertEmptyNullableObjectToAssertInstanceofRector
+ * AssertEqualsToSameRector
+
+
+10) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/DTOs/ImpedimentDataTest.php:4
+
+    ---------- begin diff ----------
+@@ @@
+
+ namespace Tests\Unit\DTOs;
+
+-use Carbon\Carbon;
+-use Illuminate\Database\Eloquent\Model;
++use Exception;
++use ReflectionClass;
+ use Illuminate\Support\Carbon as IlluminateCarbon;
+ use InvalidArgumentException;
+ use Roster\DTOs\ImpedimentData;
+@@ @@
+         $impedimentData = ImpedimentData::fromArray($rawData);
+
+         // Assert: Verify all properties are correctly set with UTC timezone
+-        $this->assertEquals(123, $impedimentData->id);
+-        $this->assertEquals(456, $impedimentData->availabilityId);
+-        $this->assertEquals('2038-01-15 09:00:00', $impedimentData->startDatetime?->format('Y-m-d H:i:s'));
++        $this->assertSame(123, $impedimentData->id);
++        $this->assertSame(456, $impedimentData->availabilityId);
++        $this->assertSame('2038-01-15 09:00:00', $impedimentData->startDatetime?->format('Y-m-d H:i:s'));
+         $this->assertEquals('UTC', $impedimentData->startDatetime?->getTimezone()->getName());
+-        $this->assertEquals('2038-01-15 17:00:00', $impedimentData->endDatetime?->format('Y-m-d H:i:s'));
++        $this->assertSame('2038-01-15 17:00:00', $impedimentData->endDatetime?->format('Y-m-d H:i:s'));
+         $this->assertEquals('UTC', $impedimentData->endDatetime?->getTimezone()->getName());
+-        $this->assertEquals('Maintenance window', $impedimentData->reason);
+-        $this->assertEquals(['type' => 'scheduled', 'impact' => 'high'], $impedimentData->metadata);
+-        $this->assertEquals(789, $impedimentData->schedulableId);
+-        $this->assertEquals('equipment', $impedimentData->schedulableType);
++        $this->assertSame('Maintenance window', $impedimentData->reason);
++        $this->assertSame(['type' => 'scheduled', 'impact' => 'high'], $impedimentData->metadata);
++        $this->assertSame(789, $impedimentData->schedulableId);
++        $this->assertSame('equipment', $impedimentData->schedulableType);
+     }
+
+     /**
+@@ @@
+         // Assert: Verify provided properties are set with defaults applied
+         $this->assertNull($impedimentData->id);
+         $this->assertNull($impedimentData->availabilityId);
+-        $this->assertEquals('2038-02-01 08:00:00', $impedimentData->startDatetime?->format('Y-m-d H:i:s'));
+-        $this->assertEquals('2038-02-01 12:00:00', $impedimentData->endDatetime?->format('Y-m-d H:i:s'));
+-        $this->assertEquals('Team offsite', $impedimentData->reason);
+-        $this->assertEquals([], $impedimentData->metadata);
++        $this->assertSame('2038-02-01 08:00:00', $impedimentData->startDatetime?->format('Y-m-d H:i:s'));
++        $this->assertSame('2038-02-01 12:00:00', $impedimentData->endDatetime?->format('Y-m-d H:i:s'));
++        $this->assertSame('Team offsite', $impedimentData->reason);
++        $this->assertSame([], $impedimentData->metadata);
+         $this->assertNull($impedimentData->schedulableId);
+         $this->assertNull($impedimentData->schedulableType);
+     }
+@@ @@
+         $impedimentData = ImpedimentData::fromArray($rawData);
+
+         // Assert: Verify Carbon instances are correctly handled
+-        $this->assertEquals('System upgrade', $impedimentData->reason);
+-        $this->assertEquals('2038-03-10 10:00:00', $impedimentData->startDatetime?->format('Y-m-d H:i:s'));
+-        $this->assertEquals('2038-03-10 18:00:00', $impedimentData->endDatetime?->format('Y-m-d H:i:s'));
++        $this->assertSame('System upgrade', $impedimentData->reason);
++        $this->assertSame('2038-03-10 10:00:00', $impedimentData->startDatetime?->format('Y-m-d H:i:s'));
++        $this->assertSame('2038-03-10 18:00:00', $impedimentData->endDatetime?->format('Y-m-d H:i:s'));
+         $this->assertEquals('UTC', $impedimentData->startDatetime?->getTimezone()->getName());
+         $this->assertEquals('UTC', $impedimentData->endDatetime?->getTimezone()->getName());
+     }
+@@ @@
+         ]);
+
+         // Act & Assert: Verify metadata is empty array
+-        $this->assertEquals([], $impedimentData->metadata);
++        $this->assertSame([], $impedimentData->metadata);
+         $this->assertEquals([], $impedimentData->toArray()['metadata']);
+     }
+
+@@ @@
+         ];
+
+         // Act & Assert: Verify exception is thrown for invalid datetime
+-        $this->expectException(\Exception::class);
++        $this->expectException(Exception::class);
+
+         ImpedimentData::fromArray($rawData);
+     }
+@@ @@
+         $impedimentData = ImpedimentData::fromArray($rawData);
+
+         // Assert: Verify empty string creates Carbon instance (current date), null remains null
+-        $this->assertNotNull($impedimentData->startDatetime);
+         $this->assertInstanceOf(IlluminateCarbon::class, $impedimentData->startDatetime);
+-        $this->assertNull($impedimentData->endDatetime);
++        $this->assertInstanceOf(IlluminateCarbon::class, $impedimentData->startDatetime);
++        $this->assertNotInstanceOf(IlluminateCarbon::class, $impedimentData->endDatetime);
+     }
+
+     /**
+@@ @@
+
+         // Verify timezone is preserved in array conversion
+         $arrayData = $impedimentData->toArray();
+-        $this->assertStringContainsString('2038-12-25 00:00:00', $arrayData['start_datetime']);
+-        $this->assertStringContainsString('2038-12-26 00:00:00', $arrayData['end_datetime']);
++        $this->assertStringContainsString('2038-12-25 00:00:00', (string) $arrayData['start_datetime']);
++        $this->assertStringContainsString('2038-12-26 00:00:00', (string) $arrayData['end_datetime']);
+     }
+
+     /**
+@@ @@
+         ]);
+
+         // Act & Assert: Verify properties are readonly (cannot be modified)
+-        $reflection = new \ReflectionClass($impedimentData);
++        $reflection = new ReflectionClass($impedimentData);
+
+         foreach ($reflection->getProperties() as $property) {
+             $this->assertTrue($property->isReadOnly());
+@@ @@
+         ]);
+
+         // Act: Create new DTO with schedulable info
+-        /**  @var \Roster\DTOs\ImpedimentData $updatedData */
++        /** @var ImpedimentData $updatedData */
+         $updatedData = $originalData->withSchedulable(456, 'team');
+
+         // Assert: Verify new instance has schedulable info, original unchanged
+@@ @@
+     public function test_parse_datetime_throws_exception_for_invalid_input_type(): void
+     {
+         // Arrange: Use reflection to test protected method
+-        $reflectionClass = new \ReflectionClass(ImpedimentData::class);
++        $reflectionClass = new ReflectionClass(ImpedimentData::class);
+         $method = $reflectionClass->getMethod('parseDateTime');
+         $method->setAccessible(true);
+
+@@ @@
+     public function test_parse_datetime_returns_null_for_null_input(): void
+     {
+         // Arrange: Use reflection to test protected method
+-        $reflectionClass = new \ReflectionClass(ImpedimentData::class);
++        $reflectionClass = new ReflectionClass(ImpedimentData::class);
+         $method = $reflectionClass->getMethod('parseDateTime');
+         $method->setAccessible(true);
+
+@@ @@
+         $carbon = IlluminateCarbon::create(2039, 4, 1, 10, 0, 0, 'UTC');
+
+         // Use reflection to test protected method
+-        $reflectionClass = new \ReflectionClass(ImpedimentData::class);
++        $reflectionClass = new ReflectionClass(ImpedimentData::class);
+         $method = $reflectionClass->getMethod('parseDateTime');
+         $method->setAccessible(true);
+
+@@ @@
+
+         // Assert: Verify all non-null data is preserved
+         foreach ($originalData as $key => $value) {
+-            if ($value !== null) {
+-                $this->assertArrayHasKey($key, $convertedData);
+-                $this->assertEquals($value, $convertedData[$key]);
+-            }
++            $this->assertArrayHasKey($key, $convertedData);
++            $this->assertEquals($value, $convertedData[$key]);
+         }
+     }
+
+@@ @@
+
+         // Assert: Verify it's exactly 24 hours
+         $this->assertEquals(24, $duration);
+-        $this->assertEquals('All day event', $impedimentData->reason);
++        $this->assertSame('All day event', $impedimentData->reason);
+     }
+
+     /**
+@@ @@
+         ]);
+
+         // Assert: Verify start date is set, end date is null
+-        $this->assertNotNull($impedimentData->startDatetime);
+-        $this->assertNull($impedimentData->endDatetime);
+-        $this->assertEquals('Start only test', $impedimentData->reason);
++        $this->assertInstanceOf(IlluminateCarbon::class, $impedimentData->startDatetime);
++        $this->assertNotInstanceOf(IlluminateCarbon::class, $impedimentData->endDatetime);
++        $this->assertSame('Start only test', $impedimentData->reason);
+
+         $arrayData = $impedimentData->toArray();
+         $this->assertArrayHasKey('start_datetime', $arrayData);
+@@ @@
+         ]);
+
+         // Assert: Verify end date is set, start date is null
+-        $this->assertNull($impedimentData->startDatetime);
+-        $this->assertNotNull($impedimentData->endDatetime);
+-        $this->assertEquals('End only test', $impedimentData->reason);
++        $this->assertNotInstanceOf(IlluminateCarbon::class, $impedimentData->startDatetime);
++        $this->assertInstanceOf(IlluminateCarbon::class, $impedimentData->endDatetime);
++        $this->assertSame('End only test', $impedimentData->reason);
+
+         $arrayData = $impedimentData->toArray();
+         $this->assertArrayNotHasKey('start_datetime', $arrayData);
+    ----------- end diff -----------
+
+Applied rules:
+ * RemoveAlwaysTrueIfConditionRector
+ * AssertEmptyNullableObjectToAssertInstanceofRector
+ * AssertEqualsToSameRector
+ * StringCastAssertStringContainsStringRector
+
+
+11) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/DTOs/ScheduleDataTest.php:4
+
+    ---------- begin diff ----------
+@@ @@
+
+ namespace Tests\Unit\DTOs;
+
+-use Illuminate\Database\Eloquent\Model;
++use Exception;
++use ReflectionClass;
+ use Illuminate\Support\Carbon;
+ use InvalidArgumentException;
+ use Roster\DTOs\ScheduleData;
+@@ @@
+         $scheduleData = ScheduleData::fromArray($rawData);
+
+         // Assert: Verify all properties are correctly set with UTC timezone
+-        $this->assertEquals(123, $scheduleData->id);
+-        $this->assertEquals(456, $scheduleData->availabilityId);
+-        $this->assertEquals('Team Meeting', $scheduleData->title);
+-        $this->assertEquals('Weekly team sync to discuss project progress', $scheduleData->description);
+-        $this->assertEquals('2038-01-15 09:00:00', $scheduleData->startDatetime?->format('Y-m-d H:i:s'));
++        $this->assertSame(123, $scheduleData->id);
++        $this->assertSame(456, $scheduleData->availabilityId);
++        $this->assertSame('Team Meeting', $scheduleData->title);
++        $this->assertSame('Weekly team sync to discuss project progress', $scheduleData->description);
++        $this->assertSame('2038-01-15 09:00:00', $scheduleData->startDatetime?->format('Y-m-d H:i:s'));
+         $this->assertEquals('UTC', $scheduleData->startDatetime?->getTimezone()->getName());
+-        $this->assertEquals('2038-01-15 10:30:00', $scheduleData->endDatetime?->format('Y-m-d H:i:s'));
++        $this->assertSame('2038-01-15 10:30:00', $scheduleData->endDatetime?->format('Y-m-d H:i:s'));
+         $this->assertEquals('UTC', $scheduleData->endDatetime?->getTimezone()->getName());
+-        $this->assertEquals(['room' => 'Conference A', 'priority' => 'high'], $scheduleData->metadata);
+-        $this->assertEquals(ScheduleStatus::BOOKED, $scheduleData->status);
+-        $this->assertEquals(789, $scheduleData->schedulableId);
+-        $this->assertEquals('team', $scheduleData->schedulableType);
++        $this->assertSame(['room' => 'Conference A', 'priority' => 'high'], $scheduleData->metadata);
++        $this->assertSame(ScheduleStatus::BOOKED, $scheduleData->status);
++        $this->assertSame(789, $scheduleData->schedulableId);
++        $this->assertSame('team', $scheduleData->schedulableType);
+     }
+
+     /**
+@@ @@
+         // Assert: Verify provided properties are set with defaults applied
+         $this->assertNull($scheduleData->id);
+         $this->assertNull($scheduleData->availabilityId);
+-        $this->assertEquals('Client Call', $scheduleData->title);
++        $this->assertSame('Client Call', $scheduleData->title);
+         $this->assertNull($scheduleData->description);
+-        $this->assertEquals('2038-02-01 14:00:00', $scheduleData->startDatetime?->format('Y-m-d H:i:s'));
+-        $this->assertEquals('2038-02-01 15:00:00', $scheduleData->endDatetime?->format('Y-m-d H:i:s'));
+-        $this->assertEquals([], $scheduleData->metadata);
+-        $this->assertEquals(ScheduleStatus::AVAILABLE, $scheduleData->status);
++        $this->assertSame('2038-02-01 14:00:00', $scheduleData->startDatetime?->format('Y-m-d H:i:s'));
++        $this->assertSame('2038-02-01 15:00:00', $scheduleData->endDatetime?->format('Y-m-d H:i:s'));
++        $this->assertSame([], $scheduleData->metadata);
++        $this->assertSame(ScheduleStatus::AVAILABLE, $scheduleData->status);
+         $this->assertNull($scheduleData->schedulableId);
+         $this->assertNull($scheduleData->schedulableType);
+     }
+@@ @@
+         $scheduleData = ScheduleData::fromArray($rawData);
+
+         // Assert: Verify Carbon instances are correctly handled
+-        $this->assertEquals('Training Session', $scheduleData->title);
+-        $this->assertEquals('2038-03-10 10:00:00', $scheduleData->startDatetime?->format('Y-m-d H:i:s'));
+-        $this->assertEquals('2038-03-10 12:00:00', $scheduleData->endDatetime?->format('Y-m-d H:i:s'));
++        $this->assertSame('Training Session', $scheduleData->title);
++        $this->assertSame('2038-03-10 10:00:00', $scheduleData->startDatetime?->format('Y-m-d H:i:s'));
++        $this->assertSame('2038-03-10 12:00:00', $scheduleData->endDatetime?->format('Y-m-d H:i:s'));
+         $this->assertEquals('UTC', $scheduleData->startDatetime?->getTimezone()->getName());
+         $this->assertEquals('UTC', $scheduleData->endDatetime?->getTimezone()->getName());
+     }
+@@ @@
+         $scheduleData = ScheduleData::fromArray($rawData);
+
+         // Assert: Verify instances sont correctement gérés (même si conversion)
+-        $this->assertEquals('Carbon Carbon Test', $scheduleData->title);
+-        $this->assertEquals('2038-06-10 10:00:00', $scheduleData->startDatetime?->format('Y-m-d H:i:s'));
+-        $this->assertEquals('2038-06-10 12:00:00', $scheduleData->endDatetime?->format('Y-m-d H:i:s'));
++        $this->assertSame('Carbon Carbon Test', $scheduleData->title);
++        $this->assertSame('2038-06-10 10:00:00', $scheduleData->startDatetime?->format('Y-m-d H:i:s'));
++        $this->assertSame('2038-06-10 12:00:00', $scheduleData->endDatetime?->format('Y-m-d H:i:s'));
+         $this->assertEquals('UTC', $scheduleData->startDatetime?->getTimezone()->getName());
+     }
+
+@@ @@
+         ]);
+
+         // Act & Assert: Verify metadata is empty array
+-        $this->assertEquals([], $scheduleData->metadata);
++        $this->assertSame([], $scheduleData->metadata);
+         $this->assertEquals([], $scheduleData->toArray()['metadata']);
+     }
+
+@@ @@
+         ]);
+
+         // Act & Assert: Verify default status is AVAILABLE
+-        $this->assertEquals(ScheduleStatus::AVAILABLE, $scheduleData->status);
++        $this->assertSame(ScheduleStatus::AVAILABLE, $scheduleData->status);
+         $this->assertEquals(ScheduleStatus::AVAILABLE, $scheduleData->toArray()['status']);
+     }
+
+@@ @@
+         ];
+
+         // Act & Assert: Verify exception is thrown for invalid datetime
+-        $this->expectException(\Exception::class);
++        $this->expectException(Exception::class);
+
+         ScheduleData::fromArray($rawData);
+     }
+@@ @@
+         $scheduleData = ScheduleData::fromArray($rawData);
+
+         // Assert: Verify empty string creates Carbon instance (current date), null remains null
+-        $this->assertNotNull($scheduleData->startDatetime);
+         $this->assertInstanceOf(Carbon::class, $scheduleData->startDatetime);
+-        $this->assertNull($scheduleData->endDatetime);
++        $this->assertInstanceOf(Carbon::class, $scheduleData->startDatetime);
++        $this->assertNotInstanceOf(Carbon::class, $scheduleData->endDatetime);
+     }
+
+     /**
+@@ @@
+
+         // Verify timezone is preserved in array conversion
+         $arrayData = $scheduleData->toArray();
+-        $this->assertStringContainsString('2038-12-25 14:00:00', $arrayData['start_datetime']);
+-        $this->assertStringContainsString('2038-12-25 15:30:00', $arrayData['end_datetime']);
++        $this->assertStringContainsString('2038-12-25 14:00:00', (string) $arrayData['start_datetime']);
++        $this->assertStringContainsString('2038-12-25 15:30:00', (string) $arrayData['end_datetime']);
+     }
+
+     /**
+@@ @@
+         ]);
+
+         // Act & Assert: Verify properties are readonly (cannot be modified)
+-        $reflection = new \ReflectionClass($scheduleData);
++        $reflection = new ReflectionClass($scheduleData);
+
+         foreach ($reflection->getProperties() as $property) {
+             $this->assertTrue($property->isReadOnly());
+@@ @@
+         ]);
+
+         // Act: Create new DTO with schedulable info
+-        /**  @var \Roster\DTOs\ScheduleData $updatedData */
++        /** @var ScheduleData $updatedData */
+         $updatedData = $originalData->withSchedulable(456, 'team');
+
+         // Assert: Verify new instance has schedulable info, original unchanged
+@@ @@
+     public function test_parse_datetime_throws_exception_for_invalid_input_type(): void
+     {
+         // Arrange: Use reflection to test protected method
+-        $reflectionClass = new \ReflectionClass(ScheduleData::class);
++        $reflectionClass = new ReflectionClass(ScheduleData::class);
+         $method = $reflectionClass->getMethod('parseDateTime');
+         $method->setAccessible(true);
+
+@@ @@
+     public function test_parse_datetime_returns_null_for_null_input(): void
+     {
+         // Arrange: Use reflection to test protected method
+-        $reflectionClass = new \ReflectionClass(ScheduleData::class);
++        $reflectionClass = new ReflectionClass(ScheduleData::class);
+         $method = $reflectionClass->getMethod('parseDateTime');
+         $method->setAccessible(true);
+
+@@ @@
+         $carbon = Carbon::create(2039, 4, 1, 10, 0, 0, 'UTC');
+
+         // Use reflection to test protected method
+-        $reflectionClass = new \ReflectionClass(ScheduleData::class);
++        $reflectionClass = new ReflectionClass(ScheduleData::class);
+         $method = $reflectionClass->getMethod('parseDateTime');
+         $method->setAccessible(true);
+
+@@ @@
+
+         // Assert: Verify all non-null data is preserved
+         foreach ($originalData as $key => $value) {
+-            if ($value !== null) {
+-                $this->assertArrayHasKey($key, $convertedData);
+-                $this->assertEquals($value, $convertedData[$key]);
+-            }
++            $this->assertArrayHasKey($key, $convertedData);
++            $this->assertEquals($value, $convertedData[$key]);
+         }
+     }
+ }
+    ----------- end diff -----------
+
+Applied rules:
+ * RemoveAlwaysTrueIfConditionRector
+ * AssertEmptyNullableObjectToAssertInstanceofRector
+ * AssertEqualsToSameRector
+ * StringCastAssertStringContainsStringRector
+
+
+12) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Domain/MutationContextAllowsMutationTest.php:47
 
     ---------- begin diff ----------
 @@ @@
@@ -805,7 +1366,7 @@ Applied rules:
  * ClosureReturnTypeRector
 
 
-9) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/HelpersTest.php:336
+13) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/HelpersTest.php:336
 
     ---------- begin diff ----------
 @@ @@
@@ -823,7 +1384,7 @@ Applied rules:
  * RemoveUselessReturnTagRector
 
 
-10) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Models/ScheduleTest.php:155
+14) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Models/ScheduleTest.php:155
 
     ---------- begin diff ----------
 @@ @@
@@ -873,7 +1434,7 @@ Applied rules:
  * AddClosureVoidReturnTypeWhereNoReturnRector
 
 
-11) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Validation/Rules/AvailabilityDateRangeRuleTest.php:95
+15) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Validation/Rules/AvailabilityDateRangeRuleTest.php:95
 
     ---------- begin diff ----------
 @@ @@
@@ -956,7 +1517,7 @@ Applied rules:
  * AssertEqualsToSameRector
 
 
-12) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Validation/Rules/AvailabilityDaysCoherenceRuleTest.php:129
+16) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Validation/Rules/AvailabilityDaysCoherenceRuleTest.php:129
 
     ---------- begin diff ----------
 @@ @@
@@ -1007,7 +1568,7 @@ Applied rules:
  * AssertEqualsToSameRector
 
 
-13) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Validation/Rules/AvailabilityOverlapRuleTest.php:569
+17) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Validation/Rules/AvailabilityOverlapRuleTest.php:569
 
     ---------- begin diff ----------
 @@ @@
@@ -1034,7 +1595,7 @@ Applied rules:
  * NewlineBetweenClassLikeStmtsRector
 
 
-14) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Validation/Rules/AvailabilityOwnershipRuleTest.php:146
+18) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Validation/Rules/AvailabilityOwnershipRuleTest.php:146
 
     ---------- begin diff ----------
 @@ @@
@@ -1153,7 +1714,7 @@ Applied rules:
  * TypedPropertyFromStrictConstructorRector
 
 
-15) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Validation/Rules/AvailabilityRulesTest.php:21
+19) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Validation/Rules/AvailabilityRulesTest.php:21
 
     ---------- begin diff ----------
 @@ @@
@@ -1172,7 +1733,7 @@ Applied rules:
  * NewlineBetweenClassLikeStmtsRector
 
 
-16) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Validation/Rules/DateRangeRulesTest.php:24
+20) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Validation/Rules/DateRangeRulesTest.php:24
 
     ---------- begin diff ----------
 @@ @@
@@ -1191,7 +1752,7 @@ Applied rules:
  * NewlineBetweenClassLikeStmtsRector
 
 
-17) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Validation/Rules/DurationRuleTest.php:5
+21) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Validation/Rules/DurationRuleTest.php:5
 
     ---------- begin diff ----------
 @@ @@
@@ -1235,7 +1796,7 @@ Applied rules:
  * RemoveUnusedPrivateMethodRector
 
 
-18) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Validation/Rules/ImpedimentScheduleDaysCoherenceRuleTest.php:27
+22) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Validation/Rules/ImpedimentScheduleDaysCoherenceRuleTest.php:27
 
     ---------- begin diff ----------
 @@ @@
@@ -1252,30 +1813,5 @@ Applied rules:
  * NewlineBetweenClassLikeStmtsRector
 
 
-19) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Validation/Rules/RequiredFieldsRuleTest.php:4
-
-    ---------- begin diff ----------
-@@ @@
-
- namespace Tests\Unit\Validation\Rules;
-
--use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
- use PHPUnit\Framework\MockObject\MockObject;
- use Roster\Contracts\Validation\ValidationContextInterface;
- use Roster\Enums\EntityType;
-@@ @@
-         $expectedFields = ['daily_start', 'daily_end', 'days', 'validity_start', 'validity_end'];
-         foreach ($expectedFields as $field) {
-             $this->assertArrayHasKey($field, $violations);
--            $this->assertSame("Field '{$field}' is required", $violations[$field]);
-+            $this->assertSame(sprintf("Field '%s' is required", $field), $violations[$field]);
-         }
-     }
-    ----------- end diff -----------
-
-Applied rules:
- * EncapsedStringsToSprintfRector
-
-
- [OK] 19 files would have been changed (dry-run) by Rector                                                              
+ [OK] 22 files would have been changed (dry-run) by Rector                                                              
 

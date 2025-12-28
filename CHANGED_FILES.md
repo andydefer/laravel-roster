@@ -91,5 +91,5 @@
 65. tests/Unit/Validation/Rules/SchedulableValidationRuleTest.php [x]
 66. tests/Unit/Validation/Rules/ScheduleOverlapRuleTest.php [x]
 67. tests/Unit/Validation/Rules/TimeRangeRuleTest.php [x]
-68. tests/Unit/Validation/Rules/TimeSlotDateTimeRuleTest.php [ ]
-69. tests/Unit/Validation/ValidationContextTest.php [ ]
+68. tests/Unit/Validation/Rules/TimeSlotDateTimeRuleTest.php [x]
+69. tests/Unit/Validation/ValidationContextTest.php [x]
