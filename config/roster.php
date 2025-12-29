@@ -15,23 +15,14 @@ return [
     | Core & Timezone
     |--------------------------------------------------------------------------
     */
-    'timezone' => [
-        'default' => env('ROSTER_TIMEZONE', env('APP_TIMEZONE', 'UTC')),
+    'timezone' =>  env('ROSTER_TIMEZONE', env('APP_TIMEZONE', 'UTC')),
 
-        'auto_detect' => env('ROSTER_AUTO_DETECT_TIMEZONE', true),
-
-        'storage_timezone' => 'UTC',
-
-        'allow_user_override' => true,
-
-        'allowed_timezones' => [],
-
-        'header_name' => 'X-Timezone',
-    ],
+    'allow_middleware' => true,
 
     'default_timezone' => 'UTC',
 
     'allowed_types' => [],
+
     /*
     |--------------------------------------------------------------------------
     | Duration Constraints

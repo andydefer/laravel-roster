@@ -44,7 +44,10 @@ class RosterServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->registerModelObservers();
-        $this->initializeTimezoneSystem();
+        if (config('roster.allow_middleware')) {
+
+            $this->initializeTimezoneSystem();
+        }
 
         Model::automaticallyEagerLoadRelationships();
 
