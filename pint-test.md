@@ -1,11 +1,11 @@
 # Pint Formatting Test Report
-*Generated: lun. 29 déc. 2025 07:59:23 WAT*
+*Generated: lun. 29 déc. 2025 09:50:25 WAT*
 
 
-  ⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯.⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯..⨯....⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯...⨯...⨯⨯⨯⨯⨯⨯⨯⨯.⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯.⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯.⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯..⨯.
+  ⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯.⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯..⨯....⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯...⨯...⨯⨯⨯⨯⨯⨯⨯⨯.⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯.⨯⨯⨯⨯⨯⨯⨯.⨯.⨯⨯⨯⨯⨯⨯⨯⨯⨯.⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯.⨯⨯..⨯.
 
   ──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────── Laravel  
-    FAIL   ............................................................................................................................................... 147 files, 128 style issues  
+    FAIL   ............................................................................................................................................... 151 files, 129 style issues  
   ⨯ config/roster.php                                                                                                                                           binary_operator_spaces  
   ⨯ database/migrations/2024_01_01_000001_create_roster_availabilities_table.php class_definition, no_superfluous_phpdoc_tags, braces_position, phpdoc_trim, no_unused_imports, no_ex…  
   ⨯ rector.php                                                                                                                                                            concat_space  
@@ -112,6 +112,7 @@
   ⨯ tests/Unit/Services/AvailabilityServiceTest.php                                                                                                                       single_quote  
   ⨯ tests/Unit/Services/ImpedimentServiceTest.php                                    increment_style, single_quote, concat_space, cast_spaces, ordered_imports, binary_operator_spaces  
   ⨯ tests/Unit/Services/ScheduleServiceTest.php                                                                                           class_attributes_separation, ordered_imports  
+  ⨯ tests/Unit/Validation/Rules/AbstractRuleTest.php                                                                                           braces_position, single_line_empty_body  
   ⨯ tests/Unit/Validation/Rules/AvailabilityDateRangeRuleTest.php class_attributes_separation, new_with_parentheses, function_declaration, increment_style, no_superfluous_phpdoc_tag…  
   ⨯ tests/Unit/Validation/Rules/AvailabilityDaysCoherenceRuleTest.php class_attributes_separation, new_with_parentheses, function_declaration, increment_style, braces_position, orde…  
   ⨯ tests/Unit/Validation/Rules/AvailabilityOverlapRuleTest.php                               class_attributes_separation, new_with_parentheses, function_declaration, braces_position  

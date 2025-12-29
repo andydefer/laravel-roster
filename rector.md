@@ -1,841 +1,11 @@
 # Rector Refactoring Report
-*Generated: lun. 29 déc. 2025 07:59:29 WAT*
+*Generated: lun. 29 déc. 2025 09:50:34 WAT*
 
 
-42 files with changes
+46 files with changes
 =====================
 
-1) /home/andy-kani/pro/sites/packages/laravel-roster/src/Casts/TimezoneAwareDateTimeCast.php:4
-
-    ---------- begin diff ----------
-@@ @@
-
- namespace Roster\Casts;
-
--use Carbon\CarbonTimeZone;
-+use Illuminate\Database\Eloquent\Model;
- use Illuminate\Contracts\Database\Eloquent\CastsAttributes;
- use Illuminate\Support\Carbon;
- use Roster\Domain\Helpers\TimezoneHelper;
-@@ @@
-     /**
-      * Convert the stored UTC datetime to the user's timezone.
-      *
--     * @param \Illuminate\Database\Eloquent\Model $model
--     * @param string $key
-+     * @param Model $model
-      * @param mixed $value The UTC datetime string from database
--     * @param array $attributes
-      * @return Carbon|null Carbon instance in user timezone or null
-      */
-     public function get($model, string $key, $value, array $attributes): ?Carbon
-@@ @@
-     /**
-      * Convert the datetime value to UTC format for database storage.
-      *
--     * @param \Illuminate\Database\Eloquent\Model $model
--     * @param string $key
-+     * @param Model $model
-      * @param mixed $value Carbon instance or datetime string
--     * @param array $attributes
-      * @return string|null UTC datetime string in 'Y-m-d H:i:s' format or null
-      */
-     public function set($model, string $key, $value, array $attributes): ?string
-    ----------- end diff -----------
-
-Applied rules:
- * RemoveUselessParamTagRector
-
-
-2) /home/andy-kani/pro/sites/packages/laravel-roster/src/Commands/DebugRulesCommand.php:4
-
-    ---------- begin diff ----------
-@@ @@
-
- namespace Roster\Commands;
-
-+use ValueError;
-+use Exception;
-+use Roster\Validation\Attributes\ValidationRule;
-+use ReflectionType;
- use Illuminate\Console\Command;
--use Illuminate\Database\Eloquent\Model;
- use Roster\Enums\EntityType;
- use Roster\Enums\OperationType;
- use Roster\Validation\RuleScanner;
-@@ @@
-             }
-
-             return self::SUCCESS;
--        } catch (Throwable $exception) {
--            $this->error($exception->getMessage());
-+        } catch (Throwable $throwable) {
-+            $this->error($throwable->getMessage());
-
-             if ($this->option('verbose')) {
--                $this->error($exception->getTraceAsString());
-+                $this->error($throwable->getTraceAsString());
-             }
-
-             return self::FAILURE;
-@@ @@
-     ): void {
-         $entityType = $this->resolveEntityType($entityInput);
-
--        $this->line("🔍 Debugging validation rules for: {$entityInput}");
-+        $this->line('🔍 Debugging validation rules for: ' . $entityInput);
-         $this->line("📊 Entity Type: " . $entityType->value);
-         $this->newLine();
-
-@@ @@
-             validator: $validator
-         );
-
--        if (empty($rules)) {
-+        if ($rules === []) {
-             $this->warn('No validation rules found for this entity/operation combination.');
-             return;
-         }
-@@ @@
-     {
-         try {
-             return EntityType::from(strtolower($input));
--        } catch (\ValueError) {
--            $this->warn("Entity '{$input}' not found in EntityType enum. Using AVAILABILITY as default.");
-+        } catch (ValueError) {
-+            $this->warn(sprintf("Entity '%s' not found in EntityType enum. Using AVAILABILITY as default.", $input));
-             return EntityType::AVAILABILITY;
-         }
-     }
-@@ @@
-             : $supportedOperations;
-
-         foreach ($operations as $operation) {
--            if (!$operation instanceof OperationType) {
--                continue;
--            }
--
-             // Skip RETRIEVE operation as validation rules don't apply to read operations
-             if ($operation === OperationType::RETRIEVE) {
-                 continue;
-@@ @@
-         EntityType $entityType,
-         ?string $operationFilter
-     ): void {
--        $this->line("📋 Rules for {$entityType->value}" .
--            ($operationFilter ? " (Operation: {$operationFilter})" : ""));
-+        $this->line('📋 Rules for ' . $entityType->value .
-+            ($operationFilter ? sprintf(' (Operation: %s)', $operationFilter) : ""));
-         $this->newLine();
-
-         $groupedRules = $this->groupRulesByClassName($rules);
-@@ @@
-         $sortedRules = $this->sortRulesByPriority($groupedRules);
-         $filteredRules = $this->filterRulesByProperty($sortedRules, $propertyFilter);
-
--        if (empty($filteredRules)) {
-+        if ($filteredRules === []) {
-             $this->warn("No rules match the specified filters.");
-             return;
-         }
-@@ @@
-     private function formatRuleProperties(object $rule): string
-     {
-         $properties = $this->extractRuleProperties($rule);
--        return !empty($properties) ? implode(', ', $properties) : '(class-level)';
-+        return $properties === [] ? '(class-level)' : implode(', ', $properties);
-     }
-
-     /**
-@@ @@
-             }
-
-             return array_unique($properties);
--        } catch (ReflectionException $exception) {
-+        } catch (ReflectionException $reflectionException) {
-             $this->warn("Could not analyze properties for rule: " . get_class($rule));
-             return [];
-         }
-@@ @@
-             $startLine = max(0, $method->getStartLine() - 1);
-             $endLine = $method->getEndLine();
-
--            for ($i = $startLine; $i < $endLine && $i < count($methodSource); $i++) {
-+            for ($i = $startLine; $i < $endLine && $i < count($methodSource); ++$i) {
-                 $line = $methodSource[$i];
-                 $properties = array_merge(
-                     $properties,
-@@ @@
-             }
-
-             return $properties;
--        } catch (\Exception) {
-+        } catch (Exception) {
-             return [];
-         }
-     }
-@@ @@
-         try {
-             $reflection = new ReflectionClass($rule);
-
--            if (!empty($reflection->getAttributes(\Roster\Validation\Attributes\ValidationRule::class))) {
-+            if ($reflection->getAttributes(ValidationRule::class) !== []) {
-                 return 'Attribute';
-             }
-
-@@ @@
-      */
-     private function displayRuleMethodDetails(object $rule, array $operations): void
-     {
--        $this->line("Rule: " . $rule->getName() . " (Priority: {$rule->getPriority()})");
-+        $this->line("Rule: " . $rule->getName() . sprintf(' (Priority: %s)', $rule->getPriority()));
-         $this->line("Operations: " . implode(', ', $operations));
-         $this->line("Class: " . get_class($rule));
-
-@@ @@
-                     $this->displayMethodInfo($method);
-                 }
-             }
--        } catch (ReflectionException $exception) {
-+        } catch (ReflectionException $reflectionException) {
-             $this->warn("    Could not analyze methods for: " . get_class($rule));
-         }
-
-@@ @@
-      */
-     private function displayMethodInfo(ReflectionMethod $method): void
-     {
--        $this->line("  📝 Method: {$method->getName()}()");
--        $this->line("    📍 File: {$method->getFileName()}:{$method->getStartLine()}");
-+        $this->line(sprintf('  📝 Method: %s()', $method->getName()));
-+        $this->line(sprintf('    📍 File: %s:%s', $method->getFileName(), $method->getStartLine()));
-
-         $parameters = $this->extractMethodParameters($method);
--        if (!empty($parameters)) {
-+        if ($parameters !== []) {
-             $this->line("    🔧 Params: " . implode(', ', $parameters));
-         }
-     }
-@@ @@
-         $parameters = [];
-
-         foreach ($method->getParameters() as $parameter) {
--            $type = $parameter->getType() ? $parameter->getType()->getName() : 'mixed';
--            $parameters[] = "{$type} \${$parameter->getName()}";
-+            $type = $parameter->getType() instanceof ReflectionType ? $parameter->getType()->getName() : 'mixed';
-+            $parameters[] = sprintf('%s $%s', $type, $parameter->getName());
-         }
-
-         return $parameters;
-@@ @@
-     /**
-      * Display all scanned rules.
-      *
--     * @param array $scannedRules Scanned rules data
-+     * @param array<string, ValidationRule> $scannedRules Scanned rules data
-      */
-     private function displayScannedRulesTable(array $scannedRules): void
-     {
-@@ @@
-      * @param string $className Rule class name
-      * @param object $ruleData Rule data object
-      * @param int $index Row index
--     * @return array Table row data
-+     * @return array<int, mixed> Table row data
-      */
-     private function createScannedRuleRow(string $className, object $ruleData, int $index): array
-     {
-@@ @@
-      * Get entity values from scanned rule data.
-      *
-      * @param object $ruleData Scanned rule data
--     * @return array Entity values
-+     * @return string[] Entity values
-      */
-     private function getEntityValuesFromScannedRule(object $ruleData): array
-     {
-    ----------- end diff -----------
-
-Applied rules:
- * SimplifyEmptyCheckOnEmptyArrayRector
- * ExplicitBoolCompareRector
- * SwitchNegatedTernaryRector
- * CatchExceptionNameMatchingTypeRector
- * EncapsedStringsToSprintfRector
- * PostIncDecToPreIncDecRector
- * RemoveDeadInstanceOfRector
- * DisallowedEmptyRuleFixerRector
- * DocblockReturnArrayFromDirectArrayInstanceRector
- * ClassMethodArrayDocblockParamFromLocalCallsRector
- * AddReturnArrayDocblockBasedOnArrayMapRector
-
-
-3) /home/andy-kani/pro/sites/packages/laravel-roster/src/Domain/Helpers/TimezoneHelper.php:4
-
-    ---------- begin diff ----------
-@@ @@
-
- namespace Roster\Domain\Helpers;
-
-+use Exception;
- use Illuminate\Support\Carbon;
- use DateTimeZone;
- use InvalidArgumentException;
-@@ @@
- final class TimezoneHelper
- {
-     private static ?string $defaultTimezone = null;
-+
-     private static ?string $userTimezone = null;
-+
-     private const SYSTEM_TIMEZONE = 'UTC';
-+
-     private static bool $initialized = false;
-
-     /**
-@@ @@
-         }
-
-         if (!self::isValidTimezone($configValue)) {
--            throw new InvalidArgumentException("Invalid timezone configured: {$configValue}");
-+            throw new InvalidArgumentException('Invalid timezone configured: ' . $configValue);
-         }
-
-         self::$defaultTimezone = self::normalizeTimezone($configValue);
-@@ @@
-
-         if ($timezone !== null) {
-             if (!self::isValidTimezone($timezone)) {
--                throw new InvalidArgumentException("Invalid user timezone: {$timezone}");
-+                throw new InvalidArgumentException('Invalid user timezone: ' . $timezone);
-             }
-+
-             $timezone = self::normalizeTimezone($timezone);
-         }
-
-@@ @@
-      */
-     public static function isValidTimezone(string $timezone): bool
-     {
--        if (empty($timezone)) {
-+        if ($timezone === '' || $timezone === '0') {
-             return false;
-         }
-
-@@ @@
-         try {
-             new DateTimeZone($timezone);
-             return true;
--        } catch (\Exception) {
-+        } catch (Exception) {
-             return false;
-         }
-     }
-@@ @@
-     public static function normalizeTimezone(string $timezone): string
-     {
-         $all = DateTimeZone::listIdentifiers();
--        $key = array_search(strtolower($timezone), array_map('strtolower', $all));
-+        $key = array_search(strtolower($timezone), array_map('strtolower', $all), true);
-         return $key !== false ? $all[$key] : self::SYSTEM_TIMEZONE;
-     }
-    ----------- end diff -----------
-
-Applied rules:
- * NewlineBetweenClassLikeStmtsRector
- * EncapsedStringsToSprintfRector
- * StrictArraySearchRector
- * NewlineAfterStatementRector
- * DisallowedEmptyRuleFixerRector
-
-
-4) /home/andy-kani/pro/sites/packages/laravel-roster/src/Models/Impediment.php:4
-
-    ---------- begin diff ----------
-@@ @@
-
- namespace Roster\Models;
-
-+use InvalidArgumentException;
- use Illuminate\Database\Eloquent\Casts\Attribute;
- use Illuminate\Database\Eloquent\Model;
- use Illuminate\Database\Eloquent\Relations\BelongsTo;
-@@ @@
-                 if ($value === null) {
-                     return null;
-                 }
-+
-                 return is_string($value) ? json_decode($value, true, 512, JSON_THROW_ON_ERROR) : $value;
-             },
-             set: function ($value): ?string {
-@@ @@
-                 if ($value === null) {
-                     return null;
-                 }
-+
-                 return is_array($value) ? json_encode($value, JSON_THROW_ON_ERROR) : $value;
-             }
-         );
-@@ @@
-      * @param Carbon $end End time of the period to check
-      * @return bool True if there is any overlap
-      *
--     * @throws \InvalidArgumentException When the time window is not valid
-+     * @throws InvalidArgumentException When the time window is not valid
-      */
-     public function overlapsWith(Carbon $start, Carbon $end): bool
-     {
-    ----------- end diff -----------
-
-Applied rules:
- * NewlineAfterStatementRector
-
-
-5) /home/andy-kani/pro/sites/packages/laravel-roster/src/Services/Core/AbstractService.php:192
-
-    ---------- begin diff ----------
-@@ @@
-                 $this->getEntityTypeEnum()
-             );
-         }
-+
-         $deleteData = [
-             'id' => $id,
-             'schedulable_id' => $entity->schedulable_id ?? $this->schedulable->id,
-    ----------- end diff -----------
-
-Applied rules:
- * NewlineAfterStatementRector
- * DocblockGetterReturnArrayFromPropertyDocblockVarRector
- * DocblockVarArrayFromGetterReturnRector
-
-
-6) /home/andy-kani/pro/sites/packages/laravel-roster/src/Validation/Cache/RuleCacheGenerator.php:148
-
-    ---------- begin diff ----------
-@@ @@
-         foreach ($rules as $className => $validationRule) {
-             $body .= $this->buildRuleEntry($className, $validationRule);
-         }
-+
-         return $body;
-     }
-
-@@ @@
-      */
-     private function buildRuleEntry(string $className, ValidationRule $validationRule): string
-     {
--        $entities = $this->extractEnumValues($validationRule->entities, EntityType::class);
--        $operations = $this->extractEnumValues($validationRule->operations, OperationType::class);
-+        $entities = $this->extractEnumValues($validationRule->entities);
-+        $operations = $this->extractEnumValues($validationRule->operations);
-
-         $indent = '    ';
-         $entry = $indent . "'" . addslashes($className) . "' => [\n";
-@@ @@
-      * Extracts string values from enum arrays.
-      *
-      * @param array<EntityType|OperationType> $enums Array of enum instances
--     * @param string $enumClass The enum class for type hinting
-      * @return array<string> Array of string values
-      */
--    private function extractEnumValues(array $enums, string $enumClass): array
-+    private function extractEnumValues(array $enums): array
-     {
-         return array_map(
--            fn($enum): string => $enum->value,
-+            fn(EntityType|OperationType $enum): string => $enum->value,
-             $enums
-         );
-     }
-    ----------- end diff -----------
-
-Applied rules:
- * NewlineAfterStatementRector
- * RemoveUnusedPrivateMethodParameterRector
- * AddArrayFunctionClosureParamTypeRector
-
-
-7) /home/andy-kani/pro/sites/packages/laravel-roster/src/Validation/Context/ValidationContext.php:360
-
-    ---------- begin diff ----------
-@@ @@
-     ): void {
-         $this->violations[] = new ViolationData(
-             field: $field,
-+            message: $message,
-             rule: $rule,
--            message: $message,
-             ruleDescription: $ruleDescription
-         );
-     }
-@@ @@
-     ): void {
-         $this->violations[] = new ViolationData(
-             field: $field,
-+            message: $message,
-             rule: $rule->getName(),
--            message: $message,
-             ruleDescription: $rule->getDescription()
-         );
-     }
-    ----------- end diff -----------
-
-Applied rules:
- * SortNamedParamRector
-
-
-8) /home/andy-kani/pro/sites/packages/laravel-roster/src/Validation/Exceptions/ValidationFailedException.php:116
-
-    ---------- begin diff ----------
-@@ @@
-     public function toArray(): array
-     {
-         $violationsArray = array_map(
--            fn(ViolationData $violation) => [
-+            fn(ViolationData $violation): array => [
-                 'field' => $violation->getField(),
-                 'rule' => $violation->getRule(),
-                 'message' => $violation->getMessage(),
-@@ @@
-     public function toDetailedArray(): array
-     {
-         $violationsArray = array_map(
--            fn(ViolationData $violation) => $violation->toArray(),
-+            fn(ViolationData $violation): array => $violation->toArray(),
-             $this->violations
-         );
-
-@@ @@
-         $latestViolations = $this->keepLatestViolationPerField($violations);
-
-         $messages = array_map(
--            fn(ViolationData $violation) => $violation->getMessage(),
-+            fn(ViolationData $violation): string => $violation->getMessage(),
-             $latestViolations
-         );
-
-@@ @@
-      * @param array<int, mixed> $violations
-      * @return array<int, ViolationData>
-      *
--     * @throws \InvalidArgumentException If an element is not a ViolationData instance
-+     * @throws InvalidArgumentException If an element is not a ViolationData instance
-      */
-     private function keepLatestViolationPerField(array $violations): array
-     {
-@@ @@
-
-         foreach ($violations as $violation) {
-             if (!$violation instanceof ViolationData) {
--                throw new \InvalidArgumentException(
-+                throw new InvalidArgumentException(
-                     sprintf(
-                         'Expected instance of ViolationData, got %s',
-                         is_object($violation) ? get_class($violation) : gettype($violation)
-    ----------- end diff -----------
-
-Applied rules:
- * AddArrowFunctionReturnTypeRector
-
-
-9) /home/andy-kani/pro/sites/packages/laravel-roster/src/Validation/Rules/AvailabilityDaysCoherenceRule.php:63
-
-    ---------- begin diff ----------
-@@ @@
-         }
-
-         $days = $validationContext->get('days');
--
--        if ($days === null || $days === []) {
--            return false;
--        }
--
--        return true;
-+        return $days !== null && $days !== [];
-     }
-
-     /**
-@@ @@
-     /**
-      * Check if validity period is valid (start < end and parseable).
-      *
--     * @param array $period Validity period with 'start' and 'end'
-+     * @param array<string, mixed> $period Validity period with 'start' and 'end'
-      * @return bool True if period is valid
-      */
-     private function isValidPeriod(array $period): bool
-@@ @@
-      *
-      * @param ValidationContextInterface $validationContext Validation context
-      * @param array $days Days to check
--     * @param array $period Validity period
-+     * @param array<string, mixed> $period Validity period
-      */
-     private function checkDaysWithinPeriod(
-         ValidationContextInterface $validationContext,
-    ----------- end diff -----------
-
-Applied rules:
- * SimplifyDeMorganBinaryRector
- * SimplifyIfReturnBoolRector
- * AddParamArrayDocblockFromDimFetchAccessRector
-
-
-10) /home/andy-kani/pro/sites/packages/laravel-roster/src/Validation/Rules/AvailabilityTemporalCoherenceRule.php:116
-
-    ---------- begin diff ----------
-@@ @@
-      *
-      * @param ValidationContextInterface $validationContext Validation context
-      * @param Availability $availability Original availability
--     * @return array Normalized update data
-+     * @return array<string, string|mixed[]|null> Normalized update data
-      */
-     private function extractUpdateData(ValidationContextInterface $validationContext, Availability $availability): array
-     {
-@@ @@
-      */
-     private function hasRelevantChanges(array $updateData): bool
-     {
--        return !empty(array_filter($updateData, fn($value) => $value !== null));
-+        return array_filter($updateData, fn($value): bool => $value !== null) !== [];
-     }
-
-     /**
-@@ @@
-      *
-      * @param string $entityClass Entity class to validate against
-      * @param Availability $availability Availability being modified
--     * @param array $updateData Normalized update data
-+     * @param array<string, mixed> $updateData Normalized update data
-      * @param ValidationContextInterface $validationContext Validation context
-      * @param Carbon $referenceTime Reference time for "future" determination
-      */
-@@ @@
-      * Validate date boundaries for a specific entity.
-      *
-      * @param object $entity Existing entity to check
--     * @param array $updateData Normalized update data
-+     * @param array<string, mixed> $updateData Normalized update data
-      * @param string $entityClass Entity class name
-      * @param ValidationContextInterface $validationContext Validation context
-      */
-@@ @@
-     /**
-      * Check if specific days are missing from new days array.
-      *
--     * @param array $entityDays Days used by the entity
-+     * @param string[] $entityDays Days used by the entity
-      * @param array $newDays New days array
-      * @param object $entity Existing entity
-      * @param string $entityClass Entity class name
-@@ @@
-      */
-     private function extractDaysFromPeriod(?Carbon $start, ?Carbon $end): array
-     {
--        if ($start === null || $end === null || $end->lt($start)) {
-+        if (!$start instanceof Carbon || !$end instanceof Carbon || $end->lt($start)) {
-             return [];
-         }
-    ----------- end diff -----------
-
-Applied rules:
- * FlipTypeControlToUseExclusiveTypeRector
- * DisallowedEmptyRuleFixerRector
- * AddParamArrayDocblockFromDimFetchAccessRector
- * DocblockReturnArrayFromDirectArrayInstanceRector
- * ClassMethodArrayDocblockParamFromLocalCallsRector
- * AddArrowFunctionReturnTypeRector
-
-
-11) /home/andy-kani/pro/sites/packages/laravel-roster/src/Validation/Rules/TimezoneValidationRule.php:4
-
-    ---------- begin diff ----------
-@@ @@
-
- namespace Roster\Validation\Rules;
-
-+use Carbon\Carbon;
-+use Exception;
- use Roster\Contracts\Validation\ValidationContextInterface;
- use Roster\Domain\Helpers\TimezoneHelper;
- use Roster\Enums\EntityType;
-@@ @@
-      * Validate timezone and datetime fields in the validation context.
-      *
-      * @param ValidationContextInterface $validationContext The context containing data to validate
--     * @return void
-      */
-     public function validate(ValidationContextInterface $validationContext): void
-     {
-@@ @@
-         }
-
-         try {
--            \Carbon\Carbon::parse($value, TimezoneHelper::getEffectiveTimezone());
--        } catch (\Exception $e) {
-+            Carbon::parse($value, TimezoneHelper::getEffectiveTimezone());
-+        } catch (Exception $exception) {
-             $context->setViolation(
-                 field: $field,
-                 message: sprintf("Invalid datetime format or timezone for field '%s'", $field)
-    ----------- end diff -----------
-
-Applied rules:
- * CatchExceptionNameMatchingTypeRector
- * RemoveUselessReturnTagRector
-
-
-12) /home/andy-kani/pro/sites/packages/laravel-roster/src/Validation/ValidationResult.php:72
-
-    ---------- begin diff ----------
-@@ @@
-     public function toArray(bool $includeRuleDescriptions = false): array
-     {
-         $violationsArray = array_map(
--            function (ViolationData $violation) use ($includeRuleDescriptions) {
-+            function (ViolationData $violation) use ($includeRuleDescriptions): array {
-                 $data = [
-                     'field' => $violation->getField(),
-                     'rule' => $violation->getRule(),
-    ----------- end diff -----------
-
-Applied rules:
- * ClosureReturnTypeRector
-
-
-13) /home/andy-kani/pro/sites/packages/laravel-roster/src/helpers.php:77
-
-    ---------- begin diff ----------
-@@ @@
-      */
-     function roster_format_period_days_for_display(array $days): string
-     {
--        if (empty($days)) {
-+        if ($days === []) {
-             return '';
-         }
-
-@@ @@
-      */
-     function roster_format_days_for_display(array $days): string
-     {
--        if (empty($days)) {
-+        if ($days === []) {
-             return '';
-         }
-
-@@ @@
-      * Creates an Availability service instance for a given schedulable model.
-      *
-      * @param Model $model The schedulable model instance
--     * @return AvailabilityService
-      * @throws BindingResolutionException If the service cannot be resolved from the container
-      */
-     function availability_for(Model $model): AvailabilityService
-@@ @@
-      * Automatically extracts the schedulable from the availability's polymorphic relationship.
-      *
-      * @param Availability $availability The availability model instance
--     * @return ImpedimentService
-      * @throws InvalidArgumentException If the availability has no schedulable relationship
-      * @throws BindingResolutionException If the service cannot be resolved from the container
-      */
-@@ @@
-      * Automatically extracts the schedulable from the availability's polymorphic relationship.
-      *
-      * @param Availability $availability The availability model instance
--     * @return ScheduleService
-      * @throws InvalidArgumentException If the availability has no schedulable relationship
-      * @throws BindingResolutionException If the service cannot be resolved from the container
-      */
-@@ @@
-             $days
-         );
-
--        for ($index = 0; $index < count($dayIndices) - 1; $index++) {
-+        for ($index = 0; $index < count($dayIndices) - 1; ++$index) {
-             $currentIndex = $dayIndices[$index];
-             $nextIndex = $dayIndices[$index + 1];
-    ----------- end diff -----------
-
-Applied rules:
- * SimplifyEmptyCheckOnEmptyArrayRector
- * PostIncDecToPreIncDecRector
- * RemoveUselessReturnTagRector
-
-
-14) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Feature/Integration/CompleteRosterIntegrationTest.php:954
-
-    ---------- begin diff ----------
-@@ @@
-         foreach ($createdSchedules as $createdSchedule) {
-             $scheduleAvailability = $availabilityByScheduleId[$createdSchedule->id] ?? null;
-
--            if ($scheduleAvailability) {
-+            if ($scheduleAvailability instanceof AvailabilityModel) {
-                 try {
-                     schedule_for($scheduleAvailability)->delete($createdSchedule->id);
-                 } catch (Exception $e) {
-@@ @@
-     /**
-      * Create multiple impediments for a given availability.
-      *
--     * @param AvailabilityModel $availability
-      * @return array<int, ImpedimentModel>
-      */
-     private function createImpedimentsForAvailability(AvailabilityModel $availability): array
-@@ @@
-     /**
-      * Create multiple schedules for a given availability.
-      *
--     * @param AvailabilityModel $availability
-      * @param array<int, AvailabilityModel> $availabilityByScheduleId
-      * @return array<int, ScheduleModel>
-      */
-    ----------- end diff -----------
-
-Applied rules:
- * FlipTypeControlToUseExclusiveTypeRector
- * NullableCompareToNullRector
- * RemoveUselessParamTagRector
-
-
-15) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Integration/Database/AvailabilityIntegrationTest.php:4
-
-    ---------- begin diff ----------
-@@ @@
-
- namespace Integration\Database;
-
--use PHPUnit\Framework\Attributes\Group;
- use Illuminate\Foundation\Testing\RefreshDatabase;
- use Illuminate\Support\Collection;
- use Roster\Models\Availability as AvailabilityModel;
-    ----------- end diff -----------
-
-Applied rules:
-
-
-16) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Support/TestSchedulable.php:14
-
-    ---------- begin diff ----------
-@@ @@
- class TestSchedulable extends Model
- {
-     use HasRoster;
-+
-     /**
-      * The table associated with the model.
-      *
-    ----------- end diff -----------
-
-Applied rules:
- * NewlineBetweenClassLikeStmtsRector
-
-
-17) /home/andy-kani/pro/sites/packages/laravel-roster/tests/TestCase.php:24
+1) /home/andy-kani/pro/sites/packages/laravel-roster/tests/TestCase.php:24
 
     ---------- begin diff ----------
 @@ @@
@@ -905,7 +75,7 @@ Applied rules:
  * RemoveUselessReturnTagRector
 
 
-18) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Commands/DebugRulesCommandTest.php:22
+2) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Commands/DebugRulesCommandTest.php:22
 
     ---------- begin diff ----------
 @@ @@
@@ -933,7 +103,7 @@ Applied rules:
  * RemoveUselessReturnTagRector
 
 
-19) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/DTOs/AvailabilityDataTest.php:5
+3) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/DTOs/AvailabilityDataTest.php:5
 
     ---------- begin diff ----------
 @@ @@
@@ -1054,7 +224,7 @@ Applied rules:
  * AssertEqualsToSameRector
 
 
-20) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/DTOs/ImpedimentDataTest.php:4
+4) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/DTOs/ImpedimentDataTest.php:4
 
     ---------- begin diff ----------
 @@ @@
@@ -1264,7 +434,7 @@ Applied rules:
  * StringCastAssertStringContainsStringRector
 
 
-21) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/DTOs/ScheduleDataTest.php:4
+5) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/DTOs/ScheduleDataTest.php:4
 
     ---------- begin diff ----------
 @@ @@
@@ -1467,7 +637,7 @@ Applied rules:
  * StringCastAssertStringContainsStringRector
 
 
-22) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Domain/Helpers/TimezoneHelperTest.php:4
+6) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Domain/Helpers/TimezoneHelperTest.php:4
 
     ---------- begin diff ----------
 @@ @@
@@ -1523,7 +693,7 @@ Applied rules:
  * AssertEmptyNullableObjectToAssertInstanceofRector
 
 
-23) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Domain/MutationContextAllowsMutationTest.php:47
+7) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Domain/MutationContextAllowsMutationTest.php:47
 
     ---------- begin diff ----------
 @@ @@
@@ -1568,7 +738,43 @@ Applied rules:
  * ClosureReturnTypeRector
 
 
-24) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/HelpersTest.php:4
+8) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Exceptions/ValidationFailedExceptionTest.php:145
+
+    ---------- begin diff ----------
+@@ @@
+             '- [time_after] validity_end: Validity end must be after start',
+         ];
+
+-        $this->assertEquals(implode("\n", $expectedLines), $message);
++        $this->assertSame(implode("\n", $expectedLines), $message);
+     }
+
+     /**
+@@ @@
+             '',
+         ];
+
+-        $this->assertEquals(implode("\n", $expectedLines), $message);
++        $this->assertSame(implode("\n", $expectedLines), $message);
+     }
+
+     /**
+@@ @@
+         $firstViolation = $exception->getFirstViolation();
+
+         // Assert: Verify first violation message
+-        $this->assertEquals('Daily start is required', $firstViolation);
++        $this->assertSame('Daily start is required', $firstViolation);
+     }
+
+     /**
+    ----------- end diff -----------
+
+Applied rules:
+ * AssertEqualsToSameRector
+
+
+9) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/HelpersTest.php:4
 
     ---------- begin diff ----------
 @@ @@
@@ -1619,7 +825,7 @@ Applied rules:
  * AssertEmptyNullableObjectToAssertInstanceofRector
 
 
-25) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Http/Middleware/SetUserTimezoneTest.php:4
+10) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Http/Middleware/SetUserTimezoneTest.php:4
 
     ---------- begin diff ----------
 @@ @@
@@ -2071,7 +1277,7 @@ Applied rules:
  * ClosureReturnTypeRector
 
 
-26) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Models/ScheduleTest.php:155
+11) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Models/ScheduleTest.php:155
 
     ---------- begin diff ----------
 @@ @@
@@ -2121,7 +1327,135 @@ Applied rules:
  * AddClosureVoidReturnTypeWhereNoReturnRector
 
 
-27) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Validation/Rules/AvailabilityDateRangeRuleTest.php:95
+12) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Validation/DTOs/ViolationDataTest.php:26
+
+    ---------- begin diff ----------
+@@ @@
+         $violation = new ViolationData($field, $message, $rule);
+
+         // Assert: Verify all fields are correctly set
+-        $this->assertEquals($field, $violation->getField());
+-        $this->assertEquals($message, $violation->getMessage());
+-        $this->assertEquals($rule, $violation->getRule());
++        $this->assertSame($field, $violation->getField());
++        $this->assertSame($message, $violation->getMessage());
++        $this->assertSame($rule, $violation->getRule());
+         $this->assertNull($violation->getRuleDescription());
+         $this->assertFalse($violation->hasRuleDescription());
+     }
+@@ @@
+         $violation = new ViolationData($field, $message, $rule, $description);
+
+         // Assert: Verify all fields including description
+-        $this->assertEquals($field, $violation->getField());
+-        $this->assertEquals($message, $violation->getMessage());
+-        $this->assertEquals($rule, $violation->getRule());
+-        $this->assertEquals($description, $violation->getRuleDescription());
++        $this->assertSame($field, $violation->getField());
++        $this->assertSame($message, $violation->getMessage());
++        $this->assertSame($rule, $violation->getRule());
++        $this->assertSame($description, $violation->getRuleDescription());
+         $this->assertTrue($violation->hasRuleDescription());
+     }
+
+@@ @@
+         $violation = new ViolationData($field, $message);
+
+         // Assert: Verify default rule name
+-        $this->assertEquals('unknown', $violation->getRule());
++        $this->assertSame('unknown', $violation->getRule());
+         $this->assertNull($violation->getRuleDescription());
+     }
+
+@@ @@
+         $violation = new ViolationData($field, $message, $rule, $description);
+
+         // Assert: Verify empty description is not considered as having description
+-        $this->assertEquals('', $violation->getRuleDescription());
++        $this->assertSame('', $violation->getRuleDescription());
+         $this->assertFalse($violation->hasRuleDescription());
+     }
+
+@@ @@
+         $array = $violation->toArray();
+
+         // Assert: Verify array structure with description
+-        $this->assertEquals([
++        $this->assertSame([
+             'field' => 'email',
+             'rule' => 'required',
+             'message' => 'Required field',
+@@ @@
+         $violation = new ViolationData('email', 'Invalid field', 'format', $description);
+
+         // Assert: Verify new lines are preserved
+-        $this->assertEquals($description, $violation->getRuleDescription());
++        $this->assertSame($description, $violation->getRuleDescription());
+     }
+
+     /**
+@@ @@
+             new ViolationData('email', 'Required', 'required'),
+             new ViolationData('email', 'Invalid format', 'email', 'Validates email format'),
+             new ViolationData('password', 'Too short', 'min:8', 'Ensures minimum length of 8 characters'),
+-            new ViolationData('name', 'Required', null), // No rule specified
++            new ViolationData('name', 'Required'), // No rule specified
+         ];
+
+         // Act & Assert: Verify each instance
+-        $this->assertEquals('email', $violations[0]->getField());
+-        $this->assertEquals('required', $violations[0]->getRule());
++        $this->assertSame('email', $violations[0]->getField());
++        $this->assertSame('required', $violations[0]->getRule());
+         $this->assertNull($violations[0]->getRuleDescription());
+
+-        $this->assertEquals('email', $violations[1]->getField());
+-        $this->assertEquals('email', $violations[1]->getRule());
+-        $this->assertEquals('Validates email format', $violations[1]->getRuleDescription());
++        $this->assertSame('email', $violations[1]->getField());
++        $this->assertSame('email', $violations[1]->getRule());
++        $this->assertSame('Validates email format', $violations[1]->getRuleDescription());
+
+-        $this->assertEquals('password', $violations[2]->getField());
+-        $this->assertEquals('min:8', $violations[2]->getRule());
+-        $this->assertEquals('Ensures minimum length of 8 characters', $violations[2]->getRuleDescription());
++        $this->assertSame('password', $violations[2]->getField());
++        $this->assertSame('min:8', $violations[2]->getRule());
++        $this->assertSame('Ensures minimum length of 8 characters', $violations[2]->getRuleDescription());
+
+-        $this->assertEquals('name', $violations[3]->getField());
+-        $this->assertEquals('unknown', $violations[3]->getRule()); // Default when null
++        $this->assertSame('name', $violations[3]->getField());
++        $this->assertSame('unknown', $violations[3]->getRule()); // Default when null
+         $this->assertNull($violations[3]->getRuleDescription());
+     }
+ }
+    ----------- end diff -----------
+
+Applied rules:
+ * RemoveNullArgOnNullDefaultParamRector
+ * AssertEqualsToSameRector
+
+
+13) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Validation/Rules/AbstractRuleTest.php:62
+
+    ---------- begin diff ----------
+@@ @@
+         $description = $rule->getDescription();
+
+         // Assert: Verify custom description is returned
+-        $this->assertEquals($customDescription, $description);
++        $this->assertSame($customDescription, $description);
+     }
+
+     /**
+    ----------- end diff -----------
+
+Applied rules:
+ * AssertEqualsToSameRector
+
+
+14) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Validation/Rules/AvailabilityDateRangeRuleTest.php:95
 
     ---------- begin diff ----------
 @@ @@
@@ -2204,7 +1538,7 @@ Applied rules:
  * AssertEqualsToSameRector
 
 
-28) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Validation/Rules/AvailabilityDaysCoherenceRuleTest.php:129
+15) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Validation/Rules/AvailabilityDaysCoherenceRuleTest.php:129
 
     ---------- begin diff ----------
 @@ @@
@@ -2255,7 +1589,7 @@ Applied rules:
  * AssertEqualsToSameRector
 
 
-29) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Validation/Rules/AvailabilityOverlapRuleTest.php:569
+16) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Validation/Rules/AvailabilityOverlapRuleTest.php:569
 
     ---------- begin diff ----------
 @@ @@
@@ -2282,7 +1616,837 @@ Applied rules:
  * NewlineBetweenClassLikeStmtsRector
 
 
-30) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Validation/Rules/AvailabilityOwnershipRuleTest.php:146
+17) /home/andy-kani/pro/sites/packages/laravel-roster/src/Casts/TimezoneAwareDateTimeCast.php:4
+
+    ---------- begin diff ----------
+@@ @@
+
+ namespace Roster\Casts;
+
+-use Carbon\CarbonTimeZone;
++use Illuminate\Database\Eloquent\Model;
+ use Illuminate\Contracts\Database\Eloquent\CastsAttributes;
+ use Illuminate\Support\Carbon;
+ use Roster\Domain\Helpers\TimezoneHelper;
+@@ @@
+     /**
+      * Convert the stored UTC datetime to the user's timezone.
+      *
+-     * @param \Illuminate\Database\Eloquent\Model $model
+-     * @param string $key
++     * @param Model $model
+      * @param mixed $value The UTC datetime string from database
+-     * @param array $attributes
+      * @return Carbon|null Carbon instance in user timezone or null
+      */
+     public function get($model, string $key, $value, array $attributes): ?Carbon
+@@ @@
+     /**
+      * Convert the datetime value to UTC format for database storage.
+      *
+-     * @param \Illuminate\Database\Eloquent\Model $model
+-     * @param string $key
++     * @param Model $model
+      * @param mixed $value Carbon instance or datetime string
+-     * @param array $attributes
+      * @return string|null UTC datetime string in 'Y-m-d H:i:s' format or null
+      */
+     public function set($model, string $key, $value, array $attributes): ?string
+    ----------- end diff -----------
+
+Applied rules:
+ * RemoveUselessParamTagRector
+
+
+18) /home/andy-kani/pro/sites/packages/laravel-roster/src/Commands/DebugRulesCommand.php:4
+
+    ---------- begin diff ----------
+@@ @@
+
+ namespace Roster\Commands;
+
++use ValueError;
++use Exception;
++use Roster\Validation\Attributes\ValidationRule;
++use ReflectionType;
+ use Illuminate\Console\Command;
+-use Illuminate\Database\Eloquent\Model;
+ use Roster\Enums\EntityType;
+ use Roster\Enums\OperationType;
+ use Roster\Validation\RuleScanner;
+@@ @@
+             }
+
+             return self::SUCCESS;
+-        } catch (Throwable $exception) {
+-            $this->error($exception->getMessage());
++        } catch (Throwable $throwable) {
++            $this->error($throwable->getMessage());
+
+             if ($this->option('verbose')) {
+-                $this->error($exception->getTraceAsString());
++                $this->error($throwable->getTraceAsString());
+             }
+
+             return self::FAILURE;
+@@ @@
+     ): void {
+         $entityType = $this->resolveEntityType($entityInput);
+
+-        $this->line("🔍 Debugging validation rules for: {$entityInput}");
++        $this->line('🔍 Debugging validation rules for: ' . $entityInput);
+         $this->line("📊 Entity Type: " . $entityType->value);
+         $this->newLine();
+
+@@ @@
+             validator: $validator
+         );
+
+-        if (empty($rules)) {
++        if ($rules === []) {
+             $this->warn('No validation rules found for this entity/operation combination.');
+             return;
+         }
+@@ @@
+     {
+         try {
+             return EntityType::from(strtolower($input));
+-        } catch (\ValueError) {
+-            $this->warn("Entity '{$input}' not found in EntityType enum. Using AVAILABILITY as default.");
++        } catch (ValueError) {
++            $this->warn(sprintf("Entity '%s' not found in EntityType enum. Using AVAILABILITY as default.", $input));
+             return EntityType::AVAILABILITY;
+         }
+     }
+@@ @@
+             : $supportedOperations;
+
+         foreach ($operations as $operation) {
+-            if (!$operation instanceof OperationType) {
+-                continue;
+-            }
+-
+             // Skip RETRIEVE operation as validation rules don't apply to read operations
+             if ($operation === OperationType::RETRIEVE) {
+                 continue;
+@@ @@
+         EntityType $entityType,
+         ?string $operationFilter
+     ): void {
+-        $this->line("📋 Rules for {$entityType->value}" .
+-            ($operationFilter ? " (Operation: {$operationFilter})" : ""));
++        $this->line('📋 Rules for ' . $entityType->value .
++            ($operationFilter ? sprintf(' (Operation: %s)', $operationFilter) : ""));
+         $this->newLine();
+
+         $groupedRules = $this->groupRulesByClassName($rules);
+@@ @@
+         $sortedRules = $this->sortRulesByPriority($groupedRules);
+         $filteredRules = $this->filterRulesByProperty($sortedRules, $propertyFilter);
+
+-        if (empty($filteredRules)) {
++        if ($filteredRules === []) {
+             $this->warn("No rules match the specified filters.");
+             return;
+         }
+@@ @@
+     private function formatRuleProperties(object $rule): string
+     {
+         $properties = $this->extractRuleProperties($rule);
+-        return !empty($properties) ? implode(', ', $properties) : '(class-level)';
++        return $properties === [] ? '(class-level)' : implode(', ', $properties);
+     }
+
+     /**
+@@ @@
+             }
+
+             return array_unique($properties);
+-        } catch (ReflectionException $exception) {
++        } catch (ReflectionException $reflectionException) {
+             $this->warn("Could not analyze properties for rule: " . get_class($rule));
+             return [];
+         }
+@@ @@
+             $startLine = max(0, $method->getStartLine() - 1);
+             $endLine = $method->getEndLine();
+
+-            for ($i = $startLine; $i < $endLine && $i < count($methodSource); $i++) {
++            for ($i = $startLine; $i < $endLine && $i < count($methodSource); ++$i) {
+                 $line = $methodSource[$i];
+                 $properties = array_merge(
+                     $properties,
+@@ @@
+             }
+
+             return $properties;
+-        } catch (\Exception) {
++        } catch (Exception) {
+             return [];
+         }
+     }
+@@ @@
+         try {
+             $reflection = new ReflectionClass($rule);
+
+-            if (!empty($reflection->getAttributes(\Roster\Validation\Attributes\ValidationRule::class))) {
++            if ($reflection->getAttributes(ValidationRule::class) !== []) {
+                 return 'Attribute';
+             }
+
+@@ @@
+      */
+     private function displayRuleMethodDetails(object $rule, array $operations): void
+     {
+-        $this->line("Rule: " . $rule->getName() . " (Priority: {$rule->getPriority()})");
++        $this->line("Rule: " . $rule->getName() . sprintf(' (Priority: %s)', $rule->getPriority()));
+         $this->line("Operations: " . implode(', ', $operations));
+         $this->line("Class: " . get_class($rule));
+
+@@ @@
+                     $this->displayMethodInfo($method);
+                 }
+             }
+-        } catch (ReflectionException $exception) {
++        } catch (ReflectionException $reflectionException) {
+             $this->warn("    Could not analyze methods for: " . get_class($rule));
+         }
+
+@@ @@
+      */
+     private function displayMethodInfo(ReflectionMethod $method): void
+     {
+-        $this->line("  📝 Method: {$method->getName()}()");
+-        $this->line("    📍 File: {$method->getFileName()}:{$method->getStartLine()}");
++        $this->line(sprintf('  📝 Method: %s()', $method->getName()));
++        $this->line(sprintf('    📍 File: %s:%s', $method->getFileName(), $method->getStartLine()));
+
+         $parameters = $this->extractMethodParameters($method);
+-        if (!empty($parameters)) {
++        if ($parameters !== []) {
+             $this->line("    🔧 Params: " . implode(', ', $parameters));
+         }
+     }
+@@ @@
+         $parameters = [];
+
+         foreach ($method->getParameters() as $parameter) {
+-            $type = $parameter->getType() ? $parameter->getType()->getName() : 'mixed';
+-            $parameters[] = "{$type} \${$parameter->getName()}";
++            $type = $parameter->getType() instanceof ReflectionType ? $parameter->getType()->getName() : 'mixed';
++            $parameters[] = sprintf('%s $%s', $type, $parameter->getName());
+         }
+
+         return $parameters;
+@@ @@
+     /**
+      * Display all scanned rules.
+      *
+-     * @param array $scannedRules Scanned rules data
++     * @param array<string, ValidationRule> $scannedRules Scanned rules data
+      */
+     private function displayScannedRulesTable(array $scannedRules): void
+     {
+@@ @@
+      * @param string $className Rule class name
+      * @param object $ruleData Rule data object
+      * @param int $index Row index
+-     * @return array Table row data
++     * @return array<int, mixed> Table row data
+      */
+     private function createScannedRuleRow(string $className, object $ruleData, int $index): array
+     {
+@@ @@
+      * Get entity values from scanned rule data.
+      *
+      * @param object $ruleData Scanned rule data
+-     * @return array Entity values
++     * @return string[] Entity values
+      */
+     private function getEntityValuesFromScannedRule(object $ruleData): array
+     {
+    ----------- end diff -----------
+
+Applied rules:
+ * SimplifyEmptyCheckOnEmptyArrayRector
+ * ExplicitBoolCompareRector
+ * SwitchNegatedTernaryRector
+ * CatchExceptionNameMatchingTypeRector
+ * EncapsedStringsToSprintfRector
+ * PostIncDecToPreIncDecRector
+ * RemoveDeadInstanceOfRector
+ * DisallowedEmptyRuleFixerRector
+ * DocblockReturnArrayFromDirectArrayInstanceRector
+ * ClassMethodArrayDocblockParamFromLocalCallsRector
+ * AddReturnArrayDocblockBasedOnArrayMapRector
+
+
+19) /home/andy-kani/pro/sites/packages/laravel-roster/src/Domain/Helpers/TimezoneHelper.php:4
+
+    ---------- begin diff ----------
+@@ @@
+
+ namespace Roster\Domain\Helpers;
+
++use Exception;
+ use Illuminate\Support\Carbon;
+ use DateTimeZone;
+ use InvalidArgumentException;
+@@ @@
+ final class TimezoneHelper
+ {
+     private static ?string $defaultTimezone = null;
++
+     private static ?string $userTimezone = null;
++
+     private const SYSTEM_TIMEZONE = 'UTC';
++
+     private static bool $initialized = false;
+
+     /**
+@@ @@
+         }
+
+         if (!self::isValidTimezone($configValue)) {
+-            throw new InvalidArgumentException("Invalid timezone configured: {$configValue}");
++            throw new InvalidArgumentException('Invalid timezone configured: ' . $configValue);
+         }
+
+         self::$defaultTimezone = self::normalizeTimezone($configValue);
+@@ @@
+
+         if ($timezone !== null) {
+             if (!self::isValidTimezone($timezone)) {
+-                throw new InvalidArgumentException("Invalid user timezone: {$timezone}");
++                throw new InvalidArgumentException('Invalid user timezone: ' . $timezone);
+             }
++
+             $timezone = self::normalizeTimezone($timezone);
+         }
+
+@@ @@
+      */
+     public static function isValidTimezone(string $timezone): bool
+     {
+-        if (empty($timezone)) {
++        if ($timezone === '' || $timezone === '0') {
+             return false;
+         }
+
+@@ @@
+         try {
+             new DateTimeZone($timezone);
+             return true;
+-        } catch (\Exception) {
++        } catch (Exception) {
+             return false;
+         }
+     }
+@@ @@
+     public static function normalizeTimezone(string $timezone): string
+     {
+         $all = DateTimeZone::listIdentifiers();
+-        $key = array_search(strtolower($timezone), array_map('strtolower', $all));
++        $key = array_search(strtolower($timezone), array_map('strtolower', $all), true);
+         return $key !== false ? $all[$key] : self::SYSTEM_TIMEZONE;
+     }
+    ----------- end diff -----------
+
+Applied rules:
+ * NewlineBetweenClassLikeStmtsRector
+ * EncapsedStringsToSprintfRector
+ * StrictArraySearchRector
+ * NewlineAfterStatementRector
+ * DisallowedEmptyRuleFixerRector
+
+
+20) /home/andy-kani/pro/sites/packages/laravel-roster/src/Models/Impediment.php:4
+
+    ---------- begin diff ----------
+@@ @@
+
+ namespace Roster\Models;
+
++use InvalidArgumentException;
+ use Illuminate\Database\Eloquent\Casts\Attribute;
+ use Illuminate\Database\Eloquent\Model;
+ use Illuminate\Database\Eloquent\Relations\BelongsTo;
+@@ @@
+                 if ($value === null) {
+                     return null;
+                 }
++
+                 return is_string($value) ? json_decode($value, true, 512, JSON_THROW_ON_ERROR) : $value;
+             },
+             set: function ($value): ?string {
+@@ @@
+                 if ($value === null) {
+                     return null;
+                 }
++
+                 return is_array($value) ? json_encode($value, JSON_THROW_ON_ERROR) : $value;
+             }
+         );
+@@ @@
+      * @param Carbon $end End time of the period to check
+      * @return bool True if there is any overlap
+      *
+-     * @throws \InvalidArgumentException When the time window is not valid
++     * @throws InvalidArgumentException When the time window is not valid
+      */
+     public function overlapsWith(Carbon $start, Carbon $end): bool
+     {
+    ----------- end diff -----------
+
+Applied rules:
+ * NewlineAfterStatementRector
+
+
+21) /home/andy-kani/pro/sites/packages/laravel-roster/src/Services/Core/AbstractService.php:192
+
+    ---------- begin diff ----------
+@@ @@
+                 $this->getEntityTypeEnum()
+             );
+         }
++
+         $deleteData = [
+             'id' => $id,
+             'schedulable_id' => $entity->schedulable_id ?? $this->schedulable->id,
+    ----------- end diff -----------
+
+Applied rules:
+ * NewlineAfterStatementRector
+ * DocblockGetterReturnArrayFromPropertyDocblockVarRector
+ * DocblockVarArrayFromGetterReturnRector
+
+
+22) /home/andy-kani/pro/sites/packages/laravel-roster/src/Validation/Cache/RuleCacheGenerator.php:148
+
+    ---------- begin diff ----------
+@@ @@
+         foreach ($rules as $className => $validationRule) {
+             $body .= $this->buildRuleEntry($className, $validationRule);
+         }
++
+         return $body;
+     }
+
+@@ @@
+      */
+     private function buildRuleEntry(string $className, ValidationRule $validationRule): string
+     {
+-        $entities = $this->extractEnumValues($validationRule->entities, EntityType::class);
+-        $operations = $this->extractEnumValues($validationRule->operations, OperationType::class);
++        $entities = $this->extractEnumValues($validationRule->entities);
++        $operations = $this->extractEnumValues($validationRule->operations);
+
+         $indent = '    ';
+         $entry = $indent . "'" . addslashes($className) . "' => [\n";
+@@ @@
+      * Extracts string values from enum arrays.
+      *
+      * @param array<EntityType|OperationType> $enums Array of enum instances
+-     * @param string $enumClass The enum class for type hinting
+      * @return array<string> Array of string values
+      */
+-    private function extractEnumValues(array $enums, string $enumClass): array
++    private function extractEnumValues(array $enums): array
+     {
+         return array_map(
+-            fn($enum): string => $enum->value,
++            fn(EntityType|OperationType $enum): string => $enum->value,
+             $enums
+         );
+     }
+    ----------- end diff -----------
+
+Applied rules:
+ * NewlineAfterStatementRector
+ * RemoveUnusedPrivateMethodParameterRector
+ * AddArrayFunctionClosureParamTypeRector
+
+
+23) /home/andy-kani/pro/sites/packages/laravel-roster/src/Validation/Context/ValidationContext.php:360
+
+    ---------- begin diff ----------
+@@ @@
+     ): void {
+         $this->violations[] = new ViolationData(
+             field: $field,
++            message: $message,
+             rule: $rule,
+-            message: $message,
+             ruleDescription: $ruleDescription
+         );
+     }
+@@ @@
+     ): void {
+         $this->violations[] = new ViolationData(
+             field: $field,
++            message: $message,
+             rule: $rule->getName(),
+-            message: $message,
+             ruleDescription: $rule->getDescription()
+         );
+     }
+    ----------- end diff -----------
+
+Applied rules:
+ * SortNamedParamRector
+
+
+24) /home/andy-kani/pro/sites/packages/laravel-roster/src/Validation/Exceptions/ValidationFailedException.php:116
+
+    ---------- begin diff ----------
+@@ @@
+     public function toArray(): array
+     {
+         $violationsArray = array_map(
+-            fn(ViolationData $violation) => [
++            fn(ViolationData $violation): array => [
+                 'field' => $violation->getField(),
+                 'rule' => $violation->getRule(),
+                 'message' => $violation->getMessage(),
+@@ @@
+     public function toDetailedArray(): array
+     {
+         $violationsArray = array_map(
+-            fn(ViolationData $violation) => $violation->toArray(),
++            fn(ViolationData $violation): array => $violation->toArray(),
+             $this->violations
+         );
+
+@@ @@
+         $latestViolations = $this->keepLatestViolationPerField($violations);
+
+         $messages = array_map(
+-            fn(ViolationData $violation) => $violation->getMessage(),
++            fn(ViolationData $violation): string => $violation->getMessage(),
+             $latestViolations
+         );
+
+@@ @@
+      * @param array<int, mixed> $violations
+      * @return array<int, ViolationData>
+      *
+-     * @throws \InvalidArgumentException If an element is not a ViolationData instance
++     * @throws InvalidArgumentException If an element is not a ViolationData instance
+      */
+     private function keepLatestViolationPerField(array $violations): array
+     {
+@@ @@
+
+         foreach ($violations as $violation) {
+             if (!$violation instanceof ViolationData) {
+-                throw new \InvalidArgumentException(
++                throw new InvalidArgumentException(
+                     sprintf(
+                         'Expected instance of ViolationData, got %s',
+                         is_object($violation) ? get_class($violation) : gettype($violation)
+    ----------- end diff -----------
+
+Applied rules:
+ * AddArrowFunctionReturnTypeRector
+
+
+25) /home/andy-kani/pro/sites/packages/laravel-roster/src/Validation/Rules/AvailabilityDaysCoherenceRule.php:63
+
+    ---------- begin diff ----------
+@@ @@
+         }
+
+         $days = $validationContext->get('days');
+-
+-        if ($days === null || $days === []) {
+-            return false;
+-        }
+-
+-        return true;
++        return $days !== null && $days !== [];
+     }
+
+     /**
+@@ @@
+     /**
+      * Check if validity period is valid (start < end and parseable).
+      *
+-     * @param array $period Validity period with 'start' and 'end'
++     * @param array<string, mixed> $period Validity period with 'start' and 'end'
+      * @return bool True if period is valid
+      */
+     private function isValidPeriod(array $period): bool
+@@ @@
+      *
+      * @param ValidationContextInterface $validationContext Validation context
+      * @param array $days Days to check
+-     * @param array $period Validity period
++     * @param array<string, mixed> $period Validity period
+      */
+     private function checkDaysWithinPeriod(
+         ValidationContextInterface $validationContext,
+    ----------- end diff -----------
+
+Applied rules:
+ * SimplifyDeMorganBinaryRector
+ * SimplifyIfReturnBoolRector
+ * AddParamArrayDocblockFromDimFetchAccessRector
+
+
+26) /home/andy-kani/pro/sites/packages/laravel-roster/src/Validation/Rules/AvailabilityTemporalCoherenceRule.php:116
+
+    ---------- begin diff ----------
+@@ @@
+      *
+      * @param ValidationContextInterface $validationContext Validation context
+      * @param Availability $availability Original availability
+-     * @return array Normalized update data
++     * @return array<string, string|mixed[]|null> Normalized update data
+      */
+     private function extractUpdateData(ValidationContextInterface $validationContext, Availability $availability): array
+     {
+@@ @@
+      */
+     private function hasRelevantChanges(array $updateData): bool
+     {
+-        return !empty(array_filter($updateData, fn($value) => $value !== null));
++        return array_filter($updateData, fn($value): bool => $value !== null) !== [];
+     }
+
+     /**
+@@ @@
+      *
+      * @param string $entityClass Entity class to validate against
+      * @param Availability $availability Availability being modified
+-     * @param array $updateData Normalized update data
++     * @param array<string, mixed> $updateData Normalized update data
+      * @param ValidationContextInterface $validationContext Validation context
+      * @param Carbon $referenceTime Reference time for "future" determination
+      */
+@@ @@
+      * Validate date boundaries for a specific entity.
+      *
+      * @param object $entity Existing entity to check
+-     * @param array $updateData Normalized update data
++     * @param array<string, mixed> $updateData Normalized update data
+      * @param string $entityClass Entity class name
+      * @param ValidationContextInterface $validationContext Validation context
+      */
+@@ @@
+     /**
+      * Check if specific days are missing from new days array.
+      *
+-     * @param array $entityDays Days used by the entity
++     * @param string[] $entityDays Days used by the entity
+      * @param array $newDays New days array
+      * @param object $entity Existing entity
+      * @param string $entityClass Entity class name
+@@ @@
+      */
+     private function extractDaysFromPeriod(?Carbon $start, ?Carbon $end): array
+     {
+-        if ($start === null || $end === null || $end->lt($start)) {
++        if (!$start instanceof Carbon || !$end instanceof Carbon || $end->lt($start)) {
+             return [];
+         }
+    ----------- end diff -----------
+
+Applied rules:
+ * FlipTypeControlToUseExclusiveTypeRector
+ * DisallowedEmptyRuleFixerRector
+ * AddParamArrayDocblockFromDimFetchAccessRector
+ * DocblockReturnArrayFromDirectArrayInstanceRector
+ * ClassMethodArrayDocblockParamFromLocalCallsRector
+ * AddArrowFunctionReturnTypeRector
+
+
+27) /home/andy-kani/pro/sites/packages/laravel-roster/src/Validation/Rules/TimezoneValidationRule.php:4
+
+    ---------- begin diff ----------
+@@ @@
+
+ namespace Roster\Validation\Rules;
+
++use Carbon\Carbon;
++use Exception;
+ use Roster\Contracts\Validation\ValidationContextInterface;
+ use Roster\Domain\Helpers\TimezoneHelper;
+ use Roster\Enums\EntityType;
+@@ @@
+      * Validate timezone and datetime fields in the validation context.
+      *
+      * @param ValidationContextInterface $validationContext The context containing data to validate
+-     * @return void
+      */
+     public function validate(ValidationContextInterface $validationContext): void
+     {
+@@ @@
+         }
+
+         try {
+-            \Carbon\Carbon::parse($value, TimezoneHelper::getEffectiveTimezone());
+-        } catch (\Exception $e) {
++            Carbon::parse($value, TimezoneHelper::getEffectiveTimezone());
++        } catch (Exception $exception) {
+             $context->setViolation(
+                 field: $field,
+                 message: sprintf("Invalid datetime format or timezone for field '%s'", $field)
+    ----------- end diff -----------
+
+Applied rules:
+ * CatchExceptionNameMatchingTypeRector
+ * RemoveUselessReturnTagRector
+
+
+28) /home/andy-kani/pro/sites/packages/laravel-roster/src/Validation/ValidationResult.php:72
+
+    ---------- begin diff ----------
+@@ @@
+     public function toArray(bool $includeRuleDescriptions = false): array
+     {
+         $violationsArray = array_map(
+-            function (ViolationData $violation) use ($includeRuleDescriptions) {
++            function (ViolationData $violation) use ($includeRuleDescriptions): array {
+                 $data = [
+                     'field' => $violation->getField(),
+                     'rule' => $violation->getRule(),
+    ----------- end diff -----------
+
+Applied rules:
+ * ClosureReturnTypeRector
+
+
+29) /home/andy-kani/pro/sites/packages/laravel-roster/src/helpers.php:77
+
+    ---------- begin diff ----------
+@@ @@
+      */
+     function roster_format_period_days_for_display(array $days): string
+     {
+-        if (empty($days)) {
++        if ($days === []) {
+             return '';
+         }
+
+@@ @@
+      */
+     function roster_format_days_for_display(array $days): string
+     {
+-        if (empty($days)) {
++        if ($days === []) {
+             return '';
+         }
+
+@@ @@
+      * Creates an Availability service instance for a given schedulable model.
+      *
+      * @param Model $model The schedulable model instance
+-     * @return AvailabilityService
+      * @throws BindingResolutionException If the service cannot be resolved from the container
+      */
+     function availability_for(Model $model): AvailabilityService
+@@ @@
+      * Automatically extracts the schedulable from the availability's polymorphic relationship.
+      *
+      * @param Availability $availability The availability model instance
+-     * @return ImpedimentService
+      * @throws InvalidArgumentException If the availability has no schedulable relationship
+      * @throws BindingResolutionException If the service cannot be resolved from the container
+      */
+@@ @@
+      * Automatically extracts the schedulable from the availability's polymorphic relationship.
+      *
+      * @param Availability $availability The availability model instance
+-     * @return ScheduleService
+      * @throws InvalidArgumentException If the availability has no schedulable relationship
+      * @throws BindingResolutionException If the service cannot be resolved from the container
+      */
+@@ @@
+             $days
+         );
+
+-        for ($index = 0; $index < count($dayIndices) - 1; $index++) {
++        for ($index = 0; $index < count($dayIndices) - 1; ++$index) {
+             $currentIndex = $dayIndices[$index];
+             $nextIndex = $dayIndices[$index + 1];
+    ----------- end diff -----------
+
+Applied rules:
+ * SimplifyEmptyCheckOnEmptyArrayRector
+ * PostIncDecToPreIncDecRector
+ * RemoveUselessReturnTagRector
+
+
+30) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Feature/Integration/CompleteRosterIntegrationTest.php:954
+
+    ---------- begin diff ----------
+@@ @@
+         foreach ($createdSchedules as $createdSchedule) {
+             $scheduleAvailability = $availabilityByScheduleId[$createdSchedule->id] ?? null;
+
+-            if ($scheduleAvailability) {
++            if ($scheduleAvailability instanceof AvailabilityModel) {
+                 try {
+                     schedule_for($scheduleAvailability)->delete($createdSchedule->id);
+                 } catch (Exception $e) {
+@@ @@
+     /**
+      * Create multiple impediments for a given availability.
+      *
+-     * @param AvailabilityModel $availability
+      * @return array<int, ImpedimentModel>
+      */
+     private function createImpedimentsForAvailability(AvailabilityModel $availability): array
+@@ @@
+     /**
+      * Create multiple schedules for a given availability.
+      *
+-     * @param AvailabilityModel $availability
+      * @param array<int, AvailabilityModel> $availabilityByScheduleId
+      * @return array<int, ScheduleModel>
+      */
+    ----------- end diff -----------
+
+Applied rules:
+ * FlipTypeControlToUseExclusiveTypeRector
+ * NullableCompareToNullRector
+ * RemoveUselessParamTagRector
+
+
+31) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Integration/Database/AvailabilityIntegrationTest.php:4
+
+    ---------- begin diff ----------
+@@ @@
+
+ namespace Integration\Database;
+
+-use PHPUnit\Framework\Attributes\Group;
+ use Illuminate\Foundation\Testing\RefreshDatabase;
+ use Illuminate\Support\Collection;
+ use Roster\Models\Availability as AvailabilityModel;
+    ----------- end diff -----------
+
+Applied rules:
+
+
+32) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Support/TestSchedulable.php:14
+
+    ---------- begin diff ----------
+@@ @@
+ class TestSchedulable extends Model
+ {
+     use HasRoster;
++
+     /**
+      * The table associated with the model.
+      *
+    ----------- end diff -----------
+
+Applied rules:
+ * NewlineBetweenClassLikeStmtsRector
+
+
+33) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Validation/Rules/AvailabilityOwnershipRuleTest.php:146
 
     ---------- begin diff ----------
 @@ @@
@@ -2401,7 +2565,7 @@ Applied rules:
  * TypedPropertyFromStrictConstructorRector
 
 
-31) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Validation/Rules/AvailabilityRulesTest.php:4
+34) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Validation/Rules/AvailabilityRulesTest.php:4
 
     ---------- begin diff ----------
 @@ @@
@@ -2472,7 +2636,7 @@ Applied rules:
  * AddArrayFunctionClosureParamTypeRector
 
 
-32) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Validation/Rules/DateRangeRulesTest.php:4
+35) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Validation/Rules/DateRangeRulesTest.php:4
 
     ---------- begin diff ----------
 @@ @@
@@ -2514,7 +2678,7 @@ Applied rules:
  * AddArrayFunctionClosureParamTypeRector
 
 
-33) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Validation/Rules/DurationRuleTest.php:5
+36) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Validation/Rules/DurationRuleTest.php:5
 
     ---------- begin diff ----------
 @@ @@
@@ -2558,7 +2722,7 @@ Applied rules:
  * RemoveUnusedPrivateMethodRector
 
 
-34) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Validation/Rules/ImpedimentScheduleDaysCoherenceRuleTest.php:27
+37) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Validation/Rules/ImpedimentScheduleDaysCoherenceRuleTest.php:27
 
     ---------- begin diff ----------
 @@ @@
@@ -2575,7 +2739,7 @@ Applied rules:
  * NewlineBetweenClassLikeStmtsRector
 
 
-35) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Validation/Rules/RequiredFieldsRuleTest.php:4
+38) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Validation/Rules/RequiredFieldsRuleTest.php:4
 
     ---------- begin diff ----------
 @@ @@
@@ -2600,7 +2764,7 @@ Applied rules:
  * EncapsedStringsToSprintfRector
 
 
-36) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Validation/Rules/SchedulableValidationRuleTest.php:688
+39) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Validation/Rules/SchedulableValidationRuleTest.php:688
 
     ---------- begin diff ----------
 @@ @@
@@ -2656,7 +2820,7 @@ Applied rules:
  * RemoveUselessReturnTagRector
 
 
-37) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Validation/Rules/TimeRangeRuleTest.php:4
+40) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Validation/Rules/TimeRangeRuleTest.php:4
 
     ---------- begin diff ----------
 @@ @@
@@ -2747,7 +2911,7 @@ Applied rules:
  * AddArrayFunctionClosureParamTypeRector
 
 
-38) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Validation/Rules/TimeSlotDateTimeRuleTest.php:4
+41) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Validation/Rules/TimeSlotDateTimeRuleTest.php:4
 
     ---------- begin diff ----------
 @@ @@
@@ -2811,7 +2975,7 @@ Applied rules:
  * AddArrayFunctionClosureParamTypeRector
 
 
-39) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Validation/Rules/TimezoneValidationRuleTest.php:4
+42) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Validation/Rules/TimezoneValidationRuleTest.php:4
 
     ---------- begin diff ----------
 @@ @@
@@ -2875,7 +3039,7 @@ Applied rules:
  * AddArrayFunctionClosureParamTypeRector
 
 
-40) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Validation/ValidationContextTest.php:4
+43) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Validation/ValidationContextTest.php:4
 
     ---------- begin diff ----------
 @@ @@
@@ -2932,6 +3096,32 @@ Applied rules:
 
              protected $attributes = [
 @@ @@
+
+         $violation = $violations[0];
+         $this->assertInstanceOf(ViolationData::class, $violation);
+-        $this->assertEquals('test_field', $violation->getField());
+-        $this->assertEquals('Test violation message', $violation->getMessage());
+-        $this->assertEquals('TestRule', $violation->getRule());
+-        $this->assertEquals('Test rule description', $violation->getRuleDescription());
++        $this->assertSame('test_field', $violation->getField());
++        $this->assertSame('Test violation message', $violation->getMessage());
++        $this->assertSame('TestRule', $violation->getRule());
++        $this->assertSame('Test rule description', $violation->getRuleDescription());
+     }
+
+     /**
+@@ @@
+         $this->assertIsArray($violations);
+         $this->assertCount(2, $violations);
+
+-        foreach ($violations as $violation) {
+-            $this->assertInstanceOf(ViolationData::class, $violation);
+-        }
++        $this->assertContainsOnlyInstancesOf(ViolationData::class, $violations);
+
+         $this->assertEquals('field1', $violations[0]->getField());
+         $this->assertEquals('field2', $violations[1]->getField());
+@@ @@
      private function createTestTable(string $tableName, ?callable $callback = null): void
      {
          if (!Schema::hasTable($tableName)) {
@@ -2958,10 +3148,47 @@ Applied rules:
 Applied rules:
  * NewlineBetweenClassLikeStmtsRector
  * NullableCompareToNullRector
+ * SimplifyForeachInstanceOfRector
+ * AssertEqualsToSameRector
  * AddClosureVoidReturnTypeWhereNoReturnRector
 
 
-41) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Validation/ValidatorTest.php:4
+44) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Validation/ValidationResultTest.php:93
+
+    ---------- begin diff ----------
+@@ @@
+         $this->assertTrue($result->isValid());
+         $this->assertEmpty($result->getViolations());
+         $this->assertFalse($result->hasViolations());
+-        $this->assertEquals(0, $result->countViolations());
++        $this->assertSame(0, $result->countViolations());
+
+         // Vérification du tableau
+         $array = $result->toArray();
+@@ @@
+         $this->assertFalse($result->isValid());
+         $this->assertSame($violations, $result->getViolations());
+         $this->assertTrue($result->hasViolations());
+-        $this->assertEquals(2, $result->countViolations());
++        $this->assertSame(2, $result->countViolations());
+
+         // Vérification du tableau
+         $array = $result->toArray();
+@@ @@
+         $result = ValidationResult::failed($violations);
+
+         // Assert
+-        $this->assertEquals(3, $result->countViolations());
++        $this->assertSame(3, $result->countViolations());
+     }
+ }
+    ----------- end diff -----------
+
+Applied rules:
+ * AssertEqualsToSameRector
+
+
+45) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Validation/ValidatorTest.php:4
 
     ---------- begin diff ----------
 @@ @@
@@ -3762,7 +3989,7 @@ Applied rules:
  * AddArrayFunctionClosureParamTypeRector
 
 
-42) /home/andy-kani/pro/sites/packages/laravel-roster/tests/database/migrations/2024_01_01_000000_create_test_schedulables_table.php:18
+46) /home/andy-kani/pro/sites/packages/laravel-roster/tests/database/migrations/2024_01_01_000000_create_test_schedulables_table.php:18
 
     ---------- begin diff ----------
 @@ @@
@@ -3789,5 +4016,5 @@ Applied rules:
  * RemoveUselessReturnTagRector
 
 
- [OK] 42 files would have been changed (dry-run) by Rector                                                              
+ [OK] 46 files would have been changed (dry-run) by Rector                                                              
 

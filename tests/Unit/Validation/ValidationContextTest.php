@@ -8,6 +8,7 @@ use Exception;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Schema;
+use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use ReflectionClass;
 use RuntimeException;
 use stdClass;
@@ -19,13 +20,17 @@ use Roster\Models\Availability;
 use Roster\Services\AvailabilityService;
 use Roster\Support\RosterMutationContext;
 use Roster\Contracts\Services\ServiceInterface;
+use Roster\Contracts\Validation\RuleInterface;
 use Roster\Validation\Context\ValidationContext;
+use Roster\Validation\DTOs\ViolationData;
 
 /**
  * Test suite for ValidationContext functionality.
  *
  * Covers data access, validation violations, service resolution, and owner resolution logic.
  */
+
+#[AllowMockObjectsWithoutExpectations]
 final class ValidationContextTest extends TestCase
 {
     use RefreshDatabase;
@@ -776,6 +781,189 @@ final class ValidationContextTest extends TestCase
 
         // Assert: Verify impediment service is correctly built
         $this->assertInstanceOf(ServiceInterface::class, $result);
+    }
+
+    /**
+     * Test setViolationFromRule method.
+     */
+    public function test_sets_violation_from_rule_with_description(): void
+    {
+        // Arrange: Create mock rule and context
+        $rule = $this->createMock(RuleInterface::class);
+        $rule->method('getName')->willReturn('TestRule');
+        $rule->method('getDescription')->willReturn('Test rule description');
+
+        $context = new ValidationContext(
+            OperationType::CREATE,
+            EntityType::AVAILABILITY,
+            []
+        );
+
+        // Act: Set violation from rule
+        $context->setViolationFromRule($rule, 'test_field', 'Test violation message');
+
+        // Assert: Verify violation was added with rule information
+        $violations = $context->getViolations();
+        $this->assertCount(1, $violations);
+
+        $violation = $violations[0];
+        $this->assertInstanceOf(ViolationData::class, $violation);
+        $this->assertEquals('test_field', $violation->getField());
+        $this->assertEquals('Test violation message', $violation->getMessage());
+        $this->assertEquals('TestRule', $violation->getRule());
+        $this->assertEquals('Test rule description', $violation->getRuleDescription());
+    }
+
+    /**
+     * Test setViolation method with rule description parameter.
+     */
+    public function test_sets_violation_with_description_parameter(): void
+    {
+        // Arrange: Create context
+        $context = new ValidationContext(
+            OperationType::UPDATE,
+            EntityType::SCHEDULE,
+            []
+        );
+
+        $description = 'Validates that the value is not empty';
+
+        // Act: Set violation with description
+        $context->setViolation('field_name', 'Field is required', 'required', $description);
+
+        // Assert: Verify violation was added with description
+        $violations = $context->getViolations();
+        $this->assertCount(1, $violations);
+
+        $violation = $violations[0];
+        $this->assertEquals('field_name', $violation->getField());
+        $this->assertEquals('Field is required', $violation->getMessage());
+        $this->assertEquals('required', $violation->getRule());
+        $this->assertEquals($description, $violation->getRuleDescription());
+    }
+
+    /**
+     * Test setViolation method without rule description.
+     */
+    public function test_sets_violation_without_description(): void
+    {
+        // Arrange: Create context
+        $context = new ValidationContext(
+            OperationType::CREATE,
+            EntityType::IMPEDIMENT,
+            []
+        );
+
+        // Act: Set violation without description
+        $context->setViolation('test_field', 'Test message', 'custom_rule');
+
+        // Assert: Verify violation was added without description
+        $violations = $context->getViolations();
+        $this->assertCount(1, $violations);
+
+        $violation = $violations[0];
+        $this->assertEquals('test_field', $violation->getField());
+        $this->assertEquals('Test message', $violation->getMessage());
+        $this->assertEquals('custom_rule', $violation->getRule());
+        $this->assertNull($violation->getRuleDescription());
+    }
+
+    /**
+     * Test mixed usage of setViolation and setViolationFromRule.
+     */
+    public function test_handles_mixed_violation_methods(): void
+    {
+        // Arrange: Create context and mock rule
+        $context = new ValidationContext(
+            OperationType::CREATE,
+            EntityType::AVAILABILITY,
+            []
+        );
+
+        $rule = $this->createMock(RuleInterface::class);
+        $rule->method('getName')->willReturn('DescriptiveRule');
+        $rule->method('getDescription')->willReturn('Rule with description');
+
+        // Act: Add violations using both methods
+        $context->setViolation('field1', 'Message 1', 'rule1');
+        $context->setViolation('field2', 'Message 2', 'rule2', 'Description for rule2');
+        $context->setViolationFromRule($rule, 'field3', 'Message 3');
+
+        // Assert: Verify all violations were added correctly
+        $violations = $context->getViolations();
+        $this->assertCount(3, $violations);
+
+        // Check first violation (no description)
+        $this->assertEquals('field1', $violations[0]->getField());
+        $this->assertEquals('rule1', $violations[0]->getRule());
+        $this->assertNull($violations[0]->getRuleDescription());
+
+        // Check second violation (with description parameter)
+        $this->assertEquals('field2', $violations[1]->getField());
+        $this->assertEquals('rule2', $violations[1]->getRule());
+        $this->assertEquals('Description for rule2', $violations[1]->getRuleDescription());
+
+        // Check third violation (from rule)
+        $this->assertEquals('field3', $violations[2]->getField());
+        $this->assertEquals('DescriptiveRule', $violations[2]->getRule());
+        $this->assertEquals('Rule with description', $violations[2]->getRuleDescription());
+    }
+
+    /**
+     * Test hasViolations method with ViolationData objects.
+     */
+    public function test_detects_violations_with_violation_data_objects(): void
+    {
+        // Arrange: Create context
+        $context = new ValidationContext(
+            OperationType::CREATE,
+            EntityType::SCHEDULE,
+            []
+        );
+
+        // Act & Assert: Initially no violations
+        $this->assertFalse($context->hasViolations());
+        $this->assertEmpty($context->getViolations());
+
+        // Add a violation
+        $context->setViolation('test', 'Test violation');
+        $this->assertTrue($context->hasViolations());
+        $this->assertCount(1, $context->getViolations());
+
+        // Add another violation
+        $context->setViolation('another', 'Another violation');
+        $this->assertTrue($context->hasViolations());
+        $this->assertCount(2, $context->getViolations());
+    }
+
+    /**
+     * Test getViolations returns ViolationData array.
+     */
+    public function test_returns_violation_data_array(): void
+    {
+        // Arrange: Create context and add violations
+        $context = new ValidationContext(
+            OperationType::UPDATE,
+            EntityType::IMPEDIMENT,
+            []
+        );
+
+        $context->setViolation('field1', 'Message 1', 'rule1');
+        $context->setViolation('field2', 'Message 2', 'rule2', 'Test description');
+
+        // Act: Get violations
+        $violations = $context->getViolations();
+
+        // Assert: Verify array of ViolationData objects
+        $this->assertIsArray($violations);
+        $this->assertCount(2, $violations);
+
+        foreach ($violations as $violation) {
+            $this->assertInstanceOf(ViolationData::class, $violation);
+        }
+
+        $this->assertEquals('field1', $violations[0]->getField());
+        $this->assertEquals('field2', $violations[1]->getField());
     }
 
     /**

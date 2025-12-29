@@ -1,5 +1,5 @@
 # Project File Checklist
-*Last updated: lun. 29 déc. 2025 08:00:15 WAT*
+*Last updated: lun. 29 déc. 2025 09:51:38 WAT*
 
 ## Previously Checked Files
 1. config/roster.php [x]
@@ -153,3 +153,7 @@
 2. src/Validation/DTOs/ViolationData.php [ ]
 3. tests/Feature/.gitkeep [ ]
 4. tests/Unit/Commands/DebugRulesCommandTest.php [ ]
+5. tests/Unit/Exceptions/ValidationFailedExceptionTest.php [ ]
+6. tests/Unit/Validation/DTOs/ViolationDataTest.php [ ]
+7. tests/Unit/Validation/Rules/AbstractRuleTest.php [ ]
+8. tests/Unit/Validation/ValidationResultTest.php [ ]
