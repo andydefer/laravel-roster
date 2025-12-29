@@ -6,7 +6,7 @@
 ![Tests](https://img.shields.io/badge/tests-760%20passing-brightgreen)
 ![Coverage](https://img.shields.io/badge/coverage-88%25-green)
 
-**Roster** est un package Laravel complet pour la gestion avancée d'emplois du temps, de disponibilités et de réservations. Conçu avec une architecture robuste, il gère les disponibilités récurrentes, les créneaux réservés et les empêchements avec une validation métier exhaustive.
+**Roster** is a comprehensive Laravel package for advanced schedule management, availabilities, and bookings. Built with a robust architecture, it handles recurring availabilities, booked slots, and impediments with exhaustive business validation.
 
 ## 📦 Installation
 
@@ -14,13 +14,13 @@
 composer require andydefer/laravel-roster
 ```
 
-Publiez les ressources du package :
+Publish package resources:
 
 ```bash
 php artisan roster:install
 ```
 
-Ou manuellement :
+Or manually:
 
 ```bash
 # Configuration
@@ -29,13 +29,13 @@ php artisan vendor:publish --tag=roster-config
 # Migrations
 php artisan vendor:publish --tag=roster-migrations
 
-# Exécutez les migrations
+# Run migrations
 php artisan migrate
 ```
 
-## 🚀 Utilisation immédiate
+## 🚀 Quick Start
 
-### 1. Ajoutez le trait à vos modèles
+### 1. Add the trait to your models
 
 ```php
 <?php
@@ -51,10 +51,10 @@ class Doctor extends Model
 }
 ```
 
-### 2. Créez des disponibilités récurrentes
+### 2. Create recurring availabilities
 
 ```php
-// Créer une disponibilité pour un médecin
+// Create an availability for a doctor
 $availability = availability_for($doctor)->create([
     'type' => 'consultation',
     'daily_start' => '09:00:00',
@@ -65,12 +65,12 @@ $availability = availability_for($doctor)->create([
 ]);
 ```
 
-### 3. Planifiez des rendez-vous
+### 3. Schedule appointments
 
 ```php
-// Réserver un créneau dans cette disponibilité
+// Book a slot within this availability
 $schedule = schedule_for($availability)->create([
-    'title' => 'Consultation annuelle - Patient A',
+    'title' => 'Annual Consultation - Patient A',
     'start_datetime' => '2038-01-04 10:00:00',
     'end_datetime' => '2038-01-04 11:00:00',
     'status' => \Roster\Enums\ScheduleStatus::BOOKED,
@@ -78,28 +78,28 @@ $schedule = schedule_for($availability)->create([
 ]);
 ```
 
-### 4. Gérez les indisponibilités temporaires
+### 4. Manage temporary unavailabilities
 
 ```php
-// Bloquer un créneau pour une formation
+// Block a slot for training
 $impediment = impediment_for($availability)->create([
-    'reason' => 'Formation médicale obligatoire',
+    'reason' => 'Mandatory medical training',
     'start_datetime' => '2038-01-04 09:00:00',
     'end_datetime' => '2038-01-04 12:00:00',
 ]);
 ```
 
-### 5. Recherchez des créneaux disponibles
+### 5. Search for available slots
 
 ```php
-// Trouver le prochain créneau disponible
+// Find the next available slot
 $nextSlot = schedule_for($availability)->findNextSlot(
     durationMinutes: 45,
     type: 'consultation',
     startFrom: now()->addDay()
 );
 
-// Vérifier la disponibilité d'un créneau spécifique
+// Check availability for a specific slot
 $isAvailable = schedule_for($availability)->isTimeSlotAvailable(
     start: '2038-01-06 14:00:00',
     end: '2038-01-06 15:00:00',
@@ -107,102 +107,102 @@ $isAvailable = schedule_for($availability)->isTimeSlotAvailable(
 );
 ```
 
-## 📖 Concepts fondamentaux
+## 📖 Core Concepts
 
-### Le principe d'immutabilité
+### The Immutability Principle
 
-Roster empêche les mutations directes des modèles pour garantir l'intégrité des données. Toutes les opérations doivent passer par les services appropriés :
+Roster prevents direct model mutations to ensure data integrity. All operations must go through the appropriate services:
 
 ```php
-// ❌ INTERDIT : Modification directe
-$availability->update(['daily_end' => '18:00:00']); // Lève une exception
+// ❌ FORBIDDEN: Direct modification
+$availability->update(['daily_end' => '18:00:00']); // Throws an exception
 
-// ✅ AUTORISÉ : Via le service
+// ✅ ALLOWED: Via the service
 availability_for($doctor)->update($availability->id, [
     'daily_end' => '18:00:00'
 ]);
 ```
 
-### Contexte unique par action
+### Single Context Per Action
 
-Chaque service est conçu pour une action unique avec son propre contexte :
+Each service is designed for a single action with its own context:
 
 ```php
-// ❌ INTERDIT : Réutilisation d'un service
+// ❌ FORBIDDEN: Service reuse
 $service = availability_for($doctor);
 $service->create([...]);
-$service->update(1, [...]); // Contexte corrompu
+$service->update(1, [...]); // Corrupted context
 
-// ✅ AUTORISÉ : Nouveau contexte pour chaque action
+// ✅ ALLOWED: New context for each action
 availability_for($doctor)->create([...]);
 availability_for($doctor)->update(1, [...]);
 ```
 
-### Les 3 entités principales
+### The 3 Main Entities
 
-1. **Availability** : Définit quand une ressource est disponible (jours, heures, période)
-2. **Schedule** : Représente un créneau réservé dans une disponibilité
-3. **Impediment** : Bloque temporairement une disponibilité
+1. **Availability**: Defines when a resource is available (days, hours, period)
+2. **Schedule**: Represents a booked slot within an availability
+3. **Impediment**: Temporarily blocks an availability
 
-## 🛡️ Architecture sécurisée
+## 🛡️ Secure Architecture
 
-### Contrôle d'accès aux mutations
+### Mutation Access Control
 
-Le système utilise deux contextes pour contrôler l'accès :
+The system uses two contexts to control access:
 
 ```php
-// 1. Contexte de mutation (interne)
-// Utilisé par les repositories pour autoriser les opérations CRUD
+// 1. Mutation context (internal)
+// Used by repositories to authorize CRUD operations
 RosterMutationContext::allow(function () {
-    return Availability::create([...]); // Autorisé dans ce contexte
+    return Availability::create([...]); // Authorized in this context
 });
 
-// 2. Contexte de service (public)
-// Utilisé par les helpers pour autoriser l'usage des services
+// 2. Service context (public)
+// Used by helpers to authorize service usage
 RosterServiceContext::allowViaHelper(function () {
-    return $service->create([...]); // Autorisé via helper
+    return $service->create([...]); // Authorized via helper
 });
 ```
 
-### Helpers sécurisés
+### Secure Helpers
 
-Les helpers `availability_for()`, `schedule_for()` et `impediment_for()` créent automatiquement le contexte nécessaire :
+The `availability_for()`, `schedule_for()`, and `impediment_for()` helpers automatically create the necessary context:
 
 ```php
-// Ces helpers gèrent automatiquement :
-// 1. La création du contexte d'exécution
-// 2. La validation de l'entité schedulable
-// 3. La prévention des réutilisations
+// These helpers automatically handle:
+// 1. Execution context creation
+// 2. Schedulable entity validation
+// 3. Prevention of reuse
 ```
 
-## 🎯 Validation métier exhaustive
+## 🎯 Exhaustive Business Validation
 
-Roster inclut **17 règles de validation** qui garantissent la cohérence du système :
+Roster includes **17 validation rules** that guarantee system consistency:
 
-### Règles principales :
-- **SchedulableValidationRule** (110) - Vérifie que le contexte schedulable est présent
-- **RequiredFieldsRule** (100) - Valide les champs requis par opération
-- **AvailabilityTemporalCoherenceRule** (100) - Assure la cohérence temporelle
-- **ScheduleOverlapRule** (80) - Empêche les chevauchements d'emplois du temps
-- **AvailabilityOverlapRule** (80) - Empêche les chevauchements de disponibilités
-- **TimeRangeRule** (85) - Valide les plages horaires (pas de multi-jours)
+### Main Rules:
+- **SchedulableValidationRule** (110) - Verifies schedulable context is present
+- **RequiredFieldsRule** (100) - Validates required fields per operation
+- **AvailabilityTemporalCoherenceRule** (100) - Ensures temporal coherence
+- **ScheduleOverlapRule** (80) - Prevents schedule overlaps
+- **AvailabilityOverlapRule** (80) - Prevents availability overlaps
+- **TimeRangeRule** (85) - Validates time ranges (no multi-day spans)
 
-### Visualisation des règles :
+### Rule Visualization:
 
 ```bash
-# Lister toutes les règles disponibles
+# List all available rules
 php artisan roster:debug-rules
 
-# Voir les règles pour une entité spécifique
+# View rules for a specific entity
 php artisan roster:debug-rules availability --operation=create
 ```
 
-## 📊 Exemples concrets d'utilisation
+## 📊 Real-World Usage Examples
 
-### Gestion d'une clinique médicale
+### Medical Clinic Management
 
 ```php
-// Création de disponibilités pour différents spécialistes
+// Creating availabilities for different specialists
 $cardiologist = Doctor::where('specialty', 'cardiology')->first();
 $availability = availability_for($cardiologist)->create([
     'type' => 'consultation',
@@ -213,9 +213,9 @@ $availability = availability_for($cardiologist)->create([
     'validity_end' => '2024-12-31',
 ]);
 
-// Réservation d'un patient
+// Patient booking
 $appointment = schedule_for($availability)->create([
-    'title' => 'Consultation cardiaque',
+    'title' => 'Cardiac consultation',
     'start_datetime' => '2024-06-10 10:00:00',
     'end_datetime' => '2024-06-10 11:00:00',
     'status' => ScheduleStatus::BOOKED,
@@ -226,22 +226,22 @@ $appointment = schedule_for($availability)->create([
     ],
 ]);
 
-// Gestion d'une indisponibilité (formation)
+// Managing unavailability (training)
 impediment_for($availability)->create([
-    'reason' => 'Formation continue',
+    'reason' => 'Continuing education',
     'start_datetime' => '2024-06-15 09:00:00',
     'end_datetime' => '2024-06-15 12:00:00',
     'metadata' => ['mandatory' => true, 'location' => 'Auditorium'],
 ]);
 ```
 
-### Système de réservation de salles
+### Room Booking System
 
 ```php
-// Deux médecins partageant une salle
+// Two doctors sharing a room
 $room = Room::find(1);
 
-// Premier médecin utilise la salle le lundi
+// First doctor uses the room on Monday
 $doctor1Availability = availability_for($doctor1)->create([
     'type' => 'room_a',
     'daily_start' => '09:00:00',
@@ -251,7 +251,7 @@ $doctor1Availability = availability_for($doctor1)->create([
     'validity_end' => '2024-12-31',
 ]);
 
-// Deuxième médecin utilise la salle le mardi
+// Second doctor uses the room on Tuesday
 $doctor2Availability = availability_for($doctor2)->create([
     'type' => 'room_a',
     'daily_start' => '09:00:00',
@@ -261,25 +261,25 @@ $doctor2Availability = availability_for($doctor2)->create([
     'validity_end' => '2024-12-31',
 ]);
 
-// Le système empêche automatiquement les conflits
+// The system automatically prevents conflicts
 schedule_for($doctor1Availability)->create([
-    'title' => 'Utilisation salle A - Dr. Smith',
-    'start_datetime' => '2024-06-10 10:00:00', // Lundi
+    'title' => 'Room A usage - Dr. Smith',
+    'start_datetime' => '2024-06-10 10:00:00', // Monday
     'end_datetime' => '2024-06-10 12:00:00',
 ]);
 
-// ❌ Cette réservation échouera (conflit inter-médecins)
+// ❌ This booking will fail (inter-doctor conflict)
 schedule_for($doctor2Availability)->create([
-    'title' => 'Utilisation salle A - Dr. Jones',
-    'start_datetime' => '2024-06-10 11:00:00', // Même jour que Dr. Smith
+    'title' => 'Room A usage - Dr. Jones',
+    'start_datetime' => '2024-06-10 11:00:00', // Same day as Dr. Smith
     'end_datetime' => '2024-06-10 13:00:00',
 ]);
 ```
 
-### Gestion des empêchements récurrents
+### Recurring Impediments Management
 
 ```php
-// Création d'une disponibilité hebdomadaire
+// Creating a weekly availability
 $weeklyAvailability = availability_for($doctor)->create([
     'type' => 'consultation',
     'daily_start' => '08:00:00',
@@ -289,19 +289,19 @@ $weeklyAvailability = availability_for($doctor)->create([
     'validity_end' => '2024-12-31',
 ]);
 
-// Empêchements récurrents (pause déjeuner)
+// Recurring impediments (lunch break)
 $weekdays = ['2024-01-08', '2024-01-09', '2024-01-10', '2024-01-11', '2024-01-12'];
 
 foreach ($weekdays as $weekday) {
     impediment_for($weeklyAvailability)->create([
-        'reason' => 'Pause déjeuner',
+        'reason' => 'Lunch break',
         'start_datetime' => Carbon::parse($weekday)->setTime(12, 0, 0),
         'end_datetime' => Carbon::parse($weekday)->setTime(13, 0, 0),
         'metadata' => ['type' => 'lunch', 'recurring' => true],
     ]);
 }
 
-// Recherche de créneaux disponibles malgré les empêchements
+// Finding available slots despite impediments
 $availableSlots = schedule_for($weeklyAvailability)->findAvailableSlots(
     startDate: '2024-01-08',
     endDate: '2024-01-12',
@@ -310,9 +310,9 @@ $availableSlots = schedule_for($weeklyAvailability)->findAvailableSlots(
 );
 ```
 
-## 🔧 API complète
+## 🔧 Complete API
 
-### Service Availability
+### Availability Service
 
 ```php
 // CRUD
@@ -321,52 +321,52 @@ availability_for($schedulable)->find($id);
 availability_for($schedulable)->update($id, $data);
 availability_for($schedulable)->delete($id);
 
-// Recherche
+// Search
 availability_for($schedulable)->all();
 availability_for($schedulable)->setFilter('type', 'consultation')->all();
 
-// Vérifications
+// Checks
 availability_for($schedulable)->isAvailableOnDate($date, $type);
 availability_for($schedulable)->getAvailabilityForTimeSlot($start, $end, $type);
 ```
 
-### Service Schedule
+### Schedule Service
 
 ```php
-// Réservation
+// Booking
 schedule_for($availability)->create($data);
 schedule_for($availability)->update($id, $data);
 schedule_for($availability)->delete($id);
 
-// Recherche de créneaux
+// Slot search
 schedule_for($availability)->findNextSlot($durationMinutes, $type, $startFrom);
 schedule_for($availability)->findAvailableSlots($startDate, $endDate, $durationMinutes, $type);
 
-// Vérifications
+// Checks
 schedule_for($availability)->isTimeSlotAvailable($start, $end, $type);
 schedule_for($availability)->isPeriodAvailable($start, $end, $type);
 ```
 
-### Service Impediment
+### Impediment Service
 
 ```php
-// Gestion des empêchements
+// Impediment management
 impediment_for($availability)->create($data);
 impediment_for($availability)->update($id, $data);
 impediment_for($availability)->delete($id);
 
-// Vérifications
+// Checks
 impediment_for($availability)->isTimeSlotBlocked($start, $end);
 impediment_for($availability)->getAvailableTimeSlots($start, $end, $type);
 ```
 
 ## ⚙️ Configuration
 
-### Fichier de configuration (`config/roster.php`)
+### Configuration file (`config/roster.php`)
 
 ```php
 return [
-    // Types d'activités autorisés
+    // Allowed activity types
     'allowed_types' => [
         'consultation',
         'surgery',
@@ -377,7 +377,7 @@ return [
         'scan',
     ],
 
-    // Durées minimales (en minutes)
+    // Minimum durations (in minutes)
     'durations' => [
         'minimum_availability_minutes' => 15,
         'minimum_schedule_minutes' => 15,
@@ -386,7 +386,7 @@ return [
         'max_availability_days' => 365,
     ],
 
-    // Cache des règles de validation
+    // Validation rules cache
     'cache' => [
         'enabled' => env('ROSTER_CACHE_ENABLED', true),
         'cache_file' => storage_path('framework/cache/roster_rules.php'),
@@ -395,43 +395,43 @@ return [
 ];
 ```
 
-### Variables d'environnement
+### Environment variables
 
 ```env
 ROSTER_TIMEZONE=Europe/Paris
 ROSTER_CACHE_ENABLED=true
 ```
 
-## 🧪 Tests complets
+## 🧪 Comprehensive Testing
 
-Le package inclut **760 tests** couvrant tous les scénarios :
+The package includes **760 tests** covering all scenarios:
 
 ```bash
-# Exécuter tous les tests
+# Run all tests
 php artisan test
 
-# Tests d'intégration
+# Integration tests
 php artisan test --group=integration
 
-# Tests de performance
+# Performance tests
 php artisan test --filter=test_performance_and_load_scenario
 
-# Tests de scénarios complexes
+# Complex scenario tests
 php artisan test --filter=test_real_world_complex_scenario
 ```
 
-### Scénarios testés :
-- ✅ Cycle de vie complet des disponibilités
-- ✅ Gestion des empêchements avec conflits
-- ✅ Système de réservation intelligent
-- ✅ Interactions complexes (disponibilités + empêchements + emplois du temps)
-- ✅ Conflits multi-utilisateurs avec ressources partagées
-- ✅ Gestion des erreurs et cas limites
-- ✅ Tests de performance avec données massives
-- ✅ Récupération après erreurs
-- ✅ Scénario réaliste complexe (hôpital avec multiples spécialistes)
+### Tested scenarios:
+- ✅ Complete availability lifecycle
+- ✅ Impediment management with conflicts
+- ✅ Intelligent booking system
+- ✅ Complex interactions (availabilities + impediments + schedules)
+- ✅ Multi-user conflicts with shared resources
+- ✅ Error handling and edge cases
+- ✅ Performance testing with massive data
+- ✅ Recovery from errors
+- ✅ Realistic complex scenario (hospital with multiple specialists)
 
-## 🚨 Gestion des erreurs
+## 🚨 Error Management
 
 ```php
 use Roster\Validation\Exceptions\ValidationFailedException;
@@ -439,89 +439,94 @@ use Roster\Validation\Exceptions\ValidationFailedException;
 try {
     $schedule = schedule_for($availability)->create($data);
 } catch (ValidationFailedException $e) {
-    // Récupération des violations détaillées
+    // Get detailed violations with rule information
     $violations = $e->getViolations();
-    // [
-    //     'field' => 'message d\'erreur',
-    //     'overlap' => 'Ce créneau chevauche une réservation existante',
-    // ]
+    // Array of ViolationData objects containing:
+    // - field name
+    // - error message
+    // - rule that triggered the violation
+    // - rule description for context
+
+    $detailedReport = $e->toDetailedArray();
+    // Includes rule descriptions for better debugging
 
     return response()->json([
         'error' => 'validation_failed',
-        'violations' => $violations,
+        'message' => $e->getFormattedMessage(),
+        'violations' => $detailedReport['violations'],
     ], 422);
 }
 ```
 
-## 📊 Outils de développement
+## 📊 Development Tools
 
-### Debug des règles de validation
+### Validation Rule Debugging
 
 ```bash
-# Afficher toutes les règles
+# Display all rules
 php artisan roster:debug-rules
 
-# Filtre par entité
+# Filter by entity
 php artisan roster:debug-rules availability
 
-# Filtre par opération
+# Filter by operation
 php artisan roster:debug-rules availability --operation=create
 
-# Afficher les méthodes
+# Display methods
 php artisan roster:debug-rules availability --show-methods
 
-# Afficher les sources
+# Display sources
 php artisan roster:debug-rules availability --show-source
 ```
 
-### Gestion du cache
+### Cache Management
 
 ```bash
-# Générer le cache des règles
+# Generate rules cache
 php artisan roster:cache-rules
 
-# Afficher les stats du cache
+# Display cache stats
 php artisan roster:cache-rules --show
 
-# Effacer le cache
+# Clear cache
 php artisan roster:cache-rules --clear
 
-# Forcer la régénération
+# Force regeneration
 php artisan roster:cache-rules --force
 ```
 
 ## 🤝 Contribution
 
-1. **Fork** le repository
-2. **Créez une branche** (`git checkout -b feature/amazing-feature`)
-3. **Commitez vos changements** (`git commit -m 'Add amazing feature'`)
-4. **Push vers la branche** (`git push origin feature/amazing-feature`)
-5. **Ouvrez une Pull Request**
+1. **Fork** the repository
+2. **Create a branch** (`git checkout -b feature/amazing-feature`)
+3. **Commit your changes** (`git commit -m 'Add amazing feature'`)
+4. **Push to the branch** (`git push origin feature/amazing-feature`)
+5. **Open a Pull Request**
 
-### Exécuter les tests
+### Run Tests
 
 ```bash
-# Tous les tests
+# All tests
 composer test
 
-# Avec couverture de code
+# With code coverage
 composer test-coverage
 
-# Vérifier le style de code
+# Check code style
 composer lint
 ```
 
-## 📄 Licence
+## 📄 License
 
-Ce package est open-source et disponible sous la licence [MIT](LICENSE).
+This package is open-source and available under the [MIT](LICENSE) license.
 
-## 🔗 Liens utiles
+## 🔗 Useful Links
 
-- [Documentation API](docs/api.md)
-- [Guide de migration](docs/migration.md)
+- [API Documentation](docs/api.md)
+- [Migration Guide](docs/migration.md)
 - [Changelog](CHANGELOG.md)
 - [Issues](https://github.com/vendor/laravel-roster/issues)
 
 ---
 
-**Roster** - Une solution professionnelle pour la gestion avancée des emplois du temps, conçue pour les applications critiques où chaque minute compte. ⚕️⏰✨
+**Roster** - A professional solution for advanced schedule management, designed for critical applications where every minute counts. ⚕️⏰✨
