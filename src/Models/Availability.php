@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Carbon;
+use Roster\Casts\TimezoneAwareDateTimeCast;
 use Roster\Domain\Helpers\TimeWindowHelper;
 use Roster\Traits\BelongsToSchedulable;
 
@@ -55,13 +56,17 @@ class Availability extends Model
     protected $casts = [
         'daily_start' => 'datetime:h:i:s',
         'daily_end' => 'datetime:h:i:s',
-        'validity_start' => 'datetime',
-        'validity_end' => 'datetime',
+        'validity_start' => TimezoneAwareDateTimeCast::class,
+        'validity_end' => TimezoneAwareDateTimeCast::class,
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime',
         'days' => 'array',
     ];
 
     /**
      * Get the schedulable resource that owns this availability.
+     *
+     * @return MorphTo The polymorphic relationship to schedulable resources
      */
     public function schedulable(): MorphTo
     {
@@ -70,6 +75,8 @@ class Availability extends Model
 
     /**
      * Get the schedules associated with this availability.
+     *
+     * @return HasMany The schedules relationship
      */
     public function schedules(): HasMany
     {
@@ -78,6 +85,8 @@ class Availability extends Model
 
     /**
      * Get the impediments associated with this availability.
+     *
+     * @return HasMany The impediments relationship
      */
     public function impediments(): HasMany
     {
@@ -97,6 +106,7 @@ class Availability extends Model
     public function isAvailableForSchedule(Carbon $start, Carbon $end): bool
     {
         TimeWindowHelper::assertDailyWindow($start, $end);
+
         return $this->isAvailableOnDay($start)
             && $this->isWithinDailyWindow($start, $end)
             && $this->isWithinValidityPeriod($start, $end);
@@ -125,12 +135,24 @@ class Availability extends Model
     private function isWithinDailyWindow(Carbon $start, Carbon $end): bool
     {
         TimeWindowHelper::assertDailyWindow($start, $end);
-        $startTime = $start->format('H:i:s');
-        $endTime = $end->format('H:i:s');
-        $dailyStart = $this->daily_start->format('H:i:s');
-        $dailyEnd = $this->daily_end->format('H:i:s');
+
+        $startTime = $this->formatTimeToHoursMinutesSeconds($start);
+        $endTime = $this->formatTimeToHoursMinutesSeconds($end);
+        $dailyStart = $this->formatTimeToHoursMinutesSeconds($this->daily_start);
+        $dailyEnd = $this->formatTimeToHoursMinutesSeconds($this->daily_end);
 
         return $startTime >= $dailyStart && $endTime <= $dailyEnd;
+    }
+
+    /**
+     * Format a datetime to H:i:s format.
+     *
+     * @param Carbon $dateTime The datetime to format
+     * @return string Formatted time in H:i:s format
+     */
+    private function formatTimeToHoursMinutesSeconds(Carbon $dateTime): string
+    {
+        return $dateTime->format('H:i:s');
     }
 
     /**
@@ -144,10 +166,11 @@ class Availability extends Model
     {
         TimeWindowHelper::assertDailyWindow($start, $end);
 
-        return (! $this->validity_start || $start->gte($this->validity_start))
-            && (! $this->validity_end || $end->lte($this->validity_end));
-    }
+        $hasStarted = $this->validity_start === null || $start->gte($this->validity_start);
+        $hasNotEnded = $this->validity_end === null || $end->lte($this->validity_end);
 
+        return $hasStarted && $hasNotEnded;
+    }
 
     /**
      * Check if the availability is active on a specific date.
@@ -158,8 +181,21 @@ class Availability extends Model
     public function isActiveOnDate(Carbon $date): bool
     {
         return $this->isAvailableOnDay($date)
-            && (!$this->validity_start || $date->gte($this->validity_start))
-            && (!$this->validity_end || $date->lte($this->validity_end));
+            && $this->isDateWithinValidity($date);
+    }
+
+    /**
+     * Check if a date is within the validity period.
+     *
+     * @param Carbon $date Date to check
+     * @return bool True if date is within validity period
+     */
+    private function isDateWithinValidity(Carbon $date): bool
+    {
+        $isAfterOrEqualStart = $this->validity_start === null || $date->gte($this->validity_start);
+        $isBeforeOrEqualEnd = $this->validity_end === null || $date->lte($this->validity_end);
+
+        return $isAfterOrEqualStart && $isBeforeOrEqualEnd;
     }
 
     /**
@@ -175,14 +211,17 @@ class Availability extends Model
     /**
      * Get the validity period duration in days.
      *
-     * @return int|null Duration in days, or null if unlimited
+     * @return int|null Duration in days, or null if start or end is missing
      */
     public function getValidityDurationDays(): ?int
     {
-        return ($this->validity_start && $this->validity_end)
-            ? (int) $this->validity_start->diffInDays($this->validity_end)
-            : null;
+        if ($this->validity_start === null || $this->validity_end === null) {
+            return null;
+        }
+
+        return (int) $this->validity_start->diffInDays($this->validity_end);
     }
+
 
     /**
      * Check if the validity period is unlimited (no end date).

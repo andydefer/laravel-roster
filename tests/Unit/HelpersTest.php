@@ -4,9 +4,10 @@ declare(strict_types=1);
 
 namespace Tests\Unit;
 
-use Carbon\Carbon;
-use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Config;
 use InvalidArgumentException;
+use Roster\Domain\Helpers\TimezoneHelper;
 use Roster\Models\Availability;
 use Roster\Services\AvailabilityService;
 use Roster\Services\ImpedimentService;
@@ -17,17 +18,38 @@ use Tests\TestCase;
  * Unit tests for Roster package helper functions.
  *
  * Tests all helper functions including date calculations, day formatting,
- * and service factory functions.
+ * timezone helpers, and service factory functions.
  */
 final class HelpersTest extends TestCase
 {
+    /**
+     * Set up the test environment.
+     */
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        TimezoneHelper::resetUserTimezone();
+        Config::set('app.timezone', 'UTC');
+        Config::set('roster.timezone', 'Europe/Paris');
+        TimezoneHelper::initialize();
+    }
+
+    /**
+     * Clean up the test environment.
+     */
+    protected function tearDown(): void
+    {
+        TimezoneHelper::resetUserTimezone();
+        parent::tearDown();
+    }
+
     /**
      * Test roster_day_of_week function returns correct day names.
      */
     public function test_roster_day_of_week(): void
     {
         // Arrange: Test with specific dates
-        // Act & Assert: Verify day names
         $this->assertSame('thursday', roster_day_of_week('2038-07-01'));
         $this->assertSame('friday', roster_day_of_week('2038-07-02'));
         $this->assertSame('saturday', roster_day_of_week('2038-07-03'));
@@ -46,24 +68,24 @@ final class HelpersTest extends TestCase
      */
     public function test_roster_format_period_days_for_display(): void
     {
-        // Arrange & Act & Assert: Continuous sequences
+        // Assert: Continuous sequences
         $this->assertSame('Thursday to Sunday', roster_format_period_days_for_display(['thursday', 'friday', 'saturday', 'sunday']));
         $this->assertSame('Monday to Wednesday', roster_format_period_days_for_display(['monday', 'tuesday', 'wednesday']));
 
-        // Arrange & Act & Assert: Non-consecutive days across weekend
+        // Assert: Non-consecutive days across weekend
         $this->assertSame('Monday, Saturday and Sunday', roster_format_period_days_for_display(['saturday', 'sunday', 'monday']));
 
-        // Arrange & Act & Assert: Non-consecutive weekdays
+        // Assert: Non-consecutive weekdays
         $this->assertSame('Monday, Wednesday and Friday', roster_format_period_days_for_display(['monday', 'wednesday', 'friday']));
         $this->assertSame('Monday and Thursday', roster_format_period_days_for_display(['monday', 'thursday']));
 
-        // Arrange & Act & Assert: Single day
+        // Assert: Single day
         $this->assertSame('Monday', roster_format_period_days_for_display(['monday']));
 
-        // Arrange & Act & Assert: All days (continuous range)
+        // Assert: All days (continuous range)
         $this->assertSame('Monday to Sunday', roster_format_period_days_for_display(['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']));
 
-        // Arrange & Act & Assert: All days starting with Sunday
+        // Assert: All days starting with Sunday
         $this->assertSame('Monday to Sunday', roster_format_period_days_for_display(['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday']));
     }
 
@@ -86,10 +108,10 @@ final class HelpersTest extends TestCase
             $this->sortDays($days)
         );
 
-        // Arrange & Act & Assert: Single day period
+        // Assert: Single day period
         $this->assertSame(['thursday'], roster_days_in_period('2038-07-01', '2038-07-01'));
 
-        // Arrange & Act & Assert: 7-day period (all days)
+        // Assert: 7-day period (all days)
         $days = roster_days_in_period('2038-07-01', '2038-07-07');
         $expectedDays = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
         $this->assertEquals(
@@ -97,15 +119,15 @@ final class HelpersTest extends TestCase
             $this->sortDays($days)
         );
 
-        // Arrange & Act & Assert: Period crossing weekend
-        $days = roster_days_in_period('2038-07-03', '2038-07-05'); // Saturday to Monday
+        // Assert: Period crossing weekend
+        $days = roster_days_in_period('2038-07-03', '2038-07-05');
         $expectedDays = ['saturday', 'sunday', 'monday'];
         $this->assertEquals(
             $this->sortDays($expectedDays),
             $this->sortDays($days)
         );
 
-        // Arrange & Act & Assert: Invalid dates
+        // Assert: Invalid dates
         $this->assertSame([], roster_days_in_period('invalid', '2038-07-01'));
     }
 
@@ -114,19 +136,19 @@ final class HelpersTest extends TestCase
      */
     public function test_roster_format_days_for_display(): void
     {
-        // Arrange & Act & Assert: Single day
+        // Assert: Single day
         $this->assertSame('Monday', roster_format_days_for_display(['monday']));
 
-        // Arrange & Act & Assert: Two days
+        // Assert: Two days
         $this->assertSame('Monday and Tuesday', roster_format_days_for_display(['monday', 'tuesday']));
 
-        // Arrange & Act & Assert: Three days
+        // Assert: Three days
         $this->assertSame('Monday, Tuesday and Wednesday', roster_format_days_for_display(['monday', 'tuesday', 'wednesday']));
 
-        // Arrange & Act & Assert: Four days
+        // Assert: Four days
         $this->assertSame('Monday, Tuesday, Wednesday and Thursday', roster_format_days_for_display(['monday', 'tuesday', 'wednesday', 'thursday']));
 
-        // Arrange & Act & Assert: Empty array
+        // Assert: Empty array
         $this->assertSame('', roster_format_days_for_display([]));
     }
 
@@ -135,19 +157,19 @@ final class HelpersTest extends TestCase
      */
     public function test_roster_period_duration_in_days(): void
     {
-        // Arrange & Act & Assert: Single day
+        // Assert: Single day
         $this->assertSame(1, roster_period_duration_in_days('2038-07-01', '2038-07-01'));
 
-        // Arrange & Act & Assert: 4 days
+        // Assert: 4 days
         $this->assertSame(4, roster_period_duration_in_days('2038-07-01', '2038-07-04'));
 
-        // Arrange & Act & Assert: 7 days
+        // Assert: 7 days
         $this->assertSame(7, roster_period_duration_in_days('2038-07-01', '2038-07-07'));
 
-        // Arrange & Act & Assert: 10 days
+        // Assert: 10 days
         $this->assertSame(10, roster_period_duration_in_days('2038-07-01', '2038-07-10'));
 
-        // Arrange & Act & Assert: Invalid start date
+        // Assert: Invalid start date
         $this->assertNull(roster_period_duration_in_days('invalid', '2038-07-01'));
     }
 
@@ -159,18 +181,18 @@ final class HelpersTest extends TestCase
         $startDate = '2038-07-01';
         $endDate = '2038-07-04';
 
-        // Arrange & Act & Assert: Days within period
+        // Assert: Days within period
         $this->assertTrue(roster_is_day_in_period('thursday', $startDate, $endDate));
         $this->assertTrue(roster_is_day_in_period('friday', $startDate, $endDate));
         $this->assertTrue(roster_is_day_in_period('saturday', $startDate, $endDate));
         $this->assertTrue(roster_is_day_in_period('sunday', $startDate, $endDate));
 
-        // Arrange & Act & Assert: Days outside period
+        // Assert: Days outside period
         $this->assertFalse(roster_is_day_in_period('monday', $startDate, $endDate));
         $this->assertFalse(roster_is_day_in_period('tuesday', $startDate, $endDate));
         $this->assertFalse(roster_is_day_in_period('wednesday', $startDate, $endDate));
 
-        // Arrange & Act & Assert: Single day period
+        // Assert: Single day period
         $this->assertTrue(roster_is_day_in_period('thursday', '2038-07-01', '2038-07-01'));
         $this->assertFalse(roster_is_day_in_period('friday', '2038-07-01', '2038-07-01'));
     }
@@ -191,17 +213,17 @@ final class HelpersTest extends TestCase
         $expectedDays = ['thursday', 'friday', 'sunday'];
         $this->assertSame($expectedDays, $validDays);
 
-        // Arrange & Act & Assert: All days are valid
+        // Assert: All days are valid
         $inputDays = ['thursday', 'friday', 'saturday', 'sunday'];
         $validDays = roster_get_valid_days_in_period($inputDays, $startDate, $endDate);
         $this->assertSame($inputDays, $validDays);
 
-        // Arrange & Act & Assert: No valid days
+        // Assert: No valid days
         $inputDays = ['monday', 'tuesday', 'wednesday'];
         $validDays = roster_get_valid_days_in_period($inputDays, '2038-07-01', '2038-07-01');
         $this->assertSame([], $validDays);
 
-        // Arrange & Act & Assert: Proper sorting with custom order
+        // Assert: Proper sorting with custom order
         $inputDays = ['sunday', 'thursday', 'friday', 'saturday'];
         $validDays = roster_get_valid_days_in_period($inputDays, $startDate, $endDate);
         $expectedDays = ['thursday', 'friday', 'saturday', 'sunday'];
@@ -213,22 +235,22 @@ final class HelpersTest extends TestCase
      */
     public function test_roster_should_auto_adjust_days(): void
     {
-        // Arrange & Act & Assert: Periods less than 7 days
+        // Assert: Periods less than 7 days
         $this->assertTrue(roster_should_auto_adjust_days('2038-07-01', '2038-07-04'));
         $this->assertTrue(roster_should_auto_adjust_days('2038-07-01', '2038-07-01'));
         $this->assertTrue(roster_should_auto_adjust_days('2038-07-01', '2038-07-06'));
 
-        // Arrange & Act & Assert: Periods of 7 days or more
+        // Assert: Periods of 7 days or more
         $this->assertFalse(roster_should_auto_adjust_days('2038-07-01', '2038-07-07'));
         $this->assertFalse(roster_should_auto_adjust_days('2038-07-01', '2038-07-10'));
         $this->assertFalse(roster_should_auto_adjust_days('2038-07-01', '2038-07-14'));
 
-        // Arrange & Act & Assert: Invalid dates
+        // Assert: Invalid dates
         $this->assertFalse(roster_should_auto_adjust_days(null, '2038-07-01'));
         $this->assertFalse(roster_should_auto_adjust_days('2038-07-01', null));
         $this->assertFalse(roster_should_auto_adjust_days('invalid', '2038-07-01'));
 
-        // Arrange & Act & Assert: DateTime objects
+        // Assert: DateTime objects
         $start = Carbon::parse('2038-07-01');
         $end = Carbon::parse('2038-07-04');
         $this->assertTrue(roster_should_auto_adjust_days($start, $end));
@@ -253,6 +275,113 @@ final class HelpersTest extends TestCase
         // Assert: Duplicates removed, only valid days returned
         $expectedDays = ['thursday'];
         $this->assertSame($expectedDays, $validDays);
+    }
+
+    /**
+     * Test roster_timezone helper returns current effective timezone.
+     */
+    public function test_roster_timezone(): void
+    {
+        // Assert: Default timezone
+        $this->assertSame('Europe/Paris', roster_timezone());
+
+        // Arrange: Set user timezone
+        TimezoneHelper::setUserTimezone('America/New_York');
+
+        // Assert: User timezone should be used
+        $this->assertSame('America/New_York', roster_timezone());
+    }
+
+    /**
+     * Test roster_to_utc helper converts to UTC.
+     */
+    public function test_roster_to_utc(): void
+    {
+        // Arrange: Set user timezone and create user time
+        TimezoneHelper::setUserTimezone('America/New_York');
+        $userTime = '2024-01-01 09:00:00';
+
+        // Act: Convert to UTC
+        $utcTime = roster_to_utc($userTime);
+
+        // Assert: Correct UTC time returned
+        $this->assertInstanceOf(Carbon::class, $utcTime);
+        $this->assertSame('UTC', $utcTime->timezoneName);
+        $this->assertSame('2024-01-01 14:00:00', $utcTime->format('Y-m-d H:i:s'));
+    }
+
+    /**
+     * Test roster_to_utc with null.
+     */
+    public function test_roster_to_utc_with_null(): void
+    {
+        $this->assertNull(roster_to_utc(null));
+    }
+
+    /**
+     * Test roster_to_user_timezone helper converts to user timezone.
+     */
+    public function test_roster_to_user_timezone(): void
+    {
+        // Arrange: Set user timezone and create UTC time
+        TimezoneHelper::setUserTimezone('Asia/Tokyo');
+        $utcTime = '2024-01-01 12:00:00';
+
+        // Act: Convert to user timezone
+        $userTime = roster_to_user_timezone($utcTime);
+
+        // Assert: Correct local time returned
+        $this->assertInstanceOf(Carbon::class, $userTime);
+        $this->assertSame('Asia/Tokyo', $userTime->timezoneName);
+        $this->assertSame('2024-01-01 21:00:00', $userTime->format('Y-m-d H:i:s'));
+    }
+
+    /**
+     * Test roster_to_user_timezone with null.
+     */
+    public function test_roster_to_user_timezone_with_null(): void
+    {
+        $this->assertNull(roster_to_user_timezone(null));
+    }
+
+    /**
+     * Test roster_format_local helper formats in user timezone.
+     */
+    public function test_roster_format_local(): void
+    {
+        // Arrange: Set user timezone and create UTC time
+        TimezoneHelper::setUserTimezone('Europe/London');
+        $utcTime = '2024-01-01 12:00:00';
+
+        // Act: Format in local timezone
+        $formatted = roster_format_local($utcTime);
+
+        // Assert: Correct local format
+        $this->assertSame('2024-01-01 12:00:00', $formatted);
+    }
+
+    /**
+     * Test roster_format_local with custom format.
+     */
+    public function test_roster_format_local_with_custom_format(): void
+    {
+        // Arrange: Set user timezone and create UTC time
+        TimezoneHelper::setUserTimezone('America/Chicago');
+        $utcTime = '2024-06-01 17:00:00';
+
+        // Act: Format with custom format
+        $formatted = roster_format_local($utcTime, 'H:i, M j, Y');
+
+        // Assert: Correct custom format
+        $this->assertSame('12:00, Jun 1, 2024', $formatted);
+    }
+
+    /**
+     * Test roster_format_local with null.
+     */
+    public function test_roster_format_local_with_null(): void
+    {
+        $this->assertNull(roster_format_local(null));
     }
 
     /**
@@ -335,13 +464,45 @@ final class HelpersTest extends TestCase
     }
 
     /**
+     * Test timezone helpers with DST transition.
+     */
+    public function test_timezone_helpers_with_dst_transition(): void
+    {
+        // Arrange: During DST in Europe/Paris
+        TimezoneHelper::setUserTimezone('Europe/Paris');
+        $utcTime = '2024-06-01 12:00:00';
+
+        // Act: Format in local timezone
+        $localTime = roster_format_local($utcTime);
+
+        // Assert: Paris is UTC+2 during DST
+        $this->assertSame('2024-06-01 14:00:00', $localTime);
+    }
+
+    /**
+     * Test timezone helpers with timezone without DST.
+     */
+    public function test_timezone_helpers_without_dst(): void
+    {
+        // Arrange: Singapore has no DST
+        TimezoneHelper::setUserTimezone('Asia/Singapore');
+        $utcTime = '2024-01-01 12:00:00';
+
+        // Act: Format in local timezone
+        $localTime = roster_format_local($utcTime);
+
+        // Assert: Correct UTC+8 offset
+        $this->assertSame('2024-01-01 20:00:00', $localTime);
+    }
+
+    /**
      * Create a mock schedulable model for testing.
      *
-     * @return Model
+     * @return \Illuminate\Database\Eloquent\Model
      */
-    private function createMockSchedulable(): Model
+    private function createMockSchedulable(): \Illuminate\Database\Eloquent\Model
     {
-        return new class extends Model {};
+        return new class extends \Illuminate\Database\Eloquent\Model {};
     }
 
     /**
@@ -362,8 +523,8 @@ final class HelpersTest extends TestCase
             'sunday' => 7,
         ];
 
-        usort($days, function (string $a, string $b) use ($dayOrder): int {
-            return ($dayOrder[$a] ?? 8) <=> ($dayOrder[$b] ?? 8);
+        usort($days, function (string $firstDay, string $secondDay) use ($dayOrder): int {
+            return ($dayOrder[$firstDay] ?? 8) <=> ($dayOrder[$secondDay] ?? 8);
         });
 
         return $days;

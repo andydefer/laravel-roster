@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Roster\Domain\Helpers;
 
-use Carbon\Carbon;
+use Illuminate\Support\Carbon;
 use Carbon\CarbonInterval;
 use Roster\Enums\DaysOfWeek;
 

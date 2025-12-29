@@ -4,36 +4,86 @@ declare(strict_types=1);
 
 namespace Tests;
 
-use Roster\Models\Availability;
-use Roster\Observers\EnforceDomainMutationObserver;
-use Roster\Models\Schedule;
-use Roster\Models\Impediment;
-use Orchestra\Testbench\TestCase as OrchestraTestCase;
-use Roster\RosterServiceProvider;
 use Illuminate\Support\Facades\Config;
+use Orchestra\Testbench\TestCase as OrchestraTestCase;
+use Roster\Models\Availability;
+use Roster\Models\Impediment;
+use Roster\Models\Schedule;
+use Roster\Observers\EnforceDomainMutationObserver;
+use Roster\RosterServiceProvider;
 
+/**
+ * Base test case for Roster package tests.
+ *
+ * Provides common setup for all package tests including:
+ * - Observer registration for domain models
+ * - Database migrations loading
+ * - Test environment configuration
+ */
 abstract class TestCase extends OrchestraTestCase
 {
+    /**
+     * Set up the test environment.
+     *
+     * @return void
+     */
     protected function setUp(): void
     {
         parent::setUp();
 
+        $this->registerDomainObservers();
+        $this->loadPackageMigrations();
+        $this->loadTestMigrations();
+        $this->configureMemoryCache();
+    }
+
+    /**
+     * Register observers for domain models.
+     *
+     * @return void
+     */
+    private function registerDomainObservers(): void
+    {
         Availability::observe(EnforceDomainMutationObserver::class);
         Schedule::observe(EnforceDomainMutationObserver::class);
         Impediment::observe(EnforceDomainMutationObserver::class);
+    }
 
-        // Charger les migrations du package
+    /**
+     * Load package migrations.
+     *
+     * @return void
+     */
+    private function loadPackageMigrations(): void
+    {
         $this->loadMigrationsFrom(__DIR__ . '/../database/migrations');
+    }
 
-        // Charger les migrations de test
+    /**
+     * Load test-specific migrations.
+     *
+     * @return void
+     */
+    private function loadTestMigrations(): void
+    {
         $this->loadMigrationsFrom(__DIR__ . '/database/migrations');
+    }
 
-        // Utiliser le cache en mémoire pour les tests
+    /**
+     * Configure in-memory cache for tests.
+     *
+     * @return void
+     */
+    private function configureMemoryCache(): void
+    {
         Config::set('cache.default', 'array');
     }
 
     /**
-     * Enregistre le ServiceProvider du package
+     * Get package service providers.
+     *
+     * @param mixed $app
+     * @return array
      */
     protected function getPackageProviders($app): array
     {
@@ -43,7 +93,10 @@ abstract class TestCase extends OrchestraTestCase
     }
 
     /**
-     * Configuration de l’environnement de test
+     * Define the test environment configuration.
+     *
+     * @param mixed $app
+     * @return void
      */
     protected function defineEnvironment($app): void
     {

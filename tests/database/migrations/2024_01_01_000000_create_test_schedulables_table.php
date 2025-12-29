@@ -7,25 +7,28 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
 /**
- * Migration class for creating the `test_schedulables` table.
+ * Migration for creating the test schedulables table.
  *
- * Handles the creation and deletion of the table used for testing schedulable entities.
+ * This table is used for testing schedulable entities in the Roster package.
+ * It provides a simple structure to test entity scheduling functionality.
  */
 return new class extends Migration
 {
     /**
      * Run the migrations.
      *
-     * Creates the `test_schedulables` table if it does not exist.
+     * Creates the test_schedulables table with necessary columns for testing.
+     *
+     * @return void
      */
     public function up(): void
     {
-        if (! Schema::hasTable('test_schedulables')) {
-            Schema::create('test_schedulables', function (Blueprint $blueprint): void {
-                $blueprint->id();
-                $blueprint->timestamps();
-                $blueprint->string('name')->default('Dr. John Doe');
-                $blueprint->string('specialty')->default('cardiology');
+        if (!Schema::hasTable('test_schedulables')) {
+            Schema::create('test_schedulables', function (Blueprint $table): void {
+                $table->id();
+                $table->timestamps();
+                $table->string('name')->default('Dr. John Doe');
+                $table->string('specialty')->default('cardiology');
             });
         }
     }
@@ -33,7 +36,9 @@ return new class extends Migration
     /**
      * Reverse the migrations.
      *
-     * Drops the `test_schedulables` table if it exists.
+     * Drops the test_schedulables table.
+     *
+     * @return void
      */
     public function down(): void
     {

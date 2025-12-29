@@ -10,14 +10,15 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Carbon;
+use Roster\Casts\TimezoneAwareDateTimeCast;
 use Roster\Domain\Helpers\TimeWindowHelper;
 use Roster\Traits\BelongsToSchedulable;
 
 /**
- * Represents an impediment that blocks scheduling within a specific time period.
+ * Represents a time period where a schedulable resource is unavailable.
  *
- * An impediment is a time period where a schedulable resource is unavailable
- * for any scheduling due to various reasons (maintenance, absence, etc.).
+ * An impediment blocks scheduling for various reasons such as maintenance,
+ * absence, or other constraints that prevent resource availability.
  *
  * @property int $id
  * @property int $availability_id
@@ -27,8 +28,12 @@ use Roster\Traits\BelongsToSchedulable;
  * @property Carbon $start_datetime
  * @property Carbon $end_datetime
  * @property array|null $metadata
+ * @property Carbon $created_at
+ * @property Carbon $updated_at
+ * @property Carbon|null $deleted_at
  * @property-read float $duration_minutes
  * @property-read Availability $availability
+ * @property-read Model $schedulable
  */
 class Impediment extends Model
 {
@@ -63,25 +68,38 @@ class Impediment extends Model
      * @var array<string, string>
      */
     protected $casts = [
-        'start_datetime' => 'datetime',
-        'end_datetime' => 'datetime',
+        'start_datetime' => TimezoneAwareDateTimeCast::class,
+        'end_datetime' => TimezoneAwareDateTimeCast::class,
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime',
+        'deleted_at' => 'datetime',
     ];
 
     /**
-     * Accessor and mutator for metadata attribute.
+     * Handle metadata attribute serialization and deserialization.
      *
-     * Accepts either a JSON string or an array from the user.
+     * @return Attribute<array|null, array|string|null>
      */
     protected function metadata(): Attribute
     {
         return Attribute::make(
-            get: fn($value) => is_string($value) ? json_decode($value, true, 512, JSON_THROW_ON_ERROR) : $value,
-            set: fn($value) => is_array($value) ? json_encode($value, JSON_THROW_ON_ERROR) : $value
+            get: function ($value): ?array {
+                if ($value === null) {
+                    return null;
+                }
+                return is_string($value) ? json_decode($value, true, 512, JSON_THROW_ON_ERROR) : $value;
+            },
+            set: function ($value): ?string {
+                if ($value === null) {
+                    return null;
+                }
+                return is_array($value) ? json_encode($value, JSON_THROW_ON_ERROR) : $value;
+            }
         );
     }
 
     /**
-     * Get the availability this impediment belongs to.
+     * Get the availability associated with this impediment.
      *
      * @return BelongsTo<Availability, Impediment>
      */
@@ -91,7 +109,9 @@ class Impediment extends Model
     }
 
     /**
-     * Get the schedulable entity associated with this impediment.
+     * Get the schedulable resource associated with this impediment.
+     *
+     * @return MorphTo<Model, Impediment>
      */
     public function schedulable(): MorphTo
     {
@@ -99,11 +119,13 @@ class Impediment extends Model
     }
 
     /**
-     * Determine if this impediment overlaps with a given time period.
+     * Check if this impediment overlaps with a given time period.
      *
      * @param Carbon $start Start time of the period to check
      * @param Carbon $end End time of the period to check
-     * @return bool True if the impediment overlaps with the period
+     * @return bool True if there is any overlap
+     *
+     * @throws \InvalidArgumentException When the time window is not valid
      */
     public function overlapsWith(Carbon $start, Carbon $end): bool
     {
@@ -112,7 +134,7 @@ class Impediment extends Model
     }
 
     /**
-     * Get the duration of the impediment in minutes.
+     * Get the impediment duration in minutes.
      *
      * @return float Duration in minutes
      */
@@ -124,19 +146,18 @@ class Impediment extends Model
     /**
      * Check if the impediment is currently active.
      *
-     * @return bool True if the impediment is currently active
+     * @return bool True if current time is within the impediment period
      */
     public function isActive(): bool
     {
         $now = Carbon::now();
-
         return $this->start_datetime->lte($now) && $this->end_datetime->gte($now);
     }
 
     /**
      * Check if the impediment is scheduled to start in the future.
      *
-     * @return bool True if the impediment is upcoming
+     * @return bool True if the impediment has not started yet
      */
     public function isUpcoming(): bool
     {
@@ -146,7 +167,7 @@ class Impediment extends Model
     /**
      * Check if the impediment has already ended.
      *
-     * @return bool True if the impediment is in the past
+     * @return bool True if the impediment is completely in the past
      */
     public function isPast(): bool
     {

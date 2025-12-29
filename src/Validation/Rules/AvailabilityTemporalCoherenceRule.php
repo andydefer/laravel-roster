@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Roster\Validation\Rules;
 
-use Carbon\Carbon;
+use Illuminate\Support\Carbon;
 use Exception;
 use Roster\Contracts\Validation\ValidationContextInterface;
 use Roster\Enums\EntityType;
@@ -14,6 +14,12 @@ use Roster\Models\Impediment;
 use Roster\Models\Schedule;
 use Roster\Validation\Attributes\ValidationRule;
 
+/**
+ * Validates temporal coherence for availability operations.
+ *
+ * Ensures availability modifications do not conflict with existing schedules or impediments
+ * by checking date boundaries and day restrictions for future entities.
+ */
 #[ValidationRule(
     priority: 100,
     entities: [EntityType::AVAILABILITY],
@@ -23,9 +29,6 @@ class AvailabilityTemporalCoherenceRule extends AbstractRule
 {
     /**
      * Validates temporal coherence for availability operations.
-     *
-     * Ensures availability modifications do not conflict with existing schedules or impediments
-     * by checking date boundaries and day restrictions for future entities.
      *
      * @param ValidationContextInterface $validationContext Validation context
      */
@@ -37,9 +40,20 @@ class AvailabilityTemporalCoherenceRule extends AbstractRule
             return;
         }
 
+        $this->validateBasedOnOperation($validationContext, $entity);
+    }
+
+    /**
+     * Routes validation to appropriate method based on operation type.
+     *
+     * @param ValidationContextInterface $validationContext Validation context
+     * @param Availability $availability Availability being validated
+     */
+    private function validateBasedOnOperation(ValidationContextInterface $validationContext, Availability $availability): void
+    {
         match ($validationContext->getOperation()) {
-            OperationType::DELETE => $this->validateDeletion($entity, $validationContext),
-            OperationType::UPDATE => $this->validateUpdate($entity, $validationContext),
+            OperationType::DELETE => $this->validateDeletion($availability, $validationContext),
+            OperationType::UPDATE => $this->validateUpdate($availability, $validationContext),
             default => null
         };
     }
@@ -55,9 +69,91 @@ class AvailabilityTemporalCoherenceRule extends AbstractRule
     private function validateDeletion(Availability $availability, ValidationContextInterface $validationContext): void
     {
         $now = Carbon::now();
-        $hasSchedules = $this->hasFutureSchedules($availability, $now);
-        $hasImpediments = $this->hasFutureImpediments($availability, $now);
 
+        $hasSchedules = $this->hasFutureEntities(Schedule::class, $availability, $now);
+        $hasImpediments = $this->hasFutureEntities(Impediment::class, $availability, $now);
+
+        $this->addDeletionViolationIfNeeded($validationContext, $hasSchedules, $hasImpediments);
+    }
+
+    /**
+     * Validates availability update.
+     *
+     * Ensures updates do not conflict with existing future schedules or impediments.
+     *
+     * @param Availability $availability Availability to update
+     * @param ValidationContextInterface $validationContext Validation context
+     */
+    private function validateUpdate(Availability $availability, ValidationContextInterface $validationContext): void
+    {
+        $updateData = $this->extractUpdateData($validationContext, $availability);
+
+        if (!$this->hasRelevantChanges($updateData)) {
+            return;
+        }
+
+        $now = Carbon::now();
+
+        $this->validateAgainstEntityType(
+            entityClass: Schedule::class,
+            availability: $availability,
+            updateData: $updateData,
+            validationContext: $validationContext,
+            referenceTime: $now
+        );
+
+        $this->validateAgainstEntityType(
+            entityClass: Impediment::class,
+            availability: $availability,
+            updateData: $updateData,
+            validationContext: $validationContext,
+            referenceTime: $now
+        );
+    }
+
+    /**
+     * Extract and normalize update data from context.
+     *
+     * @param ValidationContextInterface $validationContext Validation context
+     * @param Availability $availability Original availability
+     * @return array Normalized update data
+     */
+    private function extractUpdateData(ValidationContextInterface $validationContext, Availability $availability): array
+    {
+        $newStart = $this->extractFieldValue($validationContext, 'validity_start', $availability->validity_start);
+        $newEnd = $this->extractFieldValue($validationContext, 'validity_end', $availability->validity_end);
+        $newDays = $this->extractFieldValue($validationContext, 'days', $availability->days);
+
+        return [
+            'validity_start' => $this->normalizeDateValue($newStart),
+            'validity_end' => $this->normalizeDateValue($newEnd),
+            'days' => $this->normalizeDays($newDays),
+        ];
+    }
+
+    /**
+     * Check if update contains changes that require validation.
+     *
+     * @param array $updateData Normalized update data
+     * @return bool True if validation is needed
+     */
+    private function hasRelevantChanges(array $updateData): bool
+    {
+        return !empty(array_filter($updateData, fn($value) => $value !== null));
+    }
+
+    /**
+     * Add appropriate violation message for deletion based on existing entities.
+     *
+     * @param ValidationContextInterface $validationContext Validation context
+     * @param bool $hasSchedules Whether future schedules exist
+     * @param bool $hasImpediments Whether future impediments exist
+     */
+    private function addDeletionViolationIfNeeded(
+        ValidationContextInterface $validationContext,
+        bool $hasSchedules,
+        bool $hasImpediments
+    ): void {
         if ($hasSchedules && $hasImpediments) {
             $validationContext->setViolation(
                 '_system',
@@ -77,89 +173,18 @@ class AvailabilityTemporalCoherenceRule extends AbstractRule
     }
 
     /**
-     * Validates availability update.
-     *
-     * Ensures updates do not conflict with existing future schedules or impediments.
-     *
-     * @param Availability $availability Availability to update
-     * @param ValidationContextInterface $validationContext Validation context
-     */
-    private function validateUpdate(Availability $availability, ValidationContextInterface $validationContext): void
-    {
-        $newStart = $this->extractFieldValue($validationContext, 'validity_start', $availability->validity_start);
-        $newEnd = $this->extractFieldValue($validationContext, 'validity_end', $availability->validity_end);
-        $newDays = $this->extractFieldValue($validationContext, 'days', $availability->days);
-
-        $normalizedStart = $this->normalizeDateValue($newStart);
-        $normalizedEnd = $this->normalizeDateValue($newEnd);
-        $normalizedDays = $this->normalizeDays($newDays);
-
-        if (!$normalizedStart && !$normalizedEnd && !$normalizedDays) {
-            return;
-        }
-
-        $now = Carbon::now();
-        $this->validateAgainstFutureEntities(Schedule::class, $availability, $normalizedStart, $normalizedEnd, $normalizedDays, $validationContext, $now);
-        $this->validateAgainstFutureEntities(Impediment::class, $availability, $normalizedStart, $normalizedEnd, $normalizedDays, $validationContext, $now);
-    }
-
-    /**
-     * Checks if future schedules exist for an availability.
-     *
-     * @param Availability $availability Availability to check
-     * @param Carbon $referenceTime Reference time for "future" determination
-     * @return bool True if future schedules exist
-     */
-    private function hasFutureSchedules(Availability $availability, Carbon $referenceTime): bool
-    {
-        return $this->hasFutureEntities(Schedule::class, $availability, $referenceTime);
-    }
-
-    /**
-     * Checks if future impediments exist for an availability.
-     *
-     * @param Availability $availability Availability to check
-     * @param Carbon $referenceTime Reference time for "future" determination
-     * @return bool True if future impediments exist
-     */
-    private function hasFutureImpediments(Availability $availability, Carbon $referenceTime): bool
-    {
-        return $this->hasFutureEntities(Impediment::class, $availability, $referenceTime);
-    }
-
-    /**
-     * Checks if future entities exist for an availability.
-     *
-     * @param string $entityClass Entity class to check
-     * @param Availability $availability Availability to check
-     * @param Carbon $referenceTime Reference time for "future" determination
-     * @return bool True if future entities exist
-     */
-    private function hasFutureEntities(string $entityClass, Availability $availability, Carbon $referenceTime): bool
-    {
-        return $entityClass::query()
-            ->where('availability_id', $availability->id)
-            ->where('end_datetime', '>=', $referenceTime)
-            ->exists();
-    }
-
-    /**
-     * Validates availability changes against future entities.
+     * Validates availability changes against specific entity type.
      *
      * @param string $entityClass Entity class to validate against
      * @param Availability $availability Availability being modified
-     * @param string|null $newStart New start date
-     * @param string|null $newEnd New end date
-     * @param array|null $newDays New days array
+     * @param array $updateData Normalized update data
      * @param ValidationContextInterface $validationContext Validation context
-     * @param Carbon $referenceTime Reference time
+     * @param Carbon $referenceTime Reference time for "future" determination
      */
-    private function validateAgainstFutureEntities(
+    private function validateAgainstEntityType(
         string $entityClass,
         Availability $availability,
-        ?string $newStart,
-        ?string $newEnd,
-        ?array $newDays,
+        array $updateData,
         ValidationContextInterface $validationContext,
         Carbon $referenceTime
     ): void {
@@ -169,29 +194,66 @@ class AvailabilityTemporalCoherenceRule extends AbstractRule
             ->get();
 
         foreach ($futureEntities as $futureEntity) {
-            $this->validateDateBoundary(
-                boundaryType: 'start',
-                entity: $futureEntity,
-                newDate: $newStart,
-                entityClass: $entityClass,
-                validationContext: $validationContext
-            );
-
-            $this->validateDateBoundary(
-                boundaryType: 'end',
-                entity: $futureEntity,
-                newDate: $newEnd,
-                entityClass: $entityClass,
-                validationContext: $validationContext
-            );
-
-            $this->validateDayAvailability(
-                entity: $futureEntity,
-                newDays: $newDays,
-                entityClass: $entityClass,
-                validationContext: $validationContext
-            );
+            $this->validateEntityDateBoundaries($futureEntity, $updateData, $entityClass, $validationContext);
+            $this->validateEntityDays($futureEntity, $updateData['days'], $entityClass, $validationContext);
         }
+    }
+
+    /**
+     * Validate date boundaries for a specific entity.
+     *
+     * @param object $entity Existing entity to check
+     * @param array $updateData Normalized update data
+     * @param string $entityClass Entity class name
+     * @param ValidationContextInterface $validationContext Validation context
+     */
+    private function validateEntityDateBoundaries(
+        object $entity,
+        array $updateData,
+        string $entityClass,
+        ValidationContextInterface $validationContext
+    ): void {
+        $this->validateDateBoundary(
+            boundaryType: 'start',
+            entity: $entity,
+            newDate: $updateData['validity_start'],
+            entityClass: $entityClass,
+            validationContext: $validationContext
+        );
+
+        $this->validateDateBoundary(
+            boundaryType: 'end',
+            entity: $entity,
+            newDate: $updateData['validity_end'],
+            entityClass: $entityClass,
+            validationContext: $validationContext
+        );
+    }
+
+    /**
+     * Validates day availability changes against a specific entity.
+     *
+     * @param object $entity Existing entity to check
+     * @param array|null $newDays New days array
+     * @param string $entityClass Entity class name
+     * @param ValidationContextInterface $validationContext Validation context
+     */
+    private function validateEntityDays(
+        object $entity,
+        ?array $newDays,
+        string $entityClass,
+        ValidationContextInterface $validationContext
+    ): void {
+        if ($newDays === null || $newDays === [] || empty($entity->start_datetime) || empty($entity->end_datetime)) {
+            return;
+        }
+
+        $entityDays = $this->extractDaysFromPeriod(
+            start: $this->ensureCarbon($entity->start_datetime),
+            end: $this->ensureCarbon($entity->end_datetime)
+        );
+
+        $this->checkForMissingDays($entityDays, $newDays, $entity, $entityClass, $validationContext);
     }
 
     /**
@@ -244,33 +306,21 @@ class AvailabilityTemporalCoherenceRule extends AbstractRule
     }
 
     /**
-     * Validates day availability changes against existing entities.
+     * Check if specific days are missing from new days array.
      *
-     * @param object $entity Existing entity to check
-     * @param array|null $newDays New days array
+     * @param array $entityDays Days used by the entity
+     * @param array $newDays New days array
+     * @param object $entity Existing entity
      * @param string $entityClass Entity class name
      * @param ValidationContextInterface $validationContext Validation context
      */
-    private function validateDayAvailability(
+    private function checkForMissingDays(
+        array $entityDays,
+        array $newDays,
         object $entity,
-        ?array $newDays,
         string $entityClass,
         ValidationContextInterface $validationContext
     ): void {
-        if ($newDays === null || $newDays === [] || empty($entity->start_datetime) || empty($entity->end_datetime)) {
-            return;
-        }
-
-        $startString = $entity->start_datetime instanceof Carbon
-            ? $entity->start_datetime->toDateTimeString()
-            : (string) $entity->start_datetime;
-
-        $endString = $entity->end_datetime instanceof Carbon
-            ? $entity->end_datetime->toDateTimeString()
-            : (string) $entity->end_datetime;
-
-        $entityDays = $this->extractDaysFromPeriod($startString, $endString);
-
         foreach ($entityDays as $entityDay) {
             if (!in_array($entityDay, $newDays, true)) {
                 $validationContext->setViolation(
@@ -289,20 +339,39 @@ class AvailabilityTemporalCoherenceRule extends AbstractRule
     }
 
     /**
+     * Checks if future entities exist for an availability.
+     *
+     * @param string $entityClass Entity class to check
+     * @param Availability $availability Availability to check
+     * @param Carbon $referenceTime Reference time for "future" determination
+     * @return bool True if future entities exist
+     */
+    private function hasFutureEntities(string $entityClass, Availability $availability, Carbon $referenceTime): bool
+    {
+        return $entityClass::query()
+            ->where('availability_id', $availability->id)
+            ->where('end_datetime', '>=', $referenceTime)
+            ->exists();
+    }
+
+    /**
      * Extracts days from a date period.
      *
-     * @param string $start Start date string
-     * @param string $end End date string
+     * @param Carbon|null $start Start date
+     * @param Carbon|null $end End date
      * @return array<string> Lowercase day names
      */
-    private function extractDaysFromPeriod(string $start, string $end): array
+    private function extractDaysFromPeriod(?Carbon $start, ?Carbon $end): array
     {
+        if ($start === null || $end === null || $end->lt($start)) {
+            return [];
+        }
+
         try {
-            $current = Carbon::parse($start);
-            $endDate = Carbon::parse($end);
+            $current = $start->copy();
             $days = [];
 
-            while ($current->lte($endDate)) {
+            while ($current->lte($end)) {
                 $day = strtolower($current->format('l'));
                 if (!in_array($day, $days, true)) {
                     $days[] = $day;
@@ -312,7 +381,7 @@ class AvailabilityTemporalCoherenceRule extends AbstractRule
             }
 
             return $days;
-        } catch (Exception $exception) {
+        } catch (Exception) {
             return [];
         }
     }
@@ -384,7 +453,7 @@ class AvailabilityTemporalCoherenceRule extends AbstractRule
         if (is_string($value)) {
             try {
                 return Carbon::parse($value);
-            } catch (Exception $e) {
+            } catch (Exception) {
                 return null;
             }
         }

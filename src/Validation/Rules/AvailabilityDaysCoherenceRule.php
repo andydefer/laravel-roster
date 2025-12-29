@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Roster\Validation\Rules;
 
 use Exception;
-use Carbon\Carbon;
+use Illuminate\Support\Carbon;
 use Roster\Contracts\Validation\ValidationContextInterface;
 use Roster\Enums\DaysOfWeek;
 use Roster\Enums\EntityType;
@@ -35,25 +35,67 @@ class AvailabilityDaysCoherenceRule extends AbstractRule
      */
     public function validate(ValidationContextInterface $validationContext): void
     {
-        if (!$validationContext->has('days')) {
+        if (!$this->shouldValidate($validationContext)) {
             return;
         }
 
         $days = $validationContext->get('days');
 
-        if ($days === null) {
+        // Stop immediately if format validation fails
+        if (!$this->validateDaysFormat($validationContext, $days)) {
             return;
         }
 
+        $this->validateDaysAgainstPeriod($validationContext, $days);
+    }
+
+
+    /**
+     * Check if validation should proceed based on context.
+     *
+     * @param ValidationContextInterface $validationContext Validation context
+     * @return bool True if validation should proceed
+     */
+    private function shouldValidate(ValidationContextInterface $validationContext): bool
+    {
+        if (!$validationContext->has('days')) {
+            return false;
+        }
+
+        $days = $validationContext->get('days');
+
+        if ($days === null || $days === []) {
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * Validate the format and basic validity of days.
+     *
+     * @param ValidationContextInterface $validationContext Validation context
+     * @param mixed $days Days data from context
+     */
+    private function validateDaysFormat(
+        ValidationContextInterface $validationContext,
+        mixed $days
+    ): bool {
+        // ✅ 1. Format check FIRST
         if (!is_array($days)) {
-            $validationContext->setViolation('days', 'Days must be an array');
-            return;
+            $validationContext->setViolation(
+                'days',
+                'Days must be an array'
+            );
+            return false;
         }
 
+        // ✅ 2. Empty array is allowed (tests expect it)
         if ($days === []) {
-            return;
+            return true;
         }
 
+        // ✅ 3. Validate each day value
         $validDays = DaysOfWeek::values();
 
         foreach ($days as $day) {
@@ -62,40 +104,95 @@ class AvailabilityDaysCoherenceRule extends AbstractRule
                     'days',
                     sprintf("Day '%s' is not a valid day of week", $day)
                 );
-                return;
+                return false;
             }
         }
 
+        return true;
+    }
+
+
+
+    /**
+     * Validate days against validity period.
+     *
+     * @param ValidationContextInterface $validationContext Validation context
+     * @param array $days Days to validate
+     */
+    private function validateDaysAgainstPeriod(ValidationContextInterface $validationContext, array $days): void
+    {
+        $validityPeriod = $this->extractValidityPeriod($validationContext);
+
+        if ($validityPeriod === null || !$this->isValidPeriod($validityPeriod)) {
+            return;
+        }
+
+        $this->checkDaysWithinPeriod($validationContext, $days, $validityPeriod);
+    }
+
+    /**
+     * Extract validity period from context or existing entity.
+     *
+     * @param ValidationContextInterface $validationContext Validation context
+     * @return array|null Array with 'start' and 'end' keys, or null
+     */
+    private function extractValidityPeriod(ValidationContextInterface $validationContext): ?array
+    {
         $entity = $validationContext->getCurrentEntity();
 
-        $validityStart = $this->getValidityDate(
+        $startDate = $this->getValidityDate(
             validationContext: $validationContext,
             field: 'validity_start',
             entity: $entity
         );
 
-        $validityEnd = $this->getValidityDate(
+        $endDate = $this->getValidityDate(
             validationContext: $validationContext,
             field: 'validity_end',
             entity: $entity
         );
 
-        if ($validityStart === null || $validityEnd === null) {
-            return;
+        if ($startDate === null || $endDate === null) {
+            return null;
         }
 
+        return [
+            'start' => $startDate,
+            'end' => $endDate,
+        ];
+    }
+
+    /**
+     * Check if validity period is valid (start < end and parseable).
+     *
+     * @param array $period Validity period with 'start' and 'end'
+     * @return bool True if period is valid
+     */
+    private function isValidPeriod(array $period): bool
+    {
         try {
-            $start = Carbon::parse($validityStart);
-            $end = Carbon::parse($validityEnd);
+            $start = Carbon::parse($period['start']);
+            $end = Carbon::parse($period['end']);
 
-            if ($end->lte($start)) {
-                return;
-            }
+            return $end->gt($start);
         } catch (Exception) {
-            return;
+            return false;
         }
+    }
 
-        $daysInPeriod = roster_days_in_period($validityStart, $validityEnd);
+    /**
+     * Check if all days are within the validity period.
+     *
+     * @param ValidationContextInterface $validationContext Validation context
+     * @param array $days Days to check
+     * @param array $period Validity period
+     */
+    private function checkDaysWithinPeriod(
+        ValidationContextInterface $validationContext,
+        array $days,
+        array $period
+    ): void {
+        $daysInPeriod = roster_days_in_period($period['start'], $period['end']);
 
         foreach ($days as $day) {
             if (!in_array($day, $daysInPeriod, true)) {

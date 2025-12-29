@@ -4,11 +4,13 @@ declare(strict_types=1);
 
 namespace Roster\Models;
 
-use Illuminate\Database\Eloquent\Relations\Relation;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Carbon;
+use Roster\Casts\TimezoneAwareDateTimeCast;
 use Roster\Domain\Helpers\TimeWindowHelper;
 use Roster\Enums\ScheduleStatus;
 use Roster\Traits\BelongsToSchedulable;
@@ -28,9 +30,12 @@ use Roster\Traits\BelongsToSchedulable;
  * @property Carbon $start_datetime
  * @property Carbon $end_datetime
  * @property ScheduleStatus $status
- * @property array $metadata
+ * @property array|null $metadata
  * @property-read float $duration_minutes
  * @property-read string $type
+ * @property-read Carbon $created_at
+ * @property-read Carbon $updated_at
+ * @property-read Carbon|null $deleted_at
  * @property-read Availability $availability
  */
 class Schedule extends Model
@@ -40,8 +45,6 @@ class Schedule extends Model
 
     /**
      * The table associated with the model.
-     *
-     * @var string
      */
     protected $table = 'roster_schedules';
 
@@ -65,14 +68,49 @@ class Schedule extends Model
     /**
      * The attributes that should be cast.
      *
-     * @var array<string, string>
+     * @var array<string, string|class-string>
      */
     protected $casts = [
-        'start_datetime' => 'datetime',
-        'end_datetime' => 'datetime',
         'status' => ScheduleStatus::class,
-        'metadata' => 'array',
+        'start_datetime' => TimezoneAwareDateTimeCast::class,
+        'end_datetime' => TimezoneAwareDateTimeCast::class,
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime',
+        'deleted_at' => 'datetime',
     ];
+
+    /**
+     * Handle metadata attribute serialization and deserialization.
+     *
+     * @return Attribute<array|null, array|string|null>
+     */
+    protected function metadata(): Attribute
+    {
+        return Attribute::make(
+            get: function ($value): ?array {
+                if ($value === null) {
+                    return null;
+                }
+
+                if (is_string($value)) {
+                    return json_decode($value, true, 512, JSON_THROW_ON_ERROR);
+                }
+
+                return $value;
+            },
+            set: function ($value): ?string {
+                if ($value === null) {
+                    return null;
+                }
+
+                if (is_array($value)) {
+                    return json_encode($value, JSON_THROW_ON_ERROR);
+                }
+
+                return $value;
+            }
+        );
+    }
 
     /**
      * Get the availability this schedule belongs to.
@@ -81,11 +119,16 @@ class Schedule extends Model
      */
     public function availability(): BelongsTo
     {
-        return $this->belongsTo(Availability::class, 'availability_id');
+        return $this->belongsTo(
+            related: Availability::class,
+            foreignKey: 'availability_id'
+        );
     }
 
     /**
      * Get the schedulable entity through the parent availability.
+     *
+     * @return Relation|null The schedulable relationship
      */
     public function schedulable(): ?Relation
     {
@@ -112,7 +155,11 @@ class Schedule extends Model
     public function overlapsWith(Carbon $start, Carbon $end): bool
     {
         TimeWindowHelper::assertDailyWindow($start, $end);
-        return $this->start_datetime->lt($end) && $this->end_datetime->gt($start);
+
+        $startsBeforeEnd = $this->start_datetime->lt($end);
+        $endsAfterStart = $this->end_datetime->gt($start);
+
+        return $startsBeforeEnd && $endsAfterStart;
     }
 
     /**
@@ -134,7 +181,10 @@ class Schedule extends Model
     {
         $now = Carbon::now();
 
-        return $this->start_datetime->lte($now) && $this->end_datetime->gte($now);
+        $hasStarted = $this->start_datetime->lte($now);
+        $hasNotEnded = $this->end_datetime->gte($now);
+
+        return $hasStarted && $hasNotEnded;
     }
 
     /**
