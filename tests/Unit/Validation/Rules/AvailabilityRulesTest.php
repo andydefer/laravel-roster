@@ -94,10 +94,23 @@ final class AvailabilityRulesTest extends TestCase
         $this->assertTrue($validationContext->hasViolations());
 
         $violations = $validationContext->getViolations();
-        $this->assertArrayHasKey('validity_start', $violations);
-        $this->assertArrayHasKey('daily_end', $violations);
-        $this->assertStringContainsString('required', (string) $violations['validity_start']);
-        $this->assertStringContainsString('required', (string) $violations['daily_end']);
+
+        $this->assertTrue($validationContext->hasViolationFor('validity_start'));
+        $this->assertTrue($validationContext->hasViolationFor('daily_end'));
+
+        $validityStartViolation = array_values(array_filter(
+            $violations,
+            fn($v) => $v->getField() === 'validity_start'
+        ))[0] ?? null;
+        $this->assertNotNull($validityStartViolation);
+        $this->assertStringContainsString('required', $validityStartViolation->getMessage());
+
+        $dailyEndViolation = array_values(array_filter(
+            $violations,
+            fn($v) => $v->getField() === 'daily_end'
+        ))[0] ?? null;
+        $this->assertNotNull($dailyEndViolation);
+        $this->assertStringContainsString('required', $dailyEndViolation->getMessage());
     }
 
     /**
@@ -149,11 +162,25 @@ final class AvailabilityRulesTest extends TestCase
         $this->assertTrue($validationContext->hasViolations());
 
         $violations = $validationContext->getViolations();
-        $this->assertArrayHasKey('schedulable_id', $violations);
-        $this->assertArrayHasKey('schedulable_type', $violations);
-        $this->assertStringContainsString('cannot be changed', (string) $violations['schedulable_id']);
-        $this->assertStringContainsString('cannot be changed', (string) $violations['schedulable_type']);
+
+        $this->assertTrue($validationContext->hasViolationFor('schedulable_id'));
+        $this->assertTrue($validationContext->hasViolationFor('schedulable_type'));
+
+        $schedulableIdViolation = array_values(array_filter(
+            $violations,
+            fn($v) => $v->getField() === 'schedulable_id'
+        ))[0] ?? null;
+        $this->assertNotNull($schedulableIdViolation);
+        $this->assertStringContainsString('cannot be changed', $schedulableIdViolation->getMessage());
+
+        $schedulableTypeViolation = array_values(array_filter(
+            $violations,
+            fn($v) => $v->getField() === 'schedulable_type'
+        ))[0] ?? null;
+        $this->assertNotNull($schedulableTypeViolation);
+        $this->assertStringContainsString('cannot be changed', $schedulableTypeViolation->getMessage());
     }
+
 
     /**
      * Test that availability overlap rule skips validation when data is incomplete.

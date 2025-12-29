@@ -20,7 +20,7 @@ interface ValidatorInterface
      * Validate an operation on an entity within the given context.
      *
      * @param ValidationContextInterface $validationContext Context containing entity and operation details
-     * @param array $additionalRules Additional rules to apply for this validation
+     * @param array<int, RuleInterface> $additionalRules Additional rules to apply for this validation
      * @return ValidationResult The result of the validation operation
      */
     public function validate(

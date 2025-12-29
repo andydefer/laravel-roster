@@ -12,7 +12,6 @@ use Roster\Contracts\Validation\ValidationContextInterface;
 use Roster\Enums\EntityType;
 use Roster\Enums\OperationType;
 use Roster\Validation\RuleScanner;
-use Roster\Validation\ValidationResult;
 use Roster\Validation\Validator;
 use Tests\TestCase;
 
@@ -85,7 +84,6 @@ final class ValidatorTest extends TestCase
     public function test_indexes_rule_with_validation_rule_attribute(): void
     {
         // Arrange: Create rule class with attribute for testing
-        // We'll test this with a real class that has attribute
         $rule = new class implements RuleInterface {
             public function getName(): string
             {
@@ -95,6 +93,11 @@ final class ValidatorTest extends TestCase
             public function getPriority(): int
             {
                 return 50;
+            }
+
+            public function getDescription(): string
+            {
+                return 'Test rule with validation rule attribute';
             }
 
             public function supports(OperationType $operation, EntityType $entity): bool
@@ -136,6 +139,11 @@ final class ValidatorTest extends TestCase
                 return 50;
             }
 
+            public function getDescription(): string
+            {
+                return 'Test rule using supports method for indexing';
+            }
+
             public function supports(OperationType $operation, EntityType $entity): bool
             {
                 return $operation === OperationType::UPDATE && $entity === EntityType::IMPEDIMENT;
@@ -162,7 +170,16 @@ final class ValidatorTest extends TestCase
     public function test_sorts_rules_by_priority_during_validation(): void
     {
         // Arrange: Create rules with different priorities
-        $rule1 = new class implements RuleInterface {
+        $executionOrder = [];
+
+        $rule1 = new class($executionOrder) implements RuleInterface {
+            private array $executionOrder;
+
+            public function __construct(array &$executionOrder)
+            {
+                $this->executionOrder = &$executionOrder;
+            }
+
             public function getName(): string
             {
                 return 'LowPriorityRule';
@@ -171,14 +188,28 @@ final class ValidatorTest extends TestCase
             {
                 return 10;
             }
+            public function getDescription(): string
+            {
+                return 'Low priority test rule';
+            }
             public function supports(OperationType $operation, EntityType $entity): bool
             {
                 return $operation === OperationType::CREATE && $entity === EntityType::AVAILABILITY;
             }
-            public function validate(ValidationContextInterface $context): void {}
+            public function validate(ValidationContextInterface $context): void
+            {
+                $this->executionOrder[] = 'LowPriorityRule';
+            }
         };
 
-        $rule2 = new class implements RuleInterface {
+        $rule2 = new class($executionOrder) implements RuleInterface {
+            private array $executionOrder;
+
+            public function __construct(array &$executionOrder)
+            {
+                $this->executionOrder = &$executionOrder;
+            }
+
             public function getName(): string
             {
                 return 'MediumPriorityRule';
@@ -187,14 +218,28 @@ final class ValidatorTest extends TestCase
             {
                 return 50;
             }
+            public function getDescription(): string
+            {
+                return 'Medium priority test rule';
+            }
             public function supports(OperationType $operation, EntityType $entity): bool
             {
                 return $operation === OperationType::CREATE && $entity === EntityType::AVAILABILITY;
             }
-            public function validate(ValidationContextInterface $context): void {}
+            public function validate(ValidationContextInterface $context): void
+            {
+                $this->executionOrder[] = 'MediumPriorityRule';
+            }
         };
 
-        $rule3 = new class implements RuleInterface {
+        $rule3 = new class($executionOrder) implements RuleInterface {
+            private array $executionOrder;
+
+            public function __construct(array &$executionOrder)
+            {
+                $this->executionOrder = &$executionOrder;
+            }
+
             public function getName(): string
             {
                 return 'HighPriorityRule';
@@ -203,11 +248,18 @@ final class ValidatorTest extends TestCase
             {
                 return 100;
             }
+            public function getDescription(): string
+            {
+                return 'High priority test rule';
+            }
             public function supports(OperationType $operation, EntityType $entity): bool
             {
                 return $operation === OperationType::CREATE && $entity === EntityType::AVAILABILITY;
             }
-            public function validate(ValidationContextInterface $context): void {}
+            public function validate(ValidationContextInterface $context): void
+            {
+                $this->executionOrder[] = 'HighPriorityRule';
+            }
         };
 
         $this->mockRuleScanner->method('instantiateRules')
@@ -216,18 +268,23 @@ final class ValidatorTest extends TestCase
         // Create validator with pre-loaded rules
         $validator = new Validator($this->mockRuleScanner);
 
-        // Create mock context
+        // Create mock context that tracks violations
+        $violations = [];
         $context = $this->createMock(ValidationContextInterface::class);
         $context->method('getOperation')->willReturn(OperationType::CREATE);
         $context->method('getEntityType')->willReturn(EntityType::AVAILABILITY);
-        $context->method('hasViolations')->willReturn(false);
-        $context->method('getViolations')->willReturn([]);
+        $context->method('hasViolations')->willReturnCallback(function () use (&$violations) {
+            return count($violations) > 0;
+        });
+        $context->method('getViolations')->willReturnCallback(function () use (&$violations) {
+            return $violations;
+        });
 
         // Act: Execute validation
         $result = $validator->validate($context);
 
-        // Assert: Rules should be sorted by priority (we can't easily test execution order with real objects)
-        // Instead, we'll verify the validation completed successfully
+        // Assert: Rules should be sorted by priority (higher priority first)
+        $this->assertEquals(['HighPriorityRule', 'MediumPriorityRule', 'LowPriorityRule'], $executionOrder);
         $this->assertTrue($result->isValid());
 
         // Also verify all three rules are registered
@@ -251,22 +308,38 @@ final class ValidatorTest extends TestCase
             {
                 return 50;
             }
+            public function getDescription(): string
+            {
+                return 'Test rule that always passes validation';
+            }
             public function supports(OperationType $operation, EntityType $entity): bool
             {
                 return $operation === OperationType::CREATE && $entity === EntityType::SCHEDULE;
             }
-            public function validate(ValidationContextInterface $context): void {}
+            public function validate(ValidationContextInterface $context): void
+            {
+                // No violation added
+            }
         };
 
         $this->mockRuleScanner->method('instantiateRules')->willReturn([$rule]);
 
         $validator = new Validator($this->mockRuleScanner);
 
+        // Create mock context that tracks violations
+        $violations = [];
         $context = $this->createMock(ValidationContextInterface::class);
         $context->method('getOperation')->willReturn(OperationType::CREATE);
         $context->method('getEntityType')->willReturn(EntityType::SCHEDULE);
-        $context->method('hasViolations')->willReturn(false);
-        $context->method('getViolations')->willReturn([]);
+        $context->method('hasViolations')->willReturnCallback(function () use (&$violations) {
+            return count($violations) > 0;
+        });
+        $context->method('getViolations')->willReturnCallback(function () use (&$violations) {
+            return $violations;
+        });
+        $context->method('setViolation')->willReturnCallback(function ($field, $message, $rule = null) use (&$violations) {
+            $violations[] = new \Roster\Validation\DTOs\ViolationData($field, $message, $rule);
+        });
 
         // Act: Execute validation
         $result = $validator->validate($context);
@@ -277,32 +350,124 @@ final class ValidatorTest extends TestCase
     }
 
     /**
+     * Test validation with setViolationFromRule method.
+     */
+    public function test_validation_with_set_violation_from_rule_method(): void
+    {
+        // Arrange: Create rule that uses setViolationFromRule
+        $rule = new class implements RuleInterface {
+            public function getName(): string
+            {
+                return 'DescriptiveRule';
+            }
+            public function getPriority(): int
+            {
+                return 50;
+            }
+            public function getDescription(): string
+            {
+                return 'Rule that demonstrates setViolationFromRule usage';
+            }
+            public function supports(OperationType $operation, EntityType $entity): bool
+            {
+                return $operation === OperationType::CREATE && $entity === EntityType::AVAILABILITY;
+            }
+            public function validate(ValidationContextInterface $context): void
+            {
+                $context->setViolationFromRule($this, 'test_field', 'Test violation message');
+            }
+        };
+
+        $this->mockRuleScanner->method('instantiateRules')->willReturn([$rule]);
+
+        $validator = new Validator($this->mockRuleScanner);
+
+        // Create mock context that tracks violations
+        $violations = [];
+        $context = $this->createMock(ValidationContextInterface::class);
+        $context->method('getOperation')->willReturn(OperationType::CREATE);
+        $context->method('getEntityType')->willReturn(EntityType::AVAILABILITY);
+        $context->method('hasViolations')->willReturnCallback(function () use (&$violations) {
+            return count($violations) > 0;
+        });
+        $context->method('getViolations')->willReturnCallback(function () use (&$violations) {
+            return $violations;
+        });
+        $context->method('setViolationFromRule')->willReturnCallback(function ($ruleArg, $field, $message) use (&$violations) {
+            $violations[] = new \Roster\Validation\DTOs\ViolationData(
+                $field,
+                $message,
+                $ruleArg->getName(),
+                $ruleArg->getDescription()
+            );
+        });
+
+        // Act: Execute validation
+        $result = $validator->validate($context);
+
+        // Assert: Verify validation failed with violation
+        $this->assertFalse($result->isValid());
+        $this->assertCount(1, $result->getViolations());
+        $this->assertEquals('DescriptiveRule', $result->getViolations()[0]->getRule());
+    }
+
+    /**
      * Test failed validation with violations.
      */
     public function test_returns_failed_result_when_violations_exist(): void
     {
-        // Arrange: Set up context with violations
+        // Arrange: Create rule that sets violations
+        $rule = new class implements RuleInterface {
+            public function getName(): string
+            {
+                return 'ViolatingRule';
+            }
+            public function getPriority(): int
+            {
+                return 50;
+            }
+            public function getDescription(): string
+            {
+                return 'Test rule that always creates violations';
+            }
+            public function supports(OperationType $operation, EntityType $entity): bool
+            {
+                return $operation === OperationType::CREATE && $entity === EntityType::SCHEDULE;
+            }
+            public function validate(ValidationContextInterface $context): void
+            {
+                $context->setViolation('field1', 'Field is required');
+                $context->setViolation('field2', 'Field must be valid', 'required');
+            }
+        };
+
+        $this->mockRuleScanner->method('instantiateRules')->willReturn([$rule]);
+
+        $validator = new Validator($this->mockRuleScanner);
+
+        // Create mock context that tracks violations
+        $violations = [];
         $context = $this->createMock(ValidationContextInterface::class);
         $context->method('getOperation')->willReturn(OperationType::CREATE);
         $context->method('getEntityType')->willReturn(EntityType::SCHEDULE);
-        $context->method('hasViolations')->willReturn(true);
-        $context->method('getViolations')->willReturn([
-            'field1' => 'Field is required',
-            'field2' => 'Field must be valid'
-        ]);
+        $context->method('hasViolations')->willReturnCallback(function () use (&$violations) {
+            return count($violations) > 0;
+        });
+        $context->method('getViolations')->willReturnCallback(function () use (&$violations) {
+            return $violations;
+        });
+        $context->method('setViolation')->willReturnCallback(function ($field, $message, $rule = null) use (&$violations) {
+            $violations[] = new \Roster\Validation\DTOs\ViolationData($field, $message, $rule);
+        });
 
-        // Mock rule scanner returns no rules
-        $this->mockRuleScanner->method('instantiateRules')->willReturn([]);
-        $validator = new Validator($this->mockRuleScanner);
-
-        // Act: Execute validation (no rules, but context already has violations)
+        // Act: Execute validation
         $result = $validator->validate($context);
 
         // Assert: Verify failed result with violations
         $this->assertFalse($result->isValid());
         $this->assertCount(2, $result->getViolations());
-        $this->assertEquals('Field is required', $result->getViolations()['field1']);
-        $this->assertEquals('Field must be valid', $result->getViolations()['field2']);
+        $this->assertEquals('field1', $result->getViolations()[0]->getField());
+        $this->assertEquals('Field is required', $result->getViolations()[0]->getMessage());
     }
 
     /**
@@ -319,6 +484,10 @@ final class ValidatorTest extends TestCase
             public function getPriority(): int
             {
                 return 50;
+            }
+            public function getDescription(): string
+            {
+                return 'Base test rule';
             }
             public function supports(OperationType $operation, EntityType $entity): bool
             {
@@ -343,6 +512,10 @@ final class ValidatorTest extends TestCase
             {
                 return 50;
             }
+            public function getDescription(): string
+            {
+                return 'Additional test rule';
+            }
             public function supports(OperationType $operation, EntityType $entity): bool
             {
                 return $operation === OperationType::UPDATE && $entity === EntityType::IMPEDIMENT;
@@ -353,14 +526,20 @@ final class ValidatorTest extends TestCase
             }
         };
 
+        // Create mock context that tracks violations
+        $violations = [];
         $context = $this->createMock(ValidationContextInterface::class);
         $context->method('getOperation')->willReturn(OperationType::UPDATE);
         $context->method('getEntityType')->willReturn(EntityType::IMPEDIMENT);
-        $context->method('hasViolations')->willReturn(true);
-        $context->method('getViolations')->willReturn([
-            'base' => 'Base rule violation',
-            'additional' => 'Additional rule violation'
-        ]);
+        $context->method('hasViolations')->willReturnCallback(function () use (&$violations) {
+            return count($violations) > 0;
+        });
+        $context->method('getViolations')->willReturnCallback(function () use (&$violations) {
+            return $violations;
+        });
+        $context->method('setViolation')->willReturnCallback(function ($field, $message, $rule = null) use (&$violations) {
+            $violations[] = new \Roster\Validation\DTOs\ViolationData($field, $message, $rule);
+        });
 
         // Act: Execute validation with additional rules
         $result = $validator->validate($context, [$additionalRule]);
@@ -368,6 +547,10 @@ final class ValidatorTest extends TestCase
         // Assert: Validation should have violations from both rules
         $this->assertFalse($result->isValid());
         $this->assertCount(2, $result->getViolations());
+
+        $violationFields = array_map(fn($v) => $v->getField(), $result->getViolations());
+        $this->assertContains('base', $violationFields);
+        $this->assertContains('additional', $violationFields);
     }
 
     /**
@@ -385,6 +568,10 @@ final class ValidatorTest extends TestCase
             {
                 return 50;
             }
+            public function getDescription(): string
+            {
+                return 'Test rule that throws exception';
+            }
             public function supports(OperationType $operation, EntityType $entity): bool
             {
                 return $operation === OperationType::CREATE && $entity === EntityType::SCHEDULE;
@@ -399,22 +586,34 @@ final class ValidatorTest extends TestCase
 
         $validator = new Validator($this->mockRuleScanner);
 
+        // Create mock context that tracks violations
+        $violations = [];
         $context = $this->createMock(ValidationContextInterface::class);
         $context->method('getOperation')->willReturn(OperationType::CREATE);
         $context->method('getEntityType')->willReturn(EntityType::SCHEDULE);
-        $context->method('hasViolations')->willReturn(true);
-        $context->expects($this->atLeastOnce())
-            ->method('setViolation')
-            ->with(
-                '_system',
-                $this->stringContains('Validation rule ExceptionRule failed: Rule processing failed')
+        $context->method('hasViolations')->willReturnCallback(function () use (&$violations) {
+            return count($violations) > 0;
+        });
+        $context->method('getViolations')->willReturnCallback(function () use (&$violations) {
+            return $violations;
+        });
+        $context->method('setViolationFromRule')->willReturnCallback(function ($ruleArg, $field, $message) use (&$violations) {
+            $violations[] = new \Roster\Validation\DTOs\ViolationData(
+                $field,
+                $message,
+                $ruleArg->getName(),
+                $ruleArg->getDescription()
             );
+        });
 
         // Act: Execute validation that triggers exception
         $result = $validator->validate($context);
 
         // Assert: Verify validation failed due to system violation
         $this->assertFalse($result->isValid());
+        $this->assertCount(1, $result->getViolations());
+        $this->assertEquals('_system', $result->getViolations()[0]->getField());
+        $this->assertStringContainsString('Validation rule ExceptionRule failed:', $result->getViolations()[0]->getMessage());
     }
 
     /**
@@ -432,6 +631,10 @@ final class ValidatorTest extends TestCase
             {
                 return 50;
             }
+            public function getDescription(): string
+            {
+                return 'Rule for availability entities';
+            }
             public function supports(OperationType $operation, EntityType $entity): bool
             {
                 return $entity === EntityType::AVAILABILITY &&
@@ -448,6 +651,10 @@ final class ValidatorTest extends TestCase
             public function getPriority(): int
             {
                 return 50;
+            }
+            public function getDescription(): string
+            {
+                return 'Rule for schedule entities';
             }
             public function supports(OperationType $operation, EntityType $entity): bool
             {
@@ -490,6 +697,10 @@ final class ValidatorTest extends TestCase
             {
                 return 50;
             }
+            public function getDescription(): string
+            {
+                return 'Generic test rule';
+            }
             public function supports(OperationType $operation, EntityType $entity): bool
             {
                 return $operation === OperationType::CREATE && $entity === EntityType::AVAILABILITY;
@@ -520,6 +731,10 @@ final class ValidatorTest extends TestCase
             {
                 return 50;
             }
+            public function getDescription(): string
+            {
+                return 'First test rule';
+            }
             public function supports(OperationType $operation, EntityType $entity): bool
             {
                 return true;
@@ -536,6 +751,10 @@ final class ValidatorTest extends TestCase
             {
                 return 50;
             }
+            public function getDescription(): string
+            {
+                return 'Second test rule';
+            }
             public function supports(OperationType $operation, EntityType $entity): bool
             {
                 return true;
@@ -551,6 +770,10 @@ final class ValidatorTest extends TestCase
             public function getPriority(): int
             {
                 return 50;
+            }
+            public function getDescription(): string
+            {
+                return 'Third test rule';
             }
             public function supports(OperationType $operation, EntityType $entity): bool
             {
@@ -590,6 +813,10 @@ final class ValidatorTest extends TestCase
             {
                 return 50;
             }
+            public function getDescription(): string
+            {
+                return 'First multiple rule';
+            }
             public function supports(OperationType $operation, EntityType $entity): bool
             {
                 return $operation === OperationType::CREATE && $entity === EntityType::AVAILABILITY;
@@ -608,6 +835,10 @@ final class ValidatorTest extends TestCase
             public function getPriority(): int
             {
                 return 50;
+            }
+            public function getDescription(): string
+            {
+                return 'Second multiple rule';
             }
             public function supports(OperationType $operation, EntityType $entity): bool
             {
@@ -628,6 +859,10 @@ final class ValidatorTest extends TestCase
             {
                 return 50;
             }
+            public function getDescription(): string
+            {
+                return 'Third multiple rule';
+            }
             public function supports(OperationType $operation, EntityType $entity): bool
             {
                 return $operation === OperationType::CREATE && $entity === EntityType::AVAILABILITY;
@@ -642,15 +877,20 @@ final class ValidatorTest extends TestCase
 
         $validator = new Validator($this->mockRuleScanner);
 
+        // Create mock context that tracks violations
+        $violations = [];
         $context = $this->createMock(ValidationContextInterface::class);
         $context->method('getOperation')->willReturn(OperationType::CREATE);
         $context->method('getEntityType')->willReturn(EntityType::AVAILABILITY);
-        $context->method('hasViolations')->willReturn(true);
-        $context->method('getViolations')->willReturn([
-            'rule1' => 'Violation from Rule1',
-            'rule2' => 'Violation from Rule2',
-            'rule3' => 'Violation from Rule3'
-        ]);
+        $context->method('hasViolations')->willReturnCallback(function () use (&$violations) {
+            return count($violations) > 0;
+        });
+        $context->method('getViolations')->willReturnCallback(function () use (&$violations) {
+            return $violations;
+        });
+        $context->method('setViolation')->willReturnCallback(function ($field, $message, $rule = null) use (&$violations) {
+            $violations[] = new \Roster\Validation\DTOs\ViolationData($field, $message, $rule);
+        });
 
         // Act: Execute validation
         $result = $validator->validate($context);
@@ -669,6 +909,7 @@ final class ValidatorTest extends TestCase
         $this->mockRuleScanner->method('instantiateRules')->willReturn([]);
         $validator = new Validator($this->mockRuleScanner);
 
+        // Create mock context with no violations
         $context = $this->createMock(ValidationContextInterface::class);
         $context->method('getOperation')->willReturn(OperationType::CREATE);
         $context->method('getEntityType')->willReturn(EntityType::SCHEDULE);
@@ -698,7 +939,7 @@ final class ValidatorTest extends TestCase
         $key2 = $method->invoke($this->validator, OperationType::UPDATE, EntityType::SCHEDULE);
         $key3 = $method->invoke($this->validator, OperationType::CREATE, EntityType::IMPEDIMENT);
 
-        // Assert: Verify correct key format (enums use lowercase values)
+        // Assert: Verify correct key format
         $this->assertEquals('create:availability', $key1);
         $this->assertEquals('update:schedule', $key2);
         $this->assertEquals('create:impediment', $key3);
@@ -718,6 +959,10 @@ final class ValidatorTest extends TestCase
             public function getPriority(): int
             {
                 return 50;
+            }
+            public function getDescription(): string
+            {
+                return 'Rule with invalid attribute handling';
             }
             public function supports(OperationType $operation, EntityType $entity): bool
             {
@@ -749,6 +994,10 @@ final class ValidatorTest extends TestCase
             {
                 return 50;
             }
+            public function getDescription(): string
+            {
+                return 'First count test rule';
+            }
             public function supports(OperationType $operation, EntityType $entity): bool
             {
                 return true;
@@ -764,6 +1013,10 @@ final class ValidatorTest extends TestCase
             public function getPriority(): int
             {
                 return 50;
+            }
+            public function getDescription(): string
+            {
+                return 'Second count test rule';
             }
             public function supports(OperationType $operation, EntityType $entity): bool
             {
@@ -801,6 +1054,10 @@ final class ValidatorTest extends TestCase
             {
                 return 50;
             }
+            public function getDescription(): string
+            {
+                return 'Duplicate rule test';
+            }
             public function supports(OperationType $operation, EntityType $entity): bool
             {
                 return true;
@@ -817,6 +1074,67 @@ final class ValidatorTest extends TestCase
         $this->assertEquals(3, $this->validator->getRuleCount());
         $this->assertTrue($this->validator->hasRule(get_class($rule)));
     }
+
+    /**
+     * Test validation result structure with ViolationData objects.
+     */
+    public function test_returns_validation_result_with_violation_data_objects(): void
+    {
+        // Arrange: Create rule that sets violations
+        $rule = new class implements RuleInterface {
+            public function getName(): string
+            {
+                return 'ViolationDataRule';
+            }
+            public function getPriority(): int
+            {
+                return 50;
+            }
+            public function getDescription(): string
+            {
+                return 'Rule demonstrating ViolationData objects';
+            }
+            public function supports(OperationType $operation, EntityType $entity): bool
+            {
+                return $operation === OperationType::CREATE && $entity === EntityType::AVAILABILITY;
+            }
+            public function validate(ValidationContextInterface $context): void
+            {
+                $context->setViolation('field1', 'Required field', 'required');
+                $context->setViolation('field2', 'Invalid format', 'format');
+            }
+        };
+
+        $this->mockRuleScanner->method('instantiateRules')->willReturn([$rule]);
+
+        $validator = new Validator($this->mockRuleScanner);
+
+        // Create mock context that tracks violations
+        $violations = [];
+        $context = $this->createMock(ValidationContextInterface::class);
+        $context->method('getOperation')->willReturn(OperationType::CREATE);
+        $context->method('getEntityType')->willReturn(EntityType::AVAILABILITY);
+        $context->method('hasViolations')->willReturnCallback(function () use (&$violations) {
+            return count($violations) > 0;
+        });
+        $context->method('getViolations')->willReturnCallback(function () use (&$violations) {
+            return $violations;
+        });
+        $context->method('setViolation')->willReturnCallback(function ($field, $message, $rule = null) use (&$violations) {
+            $violations[] = new \Roster\Validation\DTOs\ViolationData($field, $message, $rule);
+        });
+
+        // Act: Execute validation
+        $result = $validator->validate($context);
+
+        // Assert: Verify result contains ViolationData objects
+        $this->assertFalse($result->isValid());
+        $violations = $result->getViolations();
+        $this->assertCount(2, $violations);
+        $this->assertInstanceOf(\Roster\Validation\DTOs\ViolationData::class, $violations[0]);
+        $this->assertEquals('field1', $violations[0]->getField());
+        $this->assertEquals('required', $violations[0]->getRule());
+    }
 }
 
 // Helper classes for testing
@@ -826,14 +1144,22 @@ class TestRule1 implements RuleInterface
     {
         return 'TestRule1';
     }
+
     public function getPriority(): int
     {
         return 50;
     }
+
+    public function getDescription(): string
+    {
+        return 'First test rule for validation testing';
+    }
+
     public function supports(OperationType $operation, EntityType $entity): bool
     {
         return true;
     }
+
     public function validate(ValidationContextInterface $context): void {}
 }
 
@@ -843,14 +1169,22 @@ class TestRule2 implements RuleInterface
     {
         return 'TestRule2';
     }
+
     public function getPriority(): int
     {
         return 50;
     }
+
+    public function getDescription(): string
+    {
+        return 'Second test rule for validation testing';
+    }
+
     public function supports(OperationType $operation, EntityType $entity): bool
     {
         return true;
     }
+
     public function validate(ValidationContextInterface $context): void {}
 }
 
@@ -860,13 +1194,21 @@ class CustomRule implements RuleInterface
     {
         return 'CustomRule';
     }
+
     public function getPriority(): int
     {
         return 50;
     }
+
+    public function getDescription(): string
+    {
+        return 'Custom test rule for validation testing';
+    }
+
     public function supports(OperationType $operation, EntityType $entity): bool
     {
         return true;
     }
+
     public function validate(ValidationContextInterface $context): void {}
 }

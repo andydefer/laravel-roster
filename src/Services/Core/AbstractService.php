@@ -26,6 +26,7 @@ use Roster\Support\RosterServiceContext;
 use Roster\Validation\Context\ValidationContext;
 use Roster\Validation\Exceptions\ValidationFailedException;
 use ReflectionClass;
+use Roster\Validation\DTOs\ViolationData;
 
 /**
  * Abstract service providing a complete CRUD template with dynamic repository resolution.
@@ -128,7 +129,15 @@ abstract class AbstractService implements ServiceInterface
 
         if (!$existingEntity) {
             throw ValidationFailedException::fromViolations(
-                ['id' => sprintf('%s with given ID does not exist for owner or schedulable', $this->getEntityTypeEnum()->displayName())],
+                [
+                    new ViolationData(
+                        field: 'id',
+                        message: sprintf(
+                            '%s with given ID does not exist for owner or schedulable',
+                            $this->getEntityTypeEnum()->displayName()
+                        )
+                    )
+                ],
                 OperationType::UPDATE,
                 $this->getEntityTypeEnum()
             );
@@ -170,12 +179,19 @@ abstract class AbstractService implements ServiceInterface
 
         if (!$entity) {
             throw ValidationFailedException::fromViolations(
-                ['id' => sprintf('%s with given ID does not exist', $this->getEntityTypeEnum()->displayName())],
+                [
+                    new ViolationData(
+                        field: 'id',
+                        message: sprintf(
+                            '%s with given ID does not exist',
+                            $this->getEntityTypeEnum()->displayName()
+                        )
+                    )
+                ],
                 OperationType::DELETE,
                 $this->getEntityTypeEnum()
             );
         }
-
         $deleteData = [
             'id' => $id,
             'schedulable_id' => $entity->schedulable_id ?? $this->schedulable->id,

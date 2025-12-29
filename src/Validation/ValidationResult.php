@@ -4,53 +4,31 @@ declare(strict_types=1);
 
 namespace Roster\Validation;
 
+use Roster\Validation\DTOs\ViolationData;
+
 /**
- * Represents the outcome of a validation operation.
+ * Result of a validation operation.
  *
- * Encapsulates validation status and any detected violations,
- * providing a clean interface for validation result inspection
- * and combination.
+ * Contains information about whether validation succeeded or failed,
+ * along with any violations that were detected.
  */
 class ValidationResult
 {
     /**
-     * Validation success status.
+     * Creates a new validation result.
+     *
+     * @param bool $success Whether validation succeeded
+     * @param array<int, ViolationData> $violations List of validation violations
      */
-    private bool $isValid;
+    public function __construct(
+        private bool $success,
+        private array $violations = []
+    ) {}
 
     /**
-     * Detected validation violations.
+     * Gets all validation violations.
      *
-     * @var array<string, string> Field => Error message pairs
-     */
-    private array $violations;
-
-    /**
-     * Initializes a validation result.
-     *
-     * @param bool $isValid Whether validation succeeded
-     * @param array<string, string> $violations Validation violations
-     */
-    public function __construct(bool $isValid = true, array $violations = [])
-    {
-        $this->isValid = $isValid;
-        $this->violations = $violations;
-    }
-
-    /**
-     * Checks if validation succeeded.
-     *
-     * @return bool True if validation passed without violations
-     */
-    public function isValid(): bool
-    {
-        return $this->isValid;
-    }
-
-    /**
-     * Retrieves validation violations.
-     *
-     * @return array<string, string> Field => Error message pairs
+     * @return array<int, ViolationData> List of violations
      */
     public function getViolations(): array
     {
@@ -58,9 +36,9 @@ class ValidationResult
     }
 
     /**
-     * Checks if any violations were detected.
+     * Checks if there are any violations.
      *
-     * @return bool True if violations exist
+     * @return bool True if there are violations, false otherwise
      */
     public function hasViolations(): bool
     {
@@ -68,50 +46,74 @@ class ValidationResult
     }
 
     /**
-     * Merges this result with another validation result.
+     * Gets the number of violations.
      *
-     * @param ValidationResult $validationResult Result to merge
-     * @return ValidationResult New combined validation result
+     * @return int Number of violations
      */
-    public function merge(ValidationResult $validationResult): self
+    public function countViolations(): int
     {
-        return new self(
-            $this->isValid && $validationResult->isValid(),
-            array_merge($this->violations, $validationResult->getViolations())
+        return count($this->violations);
+    }
+
+    /**
+     * Converts the result to an array representation.
+     *
+     * @param bool $includeRuleDescriptions Whether to include rule descriptions
+     * @return array{
+     *     success: bool,
+     *     violations: array<array{
+     *         field: string,
+     *         rule: string,
+     *         message: string,
+     *         rule_description?: string|null
+     *     }>
+     * } Array representation
+     */
+    public function toArray(bool $includeRuleDescriptions = false): array
+    {
+        $violationsArray = array_map(
+            function (ViolationData $violation) use ($includeRuleDescriptions) {
+                $data = [
+                    'field' => $violation->getField(),
+                    'rule' => $violation->getRule(),
+                    'message' => $violation->getMessage(),
+                ];
+
+                if ($includeRuleDescriptions) {
+                    $data['rule_description'] = $violation->getRuleDescription();
+                }
+
+                return $data;
+            },
+            $this->violations
         );
+
+        return [
+            'success' => $this->success,
+            'violations' => $violationsArray,
+        ];
     }
 
     /**
      * Creates a successful validation result.
      *
-     * @return ValidationResult Valid result with no violations
+     * @return self Successful validation result
      */
-    public static function valid(): self
+    public function isValid(): bool
     {
-        return new self(true);
+        return $this->success;
     }
+
+
 
     /**
      * Creates a failed validation result with violations.
      *
-     * @param array<string, string> $violations Validation violations
-     * @return ValidationResult Invalid result with violations
+     * @param array<int, ViolationData> $violations Validation violations
+     * @return self Failed validation result
      */
-    public static function invalid(array $violations): self
+    public static function failed(array $violations): self
     {
         return new self(false, $violations);
-    }
-
-    /**
-     * Converts the validation result to array representation.
-     *
-     * @return array{is_valid: bool, violations: array<string, string>}
-     */
-    public function toArray(): array
-    {
-        return [
-            'is_valid' => $this->isValid,
-            'violations' => $this->violations,
-        ];
     }
 }

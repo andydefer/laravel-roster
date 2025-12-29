@@ -49,4 +49,11 @@ interface RuleInterface
      * @return string Unique rule identifier
      */
     public function getName(): string;
+
+    /**
+     * Get a detailed description of what this rule validates and what it prevents.
+     *
+     * @return string Detailed description of the rule's purpose and validations
+     */
+    public function getDescription(): string;
 }

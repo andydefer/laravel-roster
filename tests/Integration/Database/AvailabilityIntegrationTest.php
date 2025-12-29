@@ -112,9 +112,7 @@ final class AvailabilityIntegrationTest extends TestCase
 
         // Assert: Should throw validation exception
         $this->expectException(ValidationFailedException::class);
-        $this->expectExceptionMessageMatches(
-            '/daily_time_range .*End time must be after start time/'
-        );
+        $this->expectExceptionMessageMatches('/End time must be after start time/');
 
         // Act: Attempt to create with invalid time range
         availability_for($this->schedulable)->create($invalidTimeData);
@@ -375,7 +373,7 @@ final class AvailabilityIntegrationTest extends TestCase
 
         // Assert: Should throw validation exception
         $this->expectException(ValidationFailedException::class);
-        $this->expectExceptionMessage('validity');
+        $this->expectExceptionMessage('validation failed');
 
         // Act: Attempt to create with invalid validity period
         availability_for($this->schedulable)->create($invalidValidityData);

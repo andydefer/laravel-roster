@@ -135,7 +135,7 @@ final class ScheduleOverlapRuleTest extends TestCase
 
         // Assert: Violation should be present for overlap
         $this->assertTrue($context->hasViolations());
-        $this->assertArrayHasKey('overlap', $context->getViolations());
+        $this->assertTrue($context->hasViolationFor('overlap'));
     }
 
     public function test_fails_when_conflicts_exist_for_impediment_create(): void
@@ -173,7 +173,7 @@ final class ScheduleOverlapRuleTest extends TestCase
 
         // Assert: Violation should be present for overlap
         $this->assertTrue($context->hasViolations());
-        $this->assertArrayHasKey('overlap', $context->getViolations());
+        $this->assertTrue($context->hasViolationFor('overlap'));
     }
 
     public function test_excludes_current_entity_for_schedule_update(): void

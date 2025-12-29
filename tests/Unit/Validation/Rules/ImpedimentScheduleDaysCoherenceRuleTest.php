@@ -324,7 +324,7 @@ final class ImpedimentScheduleDaysCoherenceRuleTest extends TestCase
     /**
      * Test that validation works for UPDATE operation.
      */
-    public function test_works_for_update_operation(): void
+    public function test_update_fails_when_schedule_date_not_allowed(): void
     {
         // Arrange: Create availability and initial schedule on Tuesday
         $availability = availability_for($this->schedulable)->create([
@@ -344,8 +344,9 @@ final class ImpedimentScheduleDaysCoherenceRuleTest extends TestCase
 
         $this->expectException(ValidationFailedException::class);
         $this->expectExceptionMessageMatches(
-            "/Update validation failed for Schedule: start_datetime.*not allowed/"
+            "/^Update validation failed for Schedule: The selected date .* is not allowed/"
         );
+
 
         // Act: Attempt to update schedule to Wednesday (not allowed day)
         schedule_for($availability)->update($schedule->id, [

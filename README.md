@@ -84,8 +84,8 @@ $schedule = schedule_for($availability)->create([
 // Bloquer un créneau pour une formation
 $impediment = impediment_for($availability)->create([
     'reason' => 'Formation médicale obligatoire',
-    'start_datetime' => '2038-01-05 09:00:00',
-    'end_datetime' => '2038-01-05 12:00:00',
+    'start_datetime' => '2038-01-04 09:00:00',
+    'end_datetime' => '2038-01-04 12:00:00',
 ]);
 ```
 

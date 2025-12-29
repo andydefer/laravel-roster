@@ -73,6 +73,14 @@ interface ValidationContextInterface
     public function has(string $key): bool;
 
     /**
+     * Determines whether at least one validation violation exists for the given field.
+     *
+     * @param string $field The field name to check for validation violations.
+     * @return bool True if at least one violation exists for the given field, false otherwise.
+     */
+    public function hasViolationFor(string $field): bool;
+
+    /**
      * Return only defined and non-null values from context data.
      *
      * @return array<string, mixed> Filtered context data
@@ -139,7 +147,20 @@ interface ValidationContextInterface
      * @param string $field The field name
      * @param string $message The violation message
      */
-    public function setViolation(string $field, string $message): void;
+    public function setViolation(string $field, string $message, ?string $rule = null): void;
+
+    /**
+     * Add a validation violation with automatic rule information.
+     *
+     * @param RuleInterface $rule The rule that triggered the violation
+     * @param string $field The field name with the violation
+     * @param string $message The violation message
+     */
+    public function setViolationFromRule(
+        RuleInterface $rule,
+        string $field,
+        string $message
+    ): void;
 
     /**
      * Get all recorded violations.

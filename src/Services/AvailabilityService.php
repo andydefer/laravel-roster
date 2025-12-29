@@ -8,6 +8,7 @@ use Roster\Enums\EntityType;
 use Roster\Enums\OperationType;
 use Roster\Models\Availability;
 use Roster\Services\Core\AbstractService;
+use Roster\Validation\DTOs\ViolationData;
 use Roster\Validation\Exceptions\ValidationFailedException;
 
 /**
@@ -87,10 +88,13 @@ class AvailabilityService extends AbstractService
 
         throw ValidationFailedException::fromViolations(
             [
-                'id' => sprintf(
-                    '%s with given ID does not exist',
-                    EntityType::AVAILABILITY->displayName()
-                ),
+                new ViolationData(
+                    field: 'id',
+                    message: sprintf(
+                        '%s with given ID does not exist',
+                        EntityType::AVAILABILITY->displayName()
+                    )
+                )
             ],
             $operationType,
             EntityType::AVAILABILITY

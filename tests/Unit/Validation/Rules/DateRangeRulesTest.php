@@ -91,7 +91,7 @@ final class DateRangeRulesTest extends TestCase
 
         // Assert: Validation should fail with date range violation
         $this->assertTrue($validationContext->hasViolations());
-        $this->assertArrayHasKey('validity_date_range', $validationContext->getViolations());
+        $this->assertTrue($validationContext->hasViolationFor('validity_date_range'));
     }
 
     /**
@@ -166,7 +166,7 @@ final class DateRangeRulesTest extends TestCase
 
         // Assert: Validation should fail with date range violation
         $this->assertTrue($validationContext->hasViolations());
-        $this->assertArrayHasKey('validity_date_range', $validationContext->getViolations());
+        $this->assertTrue($validationContext->hasViolationFor('validity_date_range'));;
     }
 
     /**
@@ -231,11 +231,16 @@ final class DateRangeRulesTest extends TestCase
 
         // Assert: Validation should fail with maximum duration violation
         $this->assertTrue($validationContext->hasViolations());
-        $this->assertArrayHasKey('max_duration', $validationContext->getViolations());
-        $this->assertStringContainsString(
-            'cannot exceed 365 days',
-            (string) $validationContext->getViolations()['max_duration']
-        );
+
+        $this->assertTrue($validationContext->hasViolationFor('max_duration'));
+
+        $violation = array_values(array_filter(
+            $validationContext->getViolations(),
+            fn($v) => $v->getField() === 'max_duration'
+        ))[0] ?? null;
+
+        $this->assertNotNull($violation);
+        $this->assertStringContainsString('cannot exceed 365 days', $violation->getMessage());
     }
 
     /**
@@ -263,7 +268,7 @@ final class DateRangeRulesTest extends TestCase
 
         // Assert: Validation should fail with minimum duration violation
         $this->assertTrue($validationContext->hasViolations());
-        $this->assertArrayHasKey('min_duration', $validationContext->getViolations());
+        $this->assertTrue($validationContext->hasViolationFor('min_duration'));
     }
 
     /**
@@ -314,7 +319,7 @@ final class DateRangeRulesTest extends TestCase
 
         // Assert: Validation should fail with datetime range violation
         $this->assertTrue($validationContext->hasViolations());
-        $this->assertArrayHasKey('datetime_range', $validationContext->getViolations());
+        $this->assertTrue($validationContext->hasViolationFor('datetime_range'));
     }
 
     /**
@@ -396,7 +401,7 @@ final class DateRangeRulesTest extends TestCase
 
         // Assert: Validation should fail with datetime range violation
         $this->assertTrue($validationContext->hasViolations());
-        $this->assertArrayHasKey('datetime_range', $validationContext->getViolations());
+        $this->assertTrue($validationContext->hasViolationFor('datetime_range'));
     }
 
     /**

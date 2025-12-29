@@ -9,10 +9,12 @@ use Exception;
 use Illuminate\Database\Eloquent\Model;
 use Roster\Contracts\Services\ServiceInterface;
 use Roster\Contracts\Validation\ValidationContextInterface;
+use Roster\Contracts\Validation\RuleInterface;
 use Roster\Enums\EntityType;
 use Roster\Enums\OperationType;
 use Roster\Models\Availability as AvailabilityModel;
 use Roster\Services\AvailabilityService;
+use Roster\Validation\DTOs\ViolationData;
 
 /**
  * Context container for validation operations across different entity types.
@@ -26,27 +28,28 @@ class ValidationContext implements ValidationContextInterface
 
     private EntityType $entityType;
 
-    /**
-     * Raw data (may contain null values)
-     *
-     * @var array<string, mixed>
-     */
+    /** @var array<string, mixed> Raw data (may contain null values) */
     private array $data;
 
     private ?Model $model;
 
     private mixed $currentEntity;
 
-    /**
-     * @var array<string, string|array<int, string>>
-     */
+    /** @var array<int, ViolationData> */
     private array $violations = [];
 
-    /**
-     * @var array<string, mixed>
-     */
+    /** @var array<string, mixed> */
     private array $flags = [];
 
+    /**
+     * Creates a new validation context.
+     *
+     * @param OperationType $operationType Type of operation being validated
+     * @param EntityType $entityType Type of entity being validated
+     * @param array<string, mixed> $data Validation data
+     * @param Model|null $model Schedulable model (optional)
+     * @param mixed $currentEntity Current entity being validated (optional)
+     */
     public function __construct(
         OperationType $operationType,
         EntityType $entityType,
@@ -95,7 +98,6 @@ class ValidationContext implements ValidationContextInterface
      * Get the current service instance configured with the appropriate context.
      *
      * @return ServiceInterface The service instance with context configured
-     *
      * @throws RuntimeException When schedulable is not set or owner is required but not available
      */
     public function getCurrentService(): ServiceInterface
@@ -118,7 +120,6 @@ class ValidationContext implements ValidationContextInterface
     /**
      * Build Schedule service with the appropriate context.
      *
-     *
      * @return ServiceInterface Configured Schedule service
      * @throws RuntimeException When owner is required but not available
      */
@@ -136,7 +137,6 @@ class ValidationContext implements ValidationContextInterface
 
     /**
      * Build Impediment service with the appropriate context.
-     *
      *
      * @return ServiceInterface Configured Impediment service
      * @throws RuntimeException When owner is required but not available
@@ -192,7 +192,6 @@ class ValidationContext implements ValidationContextInterface
      * Get an Availability service instance configured with the schedulable context.
      *
      * @return AvailabilityService Configured Availability service
-     *
      * @throws RuntimeException When schedulable is not set
      */
     public function getAvailabilityService(): AvailabilityService
@@ -222,13 +221,30 @@ class ValidationContext implements ValidationContextInterface
      * Check if a key exists in the data and is not null.
      *
      * @param string $key The key to check
-     *
      * @return bool True if key exists and value is not null
      */
     public function has(string $key): bool
     {
         return array_key_exists($key, $this->data) && $this->data[$key] !== null;
     }
+
+    /**
+     * Determines whether at least one validation violation exists for the given field.
+     *
+     * @param string $field The field name to check for validation violations.
+     * @return bool True if at least one violation exists for the given field, false otherwise.
+     */
+    public function hasViolationFor(string $field): bool
+    {
+        foreach ($this->violations as $violation) {
+            if ($violation->getField() === $field) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
 
     /**
      * Get data with null values filtered out.
@@ -248,7 +264,6 @@ class ValidationContext implements ValidationContextInterface
      *
      * @param string $key The key to retrieve
      * @param mixed $default Default value if not found
-     *
      * @return mixed The retrieved value or default
      */
     public function get(string $key, mixed $default = null): mixed
@@ -260,14 +275,12 @@ class ValidationContext implements ValidationContextInterface
         }
 
         if ($this->operationType === OperationType::UPDATE && $this->currentEntity instanceof Model) {
-            // Utiliser getAttribute() d'Eloquent qui gère les accesseurs et attributs
             $value = $this->currentEntity->getAttribute($key);
 
             if ($value !== null) {
                 return $value;
             }
 
-            // Fallback pour les anciennes méthodes getter (pas Eloquent)
             $getter = 'get' . str_replace('_', '', ucwords($key, '_'));
             if (method_exists($this->currentEntity, $getter)) {
                 return $this->currentEntity->{$getter}();
@@ -282,7 +295,6 @@ class ValidationContext implements ValidationContextInterface
      *
      * @param string $key The key to retrieve
      * @param mixed $default Default value if key doesn't exist
-     *
      * @return mixed The raw value or default
      */
     public function rawGet(string $key, mixed $default = null): mixed
@@ -294,7 +306,6 @@ class ValidationContext implements ValidationContextInterface
      * Check if a key exists in raw data (including null values).
      *
      * @param string $key The key to check
-     *
      * @return bool True if key exists in raw data
      */
     public function rawHas(string $key): bool
@@ -338,16 +349,47 @@ class ValidationContext implements ValidationContextInterface
      *
      * @param string $field The field name with the violation
      * @param string $message The violation message
+     * @param string|null $rule The validation rule that was violated
+     * @param string|null $ruleDescription Optional description of the rule
      */
-    public function setViolation(string $field, string $message): void
-    {
-        $this->violations[$field] = $message;
+    public function setViolation(
+        string $field,
+        string $message,
+        ?string $rule = null,
+        ?string $ruleDescription = null
+    ): void {
+        $this->violations[] = new ViolationData(
+            field: $field,
+            rule: $rule,
+            message: $message,
+            ruleDescription: $ruleDescription
+        );
+    }
+
+    /**
+     * Add a validation violation with automatic rule information.
+     *
+     * @param RuleInterface $rule The rule that triggered the violation
+     * @param string $field The field name with the violation
+     * @param string $message The violation message
+     */
+    public function setViolationFromRule(
+        RuleInterface $rule,
+        string $field,
+        string $message
+    ): void {
+        $this->violations[] = new ViolationData(
+            field: $field,
+            rule: $rule->getName(),
+            message: $message,
+            ruleDescription: $rule->getDescription()
+        );
     }
 
     /**
      * Get all validation violations.
      *
-     * @return array<string, string|array<int, string>> Array of violations
+     * @return array<int, ViolationData> Array of violations
      */
     public function getViolations(): array
     {
@@ -379,7 +421,6 @@ class ValidationContext implements ValidationContextInterface
      * Check if a flag is set and truthy.
      *
      * @param string $flag The flag name
-     *
      * @return bool True if flag exists and has a truthy value
      */
     public function hasFlag(string $flag): bool
@@ -392,7 +433,6 @@ class ValidationContext implements ValidationContextInterface
      *
      * @param string $flag The flag name
      * @param mixed $default Default value if flag doesn't exist
-     *
      * @return mixed The flag value or default
      */
     public function getFlag(string $flag, mixed $default = false): mixed

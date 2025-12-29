@@ -84,12 +84,19 @@ final class TimeSlotDateTimeRuleTest extends TestCase
 
         // Assert: Violation should be present for datetime range
         $this->assertTrue($context->hasViolations());
-        $this->assertArrayHasKey('datetime_range', $context->getViolations());
-        $this->assertSame(
+        $this->assertTrue($context->hasViolationFor('datetime_range'));
+
+        $messages = array_map(
+            fn($violation) => $violation->getMessage(),
+            $context->getViolations()
+        );
+
+        $this->assertStringContainsString(
             'End datetime must be after start datetime',
-            $context->getViolations()['datetime_range']
+            implode(' ', $messages)
         );
     }
+
 
     /**
      * Test that validation fails when CREATE operation has end datetime equal to start datetime.
@@ -108,7 +115,7 @@ final class TimeSlotDateTimeRuleTest extends TestCase
 
         // Assert: Violation should be present for datetime range
         $this->assertTrue($context->hasViolations());
-        $this->assertArrayHasKey('datetime_range', $context->getViolations());
+        $this->assertTrue($context->hasViolationFor('datetime_range'));
     }
 
     /**
@@ -193,7 +200,7 @@ final class TimeSlotDateTimeRuleTest extends TestCase
 
         // Assert: Violation should be present for datetime range
         $this->assertTrue($context->hasViolations());
-        $this->assertArrayHasKey('datetime_range', $context->getViolations());
+        $this->assertTrue($context->hasViolationFor('datetime_range'));
     }
 
     /**
@@ -242,7 +249,7 @@ final class TimeSlotDateTimeRuleTest extends TestCase
 
         // Assert: Violation should be present for datetime range
         $this->assertTrue($context->hasViolations());
-        $this->assertArrayHasKey('datetime_range', $context->getViolations());
+        $this->assertTrue($context->hasViolationFor('datetime_range'));
     }
 
     /**
@@ -291,7 +298,7 @@ final class TimeSlotDateTimeRuleTest extends TestCase
 
         // Assert: Violation should be present for datetime range
         $this->assertTrue($context->hasViolations());
-        $this->assertArrayHasKey('datetime_range', $context->getViolations());
+        $this->assertTrue($context->hasViolationFor('datetime_range'));
     }
 
     /**
@@ -332,12 +339,17 @@ final class TimeSlotDateTimeRuleTest extends TestCase
         // Act: Execute validation
         $this->rule->validate($context);
 
+        $messages = array_map(
+            fn($violation) => $violation->getMessage(),
+            $context->getViolations()
+        );
+
         // Assert: Violation should be present for datetime format
         $this->assertTrue($context->hasViolations());
-        $this->assertArrayHasKey('datetime_format', $context->getViolations());
+        $this->assertTrue($context->hasViolationFor('datetime_format'));
         $this->assertStringContainsString(
             'Invalid datetime format',
-            (string) $context->getViolations()['datetime_format']
+            implode(' ', $messages)
         );
     }
 

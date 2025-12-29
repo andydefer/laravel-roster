@@ -84,8 +84,9 @@ class AvailabilityDaysCoherenceRule extends AbstractRule
         // ✅ 1. Format check FIRST
         if (!is_array($days)) {
             $validationContext->setViolation(
-                'days',
-                'Days must be an array'
+                field: 'days',
+                message: 'Days must be an array',
+                rule: self::class
             );
             return false;
         }
@@ -101,8 +102,9 @@ class AvailabilityDaysCoherenceRule extends AbstractRule
         foreach ($days as $day) {
             if (!in_array($day, $validDays, true)) {
                 $validationContext->setViolation(
-                    'days',
-                    sprintf("Day '%s' is not a valid day of week", $day)
+                    field: 'days',
+                    message: sprintf("Day '%s' is not a valid day of week", $day),
+                    rule: self::class
                 );
                 return false;
             }
@@ -199,8 +201,9 @@ class AvailabilityDaysCoherenceRule extends AbstractRule
                 $periodDescription = roster_format_period_days_for_display($daysInPeriod);
 
                 $validationContext->setViolation(
-                    'days',
-                    sprintf("Day '%s' is not within the validity period (%s)", $day, $periodDescription)
+                    field: 'days',
+                    message: sprintf("Day '%s' is not within the validity period (%s)", $day, $periodDescription),
+                    rule: self::class
                 );
             }
         }

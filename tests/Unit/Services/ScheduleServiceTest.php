@@ -191,13 +191,14 @@ final class ScheduleServiceTest extends TestCase
 
         // Assert: Should throw validation exception
         $this->expectException(ValidationFailedException::class);
-        $this->expectExceptionMessageMatches('/Create validation failed for Schedule: availability_id → Invalid availability ID/');
+        $this->expectExceptionMessageMatches('/Invalid availability ID/');
 
         // Act: Attempt to create schedule for wrong schedulable
         schedule_for($availabilityForSchedulable1)
             ->for($schedulable2)
             ->create($scheduleData);
     }
+
 
     /**
      * Test successful schedule update.

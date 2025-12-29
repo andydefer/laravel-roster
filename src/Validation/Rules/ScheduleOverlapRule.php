@@ -62,6 +62,23 @@ class ScheduleOverlapRule extends AbstractRule
     }
 
     /**
+     * Returns a detailed description of what this rule validates.
+     *
+     * @return string Detailed description
+     */
+    public function getDescription(): string
+    {
+        return "Validates that no temporal overlap exists with other time slots.\n" .
+            "This rule prevents:\n" .
+            "- Double bookings on the same time slot\n" .
+            "- Impediments overlapping with existing schedules\n" .
+            "- Availability conflicts between different entity types\n" .
+            "\n" .
+            "The system checks within the same availability if there are existing " .
+            "entities (schedules or impediments) whose periods overlap with the proposed one.";
+    }
+
+    /**
      * Checks if the validation context has required fields.
      *
      * @param ValidationContextInterface $validationContext Validation context
@@ -126,7 +143,8 @@ class ScheduleOverlapRule extends AbstractRule
         );
 
         if ($conflictResult->hasConflicts) {
-            $validationContext->setViolation(
+            $validationContext->setViolationFromRule(
+                $this,
                 'overlap',
                 $conflictResult->message
             );

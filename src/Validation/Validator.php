@@ -21,18 +21,19 @@ use Throwable;
  */
 class Validator implements ValidatorInterface
 {
-    /**
-     * @var array<string, array<int, RuleInterface>> Rules indexed by operation:entity key
-     */
+    /** @var array<string, array<int, RuleInterface>> Rules indexed by operation:entity key */
     private array $rulesByEntityOperation = [];
 
-    /**
-     * @var array<int, RuleInterface> All registered rules
-     */
+    /** @var array<int, RuleInterface> All registered rules */
     private array $allRules = [];
 
     private RuleScanner $ruleScanner;
 
+    /**
+     * Creates a new validator instance.
+     *
+     * @param RuleScanner|null $ruleScanner Optional custom rule scanner
+     */
     public function __construct(?RuleScanner $ruleScanner = null)
     {
         $this->ruleScanner = $ruleScanner ?? new RuleScanner(
@@ -59,7 +60,6 @@ class Validator implements ValidatorInterface
      *
      * @param ValidationContextInterface $validationContext The context to validate
      * @param array<int, RuleInterface> $additionalRules Additional rules to apply
-     *
      * @return ValidationResult The validation result with success status and violations
      */
     public function validate(
@@ -115,13 +115,11 @@ class Validator implements ValidatorInterface
      *
      * @param OperationType $operationType The operation type
      * @param EntityType $entityType The entity type
-     *
      * @return array<int, RuleInterface> Applicable rules
      */
     public function getRulesFor(OperationType $operationType, EntityType $entityType): array
     {
         $key = $this->createCacheKey($operationType, $entityType);
-
         return $this->rulesByEntityOperation[$key] ?? [];
     }
 
@@ -130,7 +128,6 @@ class Validator implements ValidatorInterface
      *
      * @param OperationType $operationType The operation type
      * @param EntityType $entityType The entity type
-     *
      * @return bool True if rules exist, false otherwise
      */
     public function hasRulesFor(OperationType $operationType, EntityType $entityType): bool
@@ -152,7 +149,6 @@ class Validator implements ValidatorInterface
      * Checks if a specific rule class is registered.
      *
      * @param string $ruleClass Fully qualified rule class name
-     *
      * @return bool True if the rule is registered, false otherwise
      */
     public function hasRule(string $ruleClass): bool
@@ -201,7 +197,8 @@ class Validator implements ValidatorInterface
         RuleInterface $rule,
         Throwable $throwable
     ): void {
-        $validationContext->setViolation(
+        $validationContext->setViolationFromRule(
+            $rule,
             '_system',
             sprintf(
                 'Validation rule %s failed: %s',
@@ -276,7 +273,6 @@ class Validator implements ValidatorInterface
      *
      * @param OperationType $operationType The operation type
      * @param EntityType $entityType The entity type
-     *
      * @return string The cache key
      */
     private function createCacheKey(OperationType $operationType, EntityType $entityType): string

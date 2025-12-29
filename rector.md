@@ -1,68 +1,21 @@
 # Rector Refactoring Report
-*Generated: lun. 29 déc. 2025 02:58:00 WAT*
+*Generated: lun. 29 déc. 2025 07:49:41 WAT*
 
 
-38 files with changes
+42 files with changes
 =====================
 
-1) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Validation/Rules/TimeRangeRuleTest.php:22
+1) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Validation/Rules/TimezoneValidationRuleTest.php:4
 
     ---------- begin diff ----------
 @@ @@
-     use RefreshDatabase;
 
-     private AvailabilityService|MockInterface $availabilityService;
-+
-     private TimeRangeRule $rule;
-+
-     private Model|MockInterface $schedulable;
+ namespace Tests\Unit\Validation\Rules;
 
-     /**
-    ----------- end diff -----------
-
-Applied rules:
- * NewlineBetweenClassLikeStmtsRector
-
-
-2) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Validation/Rules/TimeSlotDateTimeRuleTest.php:23
-
-    ---------- begin diff ----------
-@@ @@
- final class TimeSlotDateTimeRuleTest extends TestCase
- {
-     private TimeSlotDateTimeRule $rule;
-+
-     private Model|MockInterface $schedulable;
-
-     /**
-@@ @@
-      * @param string|null $startDatetime The start datetime string or null if not provided
-      * @param string|null $endDatetime The end datetime string or null if not provided
-      * @param object|null $currentEntity The current entity for UPDATE operations
--     *
--     * @return ValidationContext
-      */
-     private function createValidationContext(
-         OperationType $operationType,
-@@ @@
-      *
-      * @param string|null $startDatetime The start datetime string or null
-      * @param string|null $endDatetime The end datetime string or null
--     *
--     * @return object
-      */
-     private function createMockEntity(?string $startDatetime, ?string $endDatetime): object
-     {
-    ----------- end diff -----------
-
-Applied rules:
- * NewlineBetweenClassLikeStmtsRector
- * RemoveUselessReturnTagRector
-
-
-3) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Validation/Rules/TimezoneValidationRuleTest.php:21
-
-    ---------- begin diff ----------
++use Roster\Validation\DTOs\ViolationData;
+ use Mockery;
+ use Mockery\MockInterface;
+ use Roster\Domain\Helpers\TimezoneHelper;
 @@ @@
  final class TimezoneValidationRuleTest extends TestCase
  {
@@ -71,6 +24,15 @@ Applied rules:
      private Model|MockInterface $schedulable;
 
      protected function setUp(): void
+@@ @@
+
+         // Optionally, verify the message
+         $messages = array_map(
+-            fn($violation) => $violation->getMessage(),
++            fn(ViolationData $violation): string => $violation->getMessage(),
+             $context->getViolations()
+         );
+
 @@ @@
              // Assert: Validation should pass for all entity types
              $this->assertFalse(
@@ -103,9 +65,11 @@ Applied rules:
  * NewlineBetweenClassLikeStmtsRector
  * EncapsedStringsToSprintfRector
  * ClassMethodArrayDocblockParamFromLocalCallsRector
+ * AddArrowFunctionReturnTypeRector
+ * AddArrayFunctionClosureParamTypeRector
 
 
-4) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Validation/ValidationContextTest.php:4
+2) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Validation/ValidationContextTest.php:4
 
     ---------- begin diff ----------
 @@ @@
@@ -191,25 +155,18 @@ Applied rules:
  * AddClosureVoidReturnTypeWhereNoReturnRector
 
 
-5) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Validation/ValidatorTest.php:4
+3) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Validation/ValidatorTest.php:4
 
     ---------- begin diff ----------
 @@ @@
 
  namespace Tests\Unit\Validation;
 
++use Roster\Validation\DTOs\ViolationData;
 +use ReflectionClass;
  use Exception;
  use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
  use PHPUnit\Framework\MockObject\MockObject;
-@@ @@
- use Roster\Enums\EntityType;
- use Roster\Enums\OperationType;
- use Roster\Validation\RuleScanner;
--use Roster\Validation\ValidationResult;
- use Roster\Validation\Validator;
- use Tests\TestCase;
-
 @@ @@
          // Assert: Verify both rules are registered by class name
          $this->assertTrue($validator->hasRule(TestRule1::class));
@@ -238,14 +195,19 @@ Applied rules:
                  return 10;
              }
 +
+             public function getDescription(): string
+             {
+                 return 'Low priority test rule';
+             }
++
              public function supports(OperationType $operation, EntityType $entity): bool
              {
                  return $operation === OperationType::CREATE && $entity === EntityType::AVAILABILITY;
              }
 +
-             public function validate(ValidationContextInterface $context): void {}
-         };
-
+             public function validate(ValidationContextInterface $context): void
+             {
+                 $this->executionOrder[] = 'LowPriorityRule';
 @@ @@
              {
                  return 'MediumPriorityRule';
@@ -256,14 +218,19 @@ Applied rules:
                  return 50;
              }
 +
+             public function getDescription(): string
+             {
+                 return 'Medium priority test rule';
+             }
++
              public function supports(OperationType $operation, EntityType $entity): bool
              {
                  return $operation === OperationType::CREATE && $entity === EntityType::AVAILABILITY;
              }
 +
-             public function validate(ValidationContextInterface $context): void {}
-         };
-
+             public function validate(ValidationContextInterface $context): void
+             {
+                 $this->executionOrder[] = 'MediumPriorityRule';
 @@ @@
              {
                  return 'HighPriorityRule';
@@ -274,14 +241,42 @@ Applied rules:
                  return 100;
              }
 +
+             public function getDescription(): string
+             {
+                 return 'High priority test rule';
+             }
++
              public function supports(OperationType $operation, EntityType $entity): bool
              {
                  return $operation === OperationType::CREATE && $entity === EntityType::AVAILABILITY;
              }
 +
-             public function validate(ValidationContextInterface $context): void {}
-         };
+             public function validate(ValidationContextInterface $context): void
+             {
+                 $this->executionOrder[] = 'HighPriorityRule';
+@@ @@
+         $context = $this->createMock(ValidationContextInterface::class);
+         $context->method('getOperation')->willReturn(OperationType::CREATE);
+         $context->method('getEntityType')->willReturn(EntityType::AVAILABILITY);
+-        $context->method('hasViolations')->willReturnCallback(function () use (&$violations) {
+-            return count($violations) > 0;
++        $context->method('hasViolations')->willReturnCallback(function () use (&$violations): bool {
++            return $violations !== [];
+         });
+-        $context->method('getViolations')->willReturnCallback(function () use (&$violations) {
++        $context->method('getViolations')->willReturnCallback(function () use (&$violations): array {
+             return $violations;
+         });
 
+@@ @@
+         $result = $validator->validate($context);
+
+         // Assert: Rules should be sorted by priority (higher priority first)
+-        $this->assertEquals(['HighPriorityRule', 'MediumPriorityRule', 'LowPriorityRule'], $executionOrder);
++        $this->assertSame(['HighPriorityRule', 'MediumPriorityRule', 'LowPriorityRule'], $executionOrder);
+         $this->assertTrue($result->isValid());
+
+         // Also verify all three rules are registered
 @@ @@
              {
                  return 'PassingRule';
@@ -292,14 +287,125 @@ Applied rules:
                  return 50;
              }
 +
+             public function getDescription(): string
+             {
+                 return 'Test rule that always passes validation';
+             }
++
              public function supports(OperationType $operation, EntityType $entity): bool
              {
                  return $operation === OperationType::CREATE && $entity === EntityType::SCHEDULE;
              }
 +
-             public function validate(ValidationContextInterface $context): void {}
-         };
+             public function validate(ValidationContextInterface $context): void
+             {
+                 // No violation added
+@@ @@
+         $context = $this->createMock(ValidationContextInterface::class);
+         $context->method('getOperation')->willReturn(OperationType::CREATE);
+         $context->method('getEntityType')->willReturn(EntityType::SCHEDULE);
+-        $context->method('hasViolations')->willReturnCallback(function () use (&$violations) {
+-            return count($violations) > 0;
++        $context->method('hasViolations')->willReturnCallback(function () use (&$violations): bool {
++            return $violations !== [];
+         });
+-        $context->method('getViolations')->willReturnCallback(function () use (&$violations) {
++        $context->method('getViolations')->willReturnCallback(function () use (&$violations): array {
+             return $violations;
+         });
+-        $context->method('setViolation')->willReturnCallback(function ($field, $message, $rule = null) use (&$violations) {
+-            $violations[] = new \Roster\Validation\DTOs\ViolationData($field, $message, $rule);
++        $context->method('setViolation')->willReturnCallback(function (string $field, string $message, ?string $rule = null) use (&$violations): void {
++            $violations[] = new ViolationData($field, $message, $rule);
+         });
 
+         // Act: Execute validation
+@@ @@
+             {
+                 return 'DescriptiveRule';
+             }
++
+             public function getPriority(): int
+             {
+                 return 50;
+             }
++
+             public function getDescription(): string
+             {
+                 return 'Rule that demonstrates setViolationFromRule usage';
+             }
++
+             public function supports(OperationType $operation, EntityType $entity): bool
+             {
+                 return $operation === OperationType::CREATE && $entity === EntityType::AVAILABILITY;
+             }
++
+             public function validate(ValidationContextInterface $context): void
+             {
+                 $context->setViolationFromRule($this, 'test_field', 'Test violation message');
+@@ @@
+         $context = $this->createMock(ValidationContextInterface::class);
+         $context->method('getOperation')->willReturn(OperationType::CREATE);
+         $context->method('getEntityType')->willReturn(EntityType::AVAILABILITY);
+-        $context->method('hasViolations')->willReturnCallback(function () use (&$violations) {
+-            return count($violations) > 0;
++        $context->method('hasViolations')->willReturnCallback(function () use (&$violations): bool {
++            return $violations !== [];
+         });
+-        $context->method('getViolations')->willReturnCallback(function () use (&$violations) {
++        $context->method('getViolations')->willReturnCallback(function () use (&$violations): array {
+             return $violations;
+         });
+-        $context->method('setViolationFromRule')->willReturnCallback(function ($ruleArg, $field, $message) use (&$violations) {
+-            $violations[] = new \Roster\Validation\DTOs\ViolationData(
++        $context->method('setViolationFromRule')->willReturnCallback(function ($ruleArg, string $field, string $message) use (&$violations): void {
++            $violations[] = new ViolationData(
+                 $field,
+                 $message,
+                 $ruleArg->getName(),
+@@ @@
+             {
+                 return 'ViolatingRule';
+             }
++
+             public function getPriority(): int
+             {
+                 return 50;
+             }
++
+             public function getDescription(): string
+             {
+                 return 'Test rule that always creates violations';
+             }
++
+             public function supports(OperationType $operation, EntityType $entity): bool
+             {
+                 return $operation === OperationType::CREATE && $entity === EntityType::SCHEDULE;
+             }
++
+             public function validate(ValidationContextInterface $context): void
+             {
+                 $context->setViolation('field1', 'Field is required');
+@@ @@
+         $context = $this->createMock(ValidationContextInterface::class);
+         $context->method('getOperation')->willReturn(OperationType::CREATE);
+         $context->method('getEntityType')->willReturn(EntityType::SCHEDULE);
+-        $context->method('hasViolations')->willReturnCallback(function () use (&$violations) {
+-            return count($violations) > 0;
++        $context->method('hasViolations')->willReturnCallback(function () use (&$violations): bool {
++            return $violations !== [];
+         });
+-        $context->method('getViolations')->willReturnCallback(function () use (&$violations) {
++        $context->method('getViolations')->willReturnCallback(function () use (&$violations): array {
+             return $violations;
+         });
+-        $context->method('setViolation')->willReturnCallback(function ($field, $message, $rule = null) use (&$violations) {
+-            $violations[] = new \Roster\Validation\DTOs\ViolationData($field, $message, $rule);
++        $context->method('setViolation')->willReturnCallback(function (string $field, string $message, ?string $rule = null) use (&$violations): void {
++            $violations[] = new ViolationData($field, $message, $rule);
+         });
+
+         // Act: Execute validation
 @@ @@
              {
                  return 'BaseRule';
@@ -308,6 +414,11 @@ Applied rules:
              public function getPriority(): int
              {
                  return 50;
+             }
++
+             public function getDescription(): string
+             {
+                 return 'Base test rule';
              }
 +
              public function supports(OperationType $operation, EntityType $entity): bool
@@ -328,6 +439,11 @@ Applied rules:
                  return 50;
              }
 +
+             public function getDescription(): string
+             {
+                 return 'Additional test rule';
+             }
++
              public function supports(OperationType $operation, EntityType $entity): bool
              {
                  return $operation === OperationType::UPDATE && $entity === EntityType::IMPEDIMENT;
@@ -337,6 +453,35 @@ Applied rules:
              {
                  $context->setViolation('additional', 'Additional rule violation');
 @@ @@
+         $context = $this->createMock(ValidationContextInterface::class);
+         $context->method('getOperation')->willReturn(OperationType::UPDATE);
+         $context->method('getEntityType')->willReturn(EntityType::IMPEDIMENT);
+-        $context->method('hasViolations')->willReturnCallback(function () use (&$violations) {
+-            return count($violations) > 0;
++        $context->method('hasViolations')->willReturnCallback(function () use (&$violations): bool {
++            return $violations !== [];
+         });
+-        $context->method('getViolations')->willReturnCallback(function () use (&$violations) {
++        $context->method('getViolations')->willReturnCallback(function () use (&$violations): array {
+             return $violations;
+         });
+-        $context->method('setViolation')->willReturnCallback(function ($field, $message, $rule = null) use (&$violations) {
+-            $violations[] = new \Roster\Validation\DTOs\ViolationData($field, $message, $rule);
++        $context->method('setViolation')->willReturnCallback(function (string $field, string $message, ?string $rule = null) use (&$violations): void {
++            $violations[] = new ViolationData($field, $message, $rule);
+         });
+
+         // Act: Execute validation with additional rules
+@@ @@
+         $this->assertFalse($result->isValid());
+         $this->assertCount(2, $result->getViolations());
+
+-        $violationFields = array_map(fn($v) => $v->getField(), $result->getViolations());
++        $violationFields = array_map(fn(ViolationData $v): string => $v->getField(), $result->getViolations());
+         $this->assertContains('base', $violationFields);
+         $this->assertContains('additional', $violationFields);
+     }
+@@ @@
              {
                  return 'ExceptionRule';
              }
@@ -344,6 +489,11 @@ Applied rules:
              public function getPriority(): int
              {
                  return 50;
+             }
++
+             public function getDescription(): string
+             {
+                 return 'Test rule that throws exception';
              }
 +
              public function supports(OperationType $operation, EntityType $entity): bool
@@ -355,6 +505,26 @@ Applied rules:
              {
                  throw new Exception('Rule processing failed');
 @@ @@
+         $context = $this->createMock(ValidationContextInterface::class);
+         $context->method('getOperation')->willReturn(OperationType::CREATE);
+         $context->method('getEntityType')->willReturn(EntityType::SCHEDULE);
+-        $context->method('hasViolations')->willReturnCallback(function () use (&$violations) {
+-            return count($violations) > 0;
++        $context->method('hasViolations')->willReturnCallback(function () use (&$violations): bool {
++            return $violations !== [];
+         });
+-        $context->method('getViolations')->willReturnCallback(function () use (&$violations) {
++        $context->method('getViolations')->willReturnCallback(function () use (&$violations): array {
+             return $violations;
+         });
+-        $context->method('setViolationFromRule')->willReturnCallback(function ($ruleArg, $field, $message) use (&$violations) {
+-            $violations[] = new \Roster\Validation\DTOs\ViolationData(
++        $context->method('setViolationFromRule')->willReturnCallback(function ($ruleArg, string $field, string $message) use (&$violations): void {
++            $violations[] = new ViolationData(
+                 $field,
+                 $message,
+                 $ruleArg->getName(),
+@@ @@
              {
                  return 'AvailabilityRule';
              }
@@ -362,6 +532,11 @@ Applied rules:
              public function getPriority(): int
              {
                  return 50;
+             }
++
+             public function getDescription(): string
+             {
+                 return 'Rule for availability entities';
              }
 +
              public function supports(OperationType $operation, EntityType $entity): bool
@@ -383,6 +558,11 @@ Applied rules:
                  return 50;
              }
 +
+             public function getDescription(): string
+             {
+                 return 'Rule for schedule entities';
+             }
++
              public function supports(OperationType $operation, EntityType $entity): bool
              {
                  return $entity === EntityType::SCHEDULE && $operation === OperationType::CREATE;
@@ -399,6 +579,11 @@ Applied rules:
              public function getPriority(): int
              {
                  return 50;
+             }
++
+             public function getDescription(): string
+             {
+                 return 'Generic test rule';
              }
 +
              public function supports(OperationType $operation, EntityType $entity): bool
@@ -419,6 +604,11 @@ Applied rules:
                  return 50;
              }
 +
+             public function getDescription(): string
+             {
+                 return 'First test rule';
+             }
++
              public function supports(OperationType $operation, EntityType $entity): bool
              {
                  return true;
@@ -437,6 +627,11 @@ Applied rules:
                  return 50;
              }
 +
+             public function getDescription(): string
+             {
+                 return 'Second test rule';
+             }
++
              public function supports(OperationType $operation, EntityType $entity): bool
              {
                  return true;
@@ -453,6 +648,11 @@ Applied rules:
              public function getPriority(): int
              {
                  return 50;
+             }
++
+             public function getDescription(): string
+             {
+                 return 'Third test rule';
              }
 +
              public function supports(OperationType $operation, EntityType $entity): bool
@@ -482,6 +682,11 @@ Applied rules:
                  return 50;
              }
 +
+             public function getDescription(): string
+             {
+                 return 'First multiple rule';
+             }
++
              public function supports(OperationType $operation, EntityType $entity): bool
              {
                  return $operation === OperationType::CREATE && $entity === EntityType::AVAILABILITY;
@@ -498,6 +703,11 @@ Applied rules:
              public function getPriority(): int
              {
                  return 50;
+             }
++
+             public function getDescription(): string
+             {
+                 return 'Second multiple rule';
              }
 +
              public function supports(OperationType $operation, EntityType $entity): bool
@@ -518,6 +728,11 @@ Applied rules:
                  return 50;
              }
 +
+             public function getDescription(): string
+             {
+                 return 'Third multiple rule';
+             }
++
              public function supports(OperationType $operation, EntityType $entity): bool
              {
                  return $operation === OperationType::CREATE && $entity === EntityType::AVAILABILITY;
@@ -526,6 +741,26 @@ Applied rules:
              public function validate(ValidationContextInterface $context): void
              {
                  $context->setViolation('rule3', 'Violation from Rule3');
+@@ @@
+         $context = $this->createMock(ValidationContextInterface::class);
+         $context->method('getOperation')->willReturn(OperationType::CREATE);
+         $context->method('getEntityType')->willReturn(EntityType::AVAILABILITY);
+-        $context->method('hasViolations')->willReturnCallback(function () use (&$violations) {
+-            return count($violations) > 0;
++        $context->method('hasViolations')->willReturnCallback(function () use (&$violations): bool {
++            return $violations !== [];
+         });
+-        $context->method('getViolations')->willReturnCallback(function () use (&$violations) {
++        $context->method('getViolations')->willReturnCallback(function () use (&$violations): array {
+             return $violations;
+         });
+-        $context->method('setViolation')->willReturnCallback(function ($field, $message, $rule = null) use (&$violations) {
+-            $violations[] = new \Roster\Validation\DTOs\ViolationData($field, $message, $rule);
++        $context->method('setViolation')->willReturnCallback(function (string $field, string $message, ?string $rule = null) use (&$violations): void {
++            $violations[] = new ViolationData($field, $message, $rule);
+         });
+
+         // Act: Execute validation
 @@ @@
      public function test_generates_correct_cache_keys_for_rule_indexing(): void
      {
@@ -543,6 +778,11 @@ Applied rules:
              public function getPriority(): int
              {
                  return 50;
+             }
++
+             public function getDescription(): string
+             {
+                 return 'Rule with invalid attribute handling';
              }
 +
              public function supports(OperationType $operation, EntityType $entity): bool
@@ -563,6 +803,11 @@ Applied rules:
                  return 50;
              }
 +
+             public function getDescription(): string
+             {
+                 return 'First count test rule';
+             }
++
              public function supports(OperationType $operation, EntityType $entity): bool
              {
                  return true;
@@ -579,6 +824,11 @@ Applied rules:
              public function getPriority(): int
              {
                  return 50;
+             }
++
+             public function getDescription(): string
+             {
+                 return 'Second count test rule';
              }
 +
              public function supports(OperationType $operation, EntityType $entity): bool
@@ -618,6 +868,11 @@ Applied rules:
                  return 50;
              }
 +
+             public function getDescription(): string
+             {
+                 return 'Duplicate rule test';
+             }
++
              public function supports(OperationType $operation, EntityType $entity): bool
              {
                  return true;
@@ -634,70 +889,74 @@ Applied rules:
 +        $this->assertSame(3, $this->validator->getRuleCount());
          $this->assertTrue($this->validator->hasRule(get_class($rule)));
      }
- }
-@@ @@
-     {
-         return 'TestRule1';
-     }
-+
-     public function getPriority(): int
-     {
-         return 50;
-     }
-+
-     public function supports(OperationType $operation, EntityType $entity): bool
-     {
-         return true;
-     }
-+
-     public function validate(ValidationContextInterface $context): void {}
- }
 
 @@ @@
-     {
-         return 'TestRule2';
-     }
+             {
+                 return 'ViolationDataRule';
+             }
 +
-     public function getPriority(): int
-     {
-         return 50;
-     }
+             public function getPriority(): int
+             {
+                 return 50;
+             }
 +
-     public function supports(OperationType $operation, EntityType $entity): bool
-     {
-         return true;
-     }
+             public function getDescription(): string
+             {
+                 return 'Rule demonstrating ViolationData objects';
+             }
 +
-     public function validate(ValidationContextInterface $context): void {}
- }
-
+             public function supports(OperationType $operation, EntityType $entity): bool
+             {
+                 return $operation === OperationType::CREATE && $entity === EntityType::AVAILABILITY;
+             }
++
+             public function validate(ValidationContextInterface $context): void
+             {
+                 $context->setViolation('field1', 'Required field', 'required');
 @@ @@
-     {
-         return 'CustomRule';
+         $context = $this->createMock(ValidationContextInterface::class);
+         $context->method('getOperation')->willReturn(OperationType::CREATE);
+         $context->method('getEntityType')->willReturn(EntityType::AVAILABILITY);
+-        $context->method('hasViolations')->willReturnCallback(function () use (&$violations) {
+-            return count($violations) > 0;
++        $context->method('hasViolations')->willReturnCallback(function () use (&$violations): bool {
++            return $violations !== [];
+         });
+-        $context->method('getViolations')->willReturnCallback(function () use (&$violations) {
++        $context->method('getViolations')->willReturnCallback(function () use (&$violations): array {
+             return $violations;
+         });
+-        $context->method('setViolation')->willReturnCallback(function ($field, $message, $rule = null) use (&$violations) {
+-            $violations[] = new \Roster\Validation\DTOs\ViolationData($field, $message, $rule);
++        $context->method('setViolation')->willReturnCallback(function (string $field, string $message, ?string $rule = null) use (&$violations): void {
++            $violations[] = new ViolationData($field, $message, $rule);
+         });
+
+         // Act: Execute validation
+@@ @@
+         $this->assertFalse($result->isValid());
+         $violations = $result->getViolations();
+         $this->assertCount(2, $violations);
+-        $this->assertInstanceOf(\Roster\Validation\DTOs\ViolationData::class, $violations[0]);
+-        $this->assertEquals('field1', $violations[0]->getField());
+-        $this->assertEquals('required', $violations[0]->getRule());
++        $this->assertInstanceOf(ViolationData::class, $violations[0]);
++        $this->assertSame('field1', $violations[0]->getField());
++        $this->assertSame('required', $violations[0]->getRule());
      }
-+
-     public function getPriority(): int
-     {
-         return 50;
-     }
-+
-     public function supports(OperationType $operation, EntityType $entity): bool
-     {
-         return true;
-     }
-+
-     public function validate(ValidationContextInterface $context): void {}
  }
     ----------- end diff -----------
 
 Applied rules:
  * NewlineBetweenClassLikeStmtsRector
+ * CountArrayToEmptyArrayComparisonRector
+ * TypeWillReturnCallableArrowFunctionRector
  * AssertEqualsToSameRector
  * AddArrowFunctionReturnTypeRector
  * AddArrayFunctionClosureParamTypeRector
 
 
-6) /home/andy-kani/pro/sites/packages/laravel-roster/tests/database/migrations/2024_01_01_000000_create_test_schedulables_table.php:18
+4) /home/andy-kani/pro/sites/packages/laravel-roster/tests/database/migrations/2024_01_01_000000_create_test_schedulables_table.php:18
 
     ---------- begin diff ----------
 @@ @@
@@ -724,7 +983,7 @@ Applied rules:
  * RemoveUselessReturnTagRector
 
 
-7) /home/andy-kani/pro/sites/packages/laravel-roster/src/Casts/TimezoneAwareDateTimeCast.php:4
+5) /home/andy-kani/pro/sites/packages/laravel-roster/src/Casts/TimezoneAwareDateTimeCast.php:4
 
     ---------- begin diff ----------
 @@ @@
@@ -766,7 +1025,7 @@ Applied rules:
  * RemoveUselessParamTagRector
 
 
-8) /home/andy-kani/pro/sites/packages/laravel-roster/src/Commands/DebugRulesCommand.php:4
+6) /home/andy-kani/pro/sites/packages/laravel-roster/src/Commands/DebugRulesCommand.php:4
 
     ---------- begin diff ----------
 @@ @@
@@ -989,7 +1248,7 @@ Applied rules:
  * AddReturnArrayDocblockBasedOnArrayMapRector
 
 
-9) /home/andy-kani/pro/sites/packages/laravel-roster/src/Domain/Helpers/TimezoneHelper.php:4
+7) /home/andy-kani/pro/sites/packages/laravel-roster/src/Domain/Helpers/TimezoneHelper.php:4
 
     ---------- begin diff ----------
 @@ @@
@@ -1068,7 +1327,7 @@ Applied rules:
  * DisallowedEmptyRuleFixerRector
 
 
-10) /home/andy-kani/pro/sites/packages/laravel-roster/src/Models/Impediment.php:4
+8) /home/andy-kani/pro/sites/packages/laravel-roster/src/Models/Impediment.php:4
 
     ---------- begin diff ----------
 @@ @@
@@ -1110,7 +1369,26 @@ Applied rules:
  * NewlineAfterStatementRector
 
 
-11) /home/andy-kani/pro/sites/packages/laravel-roster/src/Validation/Cache/RuleCacheGenerator.php:148
+9) /home/andy-kani/pro/sites/packages/laravel-roster/src/Services/Core/AbstractService.php:192
+
+    ---------- begin diff ----------
+@@ @@
+                 $this->getEntityTypeEnum()
+             );
+         }
++
+         $deleteData = [
+             'id' => $id,
+             'schedulable_id' => $entity->schedulable_id ?? $this->schedulable->id,
+    ----------- end diff -----------
+
+Applied rules:
+ * NewlineAfterStatementRector
+ * DocblockGetterReturnArrayFromPropertyDocblockVarRector
+ * DocblockVarArrayFromGetterReturnRector
+
+
+10) /home/andy-kani/pro/sites/packages/laravel-roster/src/Validation/Cache/RuleCacheGenerator.php:148
 
     ---------- begin diff ----------
 @@ @@
@@ -1156,7 +1434,90 @@ Applied rules:
  * AddArrayFunctionClosureParamTypeRector
 
 
-12) /home/andy-kani/pro/sites/packages/laravel-roster/src/Validation/Rules/AvailabilityDaysCoherenceRule.php:63
+11) /home/andy-kani/pro/sites/packages/laravel-roster/src/Validation/Context/ValidationContext.php:360
+
+    ---------- begin diff ----------
+@@ @@
+     ): void {
+         $this->violations[] = new ViolationData(
+             field: $field,
++            message: $message,
+             rule: $rule,
+-            message: $message,
+             ruleDescription: $ruleDescription
+         );
+     }
+@@ @@
+     ): void {
+         $this->violations[] = new ViolationData(
+             field: $field,
++            message: $message,
+             rule: $rule->getName(),
+-            message: $message,
+             ruleDescription: $rule->getDescription()
+         );
+     }
+    ----------- end diff -----------
+
+Applied rules:
+ * SortNamedParamRector
+
+
+12) /home/andy-kani/pro/sites/packages/laravel-roster/src/Validation/Exceptions/ValidationFailedException.php:116
+
+    ---------- begin diff ----------
+@@ @@
+     public function toArray(): array
+     {
+         $violationsArray = array_map(
+-            fn(ViolationData $violation) => [
++            fn(ViolationData $violation): array => [
+                 'field' => $violation->getField(),
+                 'rule' => $violation->getRule(),
+                 'message' => $violation->getMessage(),
+@@ @@
+     public function toDetailedArray(): array
+     {
+         $violationsArray = array_map(
+-            fn(ViolationData $violation) => $violation->toArray(),
++            fn(ViolationData $violation): array => $violation->toArray(),
+             $this->violations
+         );
+
+@@ @@
+         $latestViolations = $this->keepLatestViolationPerField($violations);
+
+         $messages = array_map(
+-            fn(ViolationData $violation) => $violation->getMessage(),
++            fn(ViolationData $violation): string => $violation->getMessage(),
+             $latestViolations
+         );
+
+@@ @@
+      * @param array<int, mixed> $violations
+      * @return array<int, ViolationData>
+      *
+-     * @throws \InvalidArgumentException If an element is not a ViolationData instance
++     * @throws InvalidArgumentException If an element is not a ViolationData instance
+      */
+     private function keepLatestViolationPerField(array $violations): array
+     {
+@@ @@
+
+         foreach ($violations as $violation) {
+             if (!$violation instanceof ViolationData) {
+-                throw new \InvalidArgumentException(
++                throw new InvalidArgumentException(
+                     sprintf(
+                         'Expected instance of ViolationData, got %s',
+                         is_object($violation) ? get_class($violation) : gettype($violation)
+    ----------- end diff -----------
+
+Applied rules:
+ * AddArrowFunctionReturnTypeRector
+
+
+13) /home/andy-kani/pro/sites/packages/laravel-roster/src/Validation/Rules/AvailabilityDaysCoherenceRule.php:63
 
     ---------- begin diff ----------
 @@ @@
@@ -1199,7 +1560,7 @@ Applied rules:
  * AddParamArrayDocblockFromDimFetchAccessRector
 
 
-13) /home/andy-kani/pro/sites/packages/laravel-roster/src/Validation/Rules/AvailabilityTemporalCoherenceRule.php:116
+14) /home/andy-kani/pro/sites/packages/laravel-roster/src/Validation/Rules/AvailabilityTemporalCoherenceRule.php:116
 
     ---------- begin diff ----------
 @@ @@
@@ -1266,7 +1627,7 @@ Applied rules:
  * AddArrowFunctionReturnTypeRector
 
 
-14) /home/andy-kani/pro/sites/packages/laravel-roster/src/Validation/Rules/TimezoneValidationRule.php:4
+15) /home/andy-kani/pro/sites/packages/laravel-roster/src/Validation/Rules/TimezoneValidationRule.php:4
 
     ---------- begin diff ----------
 @@ @@
@@ -1304,7 +1665,25 @@ Applied rules:
  * RemoveUselessReturnTagRector
 
 
-15) /home/andy-kani/pro/sites/packages/laravel-roster/src/helpers.php:77
+16) /home/andy-kani/pro/sites/packages/laravel-roster/src/Validation/ValidationResult.php:72
+
+    ---------- begin diff ----------
+@@ @@
+     public function toArray(bool $includeRuleDescriptions = false): array
+     {
+         $violationsArray = array_map(
+-            function (ViolationData $violation) use ($includeRuleDescriptions) {
++            function (ViolationData $violation) use ($includeRuleDescriptions): array {
+                 $data = [
+                     'field' => $violation->getField(),
+                     'rule' => $violation->getRule(),
+    ----------- end diff -----------
+
+Applied rules:
+ * ClosureReturnTypeRector
+
+
+17) /home/andy-kani/pro/sites/packages/laravel-roster/src/helpers.php:77
 
     ---------- begin diff ----------
 @@ @@
@@ -1365,7 +1744,7 @@ Applied rules:
  * RemoveUselessReturnTagRector
 
 
-16) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Feature/Integration/CompleteRosterIntegrationTest.php:954
+18) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Feature/Integration/CompleteRosterIntegrationTest.php:954
 
     ---------- begin diff ----------
 @@ @@
@@ -1401,7 +1780,7 @@ Applied rules:
  * RemoveUselessParamTagRector
 
 
-17) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Integration/Database/AvailabilityIntegrationTest.php:4
+19) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Integration/Database/AvailabilityIntegrationTest.php:4
 
     ---------- begin diff ----------
 @@ @@
@@ -1417,7 +1796,7 @@ Applied rules:
 Applied rules:
 
 
-18) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Support/TestSchedulable.php:14
+20) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Support/TestSchedulable.php:14
 
     ---------- begin diff ----------
 @@ @@
@@ -1434,7 +1813,7 @@ Applied rules:
  * NewlineBetweenClassLikeStmtsRector
 
 
-19) /home/andy-kani/pro/sites/packages/laravel-roster/tests/TestCase.php:24
+21) /home/andy-kani/pro/sites/packages/laravel-roster/tests/TestCase.php:24
 
     ---------- begin diff ----------
 @@ @@
@@ -1504,7 +1883,7 @@ Applied rules:
  * RemoveUselessReturnTagRector
 
 
-20) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Commands/DebugRulesCommandTest.php:22
+22) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Commands/DebugRulesCommandTest.php:22
 
     ---------- begin diff ----------
 @@ @@
@@ -1532,7 +1911,7 @@ Applied rules:
  * RemoveUselessReturnTagRector
 
 
-21) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/DTOs/AvailabilityDataTest.php:5
+23) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/DTOs/AvailabilityDataTest.php:5
 
     ---------- begin diff ----------
 @@ @@
@@ -1653,7 +2032,7 @@ Applied rules:
  * AssertEqualsToSameRector
 
 
-22) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/DTOs/ImpedimentDataTest.php:4
+24) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/DTOs/ImpedimentDataTest.php:4
 
     ---------- begin diff ----------
 @@ @@
@@ -1863,7 +2242,7 @@ Applied rules:
  * StringCastAssertStringContainsStringRector
 
 
-23) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/DTOs/ScheduleDataTest.php:4
+25) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/DTOs/ScheduleDataTest.php:4
 
     ---------- begin diff ----------
 @@ @@
@@ -2066,7 +2445,7 @@ Applied rules:
  * StringCastAssertStringContainsStringRector
 
 
-24) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Domain/Helpers/TimezoneHelperTest.php:4
+26) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Domain/Helpers/TimezoneHelperTest.php:4
 
     ---------- begin diff ----------
 @@ @@
@@ -2122,7 +2501,7 @@ Applied rules:
  * AssertEmptyNullableObjectToAssertInstanceofRector
 
 
-25) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Domain/MutationContextAllowsMutationTest.php:47
+27) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Domain/MutationContextAllowsMutationTest.php:47
 
     ---------- begin diff ----------
 @@ @@
@@ -2167,7 +2546,7 @@ Applied rules:
  * ClosureReturnTypeRector
 
 
-26) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/HelpersTest.php:4
+28) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/HelpersTest.php:4
 
     ---------- begin diff ----------
 @@ @@
@@ -2218,7 +2597,7 @@ Applied rules:
  * AssertEmptyNullableObjectToAssertInstanceofRector
 
 
-27) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Http/Middleware/SetUserTimezoneTest.php:4
+29) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Http/Middleware/SetUserTimezoneTest.php:4
 
     ---------- begin diff ----------
 @@ @@
@@ -2670,7 +3049,7 @@ Applied rules:
  * ClosureReturnTypeRector
 
 
-28) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Models/ScheduleTest.php:155
+30) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Models/ScheduleTest.php:155
 
     ---------- begin diff ----------
 @@ @@
@@ -2720,7 +3099,7 @@ Applied rules:
  * AddClosureVoidReturnTypeWhereNoReturnRector
 
 
-29) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Validation/Rules/AvailabilityDateRangeRuleTest.php:95
+31) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Validation/Rules/AvailabilityDateRangeRuleTest.php:95
 
     ---------- begin diff ----------
 @@ @@
@@ -2803,7 +3182,7 @@ Applied rules:
  * AssertEqualsToSameRector
 
 
-30) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Validation/Rules/AvailabilityDaysCoherenceRuleTest.php:129
+32) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Validation/Rules/AvailabilityDaysCoherenceRuleTest.php:129
 
     ---------- begin diff ----------
 @@ @@
@@ -2854,7 +3233,7 @@ Applied rules:
  * AssertEqualsToSameRector
 
 
-31) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Validation/Rules/AvailabilityOverlapRuleTest.php:569
+33) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Validation/Rules/AvailabilityOverlapRuleTest.php:569
 
     ---------- begin diff ----------
 @@ @@
@@ -2881,7 +3260,7 @@ Applied rules:
  * NewlineBetweenClassLikeStmtsRector
 
 
-32) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Validation/Rules/AvailabilityOwnershipRuleTest.php:146
+34) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Validation/Rules/AvailabilityOwnershipRuleTest.php:146
 
     ---------- begin diff ----------
 @@ @@
@@ -3000,9 +3379,17 @@ Applied rules:
  * TypedPropertyFromStrictConstructorRector
 
 
-33) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Validation/Rules/AvailabilityRulesTest.php:21
+35) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Validation/Rules/AvailabilityRulesTest.php:4
 
     ---------- begin diff ----------
+@@ @@
+
+ namespace Tests\Unit\Validation\Rules;
+
++use Roster\Validation\DTOs\ViolationData;
+ use Roster\Enums\EntityType;
+ use Roster\Enums\OperationType;
+ use Roster\Validation\Context\ValidationContext;
 @@ @@
  final class AvailabilityRulesTest extends TestCase
  {
@@ -3013,15 +3400,67 @@ Applied rules:
      private TestSchedulable $testSchedulable;
 
      /**
+@@ @@
+
+         $validityStartViolation = array_values(array_filter(
+             $violations,
+-            fn($v) => $v->getField() === 'validity_start'
++            fn(ViolationData $v): bool => $v->getField() === 'validity_start'
+         ))[0] ?? null;
+-        $this->assertNotNull($validityStartViolation);
++        $this->assertInstanceOf(ViolationData::class, $validityStartViolation);
+         $this->assertStringContainsString('required', $validityStartViolation->getMessage());
+
+         $dailyEndViolation = array_values(array_filter(
+             $violations,
+-            fn($v) => $v->getField() === 'daily_end'
++            fn(ViolationData $v): bool => $v->getField() === 'daily_end'
+         ))[0] ?? null;
+-        $this->assertNotNull($dailyEndViolation);
++        $this->assertInstanceOf(ViolationData::class, $dailyEndViolation);
+         $this->assertStringContainsString('required', $dailyEndViolation->getMessage());
+     }
+
+@@ @@
+
+         $schedulableIdViolation = array_values(array_filter(
+             $violations,
+-            fn($v) => $v->getField() === 'schedulable_id'
++            fn(ViolationData $v): bool => $v->getField() === 'schedulable_id'
+         ))[0] ?? null;
+-        $this->assertNotNull($schedulableIdViolation);
++        $this->assertInstanceOf(ViolationData::class, $schedulableIdViolation);
+         $this->assertStringContainsString('cannot be changed', $schedulableIdViolation->getMessage());
+
+         $schedulableTypeViolation = array_values(array_filter(
+             $violations,
+-            fn($v) => $v->getField() === 'schedulable_type'
++            fn(ViolationData $v): bool => $v->getField() === 'schedulable_type'
+         ))[0] ?? null;
+-        $this->assertNotNull($schedulableTypeViolation);
++        $this->assertInstanceOf(ViolationData::class, $schedulableTypeViolation);
+         $this->assertStringContainsString('cannot be changed', $schedulableTypeViolation->getMessage());
+     }
     ----------- end diff -----------
 
 Applied rules:
  * NewlineBetweenClassLikeStmtsRector
+ * AssertEmptyNullableObjectToAssertInstanceofRector
+ * AddArrowFunctionReturnTypeRector
+ * AddArrayFunctionClosureParamTypeRector
 
 
-34) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Validation/Rules/DateRangeRulesTest.php:24
+36) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Validation/Rules/DateRangeRulesTest.php:4
 
     ---------- begin diff ----------
+@@ @@
+
+ namespace Tests\Unit\Validation\Rules;
+
++use Roster\Validation\DTOs\ViolationData;
+ use stdClass;
+ use Roster\Enums\EntityType;
+ use Roster\Enums\OperationType;
 @@ @@
  final class DateRangeRulesTest extends TestCase
  {
@@ -3032,13 +3471,28 @@ Applied rules:
      private TestSchedulable $testSchedulable;
 
      /**
+@@ @@
+
+         $violation = array_values(array_filter(
+             $validationContext->getViolations(),
+-            fn($v) => $v->getField() === 'max_duration'
++            fn(ViolationData $v): bool => $v->getField() === 'max_duration'
+         ))[0] ?? null;
+
+-        $this->assertNotNull($violation);
++        $this->assertInstanceOf(ViolationData::class, $violation);
+         $this->assertStringContainsString('cannot exceed 365 days', $violation->getMessage());
+     }
     ----------- end diff -----------
 
 Applied rules:
  * NewlineBetweenClassLikeStmtsRector
+ * AssertEmptyNullableObjectToAssertInstanceofRector
+ * AddArrowFunctionReturnTypeRector
+ * AddArrayFunctionClosureParamTypeRector
 
 
-35) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Validation/Rules/DurationRuleTest.php:5
+37) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Validation/Rules/DurationRuleTest.php:5
 
     ---------- begin diff ----------
 @@ @@
@@ -3082,7 +3536,7 @@ Applied rules:
  * RemoveUnusedPrivateMethodRector
 
 
-36) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Validation/Rules/ImpedimentScheduleDaysCoherenceRuleTest.php:27
+38) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Validation/Rules/ImpedimentScheduleDaysCoherenceRuleTest.php:27
 
     ---------- begin diff ----------
 @@ @@
@@ -3099,7 +3553,7 @@ Applied rules:
  * NewlineBetweenClassLikeStmtsRector
 
 
-37) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Validation/Rules/RequiredFieldsRuleTest.php:4
+39) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Validation/Rules/RequiredFieldsRuleTest.php:4
 
     ---------- begin diff ----------
 @@ @@
@@ -3124,7 +3578,7 @@ Applied rules:
  * EncapsedStringsToSprintfRector
 
 
-38) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Validation/Rules/SchedulableValidationRuleTest.php:688
+40) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Validation/Rules/SchedulableValidationRuleTest.php:688
 
     ---------- begin diff ----------
 @@ @@
@@ -3180,5 +3634,160 @@ Applied rules:
  * RemoveUselessReturnTagRector
 
 
- [OK] 38 files would have been changed (dry-run) by Rector                                                              
+41) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Validation/Rules/TimeRangeRuleTest.php:4
+
+    ---------- begin diff ----------
+@@ @@
+
+ namespace Tests\Unit\Validation\Rules;
+
++use Roster\Validation\DTOs\ViolationData;
+ use Exception;
+ use Mockery;
+ use Mockery\MockInterface;
+@@ @@
+     use RefreshDatabase;
+
+     private AvailabilityService|MockInterface $availabilityService;
++
+     private TimeRangeRule $rule;
++
+     private Model|MockInterface $schedulable;
+
+     /**
+@@ @@
+         $this->assertTrue($context->hasViolations());
+         $this->assertTrue($context->hasViolationFor('start_datetime'));
+         $messages = array_map(
+-            fn($violation) => $violation->getMessage(),
++            fn(ViolationData $violation): string => $violation->getMessage(),
+             $context->getViolations()
+         );
+
+@@ @@
+         $this->assertTrue($context->hasViolations());
+         $this->assertTrue($context->hasViolationFor('end_datetime'));
+         $messages = array_map(
+-            fn($violation) => $violation->getMessage(),
++            fn(ViolationData $violation): string => $violation->getMessage(),
+             $context->getViolations()
+         );
+
+@@ @@
+         $this->assertTrue($context->hasViolationFor('start_datetime'));
+
+         $messages = array_map(
+-            fn($violation) => $violation->getMessage(),
++            fn(ViolationData $violation): string => $violation->getMessage(),
+             $context->getViolations()
+         );
+
+@@ @@
+         $this->assertTrue($context->hasViolations());
+         $this->assertTrue($context->hasViolationFor('start_datetime'));
+         $messages = array_map(
+-            fn($violation) => $violation->getMessage(),
++            fn(ViolationData $violation): string => $violation->getMessage(),
+             $context->getViolations()
+         );
+
+@@ @@
+         $this->assertTrue($context->hasViolations());
+         $this->assertTrue($context->hasViolationFor('end_datetime'));
+         $messages = array_map(
+-            fn($violation) => $violation->getMessage(),
++            fn(ViolationData $violation): string => $violation->getMessage(),
+             $context->getViolations()
+         );
+
+@@ @@
+         $this->assertTrue($context->hasViolationFor('end_datetime'));
+
+         $messages = array_map(
+-            fn($violation) => $violation->getMessage(),
++            fn(ViolationData $violation): string => $violation->getMessage(),
+             $context->getViolations()
+         );
+
+@@ @@
+         $this->assertTrue($context->hasViolationFor('end_datetime'));
+
+         $messages = array_map(
+-            fn($violation) => $violation->getMessage(),
++            fn(ViolationData $violation): string => $violation->getMessage(),
+             $context->getViolations()
+         );
+    ----------- end diff -----------
+
+Applied rules:
+ * NewlineBetweenClassLikeStmtsRector
+ * AddArrowFunctionReturnTypeRector
+ * AddArrayFunctionClosureParamTypeRector
+
+
+42) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Validation/Rules/TimeSlotDateTimeRuleTest.php:4
+
+    ---------- begin diff ----------
+@@ @@
+
+ namespace Tests\Unit\Validation\Rules;
+
++use Roster\Validation\DTOs\ViolationData;
+ use Illuminate\Support\Carbon;
+ use Illuminate\Database\Eloquent\Model;
+ use Mockery;
+@@ @@
+ final class TimeSlotDateTimeRuleTest extends TestCase
+ {
+     private TimeSlotDateTimeRule $rule;
++
+     private Model|MockInterface $schedulable;
+
+     /**
+@@ @@
+         $this->assertTrue($context->hasViolationFor('datetime_range'));
+
+         $messages = array_map(
+-            fn($violation) => $violation->getMessage(),
++            fn(ViolationData $violation): string => $violation->getMessage(),
+             $context->getViolations()
+         );
+
+@@ @@
+         $this->rule->validate($context);
+
+         $messages = array_map(
+-            fn($violation) => $violation->getMessage(),
++            fn(ViolationData $violation): string => $violation->getMessage(),
+             $context->getViolations()
+         );
+
+@@ @@
+      * @param string|null $startDatetime The start datetime string or null if not provided
+      * @param string|null $endDatetime The end datetime string or null if not provided
+      * @param object|null $currentEntity The current entity for UPDATE operations
+-     *
+-     * @return ValidationContext
+      */
+     private function createValidationContext(
+         OperationType $operationType,
+@@ @@
+      *
+      * @param string|null $startDatetime The start datetime string or null
+      * @param string|null $endDatetime The end datetime string or null
+-     *
+-     * @return object
+      */
+     private function createMockEntity(?string $startDatetime, ?string $endDatetime): object
+     {
+    ----------- end diff -----------
+
+Applied rules:
+ * NewlineBetweenClassLikeStmtsRector
+ * RemoveUselessReturnTagRector
+ * AddArrowFunctionReturnTypeRector
+ * AddArrayFunctionClosureParamTypeRector
+
+
+ [OK] 42 files would have been changed (dry-run) by Rector                                                              
 

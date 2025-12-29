@@ -1,11 +1,11 @@
 # Pint Formatting Test Report
-*Generated: lun. 29 déc. 2025 02:57:51 WAT*
+*Generated: lun. 29 déc. 2025 07:49:35 WAT*
 
 
-  ⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯..⨯....⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯...⨯...⨯⨯⨯⨯⨯⨯⨯⨯.⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯.⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯.⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯..⨯.
+  ⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯.⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯..⨯....⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯...⨯...⨯⨯⨯⨯⨯⨯⨯⨯.⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯.⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯.⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯..⨯.
 
   ──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────── Laravel  
-    FAIL   ............................................................................................................................................... 146 files, 128 style issues  
+    FAIL   ............................................................................................................................................... 147 files, 128 style issues  
   ⨯ config/roster.php                                                                                                                                           binary_operator_spaces  
   ⨯ database/migrations/2024_01_01_000001_create_roster_availabilities_table.php class_definition, no_superfluous_phpdoc_tags, braces_position, phpdoc_trim, no_unused_imports, no_ex…  
   ⨯ rector.php                                                                                                                                                            concat_space  
@@ -61,10 +61,10 @@
   ⨯ src/Traits/BelongsToSchedulable.php                                                                                                                phpdoc_separation, phpdoc_align  
   ⨯ src/Validation/Attributes/ValidationRule.php                                                                                 braces_position, single_line_empty_body, phpdoc_align  
   ⨯ src/Validation/Cache/RuleCacheGenerator.php      function_declaration, concat_space, not_operator_with_successor_space, blank_line_before_statement, ordered_imports, phpdoc_align  
-  ⨯ src/Validation/Context/ValidationContext.php               function_declaration, concat_space, phpdoc_separation, not_operator_with_successor_space, ordered_imports, phpdoc_align  
-  ⨯ src/Validation/Exceptions/ValidationFailedException.php                                                                                                 concat_space, phpdoc_align  
+  ⨯ src/Validation/Context/ValidationContext.php class_attributes_separation, function_declaration, concat_space, phpdoc_separation, not_operator_with_successor_space, ordered_impor…  
+  ⨯ src/Validation/Exceptions/ValidationFailedException.php function_declaration, single_quote, concat_space, not_operator_with_successor_space, blank_line_before_statement, phpdoc_…  
   ⨯ src/Validation/RuleScanner.php new_with_parentheses, function_declaration, concat_space, trailing_comma_in_multiline, phpdoc_separation, not_operator_with_successor_space, blank…  
-  ⨯ src/Validation/Rules/AbstractRule.php                                                                 not_operator_with_successor_space, blank_line_before_statement, phpdoc_align  
+  ⨯ src/Validation/Rules/AbstractRule.php                                                   concat_space, not_operator_with_successor_space, blank_line_before_statement, phpdoc_align  
   ⨯ src/Validation/Rules/AvailabilityDateRangeRule.php                                                                not_operator_with_successor_space, ordered_imports, phpdoc_align  
   ⨯ src/Validation/Rules/AvailabilityDaysCoherenceRule.php                   class_attributes_separation, not_operator_with_successor_space, blank_line_before_statement, phpdoc_align  
   ⨯ src/Validation/Rules/AvailabilityOverlapRule.php                                                                                   not_operator_with_successor_space, phpdoc_align  
@@ -78,12 +78,12 @@
   ⨯ src/Validation/Rules/RequiredFieldsRule.php                                                                  not_operator_with_successor_space, no_extra_blank_lines, phpdoc_align  
   ⨯ src/Validation/Rules/SchedulableConsistencyRule.php                                                   not_operator_with_successor_space, blank_line_before_statement, phpdoc_align  
   ⨯ src/Validation/Rules/SchedulableValidationRule.php                                                    not_operator_with_successor_space, blank_line_before_statement, phpdoc_align  
-  ⨯ src/Validation/Rules/ScheduleOverlapRule.php                                              braces_position, not_operator_with_successor_space, single_line_empty_body, phpdoc_align  
+  ⨯ src/Validation/Rules/ScheduleOverlapRule.php                  single_quote, concat_space, braces_position, not_operator_with_successor_space, single_line_empty_body, phpdoc_align  
   ⨯ src/Validation/Rules/TimeRangeRule.php                                                      not_operator_with_successor_space, blank_line_before_statement, binary_operator_spaces  
   ⨯ src/Validation/Rules/TimeSlotDateTimeRule.php                                       single_quote, concat_space, phpdoc_separation, not_operator_with_successor_space, phpdoc_align  
   ⨯ src/Validation/Rules/TimezoneValidationRule.php                                                        no_superfluous_phpdoc_tags, not_operator_with_successor_space, phpdoc_align  
-  ⨯ src/Validation/ValidationResult.php                                                                                                                                   phpdoc_align  
-  ⨯ src/Validation/Validator.php                                                function_declaration, concat_space, phpdoc_separation, not_operator_with_successor_space, phpdoc_align  
+  ⨯ src/Validation/ValidationResult.php                                                             class_attributes_separation, braces_position, single_line_empty_body, phpdoc_align  
+  ⨯ src/Validation/Validator.php                                      function_declaration, concat_space, not_operator_with_successor_space, blank_line_before_statement, phpdoc_align  
   ⨯ src/helpers.php                          no_superfluous_phpdoc_tags, concat_space, phpdoc_separation, not_operator_with_successor_space, blank_line_before_statement, phpdoc_align  
   ⨯ tests/Feature/Integration/CompleteRosterIntegrationTest.php function_declaration, increment_style, single_quote, no_superfluous_phpdoc_tags, concat_space, trailing_comma_in_mult…  
   ⨯ tests/Integration/Database/AvailabilityIntegrationTest.php                                                                                      no_unused_imports, ordered_imports  
@@ -111,27 +111,27 @@
   ⨯ tests/Unit/RosterServiceProviderTest.php                                                                                                                           ordered_imports  
   ⨯ tests/Unit/Services/AvailabilityServiceTest.php                                                                                                                       single_quote  
   ⨯ tests/Unit/Services/ImpedimentServiceTest.php                                    increment_style, single_quote, concat_space, cast_spaces, ordered_imports, binary_operator_spaces  
-  ⨯ tests/Unit/Services/ScheduleServiceTest.php                                                                                                                        ordered_imports  
+  ⨯ tests/Unit/Services/ScheduleServiceTest.php                                                                                           class_attributes_separation, ordered_imports  
   ⨯ tests/Unit/Validation/Rules/AvailabilityDateRangeRuleTest.php class_attributes_separation, new_with_parentheses, function_declaration, increment_style, no_superfluous_phpdoc_tag…  
   ⨯ tests/Unit/Validation/Rules/AvailabilityDaysCoherenceRuleTest.php class_attributes_separation, new_with_parentheses, function_declaration, increment_style, braces_position, orde…  
   ⨯ tests/Unit/Validation/Rules/AvailabilityOverlapRuleTest.php                               class_attributes_separation, new_with_parentheses, function_declaration, braces_position  
   ⨯ tests/Unit/Validation/Rules/AvailabilityOwnershipRuleTest.php new_with_parentheses, function_declaration, no_superfluous_phpdoc_tags, braces_position, phpdoc_trim, ordered_impor…  
-  ⨯ tests/Unit/Validation/Rules/AvailabilityRulesTest.php                                             class_attributes_separation, new_with_parentheses, single_quote, ordered_imports  
+  ⨯ tests/Unit/Validation/Rules/AvailabilityRulesTest.php                       class_attributes_separation, new_with_parentheses, function_declaration, single_quote, ordered_imports  
   ⨯ tests/Unit/Validation/Rules/AvailabilityTemporalCoherenceRuleTest.php                                                                                                 single_quote  
   ⨯ tests/Unit/Validation/Rules/AvailabilityTypeRuleTest.php                                                   new_with_parentheses, function_declaration, trailing_comma_in_multiline  
-  ⨯ tests/Unit/Validation/Rules/DateRangeRulesTest.php                                                              class_attributes_separation, new_with_parentheses, ordered_imports  
+  ⨯ tests/Unit/Validation/Rules/DateRangeRulesTest.php                    class_attributes_separation, no_empty_statement, new_with_parentheses, function_declaration, ordered_imports  
   ⨯ tests/Unit/Validation/Rules/DaysValidationRuleTest.php                                                                    new_with_parentheses, function_declaration, concat_space  
   ⨯ tests/Unit/Validation/Rules/DurationRuleTest.php                                                      new_with_parentheses, single_quote, no_superfluous_phpdoc_tags, phpdoc_align  
   ⨯ tests/Unit/Validation/Rules/FutureDateRuleTest.php                                                                                      new_with_parentheses, function_declaration  
-  ⨯ tests/Unit/Validation/Rules/ImpedimentScheduleDaysCoherenceRuleTest.php     class_attributes_separation, new_with_parentheses, function_declaration, single_quote, ordered_imports  
+  ⨯ tests/Unit/Validation/Rules/ImpedimentScheduleDaysCoherenceRuleTest.php class_attributes_separation, new_with_parentheses, function_declaration, single_quote, no_extra_blank_lin…  
   ⨯ tests/Unit/Validation/Rules/RequiredFieldsRuleTest.php                                                                                     new_with_parentheses, no_unused_imports  
   ⨯ tests/Unit/Validation/Rules/SchedulableConsistencyRuleTest.php                                                                 new_with_parentheses, braces_position, phpdoc_align  
   ⨯ tests/Unit/Validation/Rules/SchedulableValidationRuleTest.php                         new_with_parentheses, no_superfluous_phpdoc_tags, braces_position, phpdoc_trim, phpdoc_align  
-  ⨯ tests/Unit/Validation/Rules/TimeRangeRuleTest.php                                                               class_attributes_separation, new_with_parentheses, ordered_imports  
-  ⨯ tests/Unit/Validation/Rules/TimeSlotDateTimeRuleTest.php class_attributes_separation, new_with_parentheses, no_superfluous_phpdoc_tags, phpdoc_trim, ordered_imports, phpdoc_alig…  
-  ⨯ tests/Unit/Validation/Rules/TimezoneValidationRuleTest.php                         class_attributes_separation, new_with_parentheses, trailing_comma_in_multiline, ordered_imports  
+  ⨯ tests/Unit/Validation/Rules/TimeRangeRuleTest.php                                         class_attributes_separation, new_with_parentheses, function_declaration, ordered_imports  
+  ⨯ tests/Unit/Validation/Rules/TimeSlotDateTimeRuleTest.php class_attributes_separation, new_with_parentheses, function_declaration, no_superfluous_phpdoc_tags, phpdoc_trim, ordere…  
+  ⨯ tests/Unit/Validation/Rules/TimezoneValidationRuleTest.php   class_attributes_separation, new_with_parentheses, function_declaration, trailing_comma_in_multiline, ordered_imports  
   ⨯ tests/Unit/Validation/ValidationContextTest.php class_attributes_separation, new_with_parentheses, trailing_comma_in_multiline, braces_position, not_operator_with_successor_spac…  
-  ⨯ tests/Unit/Validation/ValidatorTest.php class_attributes_separation, new_with_parentheses, function_declaration, trailing_comma_in_multiline, braces_position, no_unused_imports,…  
+  ⨯ tests/Unit/Validation/ValidatorTest.php                           class_attributes_separation, new_with_parentheses, function_declaration, braces_position, single_line_empty_body  
   ⨯ tests/bootstrap.php                                                   phpdoc_no_package, concat_space, phpdoc_trim, not_operator_with_successor_space, no_blank_lines_after_phpdoc  
   ⨯ tests/database/migrations/2024_01_01_000000_create_test_schedulables_table.php class_definition, no_superfluous_phpdoc_tags, braces_position, phpdoc_trim, not_operator_with_succ…  
 

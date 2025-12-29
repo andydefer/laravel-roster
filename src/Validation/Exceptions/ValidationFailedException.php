@@ -7,6 +7,7 @@ namespace Roster\Validation\Exceptions;
 use InvalidArgumentException;
 use Roster\Enums\EntityType;
 use Roster\Enums\OperationType;
+use Roster\Validation\DTOs\ViolationData;
 use Throwable;
 
 /**
@@ -17,27 +18,19 @@ use Throwable;
  */
 class ValidationFailedException extends InvalidArgumentException
 {
-    /**
-     * Validation violations keyed by field name.
-     *
-     * @var array<string, string|array<string>>
-     */
+    /** @var array<int, ViolationData> Validation violations */
     private array $violations;
 
-    /**
-     * Type of operation that failed validation.
-     */
+    /** Type of operation that failed validation. */
     private OperationType $operationType;
 
-    /**
-     * Type of entity that failed validation.
-     */
+    /** Type of entity that failed validation. */
     private EntityType $entityType;
 
     /**
      * Creates a new validation failure exception.
      *
-     * @param array<string, string|array<string>> $violations Validation violations
+     * @param array<int, ViolationData> $violations Validation violations
      * @param OperationType $operation Operation type that failed
      * @param EntityType $entityType Entity type that failed validation
      * @param string|null $message Custom exception message
@@ -64,7 +57,7 @@ class ValidationFailedException extends InvalidArgumentException
     /**
      * Gets all validation violations.
      *
-     * @return array<string, string|array<string>> Validation violations
+     * @return array<int, ViolationData> Validation violations
      */
     public function getViolations(): array
     {
@@ -102,14 +95,8 @@ class ValidationFailedException extends InvalidArgumentException
             return null;
         }
 
-        $firstField = array_key_first($this->violations);
-        $firstMessage = $this->violations[$firstField];
-
-        if (is_array($firstMessage)) {
-            return $firstMessage[0] ?? null;
-        }
-
-        return $firstMessage;
+        $firstViolation = $this->violations[0];
+        return $firstViolation->getMessage();
     }
 
     /**
@@ -117,25 +104,138 @@ class ValidationFailedException extends InvalidArgumentException
      *
      * @return array{
      *     message: string,
-     *     violations: array<string, string|array<string>>,
+     *     violations: array<array{
+     *         field: string,
+     *         rule: string,
+     *         message: string
+     *     }>,
      *     operation: string,
      *     entity_type: string
      * } Array representation
      */
     public function toArray(): array
     {
+        $violationsArray = array_map(
+            fn(ViolationData $violation) => [
+                'field' => $violation->getField(),
+                'rule' => $violation->getRule(),
+                'message' => $violation->getMessage(),
+            ],
+            $this->violations
+        );
+
         return [
             'message' => $this->getMessage(),
-            'violations' => $this->violations,
+            'violations' => $violationsArray,
             'operation' => $this->operationType->value,
             'entity_type' => $this->entityType->value,
         ];
     }
 
     /**
+     * Converts exception to array representation with detailed rule descriptions.
+     *
+     * @return array{
+     *     message: string,
+     *     violations: array<array{
+     *         field: string,
+     *         rule: string,
+     *         message: string,
+     *         rule_description: string|null
+     *     }>,
+     *     operation: string,
+     *     entity_type: string
+     * } Array representation
+     */
+    public function toDetailedArray(): array
+    {
+        $violationsArray = array_map(
+            fn(ViolationData $violation) => $violation->toArray(),
+            $this->violations
+        );
+
+        return [
+            'message' => $this->getMessage(),
+            'violations' => $violationsArray,
+            'operation' => $this->operationType->value,
+            'entity_type' => $this->entityType->value,
+        ];
+    }
+
+    /**
+     * Gets violations grouped by field with rule descriptions.
+     *
+     * @return array<string, array<array{
+     *     rule: string,
+     *     message: string,
+     *     description: string|null
+     * }>> Violations grouped by field
+     */
+    public function getViolationsWithDescriptions(): array
+    {
+        $grouped = [];
+
+        foreach ($this->violations as $violation) {
+            $field = $violation->getField();
+
+            if (!isset($grouped[$field])) {
+                $grouped[$field] = [];
+            }
+
+            $grouped[$field][] = [
+                'rule' => $violation->getRule(),
+                'message' => $violation->getMessage(),
+                'description' => $violation->getRuleDescription(),
+            ];
+        }
+
+        return $grouped;
+    }
+
+    /**
+     * Formats error messages with rule descriptions for logging/debugging.
+     *
+     * @param bool $includeDescriptions Whether to include rule descriptions
+     * @return string Formatted error message
+     */
+    public function getFormattedMessage(bool $includeDescriptions = false): string
+    {
+        $baseMessage = sprintf(
+            '%s validation failed for %s',
+            $this->operationType->displayName(),
+            $this->entityType->displayName()
+        );
+
+        if ($this->violations === []) {
+            return $baseMessage;
+        }
+
+        $messageLines = [$baseMessage . ':'];
+
+        foreach ($this->violations as $violation) {
+            $line = sprintf(
+                '- [%s] %s: %s',
+                $violation->getRule(),
+                $violation->getField(),
+                $violation->getMessage()
+            );
+
+            $messageLines[] = $line;
+
+            if ($includeDescriptions && $violation->hasRuleDescription()) {
+                $description = str_replace("\n", "\n  ", $violation->getRuleDescription());
+                $messageLines[] = "  Description: " . $description;
+                $messageLines[] = "";
+            }
+        }
+
+        return implode("\n", $messageLines);
+    }
+
+    /**
      * Creates a validation exception from violations.
      *
-     * @param array<string, string|array<string>> $violations Validation violations
+     * @param array<int, ViolationData> $violations Validation violations
      * @param OperationType $operationType Operation type
      * @param EntityType $entityType Entity type
      * @return self New validation exception
@@ -155,7 +255,7 @@ class ValidationFailedException extends InvalidArgumentException
     /**
      * Builds a human-readable error message.
      *
-     * @param array<string, string|array<string>> $violations Validation violations
+     * @param array<int, ViolationData> $violations Validation violations
      * @param OperationType $operationType Operation type
      * @param EntityType $entityType Entity type
      * @return string Formatted error message
@@ -175,18 +275,41 @@ class ValidationFailedException extends InvalidArgumentException
             return $baseMessage;
         }
 
-        $formattedViolations = [];
+        $latestViolations = $this->keepLatestViolationPerField($violations);
 
-        foreach ($violations as $field => $messages) {
-            if (is_array($messages)) {
-                foreach ($messages as $message) {
-                    $formattedViolations[] = sprintf('%s → %s', $field, $message);
-                }
-            } else {
-                $formattedViolations[] = sprintf('%s → %s', $field, $messages);
+        $messages = array_map(
+            fn(ViolationData $violation) => $violation->getMessage(),
+            $latestViolations
+        );
+
+        return $baseMessage . ': ' . implode(' ; ', $messages);
+    }
+
+    /**
+     * Keep only the latest violation per field.
+     *
+     * @param array<int, mixed> $violations
+     * @return array<int, ViolationData>
+     *
+     * @throws \InvalidArgumentException If an element is not a ViolationData instance
+     */
+    private function keepLatestViolationPerField(array $violations): array
+    {
+        $latest = [];
+
+        foreach ($violations as $violation) {
+            if (!$violation instanceof ViolationData) {
+                throw new \InvalidArgumentException(
+                    sprintf(
+                        'Expected instance of ViolationData, got %s',
+                        is_object($violation) ? get_class($violation) : gettype($violation)
+                    )
+                );
             }
+
+            $latest[$violation->getField()] = $violation;
         }
 
-        return $baseMessage . ': ' . implode(' ; ', $formattedViolations);
+        return array_values($latest);
     }
 }

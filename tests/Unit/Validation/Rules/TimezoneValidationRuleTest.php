@@ -72,7 +72,7 @@ final class TimezoneValidationRuleTest extends TestCase
         // Arrange: Invalid timezone identifier
         $context = $this->createValidationContext([
             'timezone' => 'Invalid/Timezone',
-            'start_datetime' => '2024-01-01 09:00:00'
+            'start_datetime' => '2024-01-01 09:00:00',
         ]);
 
         // Act: Validate the context
@@ -80,12 +80,17 @@ final class TimezoneValidationRuleTest extends TestCase
 
         // Assert: Violation should be present for timezone field
         $this->assertTrue($context->hasViolations());
-        $this->assertArrayHasKey('timezone', $context->getViolations());
-        $this->assertStringContainsString(
-            'Invalid timezone',
-            (string) $context->getViolations()['timezone']
+        $this->assertTrue($context->hasViolationFor('timezone'));
+
+        // Optionally, verify the message
+        $messages = array_map(
+            fn($violation) => $violation->getMessage(),
+            $context->getViolations()
         );
+
+        $this->assertStringContainsString('Invalid timezone', implode(' ', $messages));
     }
+
 
     /**
      * Test validation passes when timezone is null.
@@ -139,7 +144,7 @@ final class TimezoneValidationRuleTest extends TestCase
 
         // Assert: Violation should be present for invalid datetime
         $this->assertTrue($context->hasViolations());
-        $this->assertArrayHasKey('start_datetime', $context->getViolations());
+        $this->assertTrue($context->hasViolationFor('start_datetime'));
     }
 
     /**

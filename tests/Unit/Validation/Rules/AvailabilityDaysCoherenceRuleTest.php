@@ -81,7 +81,7 @@ final class AvailabilityDaysCoherenceRuleTest extends TestCase
 
         $context->expects($this->once())
             ->method('setViolation')
-            ->with('days', 'Days must be an array');
+            ->with('days', 'Days must be an array', AvailabilityDaysCoherenceRule::class);
 
         // Act: Execute the validation rule
         $this->rule->validate($context);

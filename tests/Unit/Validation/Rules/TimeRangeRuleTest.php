@@ -103,12 +103,18 @@ final class TimeRangeRuleTest extends TestCase
 
         // Assert: Violation should be recorded for start time before availability
         $this->assertTrue($context->hasViolations());
-        $this->assertArrayHasKey('start_datetime', $context->getViolations());
+        $this->assertTrue($context->hasViolationFor('start_datetime'));
+        $messages = array_map(
+            fn($violation) => $violation->getMessage(),
+            $context->getViolations()
+        );
+
         $this->assertStringContainsString(
             'is before the availability start time',
-            (string) $context->getViolations()['start_datetime']
+            implode(' ', $messages)
         );
     }
+
 
     /**
      * Test that validation fails when end time is after availability end.
@@ -140,12 +146,18 @@ final class TimeRangeRuleTest extends TestCase
 
         // Assert: Violation should be recorded for end time after availability
         $this->assertTrue($context->hasViolations());
-        $this->assertArrayHasKey('end_datetime', $context->getViolations());
+        $this->assertTrue($context->hasViolationFor('end_datetime'));
+        $messages = array_map(
+            fn($violation) => $violation->getMessage(),
+            $context->getViolations()
+        );
+
         $this->assertStringContainsString(
             'is after the availability end time',
-            (string) $context->getViolations()['end_datetime']
+            implode(' ', $messages)
         );
     }
+
 
     /**
      * Test that validation fails when event day is not allowed.
@@ -177,12 +189,19 @@ final class TimeRangeRuleTest extends TestCase
 
         // Assert: Violation should be recorded for invalid day
         $this->assertTrue($context->hasViolations());
-        $this->assertArrayHasKey('start_datetime', $context->getViolations());
+        $this->assertTrue($context->hasViolationFor('start_datetime'));
+
+        $messages = array_map(
+            fn($violation) => $violation->getMessage(),
+            $context->getViolations()
+        );
+
         $this->assertStringContainsString(
             'is not allowed',
-            (string) $context->getViolations()['start_datetime']
+            implode(' ', $messages)
         );
     }
+
 
     /**
      * Test that validation fails when start time is before validity period.
@@ -214,7 +233,16 @@ final class TimeRangeRuleTest extends TestCase
 
         // Assert: Violation should be recorded for start before validity period
         $this->assertTrue($context->hasViolations());
-        $this->assertArrayHasKey('start_datetime', $context->getViolations());
+        $this->assertTrue($context->hasViolationFor('start_datetime'));
+        $messages = array_map(
+            fn($violation) => $violation->getMessage(),
+            $context->getViolations()
+        );
+
+        $this->assertStringContainsString(
+            'is before the availability start datetime',
+            implode(' ', $messages)
+        );
     }
 
     /**
@@ -247,7 +275,16 @@ final class TimeRangeRuleTest extends TestCase
 
         // Assert: Violation should be recorded for end after validity period
         $this->assertTrue($context->hasViolations());
-        $this->assertArrayHasKey('end_datetime', $context->getViolations());
+        $this->assertTrue($context->hasViolationFor('end_datetime'));
+        $messages = array_map(
+            fn($violation) => $violation->getMessage(),
+            $context->getViolations()
+        );
+
+        $this->assertStringContainsString(
+            'is after the availability end datetime',
+            implode(' ', $messages)
+        );
     }
 
     /**
@@ -269,8 +306,19 @@ final class TimeRangeRuleTest extends TestCase
 
         // Assert: Violation should be recorded for invalid time sequence
         $this->assertTrue($context->hasViolations());
-        $this->assertArrayHasKey('end_datetime', $context->getViolations());
+        $this->assertTrue($context->hasViolationFor('end_datetime'));
+
+        $messages = array_map(
+            fn($violation) => $violation->getMessage(),
+            $context->getViolations()
+        );
+
+        $this->assertStringContainsString(
+            'The end datetime must be after the start datetime',
+            implode(' ', $messages)
+        );
     }
+
 
     /**
      * Test that validation passes for impediment entity type.
@@ -414,12 +462,19 @@ final class TimeRangeRuleTest extends TestCase
 
         // Assert: Violation should be recorded for multi-day event
         $this->assertTrue($context->hasViolations());
-        $this->assertArrayHasKey('end_datetime', $context->getViolations());
+        $this->assertTrue($context->hasViolationFor('end_datetime'));
+
+        $messages = array_map(
+            fn($violation) => $violation->getMessage(),
+            $context->getViolations()
+        );
+
         $this->assertStringContainsString(
             'Events cannot span across multiple days',
-            (string) $context->getViolations()['end_datetime']
+            implode(' ', $messages)
         );
     }
+
 
     /**
      * Configure the schedulable mock with required methods.

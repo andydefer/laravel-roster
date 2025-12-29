@@ -45,6 +45,23 @@ abstract class AbstractRule implements RuleInterface
     }
 
     /**
+     * Returns a detailed description of what this rule validates and what it prevents.
+     *
+     * Default implementation returns a generic message. Child classes should override
+     * this method to provide specific descriptions of their validation logic.
+     *
+     * @return string Detailed description of the rule's purpose
+     */
+    public function getDescription(): string
+    {
+        return sprintf(
+            'Validates %s entity data according to business rules. ' .
+                'This rule ensures data integrity and prevents invalid state transitions.',
+            $this->getName()
+        );
+    }
+
+    /**
      * Determines if this rule supports the given operation and entity type.
      *
      * Uses the ValidationRule attribute to check supported operations and entities.
