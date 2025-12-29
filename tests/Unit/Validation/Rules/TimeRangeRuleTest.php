@@ -7,38 +7,38 @@ namespace Tests\Unit\Validation\Rules;
 use Exception;
 use Mockery;
 use Mockery\MockInterface;
+use PHPUnit\Framework\MockObject\MockObject;
+use Roster\Contracts\Validation\ValidationContextInterface;
 use Roster\Enums\EntityType;
 use Roster\Enums\OperationType;
 use Roster\Models\Availability;
 use Roster\Services\AvailabilityService;
-use Roster\Validation\Context\ValidationContext;
 use Roster\Validation\Rules\TimeRangeRule;
 use Tests\TestCase;
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 
 final class TimeRangeRuleTest extends TestCase
 {
-    use RefreshDatabase;
-
     private AvailabilityService|MockInterface $availabilityService;
     private TimeRangeRule $rule;
-    private Model|MockInterface $schedulable;
 
     /**
-     * Set up the test environment with mocks and bindings.
+     * Set up the test environment with mocks.
      */
     protected function setUp(): void
     {
         parent::setUp();
 
         $this->availabilityService = Mockery::mock(AvailabilityService::class);
-        $this->schedulable = Mockery::mock(Model::class);
-
-        $this->configureSchedulableMock();
-        $this->configureServiceContainer();
-
         $this->rule = new TimeRangeRule();
+    }
+
+    /**
+     * Clean up mockery after each test.
+     */
+    protected function tearDown(): void
+    {
+        Mockery::close();
+        parent::tearDown();
     }
 
     /**
@@ -47,12 +47,6 @@ final class TimeRangeRuleTest extends TestCase
     public function test_passes_when_time_range_is_valid_within_availability(): void
     {
         // Arrange: Time range completely within availability hours and validity period
-        $context = $this->createValidationContext(
-            startDateTime: '2024-01-01 09:00:00',
-            endDateTime: '2024-01-01 17:00:00',
-            availabilityId: 123
-        );
-
         $availability = $this->createAvailability([
             'daily_start' => '08:00:00',
             'daily_end' => '18:00:00',
@@ -61,16 +55,32 @@ final class TimeRangeRuleTest extends TestCase
             'validity_end' => '2024-12-31',
         ]);
 
+        $context = $this->createValidationContext(
+            operationType: OperationType::CREATE,
+            entityType: EntityType::SCHEDULE,
+            hasStartDatetime: true,
+            startDatetime: '2024-01-01 09:00:00',
+            hasEndDatetime: true,
+            endDatetime: '2024-01-01 17:00:00',
+            hasAvailabilityId: true,
+            availabilityId: 123
+        );
+
         $this->availabilityService->shouldReceive('find')
             ->once()
             ->with(123)
             ->andReturn($availability);
 
+        $context->expects($this->any())
+            ->method('getAvailabilityService')
+            ->willReturn($this->availabilityService);
+
+        $context->expects($this->never())->method('setViolationFromRule');
+
         // Act: Execute the time range validation rule
         $this->rule->validate($context);
 
         // Assert: No violations should be recorded for valid time range
-        $this->assertFalse($context->hasViolations());
     }
 
     /**
@@ -79,12 +89,6 @@ final class TimeRangeRuleTest extends TestCase
     public function test_fails_when_start_time_before_availability_start(): void
     {
         // Arrange: Start time earlier than availability's daily start time
-        $context = $this->createValidationContext(
-            startDateTime: '2024-01-01 07:00:00',
-            endDateTime: '2024-01-01 10:00:00',
-            availabilityId: 123
-        );
-
         $availability = $this->createAvailability([
             'daily_start' => '08:00:00',
             'daily_end' => '18:00:00',
@@ -93,28 +97,39 @@ final class TimeRangeRuleTest extends TestCase
             'validity_end' => '2024-12-31',
         ]);
 
+        $context = $this->createValidationContext(
+            operationType: OperationType::CREATE,
+            entityType: EntityType::SCHEDULE,
+            hasStartDatetime: true,
+            startDatetime: '2024-01-01 07:00:00',
+            hasEndDatetime: true,
+            endDatetime: '2024-01-01 10:00:00',
+            hasAvailabilityId: true,
+            availabilityId: 123
+        );
+
         $this->availabilityService->shouldReceive('find')
             ->once()
             ->with(123)
             ->andReturn($availability);
 
+        $context->expects($this->any())
+            ->method('getAvailabilityService')
+            ->willReturn($this->availabilityService);
+
+        $context->expects($this->once())
+            ->method('setViolationFromRule')
+            ->with(
+                $this->rule,
+                'start_datetime',
+                'The selected start time 07:00 is before the availability start time 08:00'
+            );
+
         // Act: Execute the time range validation rule
         $this->rule->validate($context);
 
         // Assert: Violation should be recorded for start time before availability
-        $this->assertTrue($context->hasViolations());
-        $this->assertTrue($context->hasViolationFor('start_datetime'));
-        $messages = array_map(
-            fn($violation) => $violation->getMessage(),
-            $context->getViolations()
-        );
-
-        $this->assertStringContainsString(
-            'is before the availability start time',
-            implode(' ', $messages)
-        );
     }
-
 
     /**
      * Test that validation fails when end time is after availability end.
@@ -122,12 +137,6 @@ final class TimeRangeRuleTest extends TestCase
     public function test_fails_when_end_time_after_availability_end(): void
     {
         // Arrange: End time later than availability's daily end time
-        $context = $this->createValidationContext(
-            startDateTime: '2024-01-01 16:00:00',
-            endDateTime: '2024-01-01 19:00:00',
-            availabilityId: 123
-        );
-
         $availability = $this->createAvailability([
             'daily_start' => '08:00:00',
             'daily_end' => '18:00:00',
@@ -136,28 +145,39 @@ final class TimeRangeRuleTest extends TestCase
             'validity_end' => '2024-12-31',
         ]);
 
+        $context = $this->createValidationContext(
+            operationType: OperationType::CREATE,
+            entityType: EntityType::SCHEDULE,
+            hasStartDatetime: true,
+            startDatetime: '2024-01-01 16:00:00',
+            hasEndDatetime: true,
+            endDatetime: '2024-01-01 19:00:00',
+            hasAvailabilityId: true,
+            availabilityId: 123
+        );
+
         $this->availabilityService->shouldReceive('find')
             ->once()
             ->with(123)
             ->andReturn($availability);
 
+        $context->expects($this->any())
+            ->method('getAvailabilityService')
+            ->willReturn($this->availabilityService);
+
+        $context->expects($this->once())
+            ->method('setViolationFromRule')
+            ->with(
+                $this->rule,
+                'end_datetime',
+                'The selected end time 19:00 is after the availability end time 18:00'
+            );
+
         // Act: Execute the time range validation rule
         $this->rule->validate($context);
 
         // Assert: Violation should be recorded for end time after availability
-        $this->assertTrue($context->hasViolations());
-        $this->assertTrue($context->hasViolationFor('end_datetime'));
-        $messages = array_map(
-            fn($violation) => $violation->getMessage(),
-            $context->getViolations()
-        );
-
-        $this->assertStringContainsString(
-            'is after the availability end time',
-            implode(' ', $messages)
-        );
     }
-
 
     /**
      * Test that validation fails when event day is not allowed.
@@ -165,12 +185,6 @@ final class TimeRangeRuleTest extends TestCase
     public function test_fails_when_day_not_allowed(): void
     {
         // Arrange: Event scheduled on a day not included in availability
-        $context = $this->createValidationContext(
-            startDateTime: '2024-01-02 09:00:00', // Tuesday (January 2, 2024 is Tuesday)
-            endDateTime: '2024-01-02 17:00:00',
-            availabilityId: 123
-        );
-
         $availability = $this->createAvailability([
             'daily_start' => '08:00:00',
             'daily_end' => '18:00:00',
@@ -179,29 +193,39 @@ final class TimeRangeRuleTest extends TestCase
             'validity_end' => '2024-12-31',
         ]);
 
+        $context = $this->createValidationContext(
+            operationType: OperationType::CREATE,
+            entityType: EntityType::SCHEDULE,
+            hasStartDatetime: true,
+            startDatetime: '2024-01-02 09:00:00', // Tuesday
+            hasEndDatetime: true,
+            endDatetime: '2024-01-02 17:00:00',
+            hasAvailabilityId: true,
+            availabilityId: 123
+        );
+
         $this->availabilityService->shouldReceive('find')
             ->once()
             ->with(123)
             ->andReturn($availability);
 
+        $context->expects($this->any())
+            ->method('getAvailabilityService')
+            ->willReturn($this->availabilityService);
+
+        $context->expects($this->once())
+            ->method('setViolationFromRule')
+            ->with(
+                $this->rule,
+                'start_datetime',
+                'The selected date 2024-01-02 (tuesday) is not allowed. Allowed days: monday'
+            );
+
         // Act: Execute the time range validation rule
         $this->rule->validate($context);
 
         // Assert: Violation should be recorded for invalid day
-        $this->assertTrue($context->hasViolations());
-        $this->assertTrue($context->hasViolationFor('start_datetime'));
-
-        $messages = array_map(
-            fn($violation) => $violation->getMessage(),
-            $context->getViolations()
-        );
-
-        $this->assertStringContainsString(
-            'is not allowed',
-            implode(' ', $messages)
-        );
     }
-
 
     /**
      * Test that validation fails when start time is before validity period.
@@ -209,12 +233,6 @@ final class TimeRangeRuleTest extends TestCase
     public function test_fails_when_start_before_validity(): void
     {
         // Arrange: Event scheduled before availability validity period starts
-        $context = $this->createValidationContext(
-            startDateTime: '2023-12-31 09:00:00',
-            endDateTime: '2023-12-31 17:00:00',
-            availabilityId: 123
-        );
-
         $availability = $this->createAvailability([
             'daily_start' => '08:00:00',
             'daily_end' => '18:00:00',
@@ -223,26 +241,38 @@ final class TimeRangeRuleTest extends TestCase
             'validity_end' => '2024-12-31',
         ]);
 
+        $context = $this->createValidationContext(
+            operationType: OperationType::CREATE,
+            entityType: EntityType::SCHEDULE,
+            hasStartDatetime: true,
+            startDatetime: '2023-12-31 09:00:00',
+            hasEndDatetime: true,
+            endDatetime: '2023-12-31 17:00:00',
+            hasAvailabilityId: true,
+            availabilityId: 123
+        );
+
         $this->availabilityService->shouldReceive('find')
             ->once()
             ->with(123)
             ->andReturn($availability);
 
+        $context->expects($this->any())
+            ->method('getAvailabilityService')
+            ->willReturn($this->availabilityService);
+
+        $context->expects($this->once())
+            ->method('setViolationFromRule')
+            ->with(
+                $this->rule,
+                'start_datetime',
+                'The selected start datetime 2023-12-31 09:00:00 is before the availability start datetime 2024-01-01 00:00:00'
+            );
+
         // Act: Execute the time range validation rule
         $this->rule->validate($context);
 
         // Assert: Violation should be recorded for start before validity period
-        $this->assertTrue($context->hasViolations());
-        $this->assertTrue($context->hasViolationFor('start_datetime'));
-        $messages = array_map(
-            fn($violation) => $violation->getMessage(),
-            $context->getViolations()
-        );
-
-        $this->assertStringContainsString(
-            'is before the availability start datetime',
-            implode(' ', $messages)
-        );
     }
 
     /**
@@ -251,12 +281,6 @@ final class TimeRangeRuleTest extends TestCase
     public function test_fails_when_end_after_validity(): void
     {
         // Arrange: Event scheduled after availability validity period ends
-        $context = $this->createValidationContext(
-            startDateTime: '2025-01-01 09:00:00',
-            endDateTime: '2025-01-01 17:00:00',
-            availabilityId: 123
-        );
-
         $availability = $this->createAvailability([
             'daily_start' => '08:00:00',
             'daily_end' => '18:00:00',
@@ -265,26 +289,38 @@ final class TimeRangeRuleTest extends TestCase
             'validity_end' => '2024-12-31',
         ]);
 
+        $context = $this->createValidationContext(
+            operationType: OperationType::CREATE,
+            entityType: EntityType::SCHEDULE,
+            hasStartDatetime: true,
+            startDatetime: '2025-01-01 09:00:00',
+            hasEndDatetime: true,
+            endDatetime: '2025-01-01 17:00:00',
+            hasAvailabilityId: true,
+            availabilityId: 123
+        );
+
         $this->availabilityService->shouldReceive('find')
             ->once()
             ->with(123)
             ->andReturn($availability);
 
+        $context->expects($this->any())
+            ->method('getAvailabilityService')
+            ->willReturn($this->availabilityService);
+
+        $context->expects($this->once())
+            ->method('setViolationFromRule')
+            ->with(
+                $this->rule,
+                'end_datetime',
+                'The selected end datetime 2025-01-01 17:00:00 is after the availability end datetime 2024-12-31 23:59:59'
+            );
+
         // Act: Execute the time range validation rule
         $this->rule->validate($context);
 
         // Assert: Violation should be recorded for end after validity period
-        $this->assertTrue($context->hasViolations());
-        $this->assertTrue($context->hasViolationFor('end_datetime'));
-        $messages = array_map(
-            fn($violation) => $violation->getMessage(),
-            $context->getViolations()
-        );
-
-        $this->assertStringContainsString(
-            'is after the availability end datetime',
-            implode(' ', $messages)
-        );
     }
 
     /**
@@ -294,31 +330,29 @@ final class TimeRangeRuleTest extends TestCase
     {
         // Arrange: Event with end time chronologically before start time
         $context = $this->createValidationContext(
-            startDateTime: '2024-01-01 12:00:00',
-            endDateTime: '2024-01-01 08:00:00',
-            availabilityId: 123
+            operationType: OperationType::CREATE,
+            entityType: EntityType::SCHEDULE,
+            hasStartDatetime: true,
+            startDatetime: '2024-01-01 12:00:00',
+            hasEndDatetime: true,
+            endDatetime: '2024-01-01 08:00:00',
+            hasAvailabilityId: false,
+            availabilityId: null
         );
 
-        $this->availabilityService->shouldReceive('find')->never();
+        $context->expects($this->once())
+            ->method('setViolationFromRule')
+            ->with(
+                $this->rule,
+                'end_datetime',
+                'The end datetime must be after the start datetime'
+            );
 
         // Act: Execute the time range validation rule
         $this->rule->validate($context);
 
         // Assert: Violation should be recorded for invalid time sequence
-        $this->assertTrue($context->hasViolations());
-        $this->assertTrue($context->hasViolationFor('end_datetime'));
-
-        $messages = array_map(
-            fn($violation) => $violation->getMessage(),
-            $context->getViolations()
-        );
-
-        $this->assertStringContainsString(
-            'The end datetime must be after the start datetime',
-            implode(' ', $messages)
-        );
     }
-
 
     /**
      * Test that validation passes for impediment entity type.
@@ -326,17 +360,6 @@ final class TimeRangeRuleTest extends TestCase
     public function test_passes_for_impediment_entity(): void
     {
         // Arrange: Impediment entity with valid time range
-        $context = new ValidationContext(
-            operationType: OperationType::CREATE,
-            entityType: EntityType::IMPEDIMENT,
-            data: [
-                'availability_id' => 123,
-                'start_datetime' => '2024-01-01 10:00:00',
-                'end_datetime' => '2024-01-01 14:00:00',
-            ],
-            model: $this->schedulable
-        );
-
         $availability = $this->createAvailability([
             'daily_start' => '08:00:00',
             'daily_end' => '18:00:00',
@@ -345,16 +368,32 @@ final class TimeRangeRuleTest extends TestCase
             'validity_end' => '2024-12-31',
         ]);
 
+        $context = $this->createValidationContext(
+            operationType: OperationType::CREATE,
+            entityType: EntityType::IMPEDIMENT,
+            hasStartDatetime: true,
+            startDatetime: '2024-01-01 10:00:00',
+            hasEndDatetime: true,
+            endDatetime: '2024-01-01 14:00:00',
+            hasAvailabilityId: true,
+            availabilityId: 123
+        );
+
         $this->availabilityService->shouldReceive('find')
             ->once()
             ->with(123)
             ->andReturn($availability);
 
+        $context->expects($this->any())
+            ->method('getAvailabilityService')
+            ->willReturn($this->availabilityService);
+
+        $context->expects($this->never())->method('setViolationFromRule');
+
         // Act: Execute the time range validation rule for impediment
         $this->rule->validate($context);
 
         // Assert: No violations for valid impediment time range
-        $this->assertFalse($context->hasViolations());
     }
 
     /**
@@ -364,8 +403,13 @@ final class TimeRangeRuleTest extends TestCase
     {
         // Arrange: Non-existent availability ID
         $context = $this->createValidationContext(
-            startDateTime: '2024-01-01 09:00:00',
-            endDateTime: '2024-01-01 17:00:00',
+            operationType: OperationType::CREATE,
+            entityType: EntityType::SCHEDULE,
+            hasStartDatetime: true,
+            startDatetime: '2024-01-01 09:00:00',
+            hasEndDatetime: true,
+            endDatetime: '2024-01-01 17:00:00',
+            hasAvailabilityId: true,
             availabilityId: 999
         );
 
@@ -374,11 +418,16 @@ final class TimeRangeRuleTest extends TestCase
             ->with(999)
             ->andReturn(null);
 
+        $context->expects($this->any())
+            ->method('getAvailabilityService')
+            ->willReturn($this->availabilityService);
+
+        $context->expects($this->never())->method('setViolationFromRule');
+
         // Act: Execute the time range validation rule
         $this->rule->validate($context);
 
         // Assert: No violations when availability doesn't exist
-        $this->assertFalse($context->hasViolations());
     }
 
     /**
@@ -387,18 +436,19 @@ final class TimeRangeRuleTest extends TestCase
     public function test_handles_malformed_datetime_strings(): void
     {
         // Arrange: Invalid datetime format in input data
-        $context = new ValidationContext(
+        $context = $this->createValidationContext(
             operationType: OperationType::CREATE,
             entityType: EntityType::SCHEDULE,
-            data: [
-                'availability_id' => 123,
-                'start_datetime' => 'invalid-datetime',
-                'end_datetime' => '2024-01-01 17:00:00',
-            ],
-            model: $this->schedulable
+            hasStartDatetime: true,
+            startDatetime: 'invalid-datetime',
+            hasEndDatetime: true,
+            endDatetime: '2024-01-01 17:00:00',
+            hasAvailabilityId: true,
+            availabilityId: 123
         );
 
-        $this->availabilityService->shouldReceive('find')->never();
+        $context->expects($this->never())->method('getAvailabilityService');
+        $context->expects($this->never())->method('setViolationFromRule');
 
         // Act: Execute the time range validation rule with invalid data
         try {
@@ -408,7 +458,6 @@ final class TimeRangeRuleTest extends TestCase
         }
 
         // Assert: No violations recorded for malformed datetime
-        $this->assertFalse($context->hasViolations());
     }
 
     /**
@@ -417,12 +466,6 @@ final class TimeRangeRuleTest extends TestCase
     public function test_passes_when_availability_has_no_validity_period(): void
     {
         // Arrange: Availability without validity period constraints
-        $context = $this->createValidationContext(
-            startDateTime: '2024-01-01 09:00:00',
-            endDateTime: '2024-01-01 17:00:00',
-            availabilityId: 123
-        );
-
         $availability = $this->createAvailability([
             'daily_start' => '08:00:00',
             'daily_end' => '18:00:00',
@@ -431,16 +474,32 @@ final class TimeRangeRuleTest extends TestCase
             'validity_end' => null,
         ]);
 
+        $context = $this->createValidationContext(
+            operationType: OperationType::CREATE,
+            entityType: EntityType::SCHEDULE,
+            hasStartDatetime: true,
+            startDatetime: '2024-01-01 09:00:00',
+            hasEndDatetime: true,
+            endDatetime: '2024-01-01 17:00:00',
+            hasAvailabilityId: true,
+            availabilityId: 123
+        );
+
         $this->availabilityService->shouldReceive('find')
             ->once()
             ->with(123)
             ->andReturn($availability);
 
+        $context->expects($this->any())
+            ->method('getAvailabilityService')
+            ->willReturn($this->availabilityService);
+
+        $context->expects($this->never())->method('setViolationFromRule');
+
         // Act: Execute the time range validation rule
         $this->rule->validate($context);
 
         // Assert: No violations for time range when no validity period
-        $this->assertFalse($context->hasViolations());
     }
 
     /**
@@ -450,63 +509,266 @@ final class TimeRangeRuleTest extends TestCase
     {
         // Arrange: Event starting on one day and ending on the next
         $context = $this->createValidationContext(
-            startDateTime: '2024-01-01 22:00:00',
-            endDateTime: '2024-01-02 01:00:00',
-            availabilityId: 123
+            operationType: OperationType::CREATE,
+            entityType: EntityType::SCHEDULE,
+            hasStartDatetime: true,
+            startDatetime: '2024-01-01 22:00:00',
+            hasEndDatetime: true,
+            endDatetime: '2024-01-02 01:00:00',
+            hasAvailabilityId: false,
+            availabilityId: null
         );
 
-        $this->availabilityService->shouldReceive('find')->never();
+        $context->expects($this->once())
+            ->method('setViolationFromRule')
+            ->with(
+                $this->rule,
+                'end_datetime',
+                'Events cannot span across multiple days'
+            );
 
         // Act: Execute the time range validation rule
         $this->rule->validate($context);
 
         // Assert: Violation should be recorded for multi-day event
-        $this->assertTrue($context->hasViolations());
-        $this->assertTrue($context->hasViolationFor('end_datetime'));
-
-        $messages = array_map(
-            fn($violation) => $violation->getMessage(),
-            $context->getViolations()
-        );
-
-        $this->assertStringContainsString(
-            'Events cannot span across multiple days',
-            implode(' ', $messages)
-        );
-    }
-
-
-    /**
-     * Configure the schedulable mock with required methods.
-     */
-    private function configureSchedulableMock(): void
-    {
-        $this->schedulable->shouldReceive('getAttribute')
-            ->with('id')
-            ->andReturn(1);
-
-        $this->schedulable->shouldReceive('getMorphClass')
-            ->andReturn('TestModel');
     }
 
     /**
-     * Configure service container bindings for tests.
+     * Test that validation fails when start and end times are equal.
      */
-    private function configureServiceContainer(): void
+    public function test_fails_when_start_and_end_times_are_equal(): void
     {
-        $this->app->singleton(AvailabilityService::class, function (): AvailabilityService|MockInterface {
-            return $this->availabilityService;
-        });
+        // Arrange: Event with identical start and end times
+        $context = $this->createValidationContext(
+            operationType: OperationType::CREATE,
+            entityType: EntityType::SCHEDULE,
+            hasStartDatetime: true,
+            startDatetime: '2024-01-01 09:00:00',
+            hasEndDatetime: true,
+            endDatetime: '2024-01-01 09:00:00',
+            hasAvailabilityId: false,
+            availabilityId: null
+        );
 
-        $this->app->instance('roster.availability', $this->availabilityService);
+        $context->expects($this->once())
+            ->method('setViolationFromRule')
+            ->with(
+                $this->rule,
+                'end_datetime',
+                'The end datetime must be after the start datetime'
+            );
 
-        if (function_exists('availability_for') && method_exists($this->app, 'bind')) {
-            $this->app->bind('availability.service', function (): MockInterface|AvailabilityService {
-                return $this->availabilityService;
-            });
-        }
+        // Act: Execute the time range validation rule
+        $this->rule->validate($context);
+
+        // Assert: Violation should be recorded for equal start and end times
     }
 
+    /**
+     * Test that validation handles UPDATE operation correctly.
+     */
+    public function test_handles_update_operation_correctly(): void
+    {
+        // Arrange: UPDATE operation with valid time range
+        $availability = $this->createAvailability([
+            'daily_start' => '08:00:00',
+            'daily_end' => '18:00:00',
+            'days' => ['monday'],
+            'validity_start' => '2024-01-01',
+            'validity_end' => '2024-12-31',
+        ]);
+
+        $context = $this->createValidationContext(
+            operationType: OperationType::UPDATE,
+            entityType: EntityType::SCHEDULE,
+            hasStartDatetime: true,
+            startDatetime: '2024-01-01 10:00:00',
+            hasEndDatetime: true,
+            endDatetime: '2024-01-01 16:00:00',
+            hasAvailabilityId: true,
+            availabilityId: 123
+        );
+
+        $this->availabilityService->shouldReceive('find')
+            ->once()
+            ->with(123)
+            ->andReturn($availability);
+
+        $context->expects($this->any())
+            ->method('getAvailabilityService')
+            ->willReturn($this->availabilityService);
+
+        $context->expects($this->never())->method('setViolationFromRule');
+
+        // Act: Execute the time range validation rule for UPDATE
+        $this->rule->validate($context);
+
+        // Assert: No violations for valid UPDATE operation
+    }
+
+    /**
+     * Test that validation skips when datetime fields are missing.
+     */
+    public function test_skips_when_datetime_fields_are_missing(): void
+    {
+        // Arrange: Missing start datetime field
+        $context = $this->createValidationContext(
+            operationType: OperationType::CREATE,
+            entityType: EntityType::SCHEDULE,
+            hasStartDatetime: false,
+            startDatetime: null,
+            hasEndDatetime: true,
+            endDatetime: '2024-01-01 17:00:00',
+            hasAvailabilityId: true,
+            availabilityId: 123
+        );
+
+        $context->expects($this->never())->method('getAvailabilityService');
+        $context->expects($this->never())->method('setViolationFromRule');
+
+        // Act: Execute the time range validation rule
+        $this->rule->validate($context);
+
+        // Assert: Validation should skip when required fields are missing
+    }
+
+    /**
+     * Test that validation skips when availability ID is missing.
+     */
+    public function test_skips_when_availability_id_is_missing(): void
+    {
+        // Arrange: Missing availability ID
+        $context = $this->createValidationContext(
+            operationType: OperationType::CREATE,
+            entityType: EntityType::SCHEDULE,
+            hasStartDatetime: true,
+            startDatetime: '2024-01-01 09:00:00',
+            hasEndDatetime: true,
+            endDatetime: '2024-01-01 17:00:00',
+            hasAvailabilityId: false,
+            availabilityId: null
+        );
+
+        $context->expects($this->never())->method('getAvailabilityService');
+        $context->expects($this->never())->method('setViolationFromRule');
+
+        // Act: Execute the time range validation rule
+        $this->rule->validate($context);
+
+        // Assert: Validation should skip when availability ID is missing
+    }
+
+    /**
+     * Test that rule description is available.
+     */
+    public function test_has_description(): void
+    {
+        // Act: Get rule description
+        $description = $this->rule->getDescription();
+
+        // Assert: Description should not be empty
+        $this->assertIsString($description);
+        $this->assertNotEmpty($description);
+        $this->assertStringContainsString('time range', $description);
+        $this->assertStringContainsString('availability', $description);
+    }
+
+    /**
+     * Test that validation handles update with existing entity data.
+     */
+    public function test_handles_update_with_existing_entity_data(): void
+    {
+        // Arrange: UPDATE operation with existing entity that has datetime values
+        $availability = $this->createAvailability([
+            'daily_start' => '08:00:00',
+            'daily_end' => '18:00:00',
+            'days' => ['monday'],
+            'validity_start' => '2024-01-01',
+            'validity_end' => '2024-12-31',
+        ]);
+
+        $context = $this->createValidationContext(
+            operationType: OperationType::UPDATE,
+            entityType: EntityType::SCHEDULE,
+            hasStartDatetime: false, // Not in update data, should come from entity
+            startDatetime: null,
+            hasEndDatetime: false, // Not in update data, should come from entity
+            endDatetime: null,
+            hasAvailabilityId: false, // Not in update data, should come from entity
+            availabilityId: null
+        );
+
+        // Mock existing entity with datetime values
+        $entity = new \stdClass();
+        $entity->start_datetime = '2024-01-01 10:00:00';
+        $entity->end_datetime = '2024-01-01 16:00:00';
+        $entity->availability_id = 123;
+
+        $context->expects($this->any())
+            ->method('getCurrentEntity')
+            ->willReturn($entity);
+
+        $this->availabilityService->shouldReceive('find')
+            ->once()
+            ->with(123)
+            ->andReturn($availability);
+
+        $context->expects($this->any())
+            ->method('getAvailabilityService')
+            ->willReturn($this->availabilityService);
+
+        $context->expects($this->never())->method('setViolationFromRule');
+
+        // Act: Execute the time range validation rule
+        $this->rule->validate($context);
+
+        // Assert: Should use entity data for UPDATE operation
+    }
+
+    /**
+     * Create a validation context mock with specified configuration.
+     *
+     * @return MockInterface&ValidationContextInterface
+     */
+    private function createValidationContext(
+        OperationType $operationType,
+        EntityType $entityType,
+        bool $hasStartDatetime,
+        ?string $startDatetime,
+        bool $hasEndDatetime,
+        ?string $endDatetime,
+        bool $hasAvailabilityId,
+        ?int $availabilityId
+    ): MockObject&ValidationContextInterface {
+        $context = $this->createMock(ValidationContextInterface::class);
+
+        $context->method('getOperation')->willReturn($operationType);
+        $context->method('getEntityType')->willReturn($entityType);
+
+        $context->method('has')->willReturnCallback(
+            function (string $field) use ($hasStartDatetime, $hasEndDatetime, $hasAvailabilityId): bool {
+                return match ($field) {
+                    'start_datetime' => $hasStartDatetime,
+                    'end_datetime' => $hasEndDatetime,
+                    'availability_id' => $hasAvailabilityId,
+                    default => false,
+                };
+            }
+        );
+
+        $context->method('get')->willReturnCallback(
+            function (string $field) use ($startDatetime, $endDatetime, $availabilityId): mixed {
+                return match ($field) {
+                    'start_datetime' => $startDatetime,
+                    'end_datetime' => $endDatetime,
+                    'availability_id' => $availabilityId,
+                    default => null,
+                };
+            }
+        );
+
+        return $context;
+    }
     /**
      * Create an Availability model instance with test data.
      *
@@ -529,32 +791,5 @@ final class TimeRangeRuleTest extends TestCase
         $availability->validity_end = $properties['validity_end'] ?? '2024-12-31';
 
         return $availability;
-    }
-
-    /**
-     * Create a ValidationContext with schedule entity type.
-     */
-    private function createValidationContext(string $startDateTime, string $endDateTime, ?int $availabilityId): ValidationContext
-    {
-        $data = [];
-
-        if ($availabilityId !== null) {
-            $data['availability_id'] = $availabilityId;
-        }
-
-        if ($startDateTime !== '') {
-            $data['start_datetime'] = $startDateTime;
-        }
-
-        if ($endDateTime !== '') {
-            $data['end_datetime'] = $endDateTime;
-        }
-
-        return new ValidationContext(
-            operationType: OperationType::CREATE,
-            entityType: EntityType::SCHEDULE,
-            data: $data,
-            model: $this->schedulable
-        );
     }
 }

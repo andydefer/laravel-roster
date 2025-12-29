@@ -1,0 +1,3360 @@
+Tu es un expert en revue de code et en conventions de commits (Conventional Commits).
+
+À partir du diff Git ci-dessous, fais les choses suivantes :
+
+1. Propose un nom de commit clair et concis en anglais
+   avec le format <type>(<scope>): <description>,
+   en respectant les Conventional Commits
+   (ex: feat:, fix:, refactor:, test:, chore:, docs:).
+
+2. Rédige un résumé du travail effectué en quelques phrases,
+   orienté métier et technique.
+
+3. Donne une liste d'exemples concrets de changements, en t'appuyant sur le diff :
+   - méthodes ajoutées, modifiées ou supprimées
+   - responsabilités déplacées ou clarifiées
+   - améliorations de validation, de logique ou de structure
+   - impacts fonctionnels éventuels
+
+Contraintes :
+   - Ne décris que ce qui est réellement visible dans le diff
+   - Sois précis, factuel et structuré
+   - Évite les suppositions
+   - Utilise un ton professionnel
+
+4. SI et SEULEMENT SI les changements sont cassants (breaking changes) :
+   - Génère une entrée de CHANGELOG conforme à Keep a Changelog et SemVer.
+   - Le changelog doit apparaître APRES les recommandations ci-dessus.
+   - Utilise STRICTEMENT la structure suivante :
+
+     ## [X.0.0] - YYYY-MM-DD
+     ### Changed
+     - Description claire du changement cassant
+
+     ### Removed (si applicable)
+     - API, méthode ou comportement supprimé
+
+     ### Security (si applicable)
+     - Impact sécurité lié au changement
+
+   - Ne génère PAS de changelog si aucun breaking change n'est détecté.
+   - N'invente PAS de version.
+
+Voici le diff :
+
+diff --git a/FILES_CHECKLIST.md b/FILES_CHECKLIST.md
+index 26e6cf3..febb707 100644
+--- a/FILES_CHECKLIST.md
++++ b/FILES_CHECKLIST.md
+@@ -90,7 +90,7 @@
+ 86. src/Validation/Rules/RequiredFieldsRule.php [x]
+ 87. src/Validation/Rules/SchedulableConsistencyRule.php [x]
+ 88. src/Validation/Rules/SchedulableValidationRule.php [x]
+-89. src/Validation/Rules/ScheduleOverlapRule.php [x]
++89. src/Validation/Rules/TemporalConflictRule.php [x]
+ 90. src/Validation/Rules/TimeRangeRule.php [x]
+ 91. src/Validation/Rules/TimeSlotDateTimeRule.php [x]
+ 92. src/Validation/Rules/TimezoneValidationRule.php [x]
+@@ -141,7 +141,7 @@
+ 137. tests/Unit/Validation/Rules/RequiredFieldsRuleTest.php [x]
+ 138. tests/Unit/Validation/Rules/SchedulableConsistencyRuleTest.php [x]
+ 139. tests/Unit/Validation/Rules/SchedulableValidationRuleTest.php [x]
+-140. tests/Unit/Validation/Rules/ScheduleOverlapRuleTest.php [x]
++140. tests/Unit/Validation/Rules/TemporalConflictRuleTest.php [x]
+ 141. tests/Unit/Validation/Rules/TimeRangeRuleTest.php [x]
+ 142. tests/Unit/Validation/Rules/TimeSlotDateTimeRuleTest.php [x]
+ 143. tests/Unit/Validation/Rules/TimezoneValidationRuleTest.php [x]
+diff --git a/README.md b/README.md
+index cb17ea0..5bfd0d7 100644
+--- a/README.md
++++ b/README.md
+@@ -183,7 +183,7 @@ Roster includes **17 validation rules** that guarantee system consistency:
+ - **SchedulableValidationRule** (110) - Verifies schedulable context is present
+ - **RequiredFieldsRule** (100) - Validates required fields per operation
+ - **AvailabilityTemporalCoherenceRule** (100) - Ensures temporal coherence
+-- **ScheduleOverlapRule** (80) - Prevents schedule overlaps
++- **TemporalConflictRule** (80) - Prevents schedule overlaps
+ - **AvailabilityOverlapRule** (80) - Prevents availability overlaps
+ - **TimeRangeRule** (85) - Validates time ranges (no multi-day spans)
+ 
+diff --git a/pint-test.md b/pint-test.md
+index de90a80..76cb26c 100644
+--- a/pint-test.md
++++ b/pint-test.md
+@@ -4,135 +4,135 @@
+ 
+   ⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯.⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯..⨯....⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯...⨯...⨯⨯⨯⨯⨯⨯⨯⨯.⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯.⨯⨯⨯⨯⨯⨯⨯.⨯.⨯⨯⨯⨯⨯⨯⨯⨯⨯.⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯.⨯⨯..⨯.
+ 
+-  ──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────── Laravel  
+-    FAIL   ............................................................................................................................................... 151 files, 129 style issues  
+-  ⨯ config/roster.php                                                                                                                                           binary_operator_spaces  
+-  ⨯ database/migrations/2024_01_01_000001_create_roster_availabilities_table.php class_definition, no_superfluous_phpdoc_tags, braces_position, phpdoc_trim, no_unused_imports, no_ex…  
+-  ⨯ rector.php                                                                                                                                                            concat_space  
+-  ⨯ src/Casts/TimezoneAwareDateTimeCast.php                                                                                no_superfluous_phpdoc_tags, no_unused_imports, phpdoc_align  
+-  ⨯ src/Commands/CacheRulesCommand.php                                                                                         concat_space, blank_line_before_statement, phpdoc_align  
+-  ⨯ src/Commands/DebugRulesCommand.php function_declaration, single_quote, concat_space, trailing_comma_in_multiline, no_unused_imports, not_operator_with_successor_space, blank_lin…  
+-  ⨯ src/Commands/InstallRosterCommand.php                                                                                                                  blank_line_before_statement  
+-  ⨯ src/Contracts/Repository/AvailabilityRepositoryInterface.php                                                                                                          phpdoc_align  
+-  ⨯ src/Contracts/Repository/ImpedimentRepositoryInterface.php                                                                                           ordered_imports, phpdoc_align  
+-  ⨯ src/Contracts/Repository/RepositoryInterface.php                                                                                                                      phpdoc_align  
+-  ⨯ src/Contracts/Repository/ScheduleRepositoryInterface.php                                                                                             ordered_imports, phpdoc_align  
+-  ⨯ src/Contracts/Services/ServiceInterface.php                                                                                                                           phpdoc_align  
+-  ⨯ src/Contracts/Validation/RuleInterface.php                                                                                                         phpdoc_separation, phpdoc_align  
+-  ⨯ src/Contracts/Validation/ValidationContextInterface.php                                                                                                               phpdoc_align  
+-  ⨯ src/Contracts/Validation/ValidatorInterface.php                                                                                                                       phpdoc_align  
+-  ⨯ src/DTOs/AbstractData.php                                                                         function_declaration, blank_line_before_statement, ordered_imports, phpdoc_align  
+-  ⨯ src/DTOs/AvailabilityData.php                                                                                                      not_operator_with_successor_space, phpdoc_align  
+-  ⨯ src/DTOs/DataInterface.php                                                                                                                                            phpdoc_align  
+-  ⨯ src/DTOs/ImpedimentData.php                                                                                                  braces_position, single_line_empty_body, phpdoc_align  
+-  ⨯ src/DTOs/ScheduleData.php                                                                                                    braces_position, single_line_empty_body, phpdoc_align  
+-  ⨯ src/Domain/DTOs/CacheStats.php increment_style, concat_space, unary_operator_spaces, braces_position, phpdoc_separation, not_operator_with_successor_space, single_line_empty_bod…  
+-  ⨯ src/Domain/DTOs/ConflictResult.php                                                                                           braces_position, single_line_empty_body, phpdoc_align  
+-  ⨯ src/Domain/Helpers/TimeSlotHelper.php                                                                             not_operator_with_successor_space, ordered_imports, phpdoc_align  
+-  ⨯ src/Domain/Helpers/TimeWindowHelper.php                                                                         phpdoc_separation, not_operator_with_successor_space, phpdoc_align  
+-  ⨯ src/Domain/Helpers/TimezoneHelper.php class_attributes_separation, phpdoc_separation, not_operator_with_successor_space, blank_line_before_statement, ordered_imports, phpdoc_ali…  
+-  ⨯ src/Domain/Services/CacheRulesService.php single_quote, concat_space, unary_operator_spaces, braces_position, phpdoc_separation, not_operator_with_successor_space, single_line_e…  
+-  ⨯ src/Domain/Services/RosterInstallerService.php                                 unary_operator_spaces, not_operator_with_successor_space, blank_line_before_statement, phpdoc_align  
+-  ⨯ src/Domain/Services/TemporalConflictService.php class_attributes_separation, function_declaration, no_multiline_whitespace_around_double_arrow, trailing_comma_in_multiline, brac…  
+-  ⨯ src/Enums/EntityType.php                                                                                                             concat_space, phpdoc_separation, phpdoc_align  
+-  ⨯ src/Exceptions/DirectServiceUsageException.php                                                                                                                        phpdoc_align  
+-  ⨯ src/Exceptions/ForbiddenModelMutationException.php                                                                                                                    phpdoc_align  
+-  ⨯ src/Exceptions/InvalidOwnerException.php                                                                                                                              phpdoc_align  
+-  ⨯ src/Exceptions/InvalidServiceContextException.php                                            no_multiline_whitespace_around_double_arrow, single_quote, concat_space, phpdoc_align  
+-  ⨯ src/Exceptions/MissingOwnerException.php                                                                                                                              phpdoc_align  
+-  ⨯ src/Exceptions/NotFoundException.php                                                                                        cast_spaces, blank_line_before_statement, phpdoc_align  
+-  ⨯ src/Exceptions/RosterException.php                                                                                                                                    phpdoc_align  
+-  ⨯ src/Http/Middleware/SetUserTimezone.php                                                               not_operator_with_successor_space, blank_line_before_statement, phpdoc_align  
+-  ⨯ src/Models/Availability.php                                                                           class_attributes_separation, not_operator_with_successor_space, phpdoc_align  
+-  ⨯ src/Models/Impediment.php                                                                                                                blank_line_before_statement, phpdoc_align  
+-  ⨯ src/Models/Schedule.php                                                                                                                                               phpdoc_align  
+-  ⨯ src/Observers/EnforceDomainMutationObserver.php                                                                 phpdoc_separation, not_operator_with_successor_space, phpdoc_align  
+-  ⨯ src/Repositories/AbstractRepository.php no_multiline_whitespace_around_double_arrow, concat_space, phpdoc_separation, not_operator_with_successor_space, blank_line_before_statem…  
+-  ⨯ src/Repositories/AvailabilityRepository.php                                        trailing_comma_in_multiline, phpdoc_separation, not_operator_with_successor_space, phpdoc_align  
+-  ⨯ src/Repositories/ImpedimentRepository.php                                                                                                                             phpdoc_align  
+-  ⨯ src/Repositories/ScheduleRepository.php                                                                                                                               phpdoc_align  
+-  ⨯ src/RosterServiceProvider.php                                                                                                                           concat_space, phpdoc_align  
+-  ⨯ src/Services/AvailabilityService.php                                                                                  trailing_comma_in_multiline, phpdoc_separation, phpdoc_align  
+-  ⨯ src/Services/Core/AbstractService.php concat_space, trailing_comma_in_multiline, phpdoc_separation, not_operator_with_successor_space, blank_line_before_statement, ordered_impor…  
+-  ⨯ src/Services/ImpedimentService.php                    class_attributes_separation, trailing_comma_in_multiline, phpdoc_separation, not_operator_with_successor_space, phpdoc_align  
+-  ⨯ src/Services/ScheduleService.php                                                         class_attributes_separation, cast_spaces, not_operator_with_successor_space, phpdoc_align  
+-  ⨯ src/Support/RosterMutationContext.php                                                   increment_style, phpdoc_no_package, phpdoc_trim, blank_line_before_statement, phpdoc_align  
+-  ⨯ src/Support/RosterServiceContext.php                                                                                    increment_style, blank_line_before_statement, phpdoc_align  
+-  ⨯ src/Traits/BelongsToSchedulable.php                                                                                                                phpdoc_separation, phpdoc_align  
+-  ⨯ src/Validation/Attributes/ValidationRule.php                                                                                 braces_position, single_line_empty_body, phpdoc_align  
+-  ⨯ src/Validation/Cache/RuleCacheGenerator.php      function_declaration, concat_space, not_operator_with_successor_space, blank_line_before_statement, ordered_imports, phpdoc_align  
+-  ⨯ src/Validation/Context/ValidationContext.php class_attributes_separation, function_declaration, concat_space, phpdoc_separation, not_operator_with_successor_space, ordered_impor…  
+-  ⨯ src/Validation/Exceptions/ValidationFailedException.php function_declaration, single_quote, concat_space, not_operator_with_successor_space, blank_line_before_statement, phpdoc_…  
+-  ⨯ src/Validation/RuleScanner.php new_with_parentheses, function_declaration, concat_space, trailing_comma_in_multiline, phpdoc_separation, not_operator_with_successor_space, blank…  
+-  ⨯ src/Validation/Rules/AbstractRule.php                                                   concat_space, not_operator_with_successor_space, blank_line_before_statement, phpdoc_align  
+-  ⨯ src/Validation/Rules/AvailabilityDateRangeRule.php                                                                not_operator_with_successor_space, ordered_imports, phpdoc_align  
+-  ⨯ src/Validation/Rules/AvailabilityDaysCoherenceRule.php                   class_attributes_separation, not_operator_with_successor_space, blank_line_before_statement, phpdoc_align  
+-  ⨯ src/Validation/Rules/AvailabilityOverlapRule.php                                                                                   not_operator_with_successor_space, phpdoc_align  
+-  ⨯ src/Validation/Rules/AvailabilityOwnershipRule.php                       trailing_comma_in_multiline, not_operator_with_successor_space, blank_line_before_statement, phpdoc_align  
+-  ⨯ src/Validation/Rules/AvailabilityTemporalCoherenceRule.php                    function_declaration, single_quote, not_operator_with_successor_space, ordered_imports, phpdoc_align  
+-  ⨯ src/Validation/Rules/AvailabilityTypeRule.php                                                                                                    not_operator_with_successor_space  
+-  ⨯ src/Validation/Rules/DaysValidationRule.php                                                           not_operator_with_successor_space, blank_line_before_statement, phpdoc_align  
+-  ⨯ src/Validation/Rules/DurationRule.php                                                                  single_quote, concat_space, not_operator_with_successor_space, phpdoc_align  
+-  ⨯ src/Validation/Rules/FutureDateRule.php                                                                                            not_operator_with_successor_space, phpdoc_align  
+-  ⨯ src/Validation/Rules/ImpedimentScheduleDaysCoherenceRule.php                       phpdoc_separation, not_operator_with_successor_space, blank_line_before_statement, phpdoc_align  
+-  ⨯ src/Validation/Rules/RequiredFieldsRule.php                                                                  not_operator_with_successor_space, no_extra_blank_lines, phpdoc_align  
+-  ⨯ src/Validation/Rules/SchedulableConsistencyRule.php                                                   not_operator_with_successor_space, blank_line_before_statement, phpdoc_align  
+-  ⨯ src/Validation/Rules/SchedulableValidationRule.php                                                    not_operator_with_successor_space, blank_line_before_statement, phpdoc_align  
+-  ⨯ src/Validation/Rules/ScheduleOverlapRule.php                  single_quote, concat_space, braces_position, not_operator_with_successor_space, single_line_empty_body, phpdoc_align  
+-  ⨯ src/Validation/Rules/TimeRangeRule.php                                                      not_operator_with_successor_space, blank_line_before_statement, binary_operator_spaces  
+-  ⨯ src/Validation/Rules/TimeSlotDateTimeRule.php                                       single_quote, concat_space, phpdoc_separation, not_operator_with_successor_space, phpdoc_align  
+-  ⨯ src/Validation/Rules/TimezoneValidationRule.php                                                        no_superfluous_phpdoc_tags, not_operator_with_successor_space, phpdoc_align  
+-  ⨯ src/Validation/ValidationResult.php                                                             class_attributes_separation, braces_position, single_line_empty_body, phpdoc_align  
+-  ⨯ src/Validation/Validator.php                                      function_declaration, concat_space, not_operator_with_successor_space, blank_line_before_statement, phpdoc_align  
+-  ⨯ src/helpers.php                          no_superfluous_phpdoc_tags, concat_space, phpdoc_separation, not_operator_with_successor_space, blank_line_before_statement, phpdoc_align  
+-  ⨯ tests/Feature/Integration/CompleteRosterIntegrationTest.php function_declaration, increment_style, single_quote, no_superfluous_phpdoc_tags, concat_space, trailing_comma_in_mult…  
+-  ⨯ tests/Integration/Database/AvailabilityIntegrationTest.php                                                                                      no_unused_imports, ordered_imports  
+-  ⨯ tests/Integration/Database/ImpedimentIntegrationTest.php                                                                                                           ordered_imports  
+-  ⨯ tests/Integration/Database/ScheduleIntegrationTest.php                                                                                                             ordered_imports  
+-  ⨯ tests/Integration/Traits/BelongsToSchedulableTest.php                                                                                                              ordered_imports  
+-  ⨯ tests/Support/TestSchedulable.php                                                                                                                      class_attributes_separation  
+-  ⨯ tests/TestCase.php                                                                                             no_superfluous_phpdoc_tags, concat_space, phpdoc_trim, phpdoc_align  
+-  ⨯ tests/Unit/Commands/CacheRulesCommandTest.php                                                                    new_with_parentheses, concat_space, ordered_imports, phpdoc_align  
+-  ⨯ tests/Unit/Commands/CapturesOutput.php                                                                                                                                phpdoc_align  
+-  ⨯ tests/Unit/Commands/DebugRulesCommandTest.php                          new_with_parentheses, no_superfluous_phpdoc_tags, trailing_comma_in_multiline, phpdoc_trim, ordered_imports  
+-  ⨯ tests/Unit/Commands/InstallRosterCommandTest.php                                                                 function_declaration, no_multiline_whitespace_around_double_arrow  
+-  ⨯ tests/Unit/DTOs/AvailabilityDataTest.php                                                                                         no_unused_imports, phpdoc_single_line_var_spacing  
+-  ⨯ tests/Unit/DTOs/ImpedimentDataTest.php                                                                                             phpdoc_single_line_var_spacing, ordered_imports  
+-  ⨯ tests/Unit/DTOs/ScheduleDataTest.php                                                                                                                phpdoc_single_line_var_spacing  
+-  ⨯ tests/Unit/Domain/Helpers/TimezoneHelperTest.php                                                                                                phpdoc_separation, ordered_imports  
+-  ⨯ tests/Unit/Domain/ModelMutationForbiddenTest.php                                                                                                                   ordered_imports  
+-  ⨯ tests/Unit/Domain/MutationContextAllowsMutationTest.php                                                                  no_superfluous_phpdoc_tags, ordered_imports, phpdoc_align  
+-  ⨯ tests/Unit/Domain/RepositoryMutationTest.php                                                                                                                       ordered_imports  
+-  ⨯ tests/Unit/HelpersTest.php                                    new_with_parentheses, no_superfluous_phpdoc_tags, braces_position, phpdoc_trim, single_line_empty_body, phpdoc_align  
+-  ⨯ tests/Unit/Http/Middleware/SetUserTimezoneTest.php new_with_parentheses, function_declaration, php_unit_method_casing, braces_position, blank_line_before_statement, ordered_impo…  
+-  ⨯ tests/Unit/Models/AvailabilityTest.php                                                                                                               ordered_imports, phpdoc_align  
+-  ⨯ tests/Unit/Models/ImpedimentTest.php                                                                                                                 ordered_imports, phpdoc_align  
+-  ⨯ tests/Unit/Models/ScheduleTest.php                                                                               class_attributes_separation, binary_operator_spaces, phpdoc_align  
+-  ⨯ tests/Unit/RosterServiceProviderTest.php                                                                                                                           ordered_imports  
+-  ⨯ tests/Unit/Services/AvailabilityServiceTest.php                                                                                                                       single_quote  
+-  ⨯ tests/Unit/Services/ImpedimentServiceTest.php                                    increment_style, single_quote, concat_space, cast_spaces, ordered_imports, binary_operator_spaces  
+-  ⨯ tests/Unit/Services/ScheduleServiceTest.php                                                                                           class_attributes_separation, ordered_imports  
+-  ⨯ tests/Unit/Validation/Rules/AbstractRuleTest.php                                                                                           braces_position, single_line_empty_body  
+-  ⨯ tests/Unit/Validation/Rules/AvailabilityDateRangeRuleTest.php class_attributes_separation, new_with_parentheses, function_declaration, increment_style, no_superfluous_phpdoc_tag…  
+-  ⨯ tests/Unit/Validation/Rules/AvailabilityDaysCoherenceRuleTest.php class_attributes_separation, new_with_parentheses, function_declaration, increment_style, braces_position, orde…  
+-  ⨯ tests/Unit/Validation/Rules/AvailabilityOverlapRuleTest.php                               class_attributes_separation, new_with_parentheses, function_declaration, braces_position  
+-  ⨯ tests/Unit/Validation/Rules/AvailabilityOwnershipRuleTest.php new_with_parentheses, function_declaration, no_superfluous_phpdoc_tags, braces_position, phpdoc_trim, ordered_impor…  
+-  ⨯ tests/Unit/Validation/Rules/AvailabilityRulesTest.php                       class_attributes_separation, new_with_parentheses, function_declaration, single_quote, ordered_imports  
+-  ⨯ tests/Unit/Validation/Rules/AvailabilityTemporalCoherenceRuleTest.php                                                                                                 single_quote  
+-  ⨯ tests/Unit/Validation/Rules/AvailabilityTypeRuleTest.php                                                   new_with_parentheses, function_declaration, trailing_comma_in_multiline  
+-  ⨯ tests/Unit/Validation/Rules/DateRangeRulesTest.php                    class_attributes_separation, no_empty_statement, new_with_parentheses, function_declaration, ordered_imports  
+-  ⨯ tests/Unit/Validation/Rules/DaysValidationRuleTest.php                                                                    new_with_parentheses, function_declaration, concat_space  
+-  ⨯ tests/Unit/Validation/Rules/DurationRuleTest.php                                                      new_with_parentheses, single_quote, no_superfluous_phpdoc_tags, phpdoc_align  
+-  ⨯ tests/Unit/Validation/Rules/FutureDateRuleTest.php                                                                                      new_with_parentheses, function_declaration  
+-  ⨯ tests/Unit/Validation/Rules/ImpedimentScheduleDaysCoherenceRuleTest.php class_attributes_separation, new_with_parentheses, function_declaration, single_quote, no_extra_blank_lin…  
+-  ⨯ tests/Unit/Validation/Rules/RequiredFieldsRuleTest.php                                                                                     new_with_parentheses, no_unused_imports  
+-  ⨯ tests/Unit/Validation/Rules/SchedulableConsistencyRuleTest.php                                                                 new_with_parentheses, braces_position, phpdoc_align  
+-  ⨯ tests/Unit/Validation/Rules/SchedulableValidationRuleTest.php                         new_with_parentheses, no_superfluous_phpdoc_tags, braces_position, phpdoc_trim, phpdoc_align  
+-  ⨯ tests/Unit/Validation/Rules/TimeRangeRuleTest.php                                         class_attributes_separation, new_with_parentheses, function_declaration, ordered_imports  
+-  ⨯ tests/Unit/Validation/Rules/TimeSlotDateTimeRuleTest.php class_attributes_separation, new_with_parentheses, function_declaration, no_superfluous_phpdoc_tags, phpdoc_trim, ordere…  
+-  ⨯ tests/Unit/Validation/Rules/TimezoneValidationRuleTest.php   class_attributes_separation, new_with_parentheses, function_declaration, trailing_comma_in_multiline, ordered_imports  
+-  ⨯ tests/Unit/Validation/ValidationContextTest.php class_attributes_separation, new_with_parentheses, trailing_comma_in_multiline, braces_position, not_operator_with_successor_spac…  
+-  ⨯ tests/Unit/Validation/ValidatorTest.php                           class_attributes_separation, new_with_parentheses, function_declaration, braces_position, single_line_empty_body  
+-  ⨯ tests/bootstrap.php                                                   phpdoc_no_package, concat_space, phpdoc_trim, not_operator_with_successor_space, no_blank_lines_after_phpdoc  
+-  ⨯ tests/database/migrations/2024_01_01_000000_create_test_schedulables_table.php class_definition, no_superfluous_phpdoc_tags, braces_position, phpdoc_trim, not_operator_with_succ…  
++  ──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────── Laravel
++    FAIL   ............................................................................................................................................... 151 files, 129 style issues
++  ⨯ config/roster.php                                                                                                                                           binary_operator_spaces
++  ⨯ database/migrations/2024_01_01_000001_create_roster_availabilities_table.php class_definition, no_superfluous_phpdoc_tags, braces_position, phpdoc_trim, no_unused_imports, no_ex…
++  ⨯ rector.php                                                                                                                                                            concat_space
++  ⨯ src/Casts/TimezoneAwareDateTimeCast.php                                                                                no_superfluous_phpdoc_tags, no_unused_imports, phpdoc_align
++  ⨯ src/Commands/CacheRulesCommand.php                                                                                         concat_space, blank_line_before_statement, phpdoc_align
++  ⨯ src/Commands/DebugRulesCommand.php function_declaration, single_quote, concat_space, trailing_comma_in_multiline, no_unused_imports, not_operator_with_successor_space, blank_lin…
++  ⨯ src/Commands/InstallRosterCommand.php                                                                                                                  blank_line_before_statement
++  ⨯ src/Contracts/Repository/AvailabilityRepositoryInterface.php                                                                                                          phpdoc_align
++  ⨯ src/Contracts/Repository/ImpedimentRepositoryInterface.php                                                                                           ordered_imports, phpdoc_align
++  ⨯ src/Contracts/Repository/RepositoryInterface.php                                                                                                                      phpdoc_align
++  ⨯ src/Contracts/Repository/ScheduleRepositoryInterface.php                                                                                             ordered_imports, phpdoc_align
++  ⨯ src/Contracts/Services/ServiceInterface.php                                                                                                                           phpdoc_align
++  ⨯ src/Contracts/Validation/RuleInterface.php                                                                                                         phpdoc_separation, phpdoc_align
++  ⨯ src/Contracts/Validation/ValidationContextInterface.php                                                                                                               phpdoc_align
++  ⨯ src/Contracts/Validation/ValidatorInterface.php                                                                                                                       phpdoc_align
++  ⨯ src/DTOs/AbstractData.php                                                                         function_declaration, blank_line_before_statement, ordered_imports, phpdoc_align
++  ⨯ src/DTOs/AvailabilityData.php                                                                                                      not_operator_with_successor_space, phpdoc_align
++  ⨯ src/DTOs/DataInterface.php                                                                                                                                            phpdoc_align
++  ⨯ src/DTOs/ImpedimentData.php                                                                                                  braces_position, single_line_empty_body, phpdoc_align
++  ⨯ src/DTOs/ScheduleData.php                                                                                                    braces_position, single_line_empty_body, phpdoc_align
++  ⨯ src/Domain/DTOs/CacheStats.php increment_style, concat_space, unary_operator_spaces, braces_position, phpdoc_separation, not_operator_with_successor_space, single_line_empty_bod…
++  ⨯ src/Domain/DTOs/ConflictResult.php                                                                                           braces_position, single_line_empty_body, phpdoc_align
++  ⨯ src/Domain/Helpers/TimeSlotHelper.php                                                                             not_operator_with_successor_space, ordered_imports, phpdoc_align
++  ⨯ src/Domain/Helpers/TimeWindowHelper.php                                                                         phpdoc_separation, not_operator_with_successor_space, phpdoc_align
++  ⨯ src/Domain/Helpers/TimezoneHelper.php class_attributes_separation, phpdoc_separation, not_operator_with_successor_space, blank_line_before_statement, ordered_imports, phpdoc_ali…
++  ⨯ src/Domain/Services/CacheRulesService.php single_quote, concat_space, unary_operator_spaces, braces_position, phpdoc_separation, not_operator_with_successor_space, single_line_e…
++  ⨯ src/Domain/Services/RosterInstallerService.php                                 unary_operator_spaces, not_operator_with_successor_space, blank_line_before_statement, phpdoc_align
++  ⨯ src/Domain/Services/TemporalConflictService.php class_attributes_separation, function_declaration, no_multiline_whitespace_around_double_arrow, trailing_comma_in_multiline, brac…
++  ⨯ src/Enums/EntityType.php                                                                                                             concat_space, phpdoc_separation, phpdoc_align
++  ⨯ src/Exceptions/DirectServiceUsageException.php                                                                                                                        phpdoc_align
++  ⨯ src/Exceptions/ForbiddenModelMutationException.php                                                                                                                    phpdoc_align
++  ⨯ src/Exceptions/InvalidOwnerException.php                                                                                                                              phpdoc_align
++  ⨯ src/Exceptions/InvalidServiceContextException.php                                            no_multiline_whitespace_around_double_arrow, single_quote, concat_space, phpdoc_align
++  ⨯ src/Exceptions/MissingOwnerException.php                                                                                                                              phpdoc_align
++  ⨯ src/Exceptions/NotFoundException.php                                                                                        cast_spaces, blank_line_before_statement, phpdoc_align
++  ⨯ src/Exceptions/RosterException.php                                                                                                                                    phpdoc_align
++  ⨯ src/Http/Middleware/SetUserTimezone.php                                                               not_operator_with_successor_space, blank_line_before_statement, phpdoc_align
++  ⨯ src/Models/Availability.php                                                                           class_attributes_separation, not_operator_with_successor_space, phpdoc_align
++  ⨯ src/Models/Impediment.php                                                                                                                blank_line_before_statement, phpdoc_align
++  ⨯ src/Models/Schedule.php                                                                                                                                               phpdoc_align
++  ⨯ src/Observers/EnforceDomainMutationObserver.php                                                                 phpdoc_separation, not_operator_with_successor_space, phpdoc_align
++  ⨯ src/Repositories/AbstractRepository.php no_multiline_whitespace_around_double_arrow, concat_space, phpdoc_separation, not_operator_with_successor_space, blank_line_before_statem…
++  ⨯ src/Repositories/AvailabilityRepository.php                                        trailing_comma_in_multiline, phpdoc_separation, not_operator_with_successor_space, phpdoc_align
++  ⨯ src/Repositories/ImpedimentRepository.php                                                                                                                             phpdoc_align
++  ⨯ src/Repositories/ScheduleRepository.php                                                                                                                               phpdoc_align
++  ⨯ src/RosterServiceProvider.php                                                                                                                           concat_space, phpdoc_align
++  ⨯ src/Services/AvailabilityService.php                                                                                  trailing_comma_in_multiline, phpdoc_separation, phpdoc_align
++  ⨯ src/Services/Core/AbstractService.php concat_space, trailing_comma_in_multiline, phpdoc_separation, not_operator_with_successor_space, blank_line_before_statement, ordered_impor…
++  ⨯ src/Services/ImpedimentService.php                    class_attributes_separation, trailing_comma_in_multiline, phpdoc_separation, not_operator_with_successor_space, phpdoc_align
++  ⨯ src/Services/ScheduleService.php                                                         class_attributes_separation, cast_spaces, not_operator_with_successor_space, phpdoc_align
++  ⨯ src/Support/RosterMutationContext.php                                                   increment_style, phpdoc_no_package, phpdoc_trim, blank_line_before_statement, phpdoc_align
++  ⨯ src/Support/RosterServiceContext.php                                                                                    increment_style, blank_line_before_statement, phpdoc_align
++  ⨯ src/Traits/BelongsToSchedulable.php                                                                                                                phpdoc_separation, phpdoc_align
++  ⨯ src/Validation/Attributes/ValidationRule.php                                                                                 braces_position, single_line_empty_body, phpdoc_align
++  ⨯ src/Validation/Cache/RuleCacheGenerator.php      function_declaration, concat_space, not_operator_with_successor_space, blank_line_before_statement, ordered_imports, phpdoc_align
++  ⨯ src/Validation/Context/ValidationContext.php class_attributes_separation, function_declaration, concat_space, phpdoc_separation, not_operator_with_successor_space, ordered_impor…
++  ⨯ src/Validation/Exceptions/ValidationFailedException.php function_declaration, single_quote, concat_space, not_operator_with_successor_space, blank_line_before_statement, phpdoc_…
++  ⨯ src/Validation/RuleScanner.php new_with_parentheses, function_declaration, concat_space, trailing_comma_in_multiline, phpdoc_separation, not_operator_with_successor_space, blank…
++  ⨯ src/Validation/Rules/AbstractRule.php                                                   concat_space, not_operator_with_successor_space, blank_line_before_statement, phpdoc_align
++  ⨯ src/Validation/Rules/AvailabilityDateRangeRule.php                                                                not_operator_with_successor_space, ordered_imports, phpdoc_align
++  ⨯ src/Validation/Rules/AvailabilityDaysCoherenceRule.php                   class_attributes_separation, not_operator_with_successor_space, blank_line_before_statement, phpdoc_align
++  ⨯ src/Validation/Rules/AvailabilityOverlapRule.php                                                                                   not_operator_with_successor_space, phpdoc_align
++  ⨯ src/Validation/Rules/AvailabilityOwnershipRule.php                       trailing_comma_in_multiline, not_operator_with_successor_space, blank_line_before_statement, phpdoc_align
++  ⨯ src/Validation/Rules/AvailabilityTemporalCoherenceRule.php                    function_declaration, single_quote, not_operator_with_successor_space, ordered_imports, phpdoc_align
++  ⨯ src/Validation/Rules/AvailabilityTypeRule.php                                                                                                    not_operator_with_successor_space
++  ⨯ src/Validation/Rules/DaysValidationRule.php                                                           not_operator_with_successor_space, blank_line_before_statement, phpdoc_align
++  ⨯ src/Validation/Rules/DurationRule.php                                                                  single_quote, concat_space, not_operator_with_successor_space, phpdoc_align
++  ⨯ src/Validation/Rules/FutureDateRule.php                                                                                            not_operator_with_successor_space, phpdoc_align
++  ⨯ src/Validation/Rules/ImpedimentScheduleDaysCoherenceRule.php                       phpdoc_separation, not_operator_with_successor_space, blank_line_before_statement, phpdoc_align
++  ⨯ src/Validation/Rules/RequiredFieldsRule.php                                                                  not_operator_with_successor_space, no_extra_blank_lines, phpdoc_align
++  ⨯ src/Validation/Rules/SchedulableConsistencyRule.php                                                   not_operator_with_successor_space, blank_line_before_statement, phpdoc_align
++  ⨯ src/Validation/Rules/SchedulableValidationRule.php                                                    not_operator_with_successor_space, blank_line_before_statement, phpdoc_align
++  ⨯ src/Validation/Rules/TemporalConflictRule.php                  single_quote, concat_space, braces_position, not_operator_with_successor_space, single_line_empty_body, phpdoc_align
++  ⨯ src/Validation/Rules/TimeRangeRule.php                                                      not_operator_with_successor_space, blank_line_before_statement, binary_operator_spaces
++  ⨯ src/Validation/Rules/TimeSlotDateTimeRule.php                                       single_quote, concat_space, phpdoc_separation, not_operator_with_successor_space, phpdoc_align
++  ⨯ src/Validation/Rules/TimezoneValidationRule.php                                                        no_superfluous_phpdoc_tags, not_operator_with_successor_space, phpdoc_align
++  ⨯ src/Validation/ValidationResult.php                                                             class_attributes_separation, braces_position, single_line_empty_body, phpdoc_align
++  ⨯ src/Validation/Validator.php                                      function_declaration, concat_space, not_operator_with_successor_space, blank_line_before_statement, phpdoc_align
++  ⨯ src/helpers.php                          no_superfluous_phpdoc_tags, concat_space, phpdoc_separation, not_operator_with_successor_space, blank_line_before_statement, phpdoc_align
++  ⨯ tests/Feature/Integration/CompleteRosterIntegrationTest.php function_declaration, increment_style, single_quote, no_superfluous_phpdoc_tags, concat_space, trailing_comma_in_mult…
++  ⨯ tests/Integration/Database/AvailabilityIntegrationTest.php                                                                                      no_unused_imports, ordered_imports
++  ⨯ tests/Integration/Database/ImpedimentIntegrationTest.php                                                                                                           ordered_imports
++  ⨯ tests/Integration/Database/ScheduleIntegrationTest.php                                                                                                             ordered_imports
++  ⨯ tests/Integration/Traits/BelongsToSchedulableTest.php                                                                                                              ordered_imports
++  ⨯ tests/Support/TestSchedulable.php                                                                                                                      class_attributes_separation
++  ⨯ tests/TestCase.php                                                                                             no_superfluous_phpdoc_tags, concat_space, phpdoc_trim, phpdoc_align
++  ⨯ tests/Unit/Commands/CacheRulesCommandTest.php                                                                    new_with_parentheses, concat_space, ordered_imports, phpdoc_align
++  ⨯ tests/Unit/Commands/CapturesOutput.php                                                                                                                                phpdoc_align
++  ⨯ tests/Unit/Commands/DebugRulesCommandTest.php                          new_with_parentheses, no_superfluous_phpdoc_tags, trailing_comma_in_multiline, phpdoc_trim, ordered_imports
++  ⨯ tests/Unit/Commands/InstallRosterCommandTest.php                                                                 function_declaration, no_multiline_whitespace_around_double_arrow
++  ⨯ tests/Unit/DTOs/AvailabilityDataTest.php                                                                                         no_unused_imports, phpdoc_single_line_var_spacing
++  ⨯ tests/Unit/DTOs/ImpedimentDataTest.php                                                                                             phpdoc_single_line_var_spacing, ordered_imports
++  ⨯ tests/Unit/DTOs/ScheduleDataTest.php                                                                                                                phpdoc_single_line_var_spacing
++  ⨯ tests/Unit/Domain/Helpers/TimezoneHelperTest.php                                                                                                phpdoc_separation, ordered_imports
++  ⨯ tests/Unit/Domain/ModelMutationForbiddenTest.php                                                                                                                   ordered_imports
++  ⨯ tests/Unit/Domain/MutationContextAllowsMutationTest.php                                                                  no_superfluous_phpdoc_tags, ordered_imports, phpdoc_align
++  ⨯ tests/Unit/Domain/RepositoryMutationTest.php                                                                                                                       ordered_imports
++  ⨯ tests/Unit/HelpersTest.php                                    new_with_parentheses, no_superfluous_phpdoc_tags, braces_position, phpdoc_trim, single_line_empty_body, phpdoc_align
++  ⨯ tests/Unit/Http/Middleware/SetUserTimezoneTest.php new_with_parentheses, function_declaration, php_unit_method_casing, braces_position, blank_line_before_statement, ordered_impo…
++  ⨯ tests/Unit/Models/AvailabilityTest.php                                                                                                               ordered_imports, phpdoc_align
++  ⨯ tests/Unit/Models/ImpedimentTest.php                                                                                                                 ordered_imports, phpdoc_align
++  ⨯ tests/Unit/Models/ScheduleTest.php                                                                               class_attributes_separation, binary_operator_spaces, phpdoc_align
++  ⨯ tests/Unit/RosterServiceProviderTest.php                                                                                                                           ordered_imports
++  ⨯ tests/Unit/Services/AvailabilityServiceTest.php                                                                                                                       single_quote
++  ⨯ tests/Unit/Services/ImpedimentServiceTest.php                                    increment_style, single_quote, concat_space, cast_spaces, ordered_imports, binary_operator_spaces
++  ⨯ tests/Unit/Services/ScheduleServiceTest.php                                                                                           class_attributes_separation, ordered_imports
++  ⨯ tests/Unit/Validation/Rules/AbstractRuleTest.php                                                                                           braces_position, single_line_empty_body
++  ⨯ tests/Unit/Validation/Rules/AvailabilityDateRangeRuleTest.php class_attributes_separation, new_with_parentheses, function_declaration, increment_style, no_superfluous_phpdoc_tag…
++  ⨯ tests/Unit/Validation/Rules/AvailabilityDaysCoherenceRuleTest.php class_attributes_separation, new_with_parentheses, function_declaration, increment_style, braces_position, orde…
++  ⨯ tests/Unit/Validation/Rules/AvailabilityOverlapRuleTest.php                               class_attributes_separation, new_with_parentheses, function_declaration, braces_position
++  ⨯ tests/Unit/Validation/Rules/AvailabilityOwnershipRuleTest.php new_with_parentheses, function_declaration, no_superfluous_phpdoc_tags, braces_position, phpdoc_trim, ordered_impor…
++  ⨯ tests/Unit/Validation/Rules/AvailabilityRulesTest.php                       class_attributes_separation, new_with_parentheses, function_declaration, single_quote, ordered_imports
++  ⨯ tests/Unit/Validation/Rules/AvailabilityTemporalCoherenceRuleTest.php                                                                                                 single_quote
++  ⨯ tests/Unit/Validation/Rules/AvailabilityTypeRuleTest.php                                                   new_with_parentheses, function_declaration, trailing_comma_in_multiline
++  ⨯ tests/Unit/Validation/Rules/DateRangeRulesTest.php                    class_attributes_separation, no_empty_statement, new_with_parentheses, function_declaration, ordered_imports
++  ⨯ tests/Unit/Validation/Rules/DaysValidationRuleTest.php                                                                    new_with_parentheses, function_declaration, concat_space
++  ⨯ tests/Unit/Validation/Rules/DurationRuleTest.php                                                      new_with_parentheses, single_quote, no_superfluous_phpdoc_tags, phpdoc_align
++  ⨯ tests/Unit/Validation/Rules/FutureDateRuleTest.php                                                                                      new_with_parentheses, function_declaration
++  ⨯ tests/Unit/Validation/Rules/ImpedimentScheduleDaysCoherenceRuleTest.php class_attributes_separation, new_with_parentheses, function_declaration, single_quote, no_extra_blank_lin…
++  ⨯ tests/Unit/Validation/Rules/RequiredFieldsRuleTest.php                                                                                     new_with_parentheses, no_unused_imports
++  ⨯ tests/Unit/Validation/Rules/SchedulableConsistencyRuleTest.php                                                                 new_with_parentheses, braces_position, phpdoc_align
++  ⨯ tests/Unit/Validation/Rules/SchedulableValidationRuleTest.php                         new_with_parentheses, no_superfluous_phpdoc_tags, braces_position, phpdoc_trim, phpdoc_align
++  ⨯ tests/Unit/Validation/Rules/TimeRangeRuleTest.php                                         class_attributes_separation, new_with_parentheses, function_declaration, ordered_imports
++  ⨯ tests/Unit/Validation/Rules/TimeSlotDateTimeRuleTest.php class_attributes_separation, new_with_parentheses, function_declaration, no_superfluous_phpdoc_tags, phpdoc_trim, ordere…
++  ⨯ tests/Unit/Validation/Rules/TimezoneValidationRuleTest.php   class_attributes_separation, new_with_parentheses, function_declaration, trailing_comma_in_multiline, ordered_imports
++  ⨯ tests/Unit/Validation/ValidationContextTest.php class_attributes_separation, new_with_parentheses, trailing_comma_in_multiline, braces_position, not_operator_with_successor_spac…
++  ⨯ tests/Unit/Validation/ValidatorTest.php                           class_attributes_separation, new_with_parentheses, function_declaration, braces_position, single_line_empty_body
++  ⨯ tests/bootstrap.php                                                   phpdoc_no_package, concat_space, phpdoc_trim, not_operator_with_successor_space, no_blank_lines_after_phpdoc
++  ⨯ tests/database/migrations/2024_01_01_000000_create_test_schedulables_table.php class_definition, no_superfluous_phpdoc_tags, braces_position, phpdoc_trim, not_operator_with_succ…
+ 
+diff --git a/src/Contracts/Validation/ValidationContextInterface.php b/src/Contracts/Validation/ValidationContextInterface.php
+index 2a1acea..6c54535 100644
+--- a/src/Contracts/Validation/ValidationContextInterface.php
++++ b/src/Contracts/Validation/ValidationContextInterface.php
+@@ -45,6 +45,13 @@ interface ValidationContextInterface
+      */
+     public function getCurrentEntity(): mixed;
+ 
++    /**
++     * Get the current entity id being validated.
++     *
++     * @return mixed The entity id instance or data being validated
++     */
++    public function getEntityId(): int;
++
+     /**
+      * Get the availability service instance.
+      */
+diff --git a/src/Validation/Context/ValidationContext.php b/src/Validation/Context/ValidationContext.php
+index cc239c6..0664de2 100644
+--- a/src/Validation/Context/ValidationContext.php
++++ b/src/Validation/Context/ValidationContext.php
+@@ -217,6 +217,16 @@ class ValidationContext implements ValidationContextInterface
+         return $this->currentEntity;
+     }
+ 
++    /**
++     * Get the current entity being validated.
++     *
++     * @return mixed The current entity model or null
++     */
++    public function getEntityId(): int
++    {
++        return $this->currentEntity->id;
++    }
++
+     /**
+      * Check if a key exists in the data and is not null.
+      *
+diff --git a/src/Validation/Rules/AvailabilityDateRangeRule.php b/src/Validation/Rules/AvailabilityDateRangeRule.php
+index 25f15d3..e0c495c 100644
+--- a/src/Validation/Rules/AvailabilityDateRangeRule.php
++++ b/src/Validation/Rules/AvailabilityDateRangeRule.php
+@@ -39,6 +39,16 @@ class AvailabilityDateRangeRule extends AbstractRule
+         $this->validateDailyTimes($validationContext, $entity, $operationType);
+     }
+ 
++    /**
++     * Returns a detailed description of what this rule validates.
++     *
++     * @return string Detailed description
++     */
++    public function getDescription(): string
++    {
++        return "This rule validates the integrity of date and time ranges for availability entities, ensuring that validity periods are properly ordered (end date after start date), daily time windows are logical (end time after start time), and durations respect business constraints (minimum 15 minutes for daily slots, maximum configured days for validity periods). The rule applies to both CREATE and UPDATE operations to maintain consistent temporal logic across the availability lifecycle.";
++    }
++
+     /**
+      * Validates validity start and end dates.
+      *
+@@ -77,7 +87,7 @@ class AvailabilityDateRangeRule extends AbstractRule
+             startValue: $startValue,
+             endValue: $endValue,
+             violationKey: 'validity_date_range',
+-            violationMessage: 'End date must be after start date',
++            violationMessage: 'Validity end date must be after start date',
+             checkMaxDuration: true
+         );
+     }
+@@ -112,7 +122,7 @@ class AvailabilityDateRangeRule extends AbstractRule
+             startValue: $startValue,
+             endValue: $endValue,
+             violationKey: 'validity_date_range',
+-            violationMessage: 'End date must be after start date',
++            violationMessage: 'Validity end date must be after start date',
+             checkMaxDuration: true
+         );
+     }
+@@ -155,7 +165,7 @@ class AvailabilityDateRangeRule extends AbstractRule
+             startValue: $startValue,
+             endValue: $endValue,
+             violationKey: 'daily_time_range',
+-            violationMessage: 'End time must be after start time'
++            violationMessage: 'Daily end time must be after start time'
+         );
+     }
+ 
+@@ -189,7 +199,7 @@ class AvailabilityDateRangeRule extends AbstractRule
+             startValue: $startValue,
+             endValue: $endValue,
+             violationKey: 'daily_time_range',
+-            violationMessage: 'End time must be after start time'
++            violationMessage: 'Daily end time must be after start time'
+         );
+     }
+ 
+@@ -220,7 +230,8 @@ class AvailabilityDateRangeRule extends AbstractRule
+             $end = Carbon::parse($endValue);
+ 
+             if ($end->lt($start)) {
+-                $validationContext->setViolation(
++                $validationContext->setViolationFromRule(
++                    rule: $this,
+                     field: $violationKey,
+                     message: $violationMessage
+                 );
+@@ -230,9 +241,10 @@ class AvailabilityDateRangeRule extends AbstractRule
+                 $this->validateMaxDuration($validationContext, $start, $end);
+             }
+         } catch (Exception $exception) {
+-            $validationContext->setViolation(
++            $validationContext->setViolationFromRule(
++                rule: $this,
+                 field: 'date_format',
+-                message: sprintf('Invalid date format: %s', $exception->getMessage())
++                message: sprintf('Invalid date format provided: %s', $exception->getMessage())
+             );
+         }
+     }
+@@ -262,7 +274,8 @@ class AvailabilityDateRangeRule extends AbstractRule
+             $end = Carbon::parse($endValue);
+ 
+             if ($end->lte($start)) {
+-                $validationContext->setViolation(
++                $validationContext->setViolationFromRule(
++                    rule: $this,
+                     field: $violationKey,
+                     message: $violationMessage
+                 );
+@@ -270,9 +283,10 @@ class AvailabilityDateRangeRule extends AbstractRule
+ 
+             $this->validateMinDuration($validationContext, $start, $end);
+         } catch (Exception $exception) {
+-            $validationContext->setViolation(
++            $validationContext->setViolationFromRule(
++                rule: $this,
+                 field: 'time_format',
+-                message: sprintf('Invalid time format: %s', $exception->getMessage())
++                message: sprintf('Invalid time format provided: %s', $exception->getMessage())
+             );
+         }
+     }
+@@ -292,9 +306,10 @@ class AvailabilityDateRangeRule extends AbstractRule
+         $maxDays = $this->getMaxDays();
+ 
+         if ($start->diffInDays($end) > $maxDays) {
+-            $validationContext->setViolation(
++            $validationContext->setViolationFromRule(
++                rule: $this,
+                 field: 'max_duration',
+-                message: sprintf('Availability period cannot exceed %d days', $maxDays)
++                message: sprintf('Availability validity period cannot exceed %d days', $maxDays)
+             );
+         }
+     }
+@@ -315,9 +330,10 @@ class AvailabilityDateRangeRule extends AbstractRule
+         $minimumMinutes = 15;
+ 
+         if ($durationInMinutes < $minimumMinutes) {
+-            $validationContext->setViolation(
++            $validationContext->setViolationFromRule(
++                rule: $this,
+                 field: 'min_duration',
+-                message: 'Minimum duration must be at least 15 minutes'
++                message: 'Daily time slot duration must be at least 15 minutes'
+             );
+         }
+     }
+diff --git a/src/Validation/Rules/AvailabilityDaysCoherenceRule.php b/src/Validation/Rules/AvailabilityDaysCoherenceRule.php
+index c387a2b..54e3f52 100644
+--- a/src/Validation/Rules/AvailabilityDaysCoherenceRule.php
++++ b/src/Validation/Rules/AvailabilityDaysCoherenceRule.php
+@@ -49,6 +49,15 @@ class AvailabilityDaysCoherenceRule extends AbstractRule
+         $this->validateDaysAgainstPeriod($validationContext, $days);
+     }
+ 
++    /**
++     * Returns a detailed description of what this rule validates.
++     *
++     * @return string Detailed description
++     */
++    public function getDescription(): string
++    {
++        return "This rule validates the coherence between specified days and the validity period of an availability entity, ensuring that all provided days are valid days of the week according to the system's enumeration and fall within the defined validity date range. It prevents scheduling inconsistencies by verifying that days like 'monday', 'tuesday', etc., actually exist within the availability's start and end dates, maintaining data integrity across CREATE and UPDATE operations.";
++    }
+ 
+     /**
+      * Check if validation should proceed based on context.
+@@ -83,10 +92,10 @@ class AvailabilityDaysCoherenceRule extends AbstractRule
+     ): bool {
+         // ✅ 1. Format check FIRST
+         if (!is_array($days)) {
+-            $validationContext->setViolation(
++            $validationContext->setViolationFromRule(
++                rule: $this,
+                 field: 'days',
+-                message: 'Days must be an array',
+-                rule: self::class
++                message: 'Days must be provided as an array'
+             );
+             return false;
+         }
+@@ -101,10 +110,10 @@ class AvailabilityDaysCoherenceRule extends AbstractRule
+ 
+         foreach ($days as $day) {
+             if (!in_array($day, $validDays, true)) {
+-                $validationContext->setViolation(
++                $validationContext->setViolationFromRule(
++                    rule: $this,
+                     field: 'days',
+-                    message: sprintf("Day '%s' is not a valid day of week", $day),
+-                    rule: self::class
++                    message: sprintf("Day value '%s' is not recognized as a valid day of the week", $day)
+                 );
+                 return false;
+             }
+@@ -113,8 +122,6 @@ class AvailabilityDaysCoherenceRule extends AbstractRule
+         return true;
+     }
+ 
+-
+-
+     /**
+      * Validate days against validity period.
+      *
+@@ -200,10 +207,14 @@ class AvailabilityDaysCoherenceRule extends AbstractRule
+             if (!in_array($day, $daysInPeriod, true)) {
+                 $periodDescription = roster_format_period_days_for_display($daysInPeriod);
+ 
+-                $validationContext->setViolation(
++                $validationContext->setViolationFromRule(
++                    rule: $this,
+                     field: 'days',
+-                    message: sprintf("Day '%s' is not within the validity period (%s)", $day, $periodDescription),
+-                    rule: self::class
++                    message: sprintf(
++                        "Day '%s' falls outside the validity period. Available days in period: %s",
++                        $day,
++                        $periodDescription
++                    )
+                 );
+             }
+         }
+diff --git a/src/Validation/Rules/AvailabilityOverlapRule.php b/src/Validation/Rules/AvailabilityOverlapRule.php
+index 5125393..38acfbc 100644
+--- a/src/Validation/Rules/AvailabilityOverlapRule.php
++++ b/src/Validation/Rules/AvailabilityOverlapRule.php
+@@ -65,13 +65,27 @@ class AvailabilityOverlapRule extends AbstractRule
+             );
+ 
+             if ($conflictResult->hasConflicts) {
+-                $validationContext->setViolation('overlap', $conflictResult->message);
++                $validationContext->setViolationFromRule(
++                    rule: $this,
++                    field: 'overlap',
++                    message: $conflictResult->message
++                );
+             }
+         } catch (Exception $exception) {
+             report($exception);
+         }
+     }
+ 
++    /**
++     * Returns a detailed description of what this rule validates.
++     *
++     * @return string Detailed description
++     */
++    public function getDescription(): string
++    {
++        return "This rule validates that new or updated availability periods do not overlap with existing ones for the same schedulable entity. It checks temporal conflicts across multiple dimensions: daily time windows (start/end times), active days of the week, and validity date ranges. The rule ensures that overlapping availability periods are prevented, maintaining schedule integrity and preventing double-booking scenarios for the same resource.";
++    }
++
+     /**
+      * Extracts availability data from validation context and current entity.
+      *
+diff --git a/src/Validation/Rules/AvailabilityOwnershipRule.php b/src/Validation/Rules/AvailabilityOwnershipRule.php
+index 6728c0a..2873575 100644
+--- a/src/Validation/Rules/AvailabilityOwnershipRule.php
++++ b/src/Validation/Rules/AvailabilityOwnershipRule.php
+@@ -24,6 +24,16 @@ use Roster\Validation\Attributes\ValidationRule;
+ )]
+ class AvailabilityOwnershipRule extends AbstractRule
+ {
++    /**
++     * Returns a detailed description of what this rule validates.
++     *
++     * @return string Detailed description
++     */
++    public function getDescription(): string
++    {
++        return "This rule validates that schedule and impediment entities are properly linked to availability periods owned by the schedulable entity, ensuring referential integrity and ownership consistency. It verifies that the referenced availability exists, belongs to the same schedulable (matching both ID and type), and prevents unauthorized cross-entity references across CREATE and UPDATE operations.";
++    }
++
+     /**
+      * Validates availability ownership for schedule and impediment entities.
+      *
+@@ -49,9 +59,10 @@ class AvailabilityOwnershipRule extends AbstractRule
+         $fromExisting = is_array($resolved) ? $resolved['from_existing'] : false;
+ 
+         if ($operationType === OperationType::CREATE && !$availabilityId) {
+-            $validationContext->setViolation(
+-                'availability_id',
+-                'Must be linked to an availability'
++            $validationContext->setViolationFromRule(
++                rule: $this,
++                field: 'availability_id',
++                message: 'Schedule or impediment must be linked to an availability period'
+             );
+             return;
+         }
+@@ -107,9 +118,10 @@ class AvailabilityOwnershipRule extends AbstractRule
+         $availability = $validationContext->getAvailabilityService()->find($availabilityId);
+ 
+         if (!$availability instanceof Availability) {
+-            $validationContext->setViolation(
+-                'availability_id',
+-                'Invalid availability ID'
++            $validationContext->setViolationFromRule(
++                rule: $this,
++                field: 'availability_id',
++                message: 'Referenced availability period does not exist or is invalid'
+             );
+             return;
+         }
+@@ -118,9 +130,10 @@ class AvailabilityOwnershipRule extends AbstractRule
+             && $availability->schedulable_type === get_class($model);
+ 
+         if (!$isOwner) {
+-            $validationContext->setViolation(
+-                'availability_id',
+-                'Availability does not belong to this schedulable'
++            $validationContext->setViolationFromRule(
++                rule: $this,
++                field: 'availability_id',
++                message: 'Referenced availability period does not belong to this schedulable entity'
+             );
+         }
+     }
+diff --git a/src/Validation/Rules/AvailabilityTemporalCoherenceRule.php b/src/Validation/Rules/AvailabilityTemporalCoherenceRule.php
+index 126c509..4836435 100644
+--- a/src/Validation/Rules/AvailabilityTemporalCoherenceRule.php
++++ b/src/Validation/Rules/AvailabilityTemporalCoherenceRule.php
+@@ -43,6 +43,16 @@ class AvailabilityTemporalCoherenceRule extends AbstractRule
+         $this->validateBasedOnOperation($validationContext, $entity);
+     }
+ 
++    /**
++     * Returns a detailed description of what this rule validates.
++     *
++     * @return string Detailed description
++     */
++    public function getDescription(): string
++    {
++        return "This rule validates temporal coherence during availability modifications to prevent conflicts with existing schedules and impediments. It ensures that availability updates (validity dates or days) do not break existing future bookings and that deletions are only allowed when no future schedules or impediments exist. This maintains data integrity and prevents orphaned time slots in the scheduling system.";
++    }
++
+     /**
+      * Routes validation to appropriate method based on operation type.
+      *
+@@ -155,19 +165,22 @@ class AvailabilityTemporalCoherenceRule extends AbstractRule
+         bool $hasImpediments
+     ): void {
+         if ($hasSchedules && $hasImpediments) {
+-            $validationContext->setViolation(
+-                '_system',
+-                "Cannot delete availability with future schedules and impediments"
++            $validationContext->setViolationFromRule(
++                rule: $this,
++                field: '_system',
++                message: "Cannot delete availability with future schedules and impediments"
+             );
+         } elseif ($hasSchedules) {
+-            $validationContext->setViolation(
+-                '_system',
+-                "Cannot delete availability with future schedules"
++            $validationContext->setViolationFromRule(
++                rule: $this,
++                field: '_system',
++                message: "Cannot delete availability with future schedules"
+             );
+         } elseif ($hasImpediments) {
+-            $validationContext->setViolation(
+-                '_system',
+-                "Cannot delete availability with future impediments"
++            $validationContext->setViolationFromRule(
++                rule: $this,
++                field: '_system',
++                message: "Cannot delete availability with future impediments"
+             );
+         }
+     }
+@@ -291,9 +304,10 @@ class AvailabilityTemporalCoherenceRule extends AbstractRule
+             : $entityCarbon->gt($newCarbon);
+ 
+         if ($isConflict) {
+-            $validationContext->setViolation(
+-                $field,
+-                sprintf(
++            $validationContext->setViolationFromRule(
++                rule: $this,
++                field: $field,
++                message: sprintf(
+                     "Cannot set %s to '%s' because it conflicts with existing future %s %s at '%s'",
+                     $field,
+                     $newDate,
+@@ -323,9 +337,10 @@ class AvailabilityTemporalCoherenceRule extends AbstractRule
+     ): void {
+         foreach ($entityDays as $entityDay) {
+             if (!in_array($entityDay, $newDays, true)) {
+-                $validationContext->setViolation(
+-                    'days',
+-                    sprintf(
++                $validationContext->setViolationFromRule(
++                    rule: $this,
++                    field: 'days',
++                    message: sprintf(
+                         "Cannot remove '%s' from days because it is used by a future %s from '%s' to '%s'",
+                         ucfirst($entityDay),
+                         strtolower(class_basename($entityClass)),
+diff --git a/src/Validation/Rules/FutureDateRule.php b/src/Validation/Rules/FutureDateRule.php
+index fb0f6f2..9eada3e 100644
+--- a/src/Validation/Rules/FutureDateRule.php
++++ b/src/Validation/Rules/FutureDateRule.php
+@@ -18,9 +18,9 @@ use Roster\Validation\Attributes\ValidationRule;
+  * unless explicitly configured to allow past dates.
+  */
+ #[ValidationRule(
+-    priority: 40,
+-    entities: [EntityType::SCHEDULE, EntityType::IMPEDIMENT],
+-    operations: [OperationType::CREATE]
++    priority: 90,
++    entities: [EntityType::SCHEDULE, EntityType::IMPEDIMENT, EntityType::AVAILABILITY],
++    operations: [OperationType::CREATE, OperationType::UPDATE]
+ )]
+ class FutureDateRule extends AbstractRule
+ {
+@@ -31,10 +31,6 @@ class FutureDateRule extends AbstractRule
+      */
+     public function validate(ValidationContextInterface $validationContext): void
+     {
+-        if ($validationContext->getOperation() !== OperationType::CREATE) {
+-            return;
+-        }
+-
+         if (!$this->shouldValidateFutureDates()) {
+             return;
+         }
+@@ -52,24 +48,98 @@ class FutureDateRule extends AbstractRule
+         }
+     }
+ 
++    /**
++     * Returns a detailed description of what this rule validates.
++     *
++     * @return string Detailed description
++     */
++    public function getDescription(): string
++    {
++        return "This rule ensures that all time-based entities (schedules, impediments, and availabilities) are created or updated with start dates/times that are in the future. For schedules and impediments, it validates that the 'start_datetime' field is not in the past. For availabilities, it validates that the combined datetime of 'validity_start' and 'daily_start' is not in the past. The rule respects configuration settings that may allow past dates or disable future date validation entirely. It applies to both CREATE and UPDATE operations, but only validates when relevant fields are being modified during updates.";
++    }
++
+     /**
+      * Validates availability start date is not in the past.
++     * Checks that the combination of validity_start + daily_start is in the future.
+      *
+      * @param ValidationContextInterface $validationContext Validation context
+      */
+     private function validateFutureAvailability(ValidationContextInterface $validationContext): void
+     {
+-        if (!$validationContext->has('start_date')) {
++        // For CREATE operation, validate all fields
++        if ($validationContext->getOperation() === OperationType::CREATE) {
++            $this->validateNewAvailability($validationContext);
++            return;
++        }
++
++        // For UPDATE operation, only validate if validity_start is being updated
++        if (
++            $validationContext->getOperation() === OperationType::UPDATE &&
++            $validationContext->has('validity_start')
++        ) {
++            $this->validateUpdatedAvailability($validationContext);
++        }
++    }
++
++    /**
++     * Validates new availability creation.
++     *
++     * @param ValidationContextInterface $validationContext Validation context
++     */
++    private function validateNewAvailability(ValidationContextInterface $validationContext): void
++    {
++        if (!$validationContext->has('validity_start')) {
+             return;
+         }
+ 
+         try {
+-            $date = Carbon::parse($validationContext->get('start_date'));
++            $validityStart = Carbon::parse($validationContext->get('validity_start'));
+ 
+-            if ($date->isPast()) {
+-                $validationContext->setViolation(
+-                    field: 'start_date',
+-                    message: 'Availability start date cannot be in the past'
++            // Get daily_start from context or database (for updates)
++            $dailyStart = $validationContext->has('daily_start')
++                ? $validationContext->get('daily_start')
++                : $this->getCurrentDailyStart($validationContext);
++
++            // Combine validity_start date with daily_start time
++            $combinedDateTime = $this->combineDateAndTime($validityStart, $dailyStart);
++
++            if ($combinedDateTime->isPast()) {
++                $validationContext->setViolationFromRule(
++                    rule: $this,
++                    field: 'validity_start',
++                    message: 'Availability start date/time cannot be in the past. ' .
++                        'The combination of validity_start and daily_start must be in the future.'
++                );
++            }
++        } catch (Exception $exception) {
++            // Format validation handled by other rules
++        }
++    }
++
++    /**
++     * Validates updated availability when validity_start is changed.
++     *
++     * @param ValidationContextInterface $validationContext Validation context
++     */
++    private function validateUpdatedAvailability(ValidationContextInterface $validationContext): void
++    {
++        try {
++            $validityStart = Carbon::parse($validationContext->get('validity_start'));
++
++            // Get daily_start from context or database
++            $dailyStart = $validationContext->has('daily_start')
++                ? $validationContext->get('daily_start')
++                : $this->getCurrentDailyStart($validationContext);
++
++            // Combine validity_start date with daily_start time
++            $combinedDateTime = $this->combineDateAndTime($validityStart, $dailyStart);
++
++            if ($combinedDateTime->isPast()) {
++                $validationContext->setViolationFromRule(
++                    rule: $this,
++                    field: 'validity_start',
++                    message: 'Availability start date/time cannot be moved to the past. ' .
++                        'The combination of validity_start and daily_start must be in the future.'
+                 );
+             }
+         } catch (Exception $exception) {
+@@ -83,6 +153,28 @@ class FutureDateRule extends AbstractRule
+      * @param ValidationContextInterface $validationContext Validation context
+      */
+     private function validateFutureDateTime(ValidationContextInterface $validationContext): void
++    {
++        // For CREATE operation, validate start_datetime
++        if ($validationContext->getOperation() === OperationType::CREATE) {
++            $this->validateNewDateTime($validationContext);
++            return;
++        }
++
++        // For UPDATE operation, only validate if start_datetime is being updated
++        if (
++            $validationContext->getOperation() === OperationType::UPDATE &&
++            $validationContext->has('start_datetime')
++        ) {
++            $this->validateUpdatedDateTime($validationContext);
++        }
++    }
++
++    /**
++     * Validates new schedule/impediment creation.
++     *
++     * @param ValidationContextInterface $validationContext Validation context
++     */
++    private function validateNewDateTime(ValidationContextInterface $validationContext): void
+     {
+         if (!$validationContext->has('start_datetime')) {
+             return;
+@@ -93,7 +185,8 @@ class FutureDateRule extends AbstractRule
+ 
+             if ($date->isPast()) {
+                 $entityType = $validationContext->getEntityType();
+-                $validationContext->setViolation(
++                $validationContext->setViolationFromRule(
++                    rule: $this,
+                     field: 'start_datetime',
+                     message: sprintf('%s start datetime cannot be in the past', $entityType->displayName())
+                 );
+@@ -102,4 +195,60 @@ class FutureDateRule extends AbstractRule
+             // Format validation handled by other rules
+         }
+     }
++
++    /**
++     * Validates updated schedule/impediment when start_datetime is changed.
++     *
++     * @param ValidationContextInterface $validationContext Validation context
++     */
++    private function validateUpdatedDateTime(ValidationContextInterface $validationContext): void
++    {
++        try {
++            $date = Carbon::parse($validationContext->get('start_datetime'));
++
++            if ($date->isPast()) {
++                $entityType = $validationContext->getEntityType();
++                $validationContext->setViolationFromRule(
++                    rule: $this,
++                    field: 'start_datetime',
++                    message: sprintf('%s start datetime cannot be moved to the past', $entityType->displayName())
++                );
++            }
++        } catch (Exception $exception) {
++            // Format validation handled by other rules
++        }
++    }
++
++    /**
++     * Combines date and time strings into a Carbon instance.
++     *
++     * @param Carbon $date
++     * @param string|null $time
++     * @return Carbon
++     */
++    private function combineDateAndTime(Carbon $date, ?string $time): Carbon
++    {
++        if ($time) {
++            return Carbon::parse($date->format('Y-m-d') . ' ' . $time);
++        }
++
++        return $date->copy();
++    }
++
++    /**
++     * Gets current daily_start from database (for update operations).
++     *
++     * @param ValidationContextInterface $validationContext
++     * @return string|null
++     */
++    private function getCurrentDailyStart(ValidationContextInterface $validationContext): ?string
++    {
++        $entity = $validationContext->getCurrentEntity();
++
++        if (!$entity || !isset($entity->daily_start)) {
++            return null;
++        }
++
++        return $entity->daily_start->format('Y-m-d H:i:s');
++    }
+ }
+diff --git a/src/Validation/Rules/ScheduleOverlapRule.php b/src/Validation/Rules/ScheduleOverlapRule.php
+deleted file mode 100644
+index 5d98859..0000000
+--- a/src/Validation/Rules/ScheduleOverlapRule.php
++++ /dev/null
+@@ -1,153 +0,0 @@
+-<?php
+-
+-declare(strict_types=1);
+-
+-namespace Roster\Validation\Rules;
+-
+-use Exception;
+-use Illuminate\Support\Carbon;
+-use Roster\Contracts\Validation\ValidationContextInterface;
+-use Roster\Domain\Services\TemporalConflictService;
+-use Roster\Enums\EntityType;
+-use Roster\Enums\OperationType;
+-use Roster\Validation\Attributes\ValidationRule;
+-
+-/**
+- * Validates that schedules and impediments do not overlap with existing entities.
+- *
+- * Ensures temporal integrity by checking for conflicts with existing schedules
+- * and impediments within the same availability period.
+- */
+-#[ValidationRule(
+-    priority: 80,
+-    entities: [EntityType::SCHEDULE, EntityType::IMPEDIMENT],
+-    operations: [OperationType::CREATE, OperationType::UPDATE]
+-)]
+-class ScheduleOverlapRule extends AbstractRule
+-{
+-    /**
+-     * Initializes the rule with required dependencies.
+-     *
+-     * @param TemporalConflictService $temporalConflictService Service for detecting temporal conflicts
+-     */
+-    public function __construct(
+-        private TemporalConflictService $temporalConflictService
+-    ) {}
+-
+-    /**
+-     * Validates that the proposed time slot does not overlap with existing entities.
+-     *
+-     * @param ValidationContextInterface $validationContext Validation context with entity data
+-     */
+-    public function validate(ValidationContextInterface $validationContext): void
+-    {
+-        if (!$this->hasRequiredFields($validationContext)) {
+-            return;
+-        }
+-
+-        try {
+-            $start = Carbon::parse($validationContext->get('start_datetime'));
+-            $end = Carbon::parse($validationContext->get('end_datetime'));
+-            $availabilityId = $validationContext->get('availability_id');
+-
+-            if (!$availabilityId) {
+-                return;
+-            }
+-
+-            $exclusionIds = $this->determineExclusionIds($validationContext);
+-            $this->checkForConflicts($validationContext, $availabilityId, $start, $end, $exclusionIds);
+-        } catch (Exception $exception) {
+-            report($exception);
+-        }
+-    }
+-
+-    /**
+-     * Returns a detailed description of what this rule validates.
+-     *
+-     * @return string Detailed description
+-     */
+-    public function getDescription(): string
+-    {
+-        return "Validates that no temporal overlap exists with other time slots.\n" .
+-            "This rule prevents:\n" .
+-            "- Double bookings on the same time slot\n" .
+-            "- Impediments overlapping with existing schedules\n" .
+-            "- Availability conflicts between different entity types\n" .
+-            "\n" .
+-            "The system checks within the same availability if there are existing " .
+-            "entities (schedules or impediments) whose periods overlap with the proposed one.";
+-    }
+-
+-    /**
+-     * Checks if the validation context has required fields.
+-     *
+-     * @param ValidationContextInterface $validationContext Validation context
+-     * @return bool True if required fields are present
+-     */
+-    private function hasRequiredFields(ValidationContextInterface $validationContext): bool
+-    {
+-        return $validationContext->has('start_datetime')
+-            && $validationContext->has('end_datetime');
+-    }
+-
+-    /**
+-     * Determines which entity IDs to exclude from conflict checking.
+-     *
+-     * @param ValidationContextInterface $validationContext Validation context
+-     * @return array<string, int|null> Exclusion IDs keyed by entity type
+-     */
+-    private function determineExclusionIds(ValidationContextInterface $validationContext): array
+-    {
+-        $currentEntity = $validationContext->getCurrentEntity();
+-        $entityType = $validationContext->getEntityType();
+-
+-        $excludeScheduleId = null;
+-        $excludeImpedimentId = null;
+-
+-        if ($currentEntity) {
+-            if ($entityType === EntityType::SCHEDULE) {
+-                $excludeScheduleId = $currentEntity->id ?? null;
+-            } elseif ($entityType === EntityType::IMPEDIMENT) {
+-                $excludeImpedimentId = $currentEntity->id ?? null;
+-            }
+-        }
+-
+-        return [
+-            'excludeScheduleId' => $excludeScheduleId,
+-            'excludeImpedimentId' => $excludeImpedimentId,
+-        ];
+-    }
+-
+-    /**
+-     * Checks for temporal conflicts and reports violations if found.
+-     *
+-     * @param ValidationContextInterface $validationContext Validation context
+-     * @param int $availabilityId Availability identifier
+-     * @param Carbon $start Proposed start time
+-     * @param Carbon $end Proposed end time
+-     * @param array<string, int|null> $exclusionIds IDs to exclude from conflict checking
+-     */
+-    private function checkForConflicts(
+-        ValidationContextInterface $validationContext,
+-        int $availabilityId,
+-        Carbon $start,
+-        Carbon $end,
+-        array $exclusionIds
+-    ): void {
+-        $conflictResult = $this->temporalConflictService->checkAllConflicts(
+-            availabilityId: $availabilityId,
+-            start: $start,
+-            end: $end,
+-            excludeScheduleId: $exclusionIds['excludeScheduleId'],
+-            excludeImpedimentId: $exclusionIds['excludeImpedimentId']
+-        );
+-
+-        if ($conflictResult->hasConflicts) {
+-            $validationContext->setViolationFromRule(
+-                $this,
+-                'overlap',
+-                $conflictResult->message
+-            );
+-        }
+-    }
+-}
+diff --git a/tests/Feature/Services/AvailabilityServiceDaysCoherenceTest.php b/tests/Feature/Services/AvailabilityServiceDaysCoherenceTest.php
+index 7795650..ee66f5c 100644
+--- a/tests/Feature/Services/AvailabilityServiceDaysCoherenceTest.php
++++ b/tests/Feature/Services/AvailabilityServiceDaysCoherenceTest.php
+@@ -91,7 +91,7 @@ final class AvailabilityServiceDaysCoherenceTest extends TestCase
+ 
+         // Assert: Should throw validation exception
+         $this->expectException(ValidationFailedException::class);
+-        $this->expectExceptionMessageMatches("/Day 'monday' is not within the validity period/");
++        $this->expectExceptionMessageMatches("/Day 'monday' falls outside the validity period/");
+ 
+         // Act: Attempt to create with invalid days
+         availability_for($this->schedulable)->create([
+@@ -237,7 +237,7 @@ final class AvailabilityServiceDaysCoherenceTest extends TestCase
+ 
+         // Assert: Should throw validation exception
+         $this->expectException(ValidationFailedException::class);
+-        $this->expectExceptionMessageMatches("/Day 'saturday' is not within the validity period/");
++        $this->expectExceptionMessageMatches("/Day 'saturday' falls outside the validity period/");
+ 
+         // Act: Attempt update with invalid days
+         availability_for($this->schedulable)->update(
+diff --git a/tests/Integration/Database/AvailabilityIntegrationTest.php b/tests/Integration/Database/AvailabilityIntegrationTest.php
+index 87f0219..3d9da6d 100644
+--- a/tests/Integration/Database/AvailabilityIntegrationTest.php
++++ b/tests/Integration/Database/AvailabilityIntegrationTest.php
+@@ -112,7 +112,10 @@ final class AvailabilityIntegrationTest extends TestCase
+ 
+         // Assert: Should throw validation exception
+         $this->expectException(ValidationFailedException::class);
+-        $this->expectExceptionMessageMatches('/End time must be after start time/');
++        $this->expectExceptionMessageMatches(
++            '/end time must be after start time/i'
++        );
++
+ 
+         // Act: Attempt to create with invalid time range
+         availability_for($this->schedulable)->create($invalidTimeData);
+diff --git a/tests/Integration/Database/ImpedimentIntegrationTest.php b/tests/Integration/Database/ImpedimentIntegrationTest.php
+index b8e233a..148e995 100644
+--- a/tests/Integration/Database/ImpedimentIntegrationTest.php
++++ b/tests/Integration/Database/ImpedimentIntegrationTest.php
+@@ -360,26 +360,6 @@ final class ImpedimentIntegrationTest extends TestCase
+         impediment_for($this->availability)->create(data: $invalidDayData);
+     }
+ 
+-    /**
+-     * Test impediment creation in the past fails.
+-     */
+-    public function test_cannot_create_impediment_in_the_past(): void
+-    {
+-        // Arrange: Impediment with past date
+-        $pastDateData = [
+-            'reason' => 'Past Event',
+-            'start_datetime' => '2020-01-01 10:00:00',
+-            'end_datetime' => '2020-01-01 11:00:00',
+-        ];
+-
+-        // Assert: Should throw validation exception
+-        $this->expectException(ValidationFailedException::class);
+-        $this->expectExceptionMessage(message: 'past');
+-
+-        // Act: Attempt to create impediment in the past
+-        impediment_for($this->availability)->create(data: $pastDateData);
+-    }
+-
+     /**
+      * Test multiple non-overlapping impediments can coexist.
+      */
+diff --git a/tests/Unit/Services/AvailabilityServiceTest.php b/tests/Unit/Services/AvailabilityServiceTest.php
+index d9dc1bd..c99851e 100644
+--- a/tests/Unit/Services/AvailabilityServiceTest.php
++++ b/tests/Unit/Services/AvailabilityServiceTest.php
+@@ -438,12 +438,15 @@ final class AvailabilityServiceTest extends TestCase
+ 
+         // Assert: Should throw validation exception
+         $this->expectException(ValidationFailedException::class);
+-        $this->expectExceptionMessageMatches('/Minimum duration/');
++        $this->expectExceptionMessageMatches(
++            '/Daily time slot duration must be at least 15 minutes/'
++        );
+ 
+         // Act: Attempt to create with insufficient duration
+         availability_for($this->schedulable)->create($availabilityData);
+     }
+ 
++
+     /**
+      * Test validates date range order.
+      */
+@@ -588,7 +591,10 @@ final class AvailabilityServiceTest extends TestCase
+ 
+         // Assert: Should throw validation exception
+         $this->expectException(ValidationFailedException::class);
+-        $this->expectExceptionMessage("Day 'not-an-array' is not a valid day of week");
++        $this->expectExceptionMessageMatches(
++            "/not-an-array.*valid day/i"
++        );
++
+ 
+         // Act: Attempt to create with invalid days format
+         availability_for($this->schedulable)->create($availabilityData);
+@@ -666,7 +672,9 @@ final class AvailabilityServiceTest extends TestCase
+ 
+         // Assert: Should throw validation exception
+         $this->expectException(ValidationFailedException::class);
+-        $this->expectExceptionMessage("Day 'invalid-day' is not a valid day of week");
++        $this->expectExceptionMessageMatches(
++            "/invalid-day.*valid day/i"
++        );
+ 
+         // Act: Attempt to create with invalid day
+         availability_for($this->schedulable)->create($availabilityData);
+diff --git a/tests/Unit/Services/ImpedimentServiceTest.php b/tests/Unit/Services/ImpedimentServiceTest.php
+index e29e151..6677863 100644
+--- a/tests/Unit/Services/ImpedimentServiceTest.php
++++ b/tests/Unit/Services/ImpedimentServiceTest.php
+@@ -773,50 +773,6 @@ final class ImpedimentServiceTest extends TestCase
+         ));
+     }
+ 
+-    /**
+-     * Test impediment active status live.
+-     */
+-    public function test_impediment_active_status_live(): void
+-    {
+-        $now = now();
+-
+-        // Skip test near midnight to avoid boundary issues
+-        if ($now->format('H') == 23 && (int)$now->format('i') >= 40) {
+-            $this->markTestSkipped('Cannot test live time slot crossing midnight.');
+-        }
+-
+-        // Arrange: Create availability for current time
+-        $dailyStart = $now->copy();
+-        $dailyEnd   = $now->copy()->addMinutes(20);
+-        $validityEnd = $now->copy()->addHour();
+-
+-        $availability = availability_for($this->testSchedulable)->create([
+-            'type' => 'instant-test',
+-            'daily_start' => $dailyStart->format('H:i:s'),
+-            'daily_end' => $dailyEnd->format('H:i:s'),
+-            'days' => [strtolower($now->englishDayOfWeek)],
+-            'validity_start' => $now->copy(),
+-            'validity_end' => $validityEnd,
+-        ]);
+-
+-        // Create impediment starting now
+-        $start = $now->copy()->addSecond();
+-        $end   = $now->copy()->addMinutes(10);
+-
+-        $impediment = impediment_for($availability)->create([
+-            'reason' => 'Live active test',
+-            'start_datetime' => $start,
+-            'end_datetime' => $end,
+-        ]);
+-
+-        sleep(2);
+-
+-        // Assert: Verify live status
+-        $this->assertTrue($impediment->isActive());
+-        $this->assertFalse($impediment->isPast());
+-        $this->assertFalse($impediment->isUpcoming());
+-    }
+-
+     /**
+      * Test concurrent impediment creation prevents overlap.
+      */
+diff --git a/tests/Unit/Services/ScheduleServiceTest.php b/tests/Unit/Services/ScheduleServiceTest.php
+index 955b9f3..4452a18 100644
+--- a/tests/Unit/Services/ScheduleServiceTest.php
++++ b/tests/Unit/Services/ScheduleServiceTest.php
+@@ -189,9 +189,11 @@ final class ScheduleServiceTest extends TestCase
+             'end_datetime' => '2038-01-04 11:00:00',
+         ];
+ 
+-        // Assert: Should throw validation exception
++        // Assert: Should throw validation exception with updated message
+         $this->expectException(ValidationFailedException::class);
+-        $this->expectExceptionMessageMatches('/Invalid availability ID/');
++        $this->expectExceptionMessageMatches('/Referenced availability period does not exist or is invalid/');
++        // Alternative: vérifier que le message contient la partie clé
++        // $this->expectExceptionMessageMatches('/availability period does not exist/');
+ 
+         // Act: Attempt to create schedule for wrong schedulable
+         schedule_for($availabilityForSchedulable1)
+@@ -199,7 +201,6 @@ final class ScheduleServiceTest extends TestCase
+             ->create($scheduleData);
+     }
+ 
+-
+     /**
+      * Test successful schedule update.
+      */
+diff --git a/tests/Unit/Validation/Rules/AvailabilityDateRangeRuleTest.php b/tests/Unit/Validation/Rules/AvailabilityDateRangeRuleTest.php
+index e32bebd..78fd29f 100644
+--- a/tests/Unit/Validation/Rules/AvailabilityDateRangeRuleTest.php
++++ b/tests/Unit/Validation/Rules/AvailabilityDateRangeRuleTest.php
+@@ -42,6 +42,7 @@ final class AvailabilityDateRangeRuleTest extends TestCase
+         $this->configureContextWithValidData($context);
+ 
+         $context->expects($this->never())->method('setViolation');
++        $context->expects($this->never())->method('setViolationFromRule');
+ 
+         // Act: Execute validation
+         $this->rule->validate($context);
+@@ -65,8 +66,12 @@ final class AvailabilityDateRangeRuleTest extends TestCase
+         );
+ 
+         $context->expects($this->once())
+-            ->method('setViolation')
+-            ->with('validity_date_range', 'End date must be after start date');
++            ->method('setViolationFromRule')
++            ->with(
++                $this->rule,
++                'validity_date_range',
++                'Validity end date must be after start date'
++            );
+ 
+         // Act: Execute validation
+         $this->rule->validate($context);
+@@ -91,15 +96,17 @@ final class AvailabilityDateRangeRuleTest extends TestCase
+ 
+         $violationCount = 0;
+         $context->expects($this->exactly(2))
+-            ->method('setViolation')
+-            ->willReturnCallback(function (string $field, string $message) use (&$violationCount): void {
++            ->method('setViolationFromRule')
++            ->willReturnCallback(function ($rule, string $field, string $message) use (&$violationCount): void {
+                 ++$violationCount;
++                $this->assertSame($this->rule, $rule);
++
+                 if ($violationCount === 1) {
+                     $this->assertEquals('daily_time_range', $field);
+-                    $this->assertEquals('End time must be after start time', $message);
++                    $this->assertEquals('Daily end time must be after start time', $message);
+                 } else {
+                     $this->assertEquals('min_duration', $field);
+-                    $this->assertEquals('Minimum duration must be at least 15 minutes', $message);
++                    $this->assertEquals('Daily time slot duration must be at least 15 minutes', $message);
+                 }
+             });
+ 
+@@ -125,8 +132,12 @@ final class AvailabilityDateRangeRuleTest extends TestCase
+         );
+ 
+         $context->expects($this->once())
+-            ->method('setViolation')
+-            ->with('min_duration', 'Minimum duration must be at least 15 minutes');
++            ->method('setViolationFromRule')
++            ->with(
++                $this->rule,
++                'min_duration',
++                'Daily time slot duration must be at least 15 minutes'
++            );
+ 
+         // Act: Execute validation
+         $this->rule->validate($context);
+@@ -152,8 +163,12 @@ final class AvailabilityDateRangeRuleTest extends TestCase
+         );
+ 
+         $context->expects($this->once())
+-            ->method('setViolation')
+-            ->with('max_duration', 'Availability period cannot exceed 365 days');
++            ->method('setViolationFromRule')
++            ->with(
++                $this->rule,
++                'max_duration',
++                'Availability validity period cannot exceed 365 days'
++            );
+ 
+         // Act: Execute validation
+         $this->rule->validate($context);
+@@ -182,6 +197,7 @@ final class AvailabilityDateRangeRuleTest extends TestCase
+         );
+ 
+         $context->expects($this->never())->method('setViolation');
++        $context->expects($this->never())->method('setViolationFromRule');
+ 
+         // Act: Execute validation
+         $this->rule->validate($context);
+@@ -205,8 +221,12 @@ final class AvailabilityDateRangeRuleTest extends TestCase
+         );
+ 
+         $context->expects($this->once())
+-            ->method('setViolation')
+-            ->with('date_format', $this->stringContains('Invalid date format:'));
++            ->method('setViolationFromRule')
++            ->with(
++                $this->rule,
++                'date_format',
++                $this->stringContains('Invalid date format provided:')
++            );
+ 
+         // Act: Execute validation
+         $this->rule->validate($context);
+@@ -230,8 +250,12 @@ final class AvailabilityDateRangeRuleTest extends TestCase
+         );
+ 
+         $context->expects($this->once())
+-            ->method('setViolation')
+-            ->with('time_format', $this->stringContains('Invalid time format:'));
++            ->method('setViolationFromRule')
++            ->with(
++                $this->rule,
++                'time_format',
++                $this->stringContains('Invalid time format provided:')
++            );
+ 
+         // Act: Execute validation
+         $this->rule->validate($context);
+@@ -250,6 +274,7 @@ final class AvailabilityDateRangeRuleTest extends TestCase
+ 
+         $context->expects($this->never())->method('get');
+         $context->expects($this->never())->method('setViolation');
++        $context->expects($this->never())->method('setViolationFromRule');
+ 
+         // Act: Execute validation
+         $this->rule->validate($context);
+@@ -272,6 +297,7 @@ final class AvailabilityDateRangeRuleTest extends TestCase
+         );
+ 
+         $context->expects($this->never())->method('setViolation');
++        $context->expects($this->never())->method('setViolationFromRule');
+ 
+         // Act: Execute validation
+         $this->rule->validate($context);
+@@ -294,6 +320,7 @@ final class AvailabilityDateRangeRuleTest extends TestCase
+         );
+ 
+         $context->expects($this->never())->method('setViolation');
++        $context->expects($this->never())->method('setViolationFromRule');
+ 
+         // Act: Execute validation
+         $this->rule->validate($context);
+@@ -323,6 +350,7 @@ final class AvailabilityDateRangeRuleTest extends TestCase
+         );
+ 
+         $context->expects($this->never())->method('setViolation');
++        $context->expects($this->never())->method('setViolationFromRule');
+ 
+         // Act: Execute validation
+         $this->rule->validate($context);
+@@ -348,6 +376,7 @@ final class AvailabilityDateRangeRuleTest extends TestCase
+         );
+ 
+         $context->expects($this->never())->method('setViolation');
++        $context->expects($this->never())->method('setViolationFromRule');
+ 
+         // Act: Execute validation
+         $this->rule->validate($context);
+@@ -355,6 +384,23 @@ final class AvailabilityDateRangeRuleTest extends TestCase
+         // Assert: No violations expected for exact maximum duration
+     }
+ 
++    /**
++     * Test that getDescription returns a detailed description.
++     */
++    public function test_get_description_returns_detailed_information(): void
++    {
++        // Act: Get description
++        $description = $this->rule->getDescription();
++
++        // Assert: Verify description contains key information
++        $this->assertIsString($description);
++        $this->assertNotEmpty($description);
++        $this->assertStringContainsString('validates', $description);
++        $this->assertStringContainsString('availability', $description);
++        $this->assertStringContainsString('date and time ranges', $description);
++        $this->assertStringContainsString('CREATE and UPDATE', $description);
++    }
++
+     /**
+      * Create a validation context mock for CREATE operation.
+      *
+diff --git a/tests/Unit/Validation/Rules/AvailabilityDaysCoherenceRuleTest.php b/tests/Unit/Validation/Rules/AvailabilityDaysCoherenceRuleTest.php
+index f993b88..87874aa 100644
+--- a/tests/Unit/Validation/Rules/AvailabilityDaysCoherenceRuleTest.php
++++ b/tests/Unit/Validation/Rules/AvailabilityDaysCoherenceRuleTest.php
+@@ -45,7 +45,7 @@ final class AvailabilityDaysCoherenceRuleTest extends TestCase
+             validityEnd: '2038-12-31'
+         );
+ 
+-        $context->expects($this->never())->method('setViolation');
++        $context->expects($this->never())->method('setViolationFromRule');
+ 
+         // Act: Execute the validation rule
+         $this->rule->validate($context);
+@@ -62,7 +62,7 @@ final class AvailabilityDaysCoherenceRuleTest extends TestCase
+         $context = $this->createValidationContextWithCreateOperation();
+         $this->configureContextWithoutDays($context);
+ 
+-        $context->expects($this->never())->method('setViolation');
++        $context->expects($this->never())->method('setViolationFromRule');
+ 
+         // Act: Execute the validation rule
+         $this->rule->validate($context);
+@@ -80,8 +80,12 @@ final class AvailabilityDaysCoherenceRuleTest extends TestCase
+         $this->configureContextWithNonArrayDays($context);
+ 
+         $context->expects($this->once())
+-            ->method('setViolation')
+-            ->with('days', 'Days must be an array', AvailabilityDaysCoherenceRule::class);
++            ->method('setViolationFromRule')
++            ->with(
++                $this->identicalTo($this->rule),
++                $this->identicalTo('days'),
++                $this->identicalTo('Days must be provided as an array')
++            );
+ 
+         // Act: Execute the validation rule
+         $this->rule->validate($context);
+@@ -102,8 +106,12 @@ final class AvailabilityDaysCoherenceRuleTest extends TestCase
+         );
+ 
+         $context->expects($this->once())
+-            ->method('setViolation')
+-            ->with('days', "Day 'invalidday' is not a valid day of week");
++            ->method('setViolationFromRule')
++            ->with(
++                $this->identicalTo($this->rule),
++                $this->identicalTo('days'),
++                $this->identicalTo("Day value 'invalidday' is not recognized as a valid day of the week")
++            );
+ 
+         // Act: Execute the validation rule
+         $this->rule->validate($context);
+@@ -127,10 +135,11 @@ final class AvailabilityDaysCoherenceRuleTest extends TestCase
+ 
+         $violationCount = 0;
+         $context->expects($this->exactly(2))
+-            ->method('setViolation')
+-            ->willReturnCallback(function (string $field, string $message) use (&$violationCount): void {
+-                $this->assertEquals('days', $field);
+-                $this->assertStringContainsString('is not within the validity period', $message);
++            ->method('setViolationFromRule')
++            ->willReturnCallback(function ($rule, string $field, string $message) use (&$violationCount): void {
++                $this->assertSame($this->rule, $rule);
++                $this->assertSame('days', $field);
++                $this->assertStringContainsString('falls outside the validity period', $message);
+                 ++$violationCount;
+             });
+ 
+@@ -138,7 +147,7 @@ final class AvailabilityDaysCoherenceRuleTest extends TestCase
+         $this->rule->validate($context);
+ 
+         // Assert: Two violations should be recorded for two out-of-period days
+-        $this->assertEquals(2, $violationCount);
++        $this->assertSame(2, $violationCount);
+     }
+ 
+     /**
+@@ -155,7 +164,7 @@ final class AvailabilityDaysCoherenceRuleTest extends TestCase
+             validityEnd: '2038-12-31'
+         );
+ 
+-        $context->expects($this->never())->method('setViolation');
++        $context->expects($this->never())->method('setViolationFromRule');
+ 
+         // Act: Execute the validation rule
+         $this->rule->validate($context);
+@@ -175,7 +184,7 @@ final class AvailabilityDaysCoherenceRuleTest extends TestCase
+             days: ['monday', 'tuesday']
+         );
+ 
+-        $context->expects($this->never())->method('setViolation');
++        $context->expects($this->never())->method('setViolationFromRule');
+ 
+         // Act: Execute the validation rule
+         $this->rule->validate($context);
+@@ -196,7 +205,7 @@ final class AvailabilityDaysCoherenceRuleTest extends TestCase
+             validityStart: '2038-01-01'
+         );
+ 
+-        $context->expects($this->never())->method('setViolation');
++        $context->expects($this->never())->method('setViolationFromRule');
+ 
+         // Act: Execute the validation rule
+         $this->rule->validate($context);
+@@ -218,7 +227,7 @@ final class AvailabilityDaysCoherenceRuleTest extends TestCase
+             validityEnd: '2038-01-01'
+         );
+ 
+-        $context->expects($this->never())->method('setViolation');
++        $context->expects($this->never())->method('setViolationFromRule');
+ 
+         // Act: Execute the validation rule
+         $this->rule->validate($context);
+@@ -240,7 +249,7 @@ final class AvailabilityDaysCoherenceRuleTest extends TestCase
+             validityEnd: '2038-01-04'
+         );
+ 
+-        $context->expects($this->never())->method('setViolation');
++        $context->expects($this->never())->method('setViolationFromRule');
+ 
+         // Act: Execute the validation rule
+         $this->rule->validate($context);
+@@ -264,11 +273,12 @@ final class AvailabilityDaysCoherenceRuleTest extends TestCase
+ 
+         $capturedMessages = [];
+         $context->expects($this->exactly(2))
+-            ->method('setViolation')
+-            ->willReturnCallback(function (string $field, string $message) use (&$capturedMessages): void {
++            ->method('setViolationFromRule')
++            ->willReturnCallback(function ($rule, string $field, string $message) use (&$capturedMessages): void {
+                 $capturedMessages[] = $message;
+-                $this->assertEquals('days', $field);
+-                $this->assertStringContainsString('is not within the validity period', $message);
++                $this->assertSame($this->rule, $rule);
++                $this->assertSame('days', $field);
++                $this->assertStringContainsString('falls outside the validity period', $message);
+             });
+ 
+         // Act: Execute the validation rule
+@@ -298,7 +308,7 @@ final class AvailabilityDaysCoherenceRuleTest extends TestCase
+             days: ['monday', 'tuesday']
+         );
+ 
+-        $context->expects($this->never())->method('setViolation');
++        $context->expects($this->never())->method('setViolationFromRule');
+ 
+         // Act: Execute the validation rule
+         $this->rule->validate($context);
+@@ -323,7 +333,7 @@ final class AvailabilityDaysCoherenceRuleTest extends TestCase
+             validityEnd: '2038-12-31'
+         );
+ 
+-        $context->expects($this->never())->method('setViolation');
++        $context->expects($this->never())->method('setViolationFromRule');
+ 
+         // Act: Execute the validation rule
+         $this->rule->validate($context);
+@@ -345,7 +355,7 @@ final class AvailabilityDaysCoherenceRuleTest extends TestCase
+             validityEnd: '2038-01-01'
+         );
+ 
+-        $context->expects($this->never())->method('setViolation');
++        $context->expects($this->never())->method('setViolationFromRule');
+ 
+         // Act: Execute the validation rule
+         $this->rule->validate($context);
+@@ -365,7 +375,7 @@ final class AvailabilityDaysCoherenceRuleTest extends TestCase
+             days: ['monday', 'tuesday']
+         );
+ 
+-        $context->expects($this->never())->method('setViolation');
++        $context->expects($this->never())->method('setViolationFromRule');
+ 
+         // Act: Execute the validation rule
+         $this->rule->validate($context);
+@@ -373,6 +383,24 @@ final class AvailabilityDaysCoherenceRuleTest extends TestCase
+         // Assert: No violations for invalid date format (handled by another rule)
+     }
+ 
++    /**
++     * Test that getDescription returns a detailed description.
++     */
++    public function test_get_description_returns_detailed_information(): void
++    {
++        // Act: Get description
++        $description = $this->rule->getDescription();
++
++        // Assert: Verify description contains key information
++        $this->assertIsString($description);
++        $this->assertNotEmpty($description);
++        $this->assertStringContainsString('validates', $description);
++        $this->assertStringContainsString('coherence', $description);
++        $this->assertStringContainsString('days', $description);
++        $this->assertStringContainsString('validity period', $description);
++        $this->assertStringContainsString('CREATE and UPDATE', $description);
++    }
++
+     /**
+      * Create a validation context mock for CREATE operation.
+      */
+diff --git a/tests/Unit/Validation/Rules/AvailabilityOverlapRuleTest.php b/tests/Unit/Validation/Rules/AvailabilityOverlapRuleTest.php
+index 4fe52c6..178aae3 100644
+--- a/tests/Unit/Validation/Rules/AvailabilityOverlapRuleTest.php
++++ b/tests/Unit/Validation/Rules/AvailabilityOverlapRuleTest.php
+@@ -30,6 +30,24 @@ final class AvailabilityOverlapRuleTest extends TestCase
+         $this->rule = new AvailabilityOverlapRule();
+     }
+ 
++    /**
++     * Test that getDescription returns a detailed description.
++     */
++    public function test_get_description_returns_detailed_information(): void
++    {
++        // Act: Get description
++        $description = $this->rule->getDescription();
++
++        // Assert: Verify description contains key information
++        $this->assertIsString($description);
++        $this->assertNotEmpty($description);
++        $this->assertStringContainsString('validates', $description);
++        $this->assertStringContainsString('availability', $description);
++        $this->assertStringContainsString('overlap', $description);
++        $this->assertStringContainsString('new or updated', $description);
++        $this->assertStringContainsString('temporal conflicts', $description);
++    }
++
+     /**
+      * Test that validation passes when there are no overlaps.
+      */
+@@ -52,7 +70,7 @@ final class AvailabilityOverlapRuleTest extends TestCase
+ 
+         $this->app->instance(TemporalConflictService::class, $conflictService);
+ 
+-        $context->expects($this->never())->method('setViolation');
++        $context->expects($this->never())->method('setViolationFromRule');
+ 
+         // Act: Execute the overlap validation rule
+         $this->rule->validate($context);
+@@ -90,8 +108,12 @@ final class AvailabilityOverlapRuleTest extends TestCase
+         $this->app->instance(TemporalConflictService::class, $conflictService);
+ 
+         $context->expects($this->once())
+-            ->method('setViolation')
+-            ->with('overlap', 'Overlap detected with existing availability');
++            ->method('setViolationFromRule')
++            ->with(
++                $this->identicalTo($this->rule),
++                $this->identicalTo('overlap'),
++                $this->identicalTo('Overlap detected with existing availability')
++            );
+ 
+         // Act: Execute the overlap validation rule
+         $this->rule->validate($context);
+@@ -114,7 +136,7 @@ final class AvailabilityOverlapRuleTest extends TestCase
+ 
+         $this->configureContextWithBasicAvailabilityData($context);
+ 
+-        $context->expects($this->never())->method('setViolation');
++        $context->expects($this->never())->method('setViolationFromRule');
+ 
+         // Act: Execute the overlap validation rule
+         $this->rule->validate($context);
+@@ -138,7 +160,7 @@ final class AvailabilityOverlapRuleTest extends TestCase
+ 
+         $this->configureContextWithMissingRequiredFields($context);
+ 
+-        $context->expects($this->never())->method('setViolation');
++        $context->expects($this->never())->method('setViolationFromRule');
+ 
+         // Act: Execute the overlap validation rule
+         $this->rule->validate($context);
+@@ -168,7 +190,7 @@ final class AvailabilityOverlapRuleTest extends TestCase
+ 
+         $this->app->instance(TemporalConflictService::class, $conflictService);
+ 
+-        $context->expects($this->never())->method('setViolation');
++        $context->expects($this->never())->method('setViolationFromRule');
+ 
+         // Act: Execute the overlap validation rule for UPDATE
+         $this->rule->validate($context);
+@@ -191,7 +213,7 @@ final class AvailabilityOverlapRuleTest extends TestCase
+ 
+         $this->configureContextWithBasicAvailabilityData($context);
+ 
+-        $context->expects($this->never())->method('setViolation');
++        $context->expects($this->never())->method('setViolationFromRule');
+ 
+         // Act: Execute the overlap validation rule
+         $this->rule->validate($context);
+@@ -224,7 +246,7 @@ final class AvailabilityOverlapRuleTest extends TestCase
+ 
+         $this->app->instance(TemporalConflictService::class, $conflictService);
+ 
+-        $context->expects($this->never())->method('setViolation');
++        $context->expects($this->never())->method('setViolationFromRule');
+ 
+         // Act: Execute the overlap validation rule with mixed data sources
+         $this->rule->validate($context);
+@@ -252,22 +274,22 @@ final class AvailabilityOverlapRuleTest extends TestCase
+         $conflictService->expects($this->once())
+             ->method('checkAvailabilityConflicts')
+             ->with(
+-                $schedulable,
+-                [
++                $this->identicalTo($schedulable),
++                $this->identicalTo([
+                     'daily_start' => '09:00:00',
+                     'daily_end' => '17:00:00',
+                     'days' => ['monday', 'tuesday'],
+                     'validity_start' => '2038-01-01',
+                     'validity_end' => '2038-12-31',
+                     'type' => 'consultation',
+-                ],
+-                123 // Current entity ID should be excluded
++                ]),
++                $this->identicalTo(123) // Current entity ID should be excluded
+             )
+             ->willReturn(ConflictResult::noConflict());
+ 
+         $this->app->instance(TemporalConflictService::class, $conflictService);
+ 
+-        $context->expects($this->never())->method('setViolation');
++        $context->expects($this->never())->method('setViolationFromRule');
+ 
+         // Act: Execute the overlap validation rule
+         $this->rule->validate($context);
+@@ -291,7 +313,7 @@ final class AvailabilityOverlapRuleTest extends TestCase
+ 
+         $this->configureContextWithEmptyDaysArray($context);
+ 
+-        $context->expects($this->never())->method('setViolation');
++        $context->expects($this->never())->method('setViolationFromRule');
+ 
+         // Act: Execute the overlap validation rule
+         $this->rule->validate($context);
+@@ -321,7 +343,7 @@ final class AvailabilityOverlapRuleTest extends TestCase
+ 
+         $this->app->instance(TemporalConflictService::class, $conflictService);
+ 
+-        $context->expects($this->never())->method('setViolation');
++        $context->expects($this->never())->method('setViolationFromRule');
+ 
+         // Act: Execute the overlap validation rule with exception
+         $this->rule->validate($context);
+@@ -351,7 +373,7 @@ final class AvailabilityOverlapRuleTest extends TestCase
+ 
+         $this->app->instance(TemporalConflictService::class, $conflictService);
+ 
+-        $context->expects($this->never())->method('setViolation');
++        $context->expects($this->never())->method('setViolationFromRule');
+ 
+         // Act: Execute the overlap validation rule
+         $this->rule->validate($context);
+@@ -381,7 +403,7 @@ final class AvailabilityOverlapRuleTest extends TestCase
+ 
+         $this->app->instance(TemporalConflictService::class, $conflictService);
+ 
+-        $context->expects($this->never())->method('setViolation');
++        $context->expects($this->never())->method('setViolationFromRule');
+ 
+         // Act: Execute the overlap validation rule
+         $this->rule->validate($context);
+diff --git a/tests/Unit/Validation/Rules/AvailabilityOwnershipRuleTest.php b/tests/Unit/Validation/Rules/AvailabilityOwnershipRuleTest.php
+index 9ab7b67..e18f98b 100644
+--- a/tests/Unit/Validation/Rules/AvailabilityOwnershipRuleTest.php
++++ b/tests/Unit/Validation/Rules/AvailabilityOwnershipRuleTest.php
+@@ -62,7 +62,7 @@ final class AvailabilityOwnershipRuleTest extends TestCase
+         $this->configureContextHasMethod($context, hasAvailabilityId: true);
+         $this->configureContextGetMethod($context, availabilityId: 456);
+ 
+-        $context->expects($this->never())->method('setViolation');
++        $context->expects($this->never())->method('setViolationFromRule');
+ 
+         // Act: Execute the validation rule
+         $this->rule->validate($context);
+@@ -98,8 +98,12 @@ final class AvailabilityOwnershipRuleTest extends TestCase
+         $this->configureContextGetMethod($context, availabilityId: 456);
+ 
+         $context->expects($this->once())
+-            ->method('setViolation')
+-            ->with('availability_id', 'Availability does not belong to this schedulable');
++            ->method('setViolationFromRule')
++            ->with(
++                $this->identicalTo($this->rule),
++                $this->identicalTo('availability_id'),
++                $this->identicalTo('Referenced availability period does not belong to this schedulable entity')
++            );
+ 
+         // Act: Execute the validation rule
+         $this->rule->validate($context);
+@@ -130,8 +134,12 @@ final class AvailabilityOwnershipRuleTest extends TestCase
+         $this->configureContextGetMethod($context, availabilityId: 999);
+ 
+         $context->expects($this->once())
+-            ->method('setViolation')
+-            ->with('availability_id', 'Invalid availability ID');
++            ->method('setViolationFromRule')
++            ->with(
++                $this->identicalTo($this->rule),
++                $this->identicalTo('availability_id'),
++                $this->identicalTo('Referenced availability period does not exist or is invalid')
++            );
+ 
+         // Act: Execute the validation rule
+         $this->rule->validate($context);
+@@ -154,7 +162,7 @@ final class AvailabilityOwnershipRuleTest extends TestCase
+         $this->configureContextGetMethod($context, availabilityId: 456);
+ 
+         $context->expects($this->never())->method('getAvailabilityService');
+-        $context->expects($this->never())->method('setViolation');
++        $context->expects($this->never())->method('setViolationFromRule');
+ 
+         // Act: Execute the validation rule
+         $this->rule->validate($context);
+@@ -180,8 +188,12 @@ final class AvailabilityOwnershipRuleTest extends TestCase
+ 
+         $context->expects($this->never())->method('getAvailabilityService');
+         $context->expects($this->once())
+-            ->method('setViolation')
+-            ->with('availability_id', 'Must be linked to an availability');
++            ->method('setViolationFromRule')
++            ->with(
++                $this->identicalTo($this->rule),
++                $this->identicalTo('availability_id'),
++                $this->identicalTo('Schedule or impediment must be linked to an availability period')
++            );
+ 
+         // Act: Execute the validation rule
+         $this->rule->validate($context);
+@@ -208,7 +220,7 @@ final class AvailabilityOwnershipRuleTest extends TestCase
+         $this->configureContextGetMethod($context, availabilityId: null);
+ 
+         $context->expects($this->never())->method('getAvailabilityService');
+-        $context->expects($this->never())->method('setViolation');
++        $context->expects($this->never())->method('setViolationFromRule');
+ 
+         // Act: Execute the validation rule
+         $this->rule->validate($context);
+@@ -246,7 +258,7 @@ final class AvailabilityOwnershipRuleTest extends TestCase
+         $this->configureContextHasMethod($context, hasAvailabilityId: true);
+         $this->configureContextGetMethod($context, availabilityId: 789);
+ 
+-        $context->expects($this->never())->method('setViolation');
++        $context->expects($this->never())->method('setViolationFromRule');
+ 
+         // Act: Execute the validation rule
+         $this->rule->validate($context);
+@@ -282,7 +294,7 @@ final class AvailabilityOwnershipRuleTest extends TestCase
+         $this->configureContextHasMethod($context, hasAvailabilityId: true);
+         $this->configureContextGetMethod($context, availabilityId: 456);
+ 
+-        $context->expects($this->never())->method('setViolation');
++        $context->expects($this->never())->method('setViolationFromRule');
+ 
+         // Act: Execute the validation rule
+         $this->rule->validate($context);
+@@ -318,8 +330,12 @@ final class AvailabilityOwnershipRuleTest extends TestCase
+         $this->configureContextGetMethod($context, availabilityId: 456);
+ 
+         $context->expects($this->once())
+-            ->method('setViolation')
+-            ->with('availability_id', 'Availability does not belong to this schedulable');
++            ->method('setViolationFromRule')
++            ->with(
++                $this->identicalTo($this->rule),
++                $this->identicalTo('availability_id'),
++                $this->identicalTo('Referenced availability period does not belong to this schedulable entity')
++            );
+ 
+         // Act: Execute the validation rule
+         $this->rule->validate($context);
+@@ -345,7 +361,7 @@ final class AvailabilityOwnershipRuleTest extends TestCase
+         $this->configureContextGetMethod($context, availabilityId: null);
+ 
+         $context->expects($this->never())->method('getAvailabilityService');
+-        $context->expects($this->never())->method('setViolation');
++        $context->expects($this->never())->method('setViolationFromRule');
+ 
+         // Act: Execute the validation rule
+         $this->rule->validate($context);
+@@ -372,7 +388,7 @@ final class AvailabilityOwnershipRuleTest extends TestCase
+         $this->configureContextGetMethod($context, availabilityId: null);
+ 
+         $context->expects($this->never())->method('getAvailabilityService');
+-        $context->expects($this->never())->method('setViolation');
++        $context->expects($this->never())->method('setViolationFromRule');
+ 
+         // Act: Execute the validation rule
+         $this->rule->validate($context);
+@@ -403,8 +419,12 @@ final class AvailabilityOwnershipRuleTest extends TestCase
+         $this->configureContextGetMethod($context, availabilityId: 456);
+ 
+         $context->expects($this->once())
+-            ->method('setViolation')
+-            ->with('availability_id', 'Invalid availability ID');
++            ->method('setViolationFromRule')
++            ->with(
++                $this->identicalTo($this->rule),
++                $this->identicalTo('availability_id'),
++                $this->identicalTo('Referenced availability period does not exist or is invalid')
++            );
+ 
+         // Act: Execute the validation rule
+         $this->rule->validate($context);
+@@ -412,6 +432,25 @@ final class AvailabilityOwnershipRuleTest extends TestCase
+         // Assert: Violation should be set when availability is not found
+     }
+ 
++    /**
++     * Test that getDescription returns a detailed description.
++     */
++    public function test_get_description_returns_detailed_information(): void
++    {
++        // Act: Get description
++        $description = $this->rule->getDescription();
++
++        // Assert: Verify description contains key information
++        $this->assertIsString($description);
++        $this->assertNotEmpty($description);
++        $this->assertStringContainsString('validates', $description);
++        $this->assertStringContainsString('schedule', $description);
++        $this->assertStringContainsString('impediment', $description);
++        $this->assertStringContainsString('availability', $description);
++        $this->assertStringContainsString('ownership', $description);
++        $this->assertStringContainsString('CREATE and UPDATE', $description);
++    }
++
+     /**
+      * Create a schedulable model mock.
+      *
+@@ -559,8 +598,6 @@ final class AvailabilityOwnershipRuleTest extends TestCase
+             ->with($availabilityId)
+             ->willReturn($returnValue);
+ 
+-        $this->app->instance(AvailabilityService::class, $availabilityService);
+-
+         return $availabilityService;
+     }
+ }
+diff --git a/tests/Unit/Validation/Rules/AvailabilityTemporalCoherenceRuleTest.php b/tests/Unit/Validation/Rules/AvailabilityTemporalCoherenceRuleTest.php
+index 0fbbfa0..9ca22c6 100644
+--- a/tests/Unit/Validation/Rules/AvailabilityTemporalCoherenceRuleTest.php
++++ b/tests/Unit/Validation/Rules/AvailabilityTemporalCoherenceRuleTest.php
+@@ -236,4 +236,171 @@ final class AvailabilityTemporalCoherenceRuleTest extends TestCase
+             'id' => $availability->id,
+         ]);
+     }
++
++    /**
++     * Test that availability with both schedules and impediments cannot be deleted.
++     */
++    public function test_cannot_delete_availability_with_both_schedules_and_impediments(): void
++    {
++        // Arrange: Create an availability with both future schedules and impediments
++        $availability = availability_for($this->schedulable)->create([
++            'type' => 'consultation',
++            'daily_start' => '09:00:00',
++            'daily_end' => '17:00:00',
++            'days' => ['monday', 'tuesday', 'wednesday'],
++            'validity_start' => '2038-01-01',
++            'validity_end' => '2038-01-31',
++        ]);
++
++        schedule_for($availability)->create([
++            'title' => 'Future Schedule',
++            'start_datetime' => '2038-01-04 10:00:00',
++            'end_datetime' => '2038-01-04 11:00:00',
++        ]);
++
++        impediment_for($availability)->create([
++            'reason' => 'Future Impediment',
++            'start_datetime' => '2038-01-06 14:00:00',
++            'end_datetime' => '2038-01-06 15:00:00',
++        ]);
++
++        // Assert: Expect validation exception when trying to delete
++        $this->expectException(ValidationFailedException::class);
++        $this->expectExceptionMessageMatches("/Cannot delete availability with future schedules and impediments/");
++
++        // Act: Attempt to delete availability with both entity types
++        availability_for($this->schedulable)->delete($availability->id);
++    }
++
++    /**
++     * Test that availability can be updated when extending validity period beyond existing schedules.
++     */
++    public function test_can_extend_availability_beyond_existing_future_schedule(): void
++    {
++        // Arrange: Create an availability with a future schedule
++        $availability = availability_for($this->schedulable)->create([
++            'type' => 'consultation',
++            'daily_start' => '09:00:00',
++            'daily_end' => '17:00:00',
++            'days' => ['monday', 'tuesday'],
++            'validity_start' => '2038-01-01',
++            'validity_end' => '2038-01-15',
++        ]);
++
++        schedule_for($availability)->create([
++            'title' => 'Future meeting',
++            'start_datetime' => '2038-01-11 10:00:00',
++            'end_datetime' => '2038-01-11 11:00:00',
++        ]);
++
++        // Act: Extend availability end date beyond existing schedule
++        $result = availability_for($this->schedulable)->update($availability->id, [
++            'validity_end' => '2038-01-20',
++        ]);
++
++        // Assert: Update should succeed (extending beyond is allowed)
++        $this->assertTrue($result);
++        $this->assertDatabaseHas('roster_availabilities', [
++            'id' => $availability->id,
++            'validity_end' => \Illuminate\Support\Carbon::parse('2038-01-20')->startOfDay(),
++        ]);
++    }
++
++    /**
++     * Test that availability can be updated when moving start date earlier than existing schedules.
++     */
++    public function test_can_move_start_date_earlier_than_existing_future_schedule(): void
++    {
++        // Arrange: Create an availability with a future schedule
++        $availability = availability_for($this->schedulable)->create([
++            'type' => 'consultation',
++            'daily_start' => '09:00:00',
++            'daily_end' => '17:00:00',
++            'days' => ['monday', 'tuesday'],
++            'validity_start' => '2038-01-10',
++            'validity_end' => '2038-01-31',
++        ]);
++
++        schedule_for($availability)->create([
++            'title' => 'Future meeting',
++            'start_datetime' => '2038-01-11 10:00:00',
++            'end_datetime' => '2038-01-11 11:00:00',
++        ]);
++
++        // Act: Move start date earlier than existing schedule
++        $result = availability_for($this->schedulable)->update($availability->id, [
++            'validity_start' => '2038-01-01',
++        ]);
++
++        // Assert: Update should succeed (moving earlier is allowed)
++        $this->assertTrue($result);
++        $this->assertDatabaseHas('roster_availabilities', [
++            'id' => $availability->id,
++            'validity_start' => '2038-01-01 00:00:00',
++        ]);
++    }
++
++    /**
++     * Test that availability days can be updated when adding new days.
++     */
++    public function test_can_add_new_days_to_availability(): void
++    {
++        // Arrange: Create an availability without conflicts
++        $availability = availability_for($this->schedulable)->create([
++            'type' => 'consultation',
++            'daily_start' => '09:00:00',
++            'daily_end' => '17:00:00',
++            'days' => ['monday', 'tuesday'],
++            'validity_start' => '2038-01-01',
++            'validity_end' => '2038-01-31',
++        ]);
++
++        // Act: Add new days to availability
++        $result = availability_for($this->schedulable)->update($availability->id, [
++            'days' => ['monday', 'tuesday', 'wednesday'],
++        ]);
++
++        // Assert: Update should succeed (adding days is allowed)
++        $this->assertTrue($result);
++        $this->assertDatabaseHas('roster_availabilities', [
++            'id' => $availability->id,
++            'days' => json_encode(['monday', 'tuesday', 'wednesday']),
++        ]);
++    }
++
++    /**
++     * Test that availability can be updated with only daily times changed.
++     */
++    public function test_can_update_only_daily_times_without_conflict(): void
++    {
++        // Arrange: Create an availability with a future schedule
++        $availability = availability_for($this->schedulable)->create([
++            'type' => 'consultation',
++            'daily_start' => '09:00:00',
++            'daily_end' => '17:00:00',
++            'days' => ['monday', 'tuesday'],
++            'validity_start' => '2038-01-01',
++            'validity_end' => '2038-01-31',
++        ]);
++
++        schedule_for($availability)->create([
++            'title' => 'Future Meeting',
++            'start_datetime' => '2038-01-04 10:00:00',
++            'end_datetime' => '2038-01-04 11:00:00',
++        ]);
++
++        // Act: Update only daily times (non-conflicting change)
++        $result = availability_for($this->schedulable)->update($availability->id, [
++            'daily_start' => '08:00:00',
++            'daily_end' => '16:00:00',
++        ]);
++
++        // Assert: Update should succeed
++        $this->assertTrue($result);
++        $this->assertDatabaseHas('roster_availabilities', [
++            'id' => $availability->id,
++            'daily_start' => '08:00:00',
++            'daily_end' => '16:00:00',
++        ]);
++    }
+ }
+diff --git a/tests/Unit/Validation/Rules/FutureDateRuleTest.php b/tests/Unit/Validation/Rules/FutureDateRuleTest.php
+index 7806962..3b500d0 100644
+--- a/tests/Unit/Validation/Rules/FutureDateRuleTest.php
++++ b/tests/Unit/Validation/Rules/FutureDateRuleTest.php
+@@ -4,6 +4,7 @@ declare(strict_types=1);
+ 
+ namespace Tests\Unit\Validation\Rules;
+ 
++use Exception;
+ use Illuminate\Support\Carbon;
+ use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
+ use PHPUnit\Framework\MockObject\MockObject;
+@@ -41,7 +42,7 @@ final class FutureDateRuleTest extends TestCase
+             startDatetime: $futureDate
+         );
+ 
+-        $context->expects($this->never())->method('setViolation');
++        $context->expects($this->never())->method('setViolationFromRule');
+ 
+         // Act: Execute the future date validation rule
+         $this->rule->validate($context);
+@@ -64,8 +65,9 @@ final class FutureDateRuleTest extends TestCase
+         );
+ 
+         $context->expects($this->once())
+-            ->method('setViolation')
++            ->method('setViolationFromRule')
+             ->with(
++                $this->rule,
+                 'start_datetime',
+                 'Schedule start datetime cannot be in the past'
+             );
+@@ -91,8 +93,9 @@ final class FutureDateRuleTest extends TestCase
+         );
+ 
+         $context->expects($this->once())
+-            ->method('setViolation')
++            ->method('setViolationFromRule')
+             ->with(
++                $this->rule,
+                 'start_datetime',
+                 'Impediment start datetime cannot be in the past'
+             );
+@@ -117,7 +120,7 @@ final class FutureDateRuleTest extends TestCase
+             startDatetime: $futureDate
+         );
+ 
+-        $context->expects($this->never())->method('setViolation');
++        $context->expects($this->never())->method('setViolationFromRule');
+ 
+         // Act: Execute the future date validation rule
+         $this->rule->validate($context);
+@@ -139,7 +142,7 @@ final class FutureDateRuleTest extends TestCase
+         );
+ 
+         $context->expects($this->never())->method('get');
+-        $context->expects($this->never())->method('setViolation');
++        $context->expects($this->never())->method('setViolationFromRule');
+ 
+         // Act: Execute the future date validation rule
+         $this->rule->validate($context);
+@@ -148,11 +151,11 @@ final class FutureDateRuleTest extends TestCase
+     }
+ 
+     /**
+-     * Test that validation does not apply for UPDATE operation.
++     * Test that validation applies for UPDATE operation when start_datetime is present.
+      */
+-    public function test_does_not_validate_for_update_operation(): void
++    public function test_validates_for_update_operation_when_start_datetime_changed(): void
+     {
+-        // Arrange: UPDATE operation with past datetime should not be validated
++        // Arrange: UPDATE operation with past datetime should be validated
+         $pastDate = Carbon::now()->subDays(1)->format('Y-m-d H:i:s');
+         $context = $this->createValidationContext(
+             entityType: EntityType::SCHEDULE,
+@@ -161,54 +164,60 @@ final class FutureDateRuleTest extends TestCase
+             startDatetime: $pastDate
+         );
+ 
+-        $context->expects($this->never())->method('setViolation');
++        $context->expects($this->once())
++            ->method('setViolationFromRule')
++            ->with(
++                $this->rule,
++                'start_datetime',
++                'Schedule start datetime cannot be moved to the past'
++            );
+ 
+         // Act: Execute the future date validation rule
+         $this->rule->validate($context);
+ 
+-        // Assert: No validation should apply to UPDATE operations
++        // Assert: Validation should apply to UPDATE operations when start_datetime is present
+     }
+ 
+     /**
+-     * Test that validation does not apply for DELETE operation.
++     * Test that validation does not apply for UPDATE operation when start_datetime not changed.
+      */
+-    public function test_does_not_validate_for_delete_operation(): void
++    public function test_does_not_validate_for_update_operation_when_start_datetime_not_present(): void
+     {
+-        // Arrange: DELETE operation should bypass validation
++        // Arrange: UPDATE operation without start_datetime should not be validated
+         $context = $this->createValidationContext(
+             entityType: EntityType::SCHEDULE,
+-            operationType: OperationType::DELETE,
++            operationType: OperationType::UPDATE,
+             hasStartDatetime: false,
+             startDatetime: null
+         );
+ 
+-        $context->expects($this->never())->method('setViolation');
++        $context->expects($this->never())->method('setViolationFromRule');
+ 
+         // Act: Execute the future date validation rule
+         $this->rule->validate($context);
+ 
+-        // Assert: No validation should apply to DELETE operations
++        // Assert: No validation when start_datetime not in update
+     }
+ 
+     /**
+-     * Test that validation handles AVAILABILITY entity type.
++     * Test that validation does not apply for DELETE operation.
+      */
+-    public function test_does_not_validate_for_availability_entity(): void
++    public function test_does_not_validate_for_delete_operation(): void
+     {
+-        // Arrange: AVAILABILITY entity uses start_date field, not start_datetime
++        // Arrange: DELETE operation should bypass validation
+         $context = $this->createValidationContext(
+-            entityType: EntityType::AVAILABILITY,
+-            operationType: OperationType::CREATE,
++            entityType: EntityType::SCHEDULE,
++            operationType: OperationType::DELETE,
+             hasStartDatetime: false,
+             startDatetime: null
+         );
+ 
+-        $context->expects($this->never())->method('setViolation');
++        $context->expects($this->never())->method('setViolationFromRule');
+ 
+         // Act: Execute the future date validation rule
+         $this->rule->validate($context);
+ 
+-        // Assert: AVAILABILITY entity validation is handled separately
++        // Assert: No validation should apply to DELETE operations
+     }
+ 
+     /**
+@@ -224,7 +233,7 @@ final class FutureDateRuleTest extends TestCase
+             startDatetime: 'invalid-datetime-format'
+         );
+ 
+-        $context->expects($this->never())->method('setViolation');
++        $context->expects($this->never())->method('setViolationFromRule');
+ 
+         // Act: Execute the future date validation rule
+         $this->rule->validate($context);
+@@ -247,8 +256,9 @@ final class FutureDateRuleTest extends TestCase
+         );
+ 
+         $context->expects($this->once())
+-            ->method('setViolation')
++            ->method('setViolationFromRule')
+             ->with(
++                $this->rule,
+                 'start_datetime',
+                 'Impediment start datetime cannot be in the past'
+             );
+@@ -274,8 +284,9 @@ final class FutureDateRuleTest extends TestCase
+         );
+ 
+         $context->expects($this->once())
+-            ->method('setViolation')
++            ->method('setViolationFromRule')
+             ->with(
++                $this->rule,
+                 'start_datetime',
+                 'Schedule start datetime cannot be in the past'
+             );
+@@ -300,7 +311,7 @@ final class FutureDateRuleTest extends TestCase
+ 
+         $context->expects($this->never())->method('has');
+         $context->expects($this->never())->method('get');
+-        $context->expects($this->never())->method('setViolation');
++        $context->expects($this->never())->method('setViolationFromRule');
+ 
+         // Act: Execute the future date validation rule
+         $rule->validate($context);
+@@ -325,7 +336,7 @@ final class FutureDateRuleTest extends TestCase
+ 
+         $context->expects($this->never())->method('has');
+         $context->expects($this->never())->method('get');
+-        $context->expects($this->never())->method('setViolation');
++        $context->expects($this->never())->method('setViolationFromRule');
+ 
+         // Act: Execute the future date validation rule
+         $rule->validate($context);
+@@ -348,8 +359,9 @@ final class FutureDateRuleTest extends TestCase
+         );
+ 
+         $context->expects($this->once())
+-            ->method('setViolation')
++            ->method('setViolationFromRule')
+             ->with(
++                $this->rule,
+                 'start_datetime',
+                 'Schedule start datetime cannot be in the past'
+             );
+@@ -374,7 +386,7 @@ final class FutureDateRuleTest extends TestCase
+             startDatetime: $oneSecondFuture
+         );
+ 
+-        $context->expects($this->never())->method('setViolation');
++        $context->expects($this->never())->method('setViolationFromRule');
+ 
+         // Act: Execute the future date validation rule
+         $this->rule->validate($context);
+@@ -383,71 +395,269 @@ final class FutureDateRuleTest extends TestCase
+     }
+ 
+     /**
+-     * Test that validation for AVAILABILITY with future start_date passes.
++     * Test that validation for AVAILABILITY with future start_date and daily_start passes.
+      */
+-    public function test_passes_for_availability_with_future_start_date(): void
++    public function test_passes_for_availability_with_future_combined_datetime(): void
+     {
+-        // Arrange: Future start_date for AVAILABILITY entity
++        // Arrange: Future validity_start and daily_start for AVAILABILITY entity
+         $futureDate = Carbon::now()->addDays(1)->format('Y-m-d');
++        $futureTime = '10:00:00';
++
+         $context = $this->createValidationContextForAvailability(
+             operationType: OperationType::CREATE,
+-            hasStartDate: true,
+-            startDate: $futureDate
++            hasValidityStart: true,
++            validityStart: $futureDate,
++            hasDailyStart: true,
++            dailyStart: $futureTime
+         );
+ 
+-        $context->expects($this->never())->method('setViolation');
++        $context->expects($this->never())->method('setViolationFromRule');
+ 
+         // Act: Execute the future date validation rule
+         $this->rule->validate($context);
+ 
+-        // Assert: Future start_date should pass AVAILABILITY validation
++        // Assert: Future combined datetime should pass AVAILABILITY validation
+     }
+ 
+     /**
+-     * Test that validation for AVAILABILITY with past start_date fails.
++     * Test that validation for AVAILABILITY with past combined datetime fails.
+      */
+-    public function test_fails_for_availability_with_past_start_date(): void
++    public function test_fails_for_availability_with_past_combined_datetime(): void
+     {
+-        // Arrange: Past start_date for AVAILABILITY entity
++        // Arrange: Past validity_start with daily_start for AVAILABILITY entity
+         $pastDate = Carbon::now()->subDays(1)->format('Y-m-d');
++        $pastTime = '10:00:00';
++
+         $context = $this->createValidationContextForAvailability(
+             operationType: OperationType::CREATE,
+-            hasStartDate: true,
+-            startDate: $pastDate
++            hasValidityStart: true,
++            validityStart: $pastDate,
++            hasDailyStart: true,
++            dailyStart: $pastTime
+         );
+ 
+         $context->expects($this->once())
+-            ->method('setViolation')
++            ->method('setViolationFromRule')
+             ->with(
+-                'start_date',
+-                'Availability start date cannot be in the past'
++                $this->rule,
++                'validity_start',
++                'Availability start date/time cannot be in the past. ' .
++                    'The combination of validity_start and daily_start must be in the future.'
+             );
+ 
+         // Act: Execute the future date validation rule
+         $this->rule->validate($context);
+ 
+-        // Assert: Past start_date should trigger AVAILABILITY violation
++        // Assert: Past combined datetime should trigger AVAILABILITY violation
+     }
+ 
+     /**
+-     * Test that validation for AVAILABILITY without start_date passes.
++     * Test that validation for AVAILABILITY without validity_start passes.
+      */
+-    public function test_passes_for_availability_without_start_date(): void
++    public function test_passes_for_availability_without_validity_start(): void
+     {
+-        // Arrange: Missing start_date for AVAILABILITY entity
++        // Arrange: Missing validity_start for AVAILABILITY entity
+         $context = $this->createValidationContextForAvailability(
+             operationType: OperationType::CREATE,
+-            hasStartDate: false,
+-            startDate: null
++            hasValidityStart: false,
++            validityStart: null,
++            hasDailyStart: true,
++            dailyStart: '09:00:00'
++        );
++
++        $context->expects($this->never())->method('get');
++        $context->expects($this->never())->method('setViolationFromRule');
++
++        // Act: Execute the future date validation rule
++        $this->rule->validate($context);
++
++        // Assert: No validation should occur when validity_start is missing
++    }
++
++    /**
++     * Test that validation for AVAILABILITY UPDATE with future combined datetime passes.
++     */
++    public function test_passes_for_availability_update_with_future_combined_datetime(): void
++    {
++        // Arrange: Future validity_start for AVAILABILITY UPDATE operation
++        $futureDate = Carbon::now()->addDays(1)->format('Y-m-d');
++        $futureTime = '10:00:00';
++
++        $context = $this->createValidationContextForAvailability(
++            operationType: OperationType::UPDATE,
++            hasValidityStart: true,
++            validityStart: $futureDate,
++            hasDailyStart: true,
++            dailyStart: $futureTime
++        );
++
++        $context->expects($this->never())->method('setViolationFromRule');
++
++        // Act: Execute the future date validation rule
++        $this->rule->validate($context);
++
++        // Assert: Future combined datetime should pass AVAILABILITY UPDATE validation
++    }
++
++    /**
++     * Test that validation for AVAILABILITY UPDATE with past combined datetime fails.
++     */
++    public function test_fails_for_availability_update_with_past_combined_datetime(): void
++    {
++        // Arrange: Past validity_start for AVAILABILITY UPDATE operation
++        $pastDate = Carbon::now()->subDays(1)->format('Y-m-d');
++        $pastTime = '10:00:00';
++
++        $context = $this->createValidationContextForAvailability(
++            operationType: OperationType::UPDATE,
++            hasValidityStart: true,
++            validityStart: $pastDate,
++            hasDailyStart: true,
++            dailyStart: $pastTime
++        );
++
++        $context->expects($this->once())
++            ->method('setViolationFromRule')
++            ->with(
++                $this->rule,
++                'validity_start',
++                'Availability start date/time cannot be moved to the past. ' .
++                    'The combination of validity_start and daily_start must be in the future.'
++            );
++
++        // Act: Execute the future date validation rule
++        $this->rule->validate($context);
++
++        // Assert: Past combined datetime should trigger AVAILABILITY UPDATE violation
++    }
++
++    /**
++     * Test that validation for AVAILABILITY UPDATE without validity_start passes.
++     */
++    public function test_passes_for_availability_update_without_validity_start(): void
++    {
++        // Arrange: UPDATE operation without validity_start for AVAILABILITY entity
++        $context = $this->createValidationContextForAvailability(
++            operationType: OperationType::UPDATE,
++            hasValidityStart: false,
++            validityStart: null,
++            hasDailyStart: true,
++            dailyStart: '09:00:00'
+         );
+ 
+         $context->expects($this->never())->method('get');
+-        $context->expects($this->never())->method('setViolation');
++        $context->expects($this->never())->method('setViolationFromRule');
++
++        // Act: Execute the future date validation rule
++        $this->rule->validate($context);
++
++        // Assert: No validation when validity_start not in update
++    }
++
++    /**
++     * Test that validation for AVAILABILITY with validity_start but without daily_start passes.
++     */
++    public function test_passes_for_availability_with_validity_start_without_daily_start(): void
++    {
++        // Arrange: Future validity_start without daily_start for AVAILABILITY entity
++        $futureDate = Carbon::now()->addDays(1)->format('Y-m-d');
++
++        $context = $this->createValidationContextForAvailability(
++            operationType: OperationType::CREATE,
++            hasValidityStart: true,
++            validityStart: $futureDate,
++            hasDailyStart: false,
++            dailyStart: null
++        );
++
++        $context->expects($this->never())->method('setViolationFromRule');
++
++        // Act: Execute the future date validation rule
++        $this->rule->validate($context);
++
++        // Assert: Should still pass validation using just the date
++    }
++
++    /**
++     * Test that validation for AVAILABILITY UPDATE handles moving validity_start earlier but still in future.
++     */
++    public function test_handles_availability_update_moving_validity_start_earlier(): void
++    {
++        // Arrange: Moving validity_start earlier but still in future
++        $futureDate = Carbon::now()->addDays(2)->format('Y-m-d');
++        $time = '09:00:00';
++
++        $context = $this->createValidationContextForAvailability(
++            operationType: OperationType::UPDATE,
++            hasValidityStart: true,
++            validityStart: $futureDate,
++            hasDailyStart: true,
++            dailyStart: $time
++        );
++
++        $context->expects($this->never())->method('setViolationFromRule');
++
++        // Act: Execute the future date validation rule
++        $this->rule->validate($context);
++
++        // Assert: Should pass if combined datetime is still in future
++    }
++
++    /**
++     * Test that validation for AVAILABILITY with current date and future time passes.
++     */
++    public function test_passes_for_availability_with_current_date_future_time(): void
++    {
++        // Arrange: Current date with future time for AVAILABILITY
++        $currentDate = Carbon::now()->format('Y-m-d');
++        $futureTime = Carbon::now()->addHours(1)->format('H:i:s');
++
++        $context = $this->createValidationContextForAvailability(
++            operationType: OperationType::CREATE,
++            hasValidityStart: true,
++            validityStart: $currentDate,
++            hasDailyStart: true,
++            dailyStart: $futureTime
++        );
++
++        $context->expects($this->never())->method('setViolationFromRule');
++
++        // Act: Execute the future date validation rule
++        $this->rule->validate($context);
++
++        // Assert: Should pass if combined datetime is in future
++    }
++
++    /**
++     * Test that validation for AVAILABILITY with current date and past time fails.
++     */
++    public function test_fails_for_availability_with_current_date_past_time(): void
++    {
++        // Arrange: Current date with past time for AVAILABILITY
++        $currentDate = Carbon::now()->format('Y-m-d');
++        $pastTime = Carbon::now()->subHours(1)->format('H:i:s');
++
++        $context = $this->createValidationContextForAvailability(
++            operationType: OperationType::CREATE,
++            hasValidityStart: true,
++            validityStart: $currentDate,
++            hasDailyStart: true,
++            dailyStart: $pastTime
++        );
++
++        $context->expects($this->once())
++            ->method('setViolationFromRule')
++            ->with(
++                $this->rule,
++                'validity_start',
++                'Availability start date/time cannot be in the past. ' .
++                    'The combination of validity_start and daily_start must be in the future.'
++            );
+ 
+         // Act: Execute the future date validation rule
+         $this->rule->validate($context);
+ 
+-        // Assert: No validation should occur when start_date is missing
++        // Assert: Should fail if combined datetime is in past
+     }
+ 
+     /**
+@@ -479,19 +689,37 @@ final class FutureDateRuleTest extends TestCase
+      */
+     private function createValidationContextForAvailability(
+         OperationType $operationType,
+-        bool $hasStartDate,
+-        ?string $startDate
++        bool $hasValidityStart,
++        ?string $validityStart,
++        bool $hasDailyStart = false,
++        ?string $dailyStart = null
+     ): MockObject&ValidationContextInterface {
+         $context = $this->createMock(ValidationContextInterface::class);
+         $context->method('getEntityType')->willReturn(EntityType::AVAILABILITY);
+         $context->method('getOperation')->willReturn($operationType);
+ 
+         $context->method('has')->willReturnCallback(
+-            fn(string $key): bool => $key === 'start_date' && $hasStartDate
++            function (string $key) use ($hasValidityStart, $hasDailyStart): bool {
++                if ($key === 'validity_start') {
++                    return $hasValidityStart;
++                }
++                if ($key === 'daily_start') {
++                    return $hasDailyStart;
++                }
++                return false;
++            }
+         );
+ 
+         $context->method('get')->willReturnCallback(
+-            fn(string $key): mixed => $key === 'start_date' ? $startDate : null
++            function (string $key) use ($validityStart, $dailyStart): mixed {
++                if ($key === 'validity_start') {
++                    return $validityStart;
++                }
++                if ($key === 'daily_start') {
++                    return $dailyStart;
++                }
++                return null;
++            }
+         );
+ 
+         return $context;
+diff --git a/tests/Unit/Validation/Rules/ScheduleOverlapRuleTest.php b/tests/Unit/Validation/Rules/ScheduleOverlapRuleTest.php
+deleted file mode 100644
+index f848ddf..0000000
+--- a/tests/Unit/Validation/Rules/ScheduleOverlapRuleTest.php
++++ /dev/null
+@@ -1,546 +0,0 @@
+-<?php
+-
+-declare(strict_types=1);
+-
+-namespace Tests\Unit\Validation\Rules;
+-
+-use Exception;
+-use Illuminate\Support\Carbon;
+-use Mockery;
+-use Mockery\MockInterface;
+-use Roster\Domain\DTOs\ConflictResult;
+-use Roster\Domain\Services\TemporalConflictService;
+-use Roster\Enums\EntityType;
+-use Roster\Enums\OperationType;
+-use Roster\Validation\Context\ValidationContext;
+-use Roster\Validation\Rules\ScheduleOverlapRule;
+-use Tests\TestCase;
+-
+-final class ScheduleOverlapRuleTest extends TestCase
+-{
+-    private TemporalConflictService|MockInterface $conflictService;
+-
+-    private ScheduleOverlapRule $rule;
+-
+-    protected function setUp(): void
+-    {
+-        parent::setUp();
+-
+-        $this->conflictService = Mockery::mock(TemporalConflictService::class);
+-        $this->rule = new ScheduleOverlapRule(temporalConflictService: $this->conflictService);
+-    }
+-
+-    protected function tearDown(): void
+-    {
+-        Mockery::close();
+-        parent::tearDown();
+-    }
+-
+-    public function test_passes_when_no_conflicts_for_schedule_create(): void
+-    {
+-        // Arrange: Create validation context for schedule creation
+-        $context = new ValidationContext(
+-            operationType: OperationType::CREATE,
+-            entityType: EntityType::SCHEDULE,
+-            data: [
+-                'availability_id' => 456,
+-                'start_datetime' => '2024-01-01 08:00:00',
+-                'end_datetime' => '2024-01-01 12:00:00',
+-            ]
+-        );
+-
+-        $this->conflictService
+-            ->expects('checkAllConflicts')
+-            ->once()
+-            ->with(
+-                456,
+-                Mockery::type(Carbon::class),
+-                Mockery::type(Carbon::class),
+-                null,
+-                null
+-            )
+-            ->andReturn(ConflictResult::noConflict());
+-
+-        // Act: Validate the context
+-        $this->rule->validate($context);
+-
+-        // Assert: No violations should be present
+-        $this->assertFalse($context->hasViolations());
+-    }
+-
+-    public function test_passes_when_no_conflicts_for_impediment_create(): void
+-    {
+-        // Arrange: Create validation context for impediment creation
+-        $context = new ValidationContext(
+-            operationType: OperationType::CREATE,
+-            entityType: EntityType::IMPEDIMENT,
+-            data: [
+-                'availability_id' => 789,
+-                'start_datetime' => '2024-01-01 09:00:00',
+-                'end_datetime' => '2024-01-01 11:00:00',
+-            ]
+-        );
+-
+-        $this->conflictService
+-            ->expects('checkAllConflicts')
+-            ->once()
+-            ->with(
+-                789,
+-                Mockery::type(Carbon::class),
+-                Mockery::type(Carbon::class),
+-                null,
+-                null
+-            )
+-            ->andReturn(ConflictResult::noConflict());
+-
+-        // Act: Validate the context
+-        $this->rule->validate($context);
+-
+-        // Assert: No violations should be present
+-        $this->assertFalse($context->hasViolations());
+-    }
+-
+-    public function test_fails_when_conflicts_exist_for_schedule_create(): void
+-    {
+-        // Arrange: Create validation context with conflicting schedule
+-        $context = new ValidationContext(
+-            operationType: OperationType::CREATE,
+-            entityType: EntityType::SCHEDULE,
+-            data: [
+-                'availability_id' => 456,
+-                'start_datetime' => '2024-01-01 08:00:00',
+-                'end_datetime' => '2024-01-01 12:00:00',
+-            ]
+-        );
+-
+-        $conflictResult = new ConflictResult(
+-            hasConflicts: true,
+-            message: 'Schedule overlaps with existing schedule from 2024-01-01 09:00 to 2024-01-01 10:00'
+-        );
+-
+-        $this->conflictService
+-            ->expects('checkAllConflicts')
+-            ->once()
+-            ->with(
+-                456,
+-                Mockery::type(Carbon::class),
+-                Mockery::type(Carbon::class),
+-                null,
+-                null
+-            )
+-            ->andReturn($conflictResult);
+-
+-        // Act: Validate the context
+-        $this->rule->validate($context);
+-
+-        // Assert: Violation should be present for overlap
+-        $this->assertTrue($context->hasViolations());
+-        $this->assertTrue($context->hasViolationFor('overlap'));
+-    }
+-
+-    public function test_fails_when_conflicts_exist_for_impediment_create(): void
+-    {
+-        // Arrange: Create validation context with conflicting impediment
+-        $context = new ValidationContext(
+-            operationType: OperationType::CREATE,
+-            entityType: EntityType::IMPEDIMENT,
+-            data: [
+-                'availability_id' => 789,
+-                'start_datetime' => '2024-01-01 09:00:00',
+-                'end_datetime' => '2024-01-01 11:00:00',
+-            ]
+-        );
+-
+-        $conflictResult = new ConflictResult(
+-            hasConflicts: true,
+-            message: 'Schedule overlaps with existing impediment from 2024-01-01 10:00 to 2024-01-01 10:30'
+-        );
+-
+-        $this->conflictService
+-            ->expects('checkAllConflicts')
+-            ->once()
+-            ->with(
+-                789,
+-                Mockery::type(Carbon::class),
+-                Mockery::type(Carbon::class),
+-                null,
+-                null
+-            )
+-            ->andReturn($conflictResult);
+-
+-        // Act: Validate the context
+-        $this->rule->validate($context);
+-
+-        // Assert: Violation should be present for overlap
+-        $this->assertTrue($context->hasViolations());
+-        $this->assertTrue($context->hasViolationFor('overlap'));
+-    }
+-
+-    public function test_excludes_current_entity_for_schedule_update(): void
+-    {
+-        // Arrange: Create validation context for schedule update with existing entity
+-        $currentEntity = (object) ['id' => 123];
+-
+-        $context = new ValidationContext(
+-            operationType: OperationType::UPDATE,
+-            entityType: EntityType::SCHEDULE,
+-            data: [
+-                'availability_id' => 456,
+-                'start_datetime' => '2024-01-01 08:00:00',
+-                'end_datetime' => '2024-01-01 12:00:00',
+-            ],
+-            model: null,
+-            currentEntity: $currentEntity
+-        );
+-
+-        $this->conflictService
+-            ->expects('checkAllConflicts')
+-            ->once()
+-            ->with(
+-                456,
+-                Mockery::type(Carbon::class),
+-                Mockery::type(Carbon::class),
+-                123,
+-                null
+-            )
+-            ->andReturn(ConflictResult::noConflict());
+-
+-        // Act: Validate the context
+-        $this->rule->validate($context);
+-
+-        // Assert: No violations should be present
+-        $this->assertFalse($context->hasViolations());
+-    }
+-
+-    public function test_excludes_current_entity_for_impediment_update(): void
+-    {
+-        // Arrange: Create validation context for impediment update with existing entity
+-        $currentEntity = (object) ['id' => 456];
+-
+-        $context = new ValidationContext(
+-            operationType: OperationType::UPDATE,
+-            entityType: EntityType::IMPEDIMENT,
+-            data: [
+-                'availability_id' => 789,
+-                'start_datetime' => '2024-01-01 09:00:00',
+-                'end_datetime' => '2024-01-01 11:00:00',
+-            ],
+-            model: null,
+-            currentEntity: $currentEntity
+-        );
+-
+-        $this->conflictService
+-            ->expects('checkAllConflicts')
+-            ->once()
+-            ->with(
+-                789,
+-                Mockery::type(Carbon::class),
+-                Mockery::type(Carbon::class),
+-                null,
+-                456
+-            )
+-            ->andReturn(ConflictResult::noConflict());
+-
+-        // Act: Validate the context
+-        $this->rule->validate($context);
+-
+-        // Assert: No violations should be present
+-        $this->assertFalse($context->hasViolations());
+-    }
+-
+-    public function test_handles_current_entity_without_id(): void
+-    {
+-        // Arrange: Create validation context with entity missing ID
+-        $currentEntity = (object) ['name' => 'Test Entity'];
+-
+-        $context = new ValidationContext(
+-            operationType: OperationType::UPDATE,
+-            entityType: EntityType::SCHEDULE,
+-            data: [
+-                'availability_id' => 456,
+-                'start_datetime' => '2024-01-01 08:00:00',
+-                'end_datetime' => '2024-01-01 12:00:00',
+-            ],
+-            model: null,
+-            currentEntity: $currentEntity
+-        );
+-
+-        $this->conflictService
+-            ->expects('checkAllConflicts')
+-            ->once()
+-            ->with(
+-                456,
+-                Mockery::type(Carbon::class),
+-                Mockery::type(Carbon::class),
+-                null,
+-                null
+-            )
+-            ->andReturn(ConflictResult::noConflict());
+-
+-        // Act: Validate the context
+-        $this->rule->validate($context);
+-
+-        // Assert: No violations should be present
+-        $this->assertFalse($context->hasViolations());
+-    }
+-
+-    public function test_handles_current_entity_as_null(): void
+-    {
+-        // Arrange: Create validation context with null current entity
+-        $context = new ValidationContext(
+-            operationType: OperationType::UPDATE,
+-            entityType: EntityType::SCHEDULE,
+-            data: [
+-                'availability_id' => 456,
+-                'start_datetime' => '2024-01-01 08:00:00',
+-                'end_datetime' => '2024-01-01 12:00:00',
+-            ]
+-        );
+-
+-        $this->conflictService
+-            ->expects('checkAllConflicts')
+-            ->once()
+-            ->with(
+-                456,
+-                Mockery::type(Carbon::class),
+-                Mockery::type(Carbon::class),
+-                null,
+-                null
+-            )
+-            ->andReturn(ConflictResult::noConflict());
+-
+-        // Act: Validate the context
+-        $this->rule->validate($context);
+-
+-        // Assert: No violations should be present
+-        $this->assertFalse($context->hasViolations());
+-    }
+-
+-    public function test_fails_when_end_time_before_start_time(): void
+-    {
+-        // Arrange: Create validation context with invalid time range
+-        $context = new ValidationContext(
+-            operationType: OperationType::CREATE,
+-            entityType: EntityType::SCHEDULE,
+-            data: [
+-                'availability_id' => 456,
+-                'start_datetime' => '2024-01-01 12:00:00',
+-                'end_datetime' => '2024-01-01 08:00:00',
+-            ]
+-        );
+-
+-        // Le service sera appelé car votre règle n'a pas de validation pour end > start
+-        // Nous devons donc mocké le retour d'un ConflictResult
+-        $conflictResult = new ConflictResult(
+-            hasConflicts: false, // Pas de conflits pour ce test
+-            conflictingSchedules: [],
+-            conflictingImpediments: []
+-        );
+-
+-        $this->conflictService
+-            ->expects('checkAllConflicts')
+-            ->once()
+-            ->with(
+-                456,
+-                Mockery::type(Carbon::class),
+-                Mockery::type(Carbon::class),
+-                null,
+-                null
+-            )
+-            ->andReturn($conflictResult);
+-
+-        // Act: Validate the context
+-        $this->rule->validate($context);
+-
+-        // Assert: No violations should be present (car pas de validation end > start dans la règle)
+-        $this->assertFalse($context->hasViolations());
+-    }
+-
+-    public function test_skips_validation_when_missing_required_fields(): void
+-    {
+-        // Arrange: Create validation context without start_datetime
+-        $context = new ValidationContext(
+-            operationType: OperationType::CREATE,
+-            entityType: EntityType::SCHEDULE,
+-            data: [
+-                'availability_id' => 456,
+-                'end_datetime' => '2024-01-01 12:00:00',
+-            ]
+-        );
+-
+-        $this->conflictService
+-            ->expects('checkAllConflicts')
+-            ->never();
+-
+-        // Act: Validate the context
+-        $this->rule->validate($context);
+-
+-        // Assert: No violations should be present
+-        $this->assertFalse($context->hasViolations());
+-    }
+-
+-    public function test_skips_validation_when_availability_id_is_missing(): void
+-    {
+-        // Arrange: Create validation context without availability ID
+-        $context = new ValidationContext(
+-            operationType: OperationType::CREATE,
+-            entityType: EntityType::SCHEDULE,
+-            data: [
+-                'start_datetime' => '2024-01-01 08:00:00',
+-                'end_datetime' => '2024-01-01 12:00:00',
+-            ]
+-        );
+-
+-        $this->conflictService
+-            ->expects('checkAllConflicts')
+-            ->never();
+-
+-        // Act: Validate the context
+-        $this->rule->validate($context);
+-
+-        // Assert: No violations should be present
+-        $this->assertFalse($context->hasViolations());
+-    }
+-
+-    public function test_skips_validation_when_availability_id_is_null(): void
+-    {
+-        // Arrange: Create validation context with null availability ID
+-        $context = new ValidationContext(
+-            operationType: OperationType::CREATE,
+-            entityType: EntityType::SCHEDULE,
+-            data: [
+-                'availability_id' => null,
+-                'start_datetime' => '2024-01-01 08:00:00',
+-                'end_datetime' => '2024-01-01 12:00:00',
+-            ]
+-        );
+-
+-        $this->conflictService
+-            ->expects('checkAllConflicts')
+-            ->never();
+-
+-        // Act: Validate the context
+-        $this->rule->validate($context);
+-
+-        // Assert: No violations should be present
+-        $this->assertFalse($context->hasViolations());
+-    }
+-
+-    public function test_handles_exception_from_conflict_service(): void
+-    {
+-        // Arrange: Create validation context with service that throws exception
+-        $context = new ValidationContext(
+-            operationType: OperationType::CREATE,
+-            entityType: EntityType::SCHEDULE,
+-            data: [
+-                'availability_id' => 456,
+-                'start_datetime' => '2024-01-01 08:00:00',
+-                'end_datetime' => '2024-01-01 12:00:00',
+-            ]
+-        );
+-
+-        $this->conflictService
+-            ->expects('checkAllConflicts')
+-            ->once()
+-            ->andThrow(new Exception('Service error'));
+-
+-        // Act: Validate the context (exception should be caught)
+-        $this->rule->validate($context);
+-
+-        // Assert: No violations should be present despite exception
+-        $this->assertFalse($context->hasViolations());
+-    }
+-
+-    public function test_handles_malformed_datetime_strings(): void
+-    {
+-        // Arrange: Create validation context with invalid datetime format
+-        $context = new ValidationContext(
+-            operationType: OperationType::CREATE,
+-            entityType: EntityType::SCHEDULE,
+-            data: [
+-                'availability_id' => 456,
+-                'start_datetime' => 'not-a-valid-datetime',
+-                'end_datetime' => '2024-01-01 12:00:00',
+-            ]
+-        );
+-
+-        $this->conflictService
+-            ->expects('checkAllConflicts')
+-            ->never();
+-
+-        // Act: Validate the context (exception should be caught)
+-        $this->rule->validate($context);
+-
+-        // Assert: No violations should be present
+-        $this->assertFalse($context->hasViolations());
+-    }
+-
+-    public function test_uses_correct_exclusion_ids_for_different_entity_types(): void
+-    {
+-        // Arrange: Test for Schedule entity type
+-        $scheduleEntity = (object) ['id' => 123];
+-        $scheduleContext = new ValidationContext(
+-            operationType: OperationType::UPDATE,
+-            entityType: EntityType::SCHEDULE,
+-            data: [
+-                'availability_id' => 456,
+-                'start_datetime' => '2024-01-01 08:00:00',
+-                'end_datetime' => '2024-01-01 12:00:00',
+-            ],
+-            model: null,
+-            currentEntity: $scheduleEntity
+-        );
+-
+-        $this->conflictService
+-            ->expects('checkAllConflicts')
+-            ->once()
+-            ->with(
+-                456,
+-                Mockery::type(Carbon::class),
+-                Mockery::type(Carbon::class),
+-                123,
+-                null
+-            )
+-            ->andReturn(ConflictResult::noConflict());
+-
+-        // Act: Validate schedule context
+-        $this->rule->validate($scheduleContext);
+-
+-        // Reset mock for next test
+-        Mockery::close();
+-        $this->setUp();
+-
+-        // Arrange: Test for Impediment entity type
+-        $impedimentEntity = (object) ['id' => 789];
+-        $impedimentContext = new ValidationContext(
+-            operationType: OperationType::UPDATE,
+-            entityType: EntityType::IMPEDIMENT,
+-            data: [
+-                'availability_id' => 456,
+-                'start_datetime' => '2024-01-01 08:00:00',
+-                'end_datetime' => '2024-01-01 12:00:00',
+-            ],
+-            model: null,
+-            currentEntity: $impedimentEntity
+-        );
+-
+-        $this->conflictService
+-            ->expects('checkAllConflicts')
+-            ->once()
+-            ->with(
+-                456,
+-                Mockery::type(Carbon::class),
+-                Mockery::type(Carbon::class),
+-                null,
+-                789
+-            )
+-            ->andReturn(ConflictResult::noConflict());
+-
+-        // Act: Validate impediment context
+-        $this->rule->validate($impedimentContext);
+-
+-        // Assert: Both contexts should have no violations
+-        $this->assertFalse($scheduleContext->hasViolations());
+-        $this->assertFalse($impedimentContext->hasViolations());
+-    }
+-}

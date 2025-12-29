@@ -23,7 +23,7 @@ use Roster\Validation\Attributes\ValidationRule;
     entities: [EntityType::SCHEDULE, EntityType::IMPEDIMENT],
     operations: [OperationType::CREATE, OperationType::UPDATE]
 )]
-class ScheduleOverlapRule extends AbstractRule
+class TemporalConflictRule extends AbstractRule
 {
     /**
      * Initializes the rule with required dependencies.
@@ -68,14 +68,7 @@ class ScheduleOverlapRule extends AbstractRule
      */
     public function getDescription(): string
     {
-        return "Validates that no temporal overlap exists with other time slots.\n" .
-            "This rule prevents:\n" .
-            "- Double bookings on the same time slot\n" .
-            "- Impediments overlapping with existing schedules\n" .
-            "- Availability conflicts between different entity types\n" .
-            "\n" .
-            "The system checks within the same availability if there are existing " .
-            "entities (schedules or impediments) whose periods overlap with the proposed one.";
+        return "This rule validates that no temporal overlap exists with other time slots, in order to prevent double bookings on the same slot, impediments overlapping existing schedules, and availability conflicts between different entity types. The system checks, within the same availability, whether there are already entities (schedules or impediments) whose time periods overlap with the proposed one.";
     }
 
     /**

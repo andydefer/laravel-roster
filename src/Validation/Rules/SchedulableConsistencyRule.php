@@ -38,6 +38,12 @@ class SchedulableConsistencyRule extends AbstractRule
     public function validate(ValidationContextInterface $validationContext): void
     {
         $entityType = $validationContext->getEntityType();
+        $operationType = $validationContext->getOperation();
+
+        // Only apply to CREATE operations for SCHEDULE and IMPEDIMENT entities
+        if ($operationType !== OperationType::CREATE) {
+            return;
+        }
 
         if (!in_array($entityType, [EntityType::SCHEDULE, EntityType::IMPEDIMENT])) {
             return;
@@ -61,6 +67,16 @@ class SchedulableConsistencyRule extends AbstractRule
     }
 
     /**
+     * Returns a detailed description of what this rule validates.
+     *
+     * @return string Detailed description
+     */
+    public function getDescription(): string
+    {
+        return "This rule validates that schedules and impediments belong to the same schedulable entity as their parent availability, ensuring data integrity across related entities. It checks that the provided schedulable_id and schedulable_type match those of the referenced availability, preventing orphaned or misassigned entities that could break the consistency of the scheduling system.";
+    }
+
+    /**
      * Checks if required schedulable data is present.
      *
      * @param ValidationContextInterface $validationContext Validation context
@@ -68,13 +84,29 @@ class SchedulableConsistencyRule extends AbstractRule
      */
     private function hasRequiredSchedulableData(ValidationContextInterface $validationContext): bool
     {
+        // Check for presence first
         if (!$validationContext->has('schedulable_id') || !$validationContext->has('schedulable_type')) {
-            $validationContext->setViolation(
-                'schedulable',
-                'Schedulable information is required'
+            $validationContext->setViolationFromRule(
+                rule: $this,
+                field: 'schedulable',
+                message: 'Schedulable information is required'
             );
             return false;
         }
+
+        // Check for non-empty values
+        $schedulableId = $validationContext->get('schedulable_id');
+        $schedulableType = $validationContext->get('schedulable_type');
+
+        if ($schedulableId === null || $schedulableType === null || $schedulableType === '') {
+            $validationContext->setViolationFromRule(
+                rule: $this,
+                field: 'schedulable',
+                message: 'Schedulable information cannot be empty'
+            );
+            return false;
+        }
+
 
         return true;
     }
@@ -87,9 +119,13 @@ class SchedulableConsistencyRule extends AbstractRule
      */
     private function getParentAvailability(ValidationContextInterface $validationContext): ?Availability
     {
+        if (!$validationContext->has('availability_id')) {
+            return null;
+        }
+
         $availabilityId = $validationContext->get('availability_id');
         if (!$availabilityId) {
-            return null; // AvailabilityOwnershipRule will handle missing availability_id
+            return null;
         }
 
         App::make(AvailabilityRepositoryInterface::class);
@@ -120,9 +156,10 @@ class SchedulableConsistencyRule extends AbstractRule
      */
     private function addSchedulableMismatchViolation(ValidationContextInterface $validationContext): void
     {
-        $validationContext->setViolation(
-            'schedulable',
-            "Schedulable information does not match the availability's schedulable"
+        $validationContext->setViolationFromRule(
+            rule: $this,
+            field: 'schedulable',
+            message: "Schedulable information does not match the availability's schedulable"
         );
     }
 }

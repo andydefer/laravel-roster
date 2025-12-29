@@ -10,9 +10,10 @@ use Mockery;
 use Mockery\MockInterface;
 use Roster\Enums\EntityType;
 use Roster\Enums\OperationType;
-use Roster\Validation\Context\ValidationContext;
 use Roster\Validation\Rules\TimeSlotDateTimeRule;
 use Tests\TestCase;
+use PHPUnit\Framework\MockObject\MockObject;
+use Roster\Contracts\Validation\ValidationContextInterface;
 
 /**
  * Unit tests for TimeSlotDateTimeRule validation logic.
@@ -23,19 +24,13 @@ use Tests\TestCase;
 final class TimeSlotDateTimeRuleTest extends TestCase
 {
     private TimeSlotDateTimeRule $rule;
-    private Model|MockInterface $schedulable;
 
     /**
-     * Set up the test case with a fresh rule instance and mock schedulable model.
+     * Set up the test case with a fresh rule instance.
      */
     protected function setUp(): void
     {
         parent::setUp();
-
-        $this->schedulable = Mockery::mock(Model::class);
-        $this->schedulable->shouldReceive('getAttribute')->with('id')->andReturn(1);
-        $this->schedulable->shouldReceive('getMorphClass')->andReturn('TestModel');
-
         $this->rule = new TimeSlotDateTimeRule();
     }
 
@@ -56,15 +51,19 @@ final class TimeSlotDateTimeRuleTest extends TestCase
         // Arrange: Create context with valid datetime range for CREATE operation
         $context = $this->createValidationContext(
             operationType: OperationType::CREATE,
+            entityType: EntityType::SCHEDULE,
+            hasStartDatetime: true,
             startDatetime: '2024-01-01 09:00:00',
+            hasEndDatetime: true,
             endDatetime: '2024-01-01 17:00:00'
         );
+
+        $context->expects($this->never())->method('setViolationFromRule');
 
         // Act: Execute validation
         $this->rule->validate($context);
 
         // Assert: No violations should be present
-        $this->assertFalse($context->hasViolations());
     }
 
     /**
@@ -75,28 +74,24 @@ final class TimeSlotDateTimeRuleTest extends TestCase
         // Arrange: Create context with invalid datetime range (end before start)
         $context = $this->createValidationContext(
             operationType: OperationType::CREATE,
+            entityType: EntityType::SCHEDULE,
+            hasStartDatetime: true,
             startDatetime: '2024-01-01 12:00:00',
+            hasEndDatetime: true,
             endDatetime: '2024-01-01 08:00:00'
         );
 
+        $context->expects($this->once())
+            ->method('setViolationFromRule')
+            ->with(
+                $this->rule,
+                'datetime_range',
+                'End datetime must be after start datetime'
+            );
+
         // Act: Execute validation
         $this->rule->validate($context);
-
-        // Assert: Violation should be present for datetime range
-        $this->assertTrue($context->hasViolations());
-        $this->assertTrue($context->hasViolationFor('datetime_range'));
-
-        $messages = array_map(
-            fn($violation) => $violation->getMessage(),
-            $context->getViolations()
-        );
-
-        $this->assertStringContainsString(
-            'End datetime must be after start datetime',
-            implode(' ', $messages)
-        );
     }
-
 
     /**
      * Test that validation fails when CREATE operation has end datetime equal to start datetime.
@@ -106,16 +101,23 @@ final class TimeSlotDateTimeRuleTest extends TestCase
         // Arrange: Create context with equal start and end datetimes
         $context = $this->createValidationContext(
             operationType: OperationType::CREATE,
+            entityType: EntityType::SCHEDULE,
+            hasStartDatetime: true,
             startDatetime: '2024-01-01 09:00:00',
+            hasEndDatetime: true,
             endDatetime: '2024-01-01 09:00:00'
         );
 
+        $context->expects($this->once())
+            ->method('setViolationFromRule')
+            ->with(
+                $this->rule,
+                'datetime_range',
+                'End datetime must be after start datetime'
+            );
+
         // Act: Execute validation
         $this->rule->validate($context);
-
-        // Assert: Violation should be present for datetime range
-        $this->assertTrue($context->hasViolations());
-        $this->assertTrue($context->hasViolationFor('datetime_range'));
     }
 
     /**
@@ -126,15 +128,17 @@ final class TimeSlotDateTimeRuleTest extends TestCase
         // Arrange: Create context with missing start datetime
         $context = $this->createValidationContext(
             operationType: OperationType::CREATE,
+            entityType: EntityType::SCHEDULE,
+            hasStartDatetime: false,
             startDatetime: null,
+            hasEndDatetime: true,
             endDatetime: '2024-01-01 17:00:00'
         );
 
+        $context->expects($this->never())->method('setViolationFromRule');
+
         // Act: Execute validation
         $this->rule->validate($context);
-
-        // Assert: No violations should be present (validation skipped)
-        $this->assertFalse($context->hasViolations());
     }
 
     /**
@@ -145,15 +149,17 @@ final class TimeSlotDateTimeRuleTest extends TestCase
         // Arrange: Create context with missing end datetime
         $context = $this->createValidationContext(
             operationType: OperationType::CREATE,
+            entityType: EntityType::SCHEDULE,
+            hasStartDatetime: true,
             startDatetime: '2024-01-01 09:00:00',
+            hasEndDatetime: false,
             endDatetime: null
         );
 
+        $context->expects($this->never())->method('setViolationFromRule');
+
         // Act: Execute validation
         $this->rule->validate($context);
-
-        // Assert: No violations should be present (validation skipped)
-        $this->assertFalse($context->hasViolations());
     }
 
     /**
@@ -164,7 +170,10 @@ final class TimeSlotDateTimeRuleTest extends TestCase
         // Arrange: Create context with valid update of both datetimes
         $context = $this->createValidationContext(
             operationType: OperationType::UPDATE,
+            entityType: EntityType::SCHEDULE,
+            hasStartDatetime: true,
             startDatetime: '2024-01-01 10:00:00',
+            hasEndDatetime: true,
             endDatetime: '2024-01-01 18:00:00',
             currentEntity: $this->createMockEntity(
                 startDatetime: '2024-01-01 09:00:00',
@@ -172,11 +181,10 @@ final class TimeSlotDateTimeRuleTest extends TestCase
             )
         );
 
+        $context->expects($this->never())->method('setViolationFromRule');
+
         // Act: Execute validation
         $this->rule->validate($context);
-
-        // Assert: No violations should be present
-        $this->assertFalse($context->hasViolations());
     }
 
     /**
@@ -187,7 +195,10 @@ final class TimeSlotDateTimeRuleTest extends TestCase
         // Arrange: Create context with invalid update of both datetimes
         $context = $this->createValidationContext(
             operationType: OperationType::UPDATE,
+            entityType: EntityType::SCHEDULE,
+            hasStartDatetime: true,
             startDatetime: '2024-01-01 12:00:00',
+            hasEndDatetime: true,
             endDatetime: '2024-01-01 10:00:00',
             currentEntity: $this->createMockEntity(
                 startDatetime: '2024-01-01 09:00:00',
@@ -195,12 +206,16 @@ final class TimeSlotDateTimeRuleTest extends TestCase
             )
         );
 
+        $context->expects($this->once())
+            ->method('setViolationFromRule')
+            ->with(
+                $this->rule,
+                'datetime_range',
+                'End datetime must be after start datetime'
+            );
+
         // Act: Execute validation
         $this->rule->validate($context);
-
-        // Assert: Violation should be present for datetime range
-        $this->assertTrue($context->hasViolations());
-        $this->assertTrue($context->hasViolationFor('datetime_range'));
     }
 
     /**
@@ -209,22 +224,23 @@ final class TimeSlotDateTimeRuleTest extends TestCase
     public function test_passes_when_update_operation_with_only_start_updated_valid(): void
     {
         // Arrange: Create context with valid update of only start datetime
-        $existingEnd = '2024-01-01 17:00:00';
         $context = $this->createValidationContext(
             operationType: OperationType::UPDATE,
+            entityType: EntityType::SCHEDULE,
+            hasStartDatetime: true,
             startDatetime: '2024-01-01 08:00:00',
+            hasEndDatetime: false,
             endDatetime: null,
             currentEntity: $this->createMockEntity(
                 startDatetime: '2024-01-01 09:00:00',
-                endDatetime: $existingEnd
+                endDatetime: '2024-01-01 17:00:00'
             )
         );
 
+        $context->expects($this->never())->method('setViolationFromRule');
+
         // Act: Execute validation
         $this->rule->validate($context);
-
-        // Assert: No violations should be present
-        $this->assertFalse($context->hasViolations());
     }
 
     /**
@@ -236,7 +252,10 @@ final class TimeSlotDateTimeRuleTest extends TestCase
         $existingEnd = '2024-01-01 17:00:00';
         $context = $this->createValidationContext(
             operationType: OperationType::UPDATE,
+            entityType: EntityType::SCHEDULE,
+            hasStartDatetime: true,
             startDatetime: $existingEnd,
+            hasEndDatetime: false,
             endDatetime: null,
             currentEntity: $this->createMockEntity(
                 startDatetime: '2024-01-01 09:00:00',
@@ -244,12 +263,16 @@ final class TimeSlotDateTimeRuleTest extends TestCase
             )
         );
 
+        $context->expects($this->once())
+            ->method('setViolationFromRule')
+            ->with(
+                $this->rule,
+                'datetime_range',
+                'End datetime must be after start datetime'
+            );
+
         // Act: Execute validation
         $this->rule->validate($context);
-
-        // Assert: Violation should be present for datetime range
-        $this->assertTrue($context->hasViolations());
-        $this->assertTrue($context->hasViolationFor('datetime_range'));
     }
 
     /**
@@ -258,22 +281,23 @@ final class TimeSlotDateTimeRuleTest extends TestCase
     public function test_passes_when_update_operation_with_only_end_updated_valid(): void
     {
         // Arrange: Create context with valid update of only end datetime
-        $existingStart = '2024-01-01 09:00:00';
         $context = $this->createValidationContext(
             operationType: OperationType::UPDATE,
+            entityType: EntityType::SCHEDULE,
+            hasStartDatetime: false,
             startDatetime: null,
+            hasEndDatetime: true,
             endDatetime: '2024-01-01 19:00:00',
             currentEntity: $this->createMockEntity(
-                startDatetime: $existingStart,
+                startDatetime: '2024-01-01 09:00:00',
                 endDatetime: '2024-01-01 17:00:00'
             )
         );
 
+        $context->expects($this->never())->method('setViolationFromRule');
+
         // Act: Execute validation
         $this->rule->validate($context);
-
-        // Assert: No violations should be present
-        $this->assertFalse($context->hasViolations());
     }
 
     /**
@@ -285,7 +309,10 @@ final class TimeSlotDateTimeRuleTest extends TestCase
         $existingStart = '2024-01-01 09:00:00';
         $context = $this->createValidationContext(
             operationType: OperationType::UPDATE,
+            entityType: EntityType::SCHEDULE,
+            hasStartDatetime: false,
             startDatetime: null,
+            hasEndDatetime: true,
             endDatetime: '2024-01-01 08:00:00',
             currentEntity: $this->createMockEntity(
                 startDatetime: $existingStart,
@@ -293,12 +320,16 @@ final class TimeSlotDateTimeRuleTest extends TestCase
             )
         );
 
+        $context->expects($this->once())
+            ->method('setViolationFromRule')
+            ->with(
+                $this->rule,
+                'datetime_range',
+                'End datetime must be after start datetime'
+            );
+
         // Act: Execute validation
         $this->rule->validate($context);
-
-        // Assert: Violation should be present for datetime range
-        $this->assertTrue($context->hasViolations());
-        $this->assertTrue($context->hasViolationFor('datetime_range'));
     }
 
     /**
@@ -309,7 +340,10 @@ final class TimeSlotDateTimeRuleTest extends TestCase
         // Arrange: Create context with no datetime updates
         $context = $this->createValidationContext(
             operationType: OperationType::UPDATE,
+            entityType: EntityType::SCHEDULE,
+            hasStartDatetime: false,
             startDatetime: null,
+            hasEndDatetime: false,
             endDatetime: null,
             currentEntity: $this->createMockEntity(
                 startDatetime: '2024-01-01 09:00:00',
@@ -317,11 +351,10 @@ final class TimeSlotDateTimeRuleTest extends TestCase
             )
         );
 
+        $context->expects($this->never())->method('setViolationFromRule');
+
         // Act: Execute validation
         $this->rule->validate($context);
-
-        // Assert: No violations should be present (validation skipped)
-        $this->assertFalse($context->hasViolations());
     }
 
     /**
@@ -332,25 +365,23 @@ final class TimeSlotDateTimeRuleTest extends TestCase
         // Arrange: Create context with invalid datetime format
         $context = $this->createValidationContext(
             operationType: OperationType::CREATE,
+            entityType: EntityType::SCHEDULE,
+            hasStartDatetime: true,
             startDatetime: 'invalid-date',
+            hasEndDatetime: true,
             endDatetime: '2024-01-01 17:00:00'
         );
 
+        $context->expects($this->once())
+            ->method('setViolationFromRule')
+            ->with(
+                $this->rule,
+                'datetime_format',
+                $this->stringContains('Invalid datetime format')
+            );
+
         // Act: Execute validation
         $this->rule->validate($context);
-
-        $messages = array_map(
-            fn($violation) => $violation->getMessage(),
-            $context->getViolations()
-        );
-
-        // Assert: Violation should be present for datetime format
-        $this->assertTrue($context->hasViolations());
-        $this->assertTrue($context->hasViolationFor('datetime_format'));
-        $this->assertStringContainsString(
-            'Invalid datetime format',
-            implode(' ', $messages)
-        );
     }
 
     /**
@@ -359,21 +390,19 @@ final class TimeSlotDateTimeRuleTest extends TestCase
     public function test_works_for_schedule_entity(): void
     {
         // Arrange: Create context with SCHEDULE entity type
-        $context = new ValidationContext(
+        $context = $this->createValidationContext(
             operationType: OperationType::CREATE,
             entityType: EntityType::SCHEDULE,
-            data: [
-                'start_datetime' => '2024-01-01 09:00:00',
-                'end_datetime' => '2024-01-01 17:00:00',
-            ],
-            model: $this->schedulable
+            hasStartDatetime: true,
+            startDatetime: '2024-01-01 09:00:00',
+            hasEndDatetime: true,
+            endDatetime: '2024-01-01 17:00:00'
         );
+
+        $context->expects($this->never())->method('setViolationFromRule');
 
         // Act: Execute validation
         $this->rule->validate($context);
-
-        // Assert: No violations should be present
-        $this->assertFalse($context->hasViolations());
     }
 
     /**
@@ -382,21 +411,19 @@ final class TimeSlotDateTimeRuleTest extends TestCase
     public function test_works_for_impediment_entity(): void
     {
         // Arrange: Create context with IMPEDIMENT entity type
-        $context = new ValidationContext(
+        $context = $this->createValidationContext(
             operationType: OperationType::CREATE,
             entityType: EntityType::IMPEDIMENT,
-            data: [
-                'start_datetime' => '2024-01-01 09:00:00',
-                'end_datetime' => '2024-01-01 17:00:00',
-            ],
-            model: $this->schedulable
+            hasStartDatetime: true,
+            startDatetime: '2024-01-01 09:00:00',
+            hasEndDatetime: true,
+            endDatetime: '2024-01-01 17:00:00'
         );
+
+        $context->expects($this->never())->method('setViolationFromRule');
 
         // Act: Execute validation
         $this->rule->validate($context);
-
-        // Assert: No violations should be present
-        $this->assertFalse($context->hasViolations());
     }
 
     /**
@@ -414,16 +441,18 @@ final class TimeSlotDateTimeRuleTest extends TestCase
 
         $context = $this->createValidationContext(
             operationType: OperationType::UPDATE,
+            entityType: EntityType::SCHEDULE,
+            hasStartDatetime: true,
             startDatetime: '2024-01-01 08:00:00',
+            hasEndDatetime: false,
             endDatetime: null,
             currentEntity: $entity
         );
 
+        $context->expects($this->never())->method('setViolationFromRule');
+
         // Act: Execute validation
         $this->rule->validate($context);
-
-        // Assert: No violations should be present
-        $this->assertFalse($context->hasViolations());
     }
 
     /**
@@ -434,15 +463,17 @@ final class TimeSlotDateTimeRuleTest extends TestCase
         // Arrange: Create context with timezone-aware datetime strings
         $context = $this->createValidationContext(
             operationType: OperationType::CREATE,
+            entityType: EntityType::SCHEDULE,
+            hasStartDatetime: true,
             startDatetime: '2024-01-01T09:00:00+02:00',
+            hasEndDatetime: true,
             endDatetime: '2024-01-01T17:00:00+02:00'
         );
 
+        $context->expects($this->never())->method('setViolationFromRule');
+
         // Act: Execute validation
         $this->rule->validate($context);
-
-        // Assert: No violations should be present
-        $this->assertFalse($context->hasViolations());
     }
 
     /**
@@ -453,50 +484,179 @@ final class TimeSlotDateTimeRuleTest extends TestCase
         // Arrange: Create context with datetime range spanning multiple days
         $context = $this->createValidationContext(
             operationType: OperationType::CREATE,
+            entityType: EntityType::SCHEDULE,
+            hasStartDatetime: true,
             startDatetime: '2024-01-01 22:00:00',
+            hasEndDatetime: true,
             endDatetime: '2024-01-02 06:00:00'
         );
 
+        $context->expects($this->never())->method('setViolationFromRule');
+
         // Act: Execute validation
         $this->rule->validate($context);
-
-        // Assert: No violations should be present
-        $this->assertFalse($context->hasViolations());
     }
 
     /**
-     * Create a validation context with the given parameters.
+     * Test that rule description is available.
+     */
+    public function test_has_description(): void
+    {
+        // Act: Get rule description
+        $description = $this->rule->getDescription();
+
+        // Assert: Description should not be empty
+        $this->assertIsString($description);
+        $this->assertNotEmpty($description);
+        $this->assertStringContainsString('datetime', $description);
+        $this->assertStringContainsString('validate', $description);
+    }
+
+    /**
+     * Test that validation passes for UPDATE with only start datetime when end datetime is null.
+     */
+    public function test_passes_for_update_with_only_start_when_end_is_null(): void
+    {
+        // Arrange: Create context with only start datetime update and null end datetime
+        $context = $this->createValidationContext(
+            operationType: OperationType::UPDATE,
+            entityType: EntityType::SCHEDULE,
+            hasStartDatetime: true,
+            startDatetime: '2024-01-01 08:00:00',
+            hasEndDatetime: false,
+            endDatetime: null,
+            currentEntity: $this->createMockEntity(
+                startDatetime: '2024-01-01 09:00:00',
+                endDatetime: null // Explicitement null
+            )
+        );
+
+        $context->expects($this->never())->method('setViolationFromRule');
+
+        // Act: Execute validation
+        $this->rule->validate($context);
+    }
+
+    /**
+     * Test that validation passes for UPDATE with only end datetime when start datetime is null.
+     */
+    public function test_passes_for_update_with_only_end_when_start_is_null(): void
+    {
+        // Arrange: Create context with only end datetime update and null start datetime
+        $context = $this->createValidationContext(
+            operationType: OperationType::UPDATE,
+            entityType: EntityType::SCHEDULE,
+            hasStartDatetime: false,
+            startDatetime: null,
+            hasEndDatetime: true,
+            endDatetime: '2024-01-01 19:00:00',
+            currentEntity: $this->createMockEntity(
+                startDatetime: null, // Explicitement null
+                endDatetime: '2024-01-01 17:00:00'
+            )
+        );
+
+        $context->expects($this->never())->method('setViolationFromRule');
+
+        // Act: Execute validation
+        $this->rule->validate($context);
+    }
+
+    /**
+     * Test that validation skips for non-CREATE/UPDATE operations.
+     */
+    public function test_skips_for_non_create_update_operations(): void
+    {
+        // Arrange: Create context with DELETE operation
+        $context = $this->createMock(ValidationContextInterface::class);
+        $context->method('getOperation')->willReturn(OperationType::DELETE);
+        $context->method('getEntityType')->willReturn(EntityType::SCHEDULE);
+
+        $context->expects($this->never())->method('has');
+        $context->expects($this->never())->method('get');
+        $context->expects($this->never())->method('setViolationFromRule');
+
+        // Act: Execute validation
+        $this->rule->validate($context);
+    }
+
+    /**
+     * Test that validation handles invalid datetime format in end datetime.
+     */
+    public function test_fails_when_end_datetime_format_is_invalid(): void
+    {
+        // Arrange: Create context with invalid end datetime format
+        $context = $this->createValidationContext(
+            operationType: OperationType::CREATE,
+            entityType: EntityType::SCHEDULE,
+            hasStartDatetime: true,
+            startDatetime: '2024-01-01 09:00:00',
+            hasEndDatetime: true,
+            endDatetime: 'invalid-date'
+        );
+
+        $context->expects($this->once())
+            ->method('setViolationFromRule')
+            ->with(
+                $this->rule,
+                'datetime_format',
+                $this->stringContains('Invalid datetime format')
+            );
+
+        // Act: Execute validation
+        $this->rule->validate($context);
+    }
+
+    /**
+     * Create a validation context mock with specified configuration.
      *
      * @param OperationType $operationType The operation type (CREATE or UPDATE)
-     * @param string|null $startDatetime The start datetime string or null if not provided
-     * @param string|null $endDatetime The end datetime string or null if not provided
+     * @param EntityType $entityType The entity type
+     * @param bool $hasStartDatetime Whether start_datetime is present
+     * @param string|null $startDatetime The start datetime string or null
+     * @param bool $hasEndDatetime Whether end_datetime is present
+     * @param string|null $endDatetime The end datetime string or null
      * @param object|null $currentEntity The current entity for UPDATE operations
      *
-     * @return ValidationContext
+     * @return MockObject&ValidationContextInterface
      */
     private function createValidationContext(
         OperationType $operationType,
+        EntityType $entityType,
+        bool $hasStartDatetime,
         ?string $startDatetime,
+        bool $hasEndDatetime,
         ?string $endDatetime,
         ?object $currentEntity = null
-    ): ValidationContext {
-        $data = [];
+    ): MockObject&ValidationContextInterface {
+        $context = $this->createMock(ValidationContextInterface::class);
+        $context->method('getOperation')->willReturn($operationType);
+        $context->method('getEntityType')->willReturn($entityType);
+        $context->method('getCurrentEntity')->willReturn($currentEntity);
 
-        if ($startDatetime !== null) {
-            $data['start_datetime'] = $startDatetime;
-        }
-
-        if ($endDatetime !== null) {
-            $data['end_datetime'] = $endDatetime;
-        }
-
-        return new ValidationContext(
-            operationType: $operationType,
-            entityType: EntityType::SCHEDULE,
-            data: $data,
-            model: $this->schedulable,
-            currentEntity: $currentEntity
+        $context->method('has')->willReturnCallback(
+            function (string $key) use ($hasStartDatetime, $hasEndDatetime): bool {
+                return match ($key) {
+                    'start_datetime' => $hasStartDatetime,
+                    'end_datetime' => $hasEndDatetime,
+                    default => false,
+                };
+            }
         );
+
+        if ($hasStartDatetime || $hasEndDatetime) {
+            $context->method('get')->willReturnCallback(
+                function (string $key) use ($startDatetime, $endDatetime): mixed {
+                    return match ($key) {
+                        'start_datetime' => $startDatetime,
+                        'end_datetime' => $endDatetime,
+                        default => null,
+                    };
+                }
+            );
+        }
+
+        return $context;
     }
 
     /**
@@ -509,16 +669,11 @@ final class TimeSlotDateTimeRuleTest extends TestCase
      */
     private function createMockEntity(?string $startDatetime, ?string $endDatetime): object
     {
-        $entity = Mockery::mock();
-
-        if ($startDatetime !== null) {
-            $entity->start_datetime = $startDatetime;
-        }
-
-        if ($endDatetime !== null) {
-            $entity->end_datetime = $endDatetime;
-        }
-
-        return $entity;
+        return new class($startDatetime, $endDatetime) {
+            public function __construct(
+                public ?string $start_datetime = null,
+                public ?string $end_datetime = null
+            ) {}
+        };
     }
 }

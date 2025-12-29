@@ -34,9 +34,10 @@ class SchedulableValidationRule extends AbstractRule
         $safeData = $validationContext->safeData();
 
         if (!$schedulable instanceof Model) {
-            $validationContext->setViolation(
-                'schedulable',
-                'No schedulable resource specified. Call for() with a schedulable entity before executing the operation.'
+            $validationContext->setViolationFromRule(
+                rule: $this,
+                field: 'schedulable',
+                message: 'No schedulable resource specified. Call for() with a schedulable entity before executing the operation.'
             );
             return;
         }
@@ -47,6 +48,16 @@ class SchedulableValidationRule extends AbstractRule
         }
 
         $this->validateSchedulableConsistency($validationContext, $schedulable, $entityType);
+    }
+
+    /**
+     * Returns a detailed description of what this rule validates.
+     *
+     * @return string Detailed description
+     */
+    public function getDescription(): string
+    {
+        return "This rule validates the consistency and integrity of schedulable entity relationships across availability, schedule, and impediment operations. It ensures that the specified schedulable resource (provided via the for() method) matches the entity's ownership fields (schedulable_id and schedulable_type), prevents unauthorized modification of ownership relationships during UPDATE operations, and maintains proper reference consistency for all entity types and operations (CREATE, UPDATE, DELETE). The rule also validates that child entities (schedules and impediments) have properly defined ownership fields while allowing more flexible ownership specification for availability entities.";
     }
 
     /**
@@ -63,9 +74,10 @@ class SchedulableValidationRule extends AbstractRule
     ): void {
         foreach ($ownerFields as $ownerField) {
             if (array_key_exists($ownerField, $safeData)) {
-                $validationContext->setViolation(
-                    $ownerField,
-                    sprintf("Field '%s' cannot be changed. The owner cannot be modified.", $ownerField)
+                $validationContext->setViolationFromRule(
+                    rule: $this,
+                    field: $ownerField,
+                    message: sprintf("Field '%s' cannot be changed. The owner cannot be modified.", $ownerField)
                 );
             }
         }
@@ -83,6 +95,10 @@ class SchedulableValidationRule extends AbstractRule
         Model $model,
         EntityType $entityType
     ): void {
+        if ($validationContext->getOperation() === OperationType::DELETE) {
+            return;
+        }
+
         if (in_array($entityType, [EntityType::SCHEDULE, EntityType::IMPEDIMENT])) {
             $this->validateChildEntitySchedulable($validationContext, $model);
             return;
@@ -105,9 +121,10 @@ class SchedulableValidationRule extends AbstractRule
         $schedulableType = $validationContext->get('schedulable_type');
 
         if (!$schedulableId || !$schedulableType) {
-            $validationContext->setViolation(
-                'schedulable',
-                'Schedulable ID and type are required'
+            $validationContext->setViolationFromRule(
+                rule: $this,
+                field: 'schedulable',
+                message: 'Schedulable ID and type are required'
             );
             return;
         }
@@ -129,9 +146,10 @@ class SchedulableValidationRule extends AbstractRule
         mixed $providedId
     ): void {
         if ($providedId != $model->getKey()) {
-            $validationContext->setViolation(
-                'schedulable_id',
-                sprintf(
+            $validationContext->setViolationFromRule(
+                rule: $this,
+                field: 'schedulable_id',
+                message: sprintf(
                     'Schedulable ID mismatch. Expected: %d, Got: %d',
                     $model->getKey(),
                     $providedId
@@ -153,9 +171,10 @@ class SchedulableValidationRule extends AbstractRule
         ?string $providedType
     ): void {
         if ($providedType !== get_class($model)) {
-            $validationContext->setViolation(
-                'schedulable_type',
-                sprintf(
+            $validationContext->setViolationFromRule(
+                rule: $this,
+                field: 'schedulable_type',
+                message: sprintf(
                     'Schedulable type mismatch. Expected: %s, Got: %s',
                     get_class($model),
                     $providedType

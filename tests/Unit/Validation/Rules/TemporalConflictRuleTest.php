@@ -13,21 +13,21 @@ use Roster\Domain\Services\TemporalConflictService;
 use Roster\Enums\EntityType;
 use Roster\Enums\OperationType;
 use Roster\Validation\Context\ValidationContext;
-use Roster\Validation\Rules\ScheduleOverlapRule;
+use Roster\Validation\Rules\TemporalConflictRule;
 use Tests\TestCase;
 
-final class ScheduleOverlapRuleTest extends TestCase
+final class TemporalConflictRuleTest extends TestCase
 {
     private TemporalConflictService|MockInterface $conflictService;
 
-    private ScheduleOverlapRule $rule;
+    private TemporalConflictRule $rule;
 
     protected function setUp(): void
     {
         parent::setUp();
 
         $this->conflictService = Mockery::mock(TemporalConflictService::class);
-        $this->rule = new ScheduleOverlapRule(temporalConflictService: $this->conflictService);
+        $this->rule = new TemporalConflictRule(temporalConflictService: $this->conflictService);
     }
 
     protected function tearDown(): void

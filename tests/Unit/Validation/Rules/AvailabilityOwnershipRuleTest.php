@@ -62,7 +62,7 @@ final class AvailabilityOwnershipRuleTest extends TestCase
         $this->configureContextHasMethod($context, hasAvailabilityId: true);
         $this->configureContextGetMethod($context, availabilityId: 456);
 
-        $context->expects($this->never())->method('setViolation');
+        $context->expects($this->never())->method('setViolationFromRule');
 
         // Act: Execute the validation rule
         $this->rule->validate($context);
@@ -98,8 +98,12 @@ final class AvailabilityOwnershipRuleTest extends TestCase
         $this->configureContextGetMethod($context, availabilityId: 456);
 
         $context->expects($this->once())
-            ->method('setViolation')
-            ->with('availability_id', 'Availability does not belong to this schedulable');
+            ->method('setViolationFromRule')
+            ->with(
+                $this->identicalTo($this->rule),
+                $this->identicalTo('availability_id'),
+                $this->identicalTo('Referenced availability period does not belong to this schedulable entity')
+            );
 
         // Act: Execute the validation rule
         $this->rule->validate($context);
@@ -130,8 +134,12 @@ final class AvailabilityOwnershipRuleTest extends TestCase
         $this->configureContextGetMethod($context, availabilityId: 999);
 
         $context->expects($this->once())
-            ->method('setViolation')
-            ->with('availability_id', 'Invalid availability ID');
+            ->method('setViolationFromRule')
+            ->with(
+                $this->identicalTo($this->rule),
+                $this->identicalTo('availability_id'),
+                $this->identicalTo('Referenced availability period does not exist or is invalid')
+            );
 
         // Act: Execute the validation rule
         $this->rule->validate($context);
@@ -154,7 +162,7 @@ final class AvailabilityOwnershipRuleTest extends TestCase
         $this->configureContextGetMethod($context, availabilityId: 456);
 
         $context->expects($this->never())->method('getAvailabilityService');
-        $context->expects($this->never())->method('setViolation');
+        $context->expects($this->never())->method('setViolationFromRule');
 
         // Act: Execute the validation rule
         $this->rule->validate($context);
@@ -180,8 +188,12 @@ final class AvailabilityOwnershipRuleTest extends TestCase
 
         $context->expects($this->never())->method('getAvailabilityService');
         $context->expects($this->once())
-            ->method('setViolation')
-            ->with('availability_id', 'Must be linked to an availability');
+            ->method('setViolationFromRule')
+            ->with(
+                $this->identicalTo($this->rule),
+                $this->identicalTo('availability_id'),
+                $this->identicalTo('Schedule or impediment must be linked to an availability period')
+            );
 
         // Act: Execute the validation rule
         $this->rule->validate($context);
@@ -208,7 +220,7 @@ final class AvailabilityOwnershipRuleTest extends TestCase
         $this->configureContextGetMethod($context, availabilityId: null);
 
         $context->expects($this->never())->method('getAvailabilityService');
-        $context->expects($this->never())->method('setViolation');
+        $context->expects($this->never())->method('setViolationFromRule');
 
         // Act: Execute the validation rule
         $this->rule->validate($context);
@@ -246,7 +258,7 @@ final class AvailabilityOwnershipRuleTest extends TestCase
         $this->configureContextHasMethod($context, hasAvailabilityId: true);
         $this->configureContextGetMethod($context, availabilityId: 789);
 
-        $context->expects($this->never())->method('setViolation');
+        $context->expects($this->never())->method('setViolationFromRule');
 
         // Act: Execute the validation rule
         $this->rule->validate($context);
@@ -282,7 +294,7 @@ final class AvailabilityOwnershipRuleTest extends TestCase
         $this->configureContextHasMethod($context, hasAvailabilityId: true);
         $this->configureContextGetMethod($context, availabilityId: 456);
 
-        $context->expects($this->never())->method('setViolation');
+        $context->expects($this->never())->method('setViolationFromRule');
 
         // Act: Execute the validation rule
         $this->rule->validate($context);
@@ -318,8 +330,12 @@ final class AvailabilityOwnershipRuleTest extends TestCase
         $this->configureContextGetMethod($context, availabilityId: 456);
 
         $context->expects($this->once())
-            ->method('setViolation')
-            ->with('availability_id', 'Availability does not belong to this schedulable');
+            ->method('setViolationFromRule')
+            ->with(
+                $this->identicalTo($this->rule),
+                $this->identicalTo('availability_id'),
+                $this->identicalTo('Referenced availability period does not belong to this schedulable entity')
+            );
 
         // Act: Execute the validation rule
         $this->rule->validate($context);
@@ -345,7 +361,7 @@ final class AvailabilityOwnershipRuleTest extends TestCase
         $this->configureContextGetMethod($context, availabilityId: null);
 
         $context->expects($this->never())->method('getAvailabilityService');
-        $context->expects($this->never())->method('setViolation');
+        $context->expects($this->never())->method('setViolationFromRule');
 
         // Act: Execute the validation rule
         $this->rule->validate($context);
@@ -372,7 +388,7 @@ final class AvailabilityOwnershipRuleTest extends TestCase
         $this->configureContextGetMethod($context, availabilityId: null);
 
         $context->expects($this->never())->method('getAvailabilityService');
-        $context->expects($this->never())->method('setViolation');
+        $context->expects($this->never())->method('setViolationFromRule');
 
         // Act: Execute the validation rule
         $this->rule->validate($context);
@@ -403,13 +419,36 @@ final class AvailabilityOwnershipRuleTest extends TestCase
         $this->configureContextGetMethod($context, availabilityId: 456);
 
         $context->expects($this->once())
-            ->method('setViolation')
-            ->with('availability_id', 'Invalid availability ID');
+            ->method('setViolationFromRule')
+            ->with(
+                $this->identicalTo($this->rule),
+                $this->identicalTo('availability_id'),
+                $this->identicalTo('Referenced availability period does not exist or is invalid')
+            );
 
         // Act: Execute the validation rule
         $this->rule->validate($context);
 
         // Assert: Violation should be set when availability is not found
+    }
+
+    /**
+     * Test that getDescription returns a detailed description.
+     */
+    public function test_get_description_returns_detailed_information(): void
+    {
+        // Act: Get description
+        $description = $this->rule->getDescription();
+
+        // Assert: Verify description contains key information
+        $this->assertIsString($description);
+        $this->assertNotEmpty($description);
+        $this->assertStringContainsString('validates', $description);
+        $this->assertStringContainsString('schedule', $description);
+        $this->assertStringContainsString('impediment', $description);
+        $this->assertStringContainsString('availability', $description);
+        $this->assertStringContainsString('ownership', $description);
+        $this->assertStringContainsString('CREATE and UPDATE', $description);
     }
 
     /**
@@ -558,8 +597,6 @@ final class AvailabilityOwnershipRuleTest extends TestCase
             ->method('find')
             ->with($availabilityId)
             ->willReturn($returnValue);
-
-        $this->app->instance(AvailabilityService::class, $availabilityService);
 
         return $availabilityService;
     }

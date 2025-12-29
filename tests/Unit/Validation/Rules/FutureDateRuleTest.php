@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Validation\Rules;
 
+use Exception;
 use Illuminate\Support\Carbon;
 use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\MockObject\MockObject;
@@ -41,7 +42,7 @@ final class FutureDateRuleTest extends TestCase
             startDatetime: $futureDate
         );
 
-        $context->expects($this->never())->method('setViolation');
+        $context->expects($this->never())->method('setViolationFromRule');
 
         // Act: Execute the future date validation rule
         $this->rule->validate($context);
@@ -64,8 +65,9 @@ final class FutureDateRuleTest extends TestCase
         );
 
         $context->expects($this->once())
-            ->method('setViolation')
+            ->method('setViolationFromRule')
             ->with(
+                $this->rule,
                 'start_datetime',
                 'Schedule start datetime cannot be in the past'
             );
@@ -91,8 +93,9 @@ final class FutureDateRuleTest extends TestCase
         );
 
         $context->expects($this->once())
-            ->method('setViolation')
+            ->method('setViolationFromRule')
             ->with(
+                $this->rule,
                 'start_datetime',
                 'Impediment start datetime cannot be in the past'
             );
@@ -117,7 +120,7 @@ final class FutureDateRuleTest extends TestCase
             startDatetime: $futureDate
         );
 
-        $context->expects($this->never())->method('setViolation');
+        $context->expects($this->never())->method('setViolationFromRule');
 
         // Act: Execute the future date validation rule
         $this->rule->validate($context);
@@ -139,7 +142,7 @@ final class FutureDateRuleTest extends TestCase
         );
 
         $context->expects($this->never())->method('get');
-        $context->expects($this->never())->method('setViolation');
+        $context->expects($this->never())->method('setViolationFromRule');
 
         // Act: Execute the future date validation rule
         $this->rule->validate($context);
@@ -148,11 +151,11 @@ final class FutureDateRuleTest extends TestCase
     }
 
     /**
-     * Test that validation does not apply for UPDATE operation.
+     * Test that validation applies for UPDATE operation when start_datetime is present.
      */
-    public function test_does_not_validate_for_update_operation(): void
+    public function test_validates_for_update_operation_when_start_datetime_changed(): void
     {
-        // Arrange: UPDATE operation with past datetime should not be validated
+        // Arrange: UPDATE operation with past datetime should be validated
         $pastDate = Carbon::now()->subDays(1)->format('Y-m-d H:i:s');
         $context = $this->createValidationContext(
             entityType: EntityType::SCHEDULE,
@@ -161,12 +164,39 @@ final class FutureDateRuleTest extends TestCase
             startDatetime: $pastDate
         );
 
-        $context->expects($this->never())->method('setViolation');
+        $context->expects($this->once())
+            ->method('setViolationFromRule')
+            ->with(
+                $this->rule,
+                'start_datetime',
+                'Schedule start datetime cannot be moved to the past'
+            );
 
         // Act: Execute the future date validation rule
         $this->rule->validate($context);
 
-        // Assert: No validation should apply to UPDATE operations
+        // Assert: Validation should apply to UPDATE operations when start_datetime is present
+    }
+
+    /**
+     * Test that validation does not apply for UPDATE operation when start_datetime not changed.
+     */
+    public function test_does_not_validate_for_update_operation_when_start_datetime_not_present(): void
+    {
+        // Arrange: UPDATE operation without start_datetime should not be validated
+        $context = $this->createValidationContext(
+            entityType: EntityType::SCHEDULE,
+            operationType: OperationType::UPDATE,
+            hasStartDatetime: false,
+            startDatetime: null
+        );
+
+        $context->expects($this->never())->method('setViolationFromRule');
+
+        // Act: Execute the future date validation rule
+        $this->rule->validate($context);
+
+        // Assert: No validation when start_datetime not in update
     }
 
     /**
@@ -182,33 +212,12 @@ final class FutureDateRuleTest extends TestCase
             startDatetime: null
         );
 
-        $context->expects($this->never())->method('setViolation');
+        $context->expects($this->never())->method('setViolationFromRule');
 
         // Act: Execute the future date validation rule
         $this->rule->validate($context);
 
         // Assert: No validation should apply to DELETE operations
-    }
-
-    /**
-     * Test that validation handles AVAILABILITY entity type.
-     */
-    public function test_does_not_validate_for_availability_entity(): void
-    {
-        // Arrange: AVAILABILITY entity uses start_date field, not start_datetime
-        $context = $this->createValidationContext(
-            entityType: EntityType::AVAILABILITY,
-            operationType: OperationType::CREATE,
-            hasStartDatetime: false,
-            startDatetime: null
-        );
-
-        $context->expects($this->never())->method('setViolation');
-
-        // Act: Execute the future date validation rule
-        $this->rule->validate($context);
-
-        // Assert: AVAILABILITY entity validation is handled separately
     }
 
     /**
@@ -224,7 +233,7 @@ final class FutureDateRuleTest extends TestCase
             startDatetime: 'invalid-datetime-format'
         );
 
-        $context->expects($this->never())->method('setViolation');
+        $context->expects($this->never())->method('setViolationFromRule');
 
         // Act: Execute the future date validation rule
         $this->rule->validate($context);
@@ -247,8 +256,9 @@ final class FutureDateRuleTest extends TestCase
         );
 
         $context->expects($this->once())
-            ->method('setViolation')
+            ->method('setViolationFromRule')
             ->with(
+                $this->rule,
                 'start_datetime',
                 'Impediment start datetime cannot be in the past'
             );
@@ -274,8 +284,9 @@ final class FutureDateRuleTest extends TestCase
         );
 
         $context->expects($this->once())
-            ->method('setViolation')
+            ->method('setViolationFromRule')
             ->with(
+                $this->rule,
                 'start_datetime',
                 'Schedule start datetime cannot be in the past'
             );
@@ -300,7 +311,7 @@ final class FutureDateRuleTest extends TestCase
 
         $context->expects($this->never())->method('has');
         $context->expects($this->never())->method('get');
-        $context->expects($this->never())->method('setViolation');
+        $context->expects($this->never())->method('setViolationFromRule');
 
         // Act: Execute the future date validation rule
         $rule->validate($context);
@@ -325,7 +336,7 @@ final class FutureDateRuleTest extends TestCase
 
         $context->expects($this->never())->method('has');
         $context->expects($this->never())->method('get');
-        $context->expects($this->never())->method('setViolation');
+        $context->expects($this->never())->method('setViolationFromRule');
 
         // Act: Execute the future date validation rule
         $rule->validate($context);
@@ -348,8 +359,9 @@ final class FutureDateRuleTest extends TestCase
         );
 
         $context->expects($this->once())
-            ->method('setViolation')
+            ->method('setViolationFromRule')
             ->with(
+                $this->rule,
                 'start_datetime',
                 'Schedule start datetime cannot be in the past'
             );
@@ -374,7 +386,7 @@ final class FutureDateRuleTest extends TestCase
             startDatetime: $oneSecondFuture
         );
 
-        $context->expects($this->never())->method('setViolation');
+        $context->expects($this->never())->method('setViolationFromRule');
 
         // Act: Execute the future date validation rule
         $this->rule->validate($context);
@@ -383,71 +395,269 @@ final class FutureDateRuleTest extends TestCase
     }
 
     /**
-     * Test that validation for AVAILABILITY with future start_date passes.
+     * Test that validation for AVAILABILITY with future start_date and daily_start passes.
      */
-    public function test_passes_for_availability_with_future_start_date(): void
+    public function test_passes_for_availability_with_future_combined_datetime(): void
     {
-        // Arrange: Future start_date for AVAILABILITY entity
+        // Arrange: Future validity_start and daily_start for AVAILABILITY entity
         $futureDate = Carbon::now()->addDays(1)->format('Y-m-d');
+        $futureTime = '10:00:00';
+
         $context = $this->createValidationContextForAvailability(
             operationType: OperationType::CREATE,
-            hasStartDate: true,
-            startDate: $futureDate
+            hasValidityStart: true,
+            validityStart: $futureDate,
+            hasDailyStart: true,
+            dailyStart: $futureTime
         );
 
-        $context->expects($this->never())->method('setViolation');
+        $context->expects($this->never())->method('setViolationFromRule');
 
         // Act: Execute the future date validation rule
         $this->rule->validate($context);
 
-        // Assert: Future start_date should pass AVAILABILITY validation
+        // Assert: Future combined datetime should pass AVAILABILITY validation
     }
 
     /**
-     * Test that validation for AVAILABILITY with past start_date fails.
+     * Test that validation for AVAILABILITY with past combined datetime fails.
      */
-    public function test_fails_for_availability_with_past_start_date(): void
+    public function test_fails_for_availability_with_past_combined_datetime(): void
     {
-        // Arrange: Past start_date for AVAILABILITY entity
+        // Arrange: Past validity_start with daily_start for AVAILABILITY entity
         $pastDate = Carbon::now()->subDays(1)->format('Y-m-d');
+        $pastTime = '10:00:00';
+
         $context = $this->createValidationContextForAvailability(
             operationType: OperationType::CREATE,
-            hasStartDate: true,
-            startDate: $pastDate
+            hasValidityStart: true,
+            validityStart: $pastDate,
+            hasDailyStart: true,
+            dailyStart: $pastTime
         );
 
         $context->expects($this->once())
-            ->method('setViolation')
+            ->method('setViolationFromRule')
             ->with(
-                'start_date',
-                'Availability start date cannot be in the past'
+                $this->rule,
+                'validity_start',
+                'Availability start date/time cannot be in the past. ' .
+                    'The combination of validity_start and daily_start must be in the future.'
             );
 
         // Act: Execute the future date validation rule
         $this->rule->validate($context);
 
-        // Assert: Past start_date should trigger AVAILABILITY violation
+        // Assert: Past combined datetime should trigger AVAILABILITY violation
     }
 
     /**
-     * Test that validation for AVAILABILITY without start_date passes.
+     * Test that validation for AVAILABILITY without validity_start passes.
      */
-    public function test_passes_for_availability_without_start_date(): void
+    public function test_passes_for_availability_without_validity_start(): void
     {
-        // Arrange: Missing start_date for AVAILABILITY entity
+        // Arrange: Missing validity_start for AVAILABILITY entity
         $context = $this->createValidationContextForAvailability(
             operationType: OperationType::CREATE,
-            hasStartDate: false,
-            startDate: null
+            hasValidityStart: false,
+            validityStart: null,
+            hasDailyStart: true,
+            dailyStart: '09:00:00'
         );
 
         $context->expects($this->never())->method('get');
-        $context->expects($this->never())->method('setViolation');
+        $context->expects($this->never())->method('setViolationFromRule');
 
         // Act: Execute the future date validation rule
         $this->rule->validate($context);
 
-        // Assert: No validation should occur when start_date is missing
+        // Assert: No validation should occur when validity_start is missing
+    }
+
+    /**
+     * Test that validation for AVAILABILITY UPDATE with future combined datetime passes.
+     */
+    public function test_passes_for_availability_update_with_future_combined_datetime(): void
+    {
+        // Arrange: Future validity_start for AVAILABILITY UPDATE operation
+        $futureDate = Carbon::now()->addDays(1)->format('Y-m-d');
+        $futureTime = '10:00:00';
+
+        $context = $this->createValidationContextForAvailability(
+            operationType: OperationType::UPDATE,
+            hasValidityStart: true,
+            validityStart: $futureDate,
+            hasDailyStart: true,
+            dailyStart: $futureTime
+        );
+
+        $context->expects($this->never())->method('setViolationFromRule');
+
+        // Act: Execute the future date validation rule
+        $this->rule->validate($context);
+
+        // Assert: Future combined datetime should pass AVAILABILITY UPDATE validation
+    }
+
+    /**
+     * Test that validation for AVAILABILITY UPDATE with past combined datetime fails.
+     */
+    public function test_fails_for_availability_update_with_past_combined_datetime(): void
+    {
+        // Arrange: Past validity_start for AVAILABILITY UPDATE operation
+        $pastDate = Carbon::now()->subDays(1)->format('Y-m-d');
+        $pastTime = '10:00:00';
+
+        $context = $this->createValidationContextForAvailability(
+            operationType: OperationType::UPDATE,
+            hasValidityStart: true,
+            validityStart: $pastDate,
+            hasDailyStart: true,
+            dailyStart: $pastTime
+        );
+
+        $context->expects($this->once())
+            ->method('setViolationFromRule')
+            ->with(
+                $this->rule,
+                'validity_start',
+                'Availability start date/time cannot be moved to the past. ' .
+                    'The combination of validity_start and daily_start must be in the future.'
+            );
+
+        // Act: Execute the future date validation rule
+        $this->rule->validate($context);
+
+        // Assert: Past combined datetime should trigger AVAILABILITY UPDATE violation
+    }
+
+    /**
+     * Test that validation for AVAILABILITY UPDATE without validity_start passes.
+     */
+    public function test_passes_for_availability_update_without_validity_start(): void
+    {
+        // Arrange: UPDATE operation without validity_start for AVAILABILITY entity
+        $context = $this->createValidationContextForAvailability(
+            operationType: OperationType::UPDATE,
+            hasValidityStart: false,
+            validityStart: null,
+            hasDailyStart: true,
+            dailyStart: '09:00:00'
+        );
+
+        $context->expects($this->never())->method('get');
+        $context->expects($this->never())->method('setViolationFromRule');
+
+        // Act: Execute the future date validation rule
+        $this->rule->validate($context);
+
+        // Assert: No validation when validity_start not in update
+    }
+
+    /**
+     * Test that validation for AVAILABILITY with validity_start but without daily_start passes.
+     */
+    public function test_passes_for_availability_with_validity_start_without_daily_start(): void
+    {
+        // Arrange: Future validity_start without daily_start for AVAILABILITY entity
+        $futureDate = Carbon::now()->addDays(1)->format('Y-m-d');
+
+        $context = $this->createValidationContextForAvailability(
+            operationType: OperationType::CREATE,
+            hasValidityStart: true,
+            validityStart: $futureDate,
+            hasDailyStart: false,
+            dailyStart: null
+        );
+
+        $context->expects($this->never())->method('setViolationFromRule');
+
+        // Act: Execute the future date validation rule
+        $this->rule->validate($context);
+
+        // Assert: Should still pass validation using just the date
+    }
+
+    /**
+     * Test that validation for AVAILABILITY UPDATE handles moving validity_start earlier but still in future.
+     */
+    public function test_handles_availability_update_moving_validity_start_earlier(): void
+    {
+        // Arrange: Moving validity_start earlier but still in future
+        $futureDate = Carbon::now()->addDays(2)->format('Y-m-d');
+        $time = '09:00:00';
+
+        $context = $this->createValidationContextForAvailability(
+            operationType: OperationType::UPDATE,
+            hasValidityStart: true,
+            validityStart: $futureDate,
+            hasDailyStart: true,
+            dailyStart: $time
+        );
+
+        $context->expects($this->never())->method('setViolationFromRule');
+
+        // Act: Execute the future date validation rule
+        $this->rule->validate($context);
+
+        // Assert: Should pass if combined datetime is still in future
+    }
+
+    /**
+     * Test that validation for AVAILABILITY with current date and future time passes.
+     */
+    public function test_passes_for_availability_with_current_date_future_time(): void
+    {
+        // Arrange: Current date with future time for AVAILABILITY
+        $currentDate = Carbon::now()->format('Y-m-d');
+        $futureTime = Carbon::now()->addHours(1)->format('H:i:s');
+
+        $context = $this->createValidationContextForAvailability(
+            operationType: OperationType::CREATE,
+            hasValidityStart: true,
+            validityStart: $currentDate,
+            hasDailyStart: true,
+            dailyStart: $futureTime
+        );
+
+        $context->expects($this->never())->method('setViolationFromRule');
+
+        // Act: Execute the future date validation rule
+        $this->rule->validate($context);
+
+        // Assert: Should pass if combined datetime is in future
+    }
+
+    /**
+     * Test that validation for AVAILABILITY with current date and past time fails.
+     */
+    public function test_fails_for_availability_with_current_date_past_time(): void
+    {
+        // Arrange: Current date with past time for AVAILABILITY
+        $currentDate = Carbon::now()->format('Y-m-d');
+        $pastTime = Carbon::now()->subHours(1)->format('H:i:s');
+
+        $context = $this->createValidationContextForAvailability(
+            operationType: OperationType::CREATE,
+            hasValidityStart: true,
+            validityStart: $currentDate,
+            hasDailyStart: true,
+            dailyStart: $pastTime
+        );
+
+        $context->expects($this->once())
+            ->method('setViolationFromRule')
+            ->with(
+                $this->rule,
+                'validity_start',
+                'Availability start date/time cannot be in the past. ' .
+                    'The combination of validity_start and daily_start must be in the future.'
+            );
+
+        // Act: Execute the future date validation rule
+        $this->rule->validate($context);
+
+        // Assert: Should fail if combined datetime is in past
     }
 
     /**
@@ -479,19 +689,37 @@ final class FutureDateRuleTest extends TestCase
      */
     private function createValidationContextForAvailability(
         OperationType $operationType,
-        bool $hasStartDate,
-        ?string $startDate
+        bool $hasValidityStart,
+        ?string $validityStart,
+        bool $hasDailyStart = false,
+        ?string $dailyStart = null
     ): MockObject&ValidationContextInterface {
         $context = $this->createMock(ValidationContextInterface::class);
         $context->method('getEntityType')->willReturn(EntityType::AVAILABILITY);
         $context->method('getOperation')->willReturn($operationType);
 
         $context->method('has')->willReturnCallback(
-            fn(string $key): bool => $key === 'start_date' && $hasStartDate
+            function (string $key) use ($hasValidityStart, $hasDailyStart): bool {
+                if ($key === 'validity_start') {
+                    return $hasValidityStart;
+                }
+                if ($key === 'daily_start') {
+                    return $hasDailyStart;
+                }
+                return false;
+            }
         );
 
         $context->method('get')->willReturnCallback(
-            fn(string $key): mixed => $key === 'start_date' ? $startDate : null
+            function (string $key) use ($validityStart, $dailyStart): mixed {
+                if ($key === 'validity_start') {
+                    return $validityStart;
+                }
+                if ($key === 'daily_start') {
+                    return $dailyStart;
+                }
+                return null;
+            }
         );
 
         return $context;

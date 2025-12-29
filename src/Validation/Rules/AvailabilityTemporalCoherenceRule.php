@@ -44,6 +44,16 @@ class AvailabilityTemporalCoherenceRule extends AbstractRule
     }
 
     /**
+     * Returns a detailed description of what this rule validates.
+     *
+     * @return string Detailed description
+     */
+    public function getDescription(): string
+    {
+        return "This rule validates temporal coherence during availability modifications to prevent conflicts with existing schedules and impediments. It ensures that availability updates (validity dates or days) do not break existing future bookings and that deletions are only allowed when no future schedules or impediments exist. This maintains data integrity and prevents orphaned time slots in the scheduling system.";
+    }
+
+    /**
      * Routes validation to appropriate method based on operation type.
      *
      * @param ValidationContextInterface $validationContext Validation context
@@ -155,19 +165,22 @@ class AvailabilityTemporalCoherenceRule extends AbstractRule
         bool $hasImpediments
     ): void {
         if ($hasSchedules && $hasImpediments) {
-            $validationContext->setViolation(
-                '_system',
-                "Cannot delete availability with future schedules and impediments"
+            $validationContext->setViolationFromRule(
+                rule: $this,
+                field: '_system',
+                message: "Cannot delete availability with future schedules and impediments"
             );
         } elseif ($hasSchedules) {
-            $validationContext->setViolation(
-                '_system',
-                "Cannot delete availability with future schedules"
+            $validationContext->setViolationFromRule(
+                rule: $this,
+                field: '_system',
+                message: "Cannot delete availability with future schedules"
             );
         } elseif ($hasImpediments) {
-            $validationContext->setViolation(
-                '_system',
-                "Cannot delete availability with future impediments"
+            $validationContext->setViolationFromRule(
+                rule: $this,
+                field: '_system',
+                message: "Cannot delete availability with future impediments"
             );
         }
     }
@@ -291,9 +304,10 @@ class AvailabilityTemporalCoherenceRule extends AbstractRule
             : $entityCarbon->gt($newCarbon);
 
         if ($isConflict) {
-            $validationContext->setViolation(
-                $field,
-                sprintf(
+            $validationContext->setViolationFromRule(
+                rule: $this,
+                field: $field,
+                message: sprintf(
                     "Cannot set %s to '%s' because it conflicts with existing future %s %s at '%s'",
                     $field,
                     $newDate,
@@ -323,9 +337,10 @@ class AvailabilityTemporalCoherenceRule extends AbstractRule
     ): void {
         foreach ($entityDays as $entityDay) {
             if (!in_array($entityDay, $newDays, true)) {
-                $validationContext->setViolation(
-                    'days',
-                    sprintf(
+                $validationContext->setViolationFromRule(
+                    rule: $this,
+                    field: 'days',
+                    message: sprintf(
                         "Cannot remove '%s' from days because it is used by a future %s from '%s' to '%s'",
                         ucfirst($entityDay),
                         strtolower(class_basename($entityClass)),

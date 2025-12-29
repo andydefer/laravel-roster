@@ -1,5 +1,5 @@
 # Project File Checklist
-*Last updated: lun. 29 déc. 2025 09:51:38 WAT*
+*Last updated: lun. 29 déc. 2025 18:49:41 WAT*
 
 ## Previously Checked Files
 1. config/roster.php [x]
@@ -90,7 +90,7 @@
 86. src/Validation/Rules/RequiredFieldsRule.php [x]
 87. src/Validation/Rules/SchedulableConsistencyRule.php [x]
 88. src/Validation/Rules/SchedulableValidationRule.php [x]
-89. src/Validation/Rules/ScheduleOverlapRule.php [x]
+89. src/Validation/Rules/TemporalConflictRule.php [x]
 90. src/Validation/Rules/TimeRangeRule.php [x]
 91. src/Validation/Rules/TimeSlotDateTimeRule.php [x]
 92. src/Validation/Rules/TimezoneValidationRule.php [x]
@@ -141,7 +141,7 @@
 137. tests/Unit/Validation/Rules/RequiredFieldsRuleTest.php [x]
 138. tests/Unit/Validation/Rules/SchedulableConsistencyRuleTest.php [x]
 139. tests/Unit/Validation/Rules/SchedulableValidationRuleTest.php [x]
-140. tests/Unit/Validation/Rules/ScheduleOverlapRuleTest.php [x]
+140. tests/Unit/Validation/Rules/TemporalConflictRuleTest.php [x]
 141. tests/Unit/Validation/Rules/TimeRangeRuleTest.php [x]
 142. tests/Unit/Validation/Rules/TimeSlotDateTimeRuleTest.php [x]
 143. tests/Unit/Validation/Rules/TimezoneValidationRuleTest.php [x]

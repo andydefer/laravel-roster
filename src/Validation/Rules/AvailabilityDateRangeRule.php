@@ -40,6 +40,16 @@ class AvailabilityDateRangeRule extends AbstractRule
     }
 
     /**
+     * Returns a detailed description of what this rule validates.
+     *
+     * @return string Detailed description
+     */
+    public function getDescription(): string
+    {
+        return "This rule validates the integrity of date and time ranges for availability entities, ensuring that validity periods are properly ordered (end date after start date), daily time windows are logical (end time after start time), and durations respect business constraints (minimum 15 minutes for daily slots, maximum configured days for validity periods). The rule applies to both CREATE and UPDATE operations to maintain consistent temporal logic across the availability lifecycle.";
+    }
+
+    /**
      * Validates validity start and end dates.
      *
      * @param ValidationContextInterface $validationContext The validation context
@@ -77,7 +87,7 @@ class AvailabilityDateRangeRule extends AbstractRule
             startValue: $startValue,
             endValue: $endValue,
             violationKey: 'validity_date_range',
-            violationMessage: 'End date must be after start date',
+            violationMessage: 'Validity end date must be after start date',
             checkMaxDuration: true
         );
     }
@@ -112,7 +122,7 @@ class AvailabilityDateRangeRule extends AbstractRule
             startValue: $startValue,
             endValue: $endValue,
             violationKey: 'validity_date_range',
-            violationMessage: 'End date must be after start date',
+            violationMessage: 'Validity end date must be after start date',
             checkMaxDuration: true
         );
     }
@@ -155,7 +165,7 @@ class AvailabilityDateRangeRule extends AbstractRule
             startValue: $startValue,
             endValue: $endValue,
             violationKey: 'daily_time_range',
-            violationMessage: 'End time must be after start time'
+            violationMessage: 'Daily end time must be after start time'
         );
     }
 
@@ -189,7 +199,7 @@ class AvailabilityDateRangeRule extends AbstractRule
             startValue: $startValue,
             endValue: $endValue,
             violationKey: 'daily_time_range',
-            violationMessage: 'End time must be after start time'
+            violationMessage: 'Daily end time must be after start time'
         );
     }
 
@@ -220,7 +230,8 @@ class AvailabilityDateRangeRule extends AbstractRule
             $end = Carbon::parse($endValue);
 
             if ($end->lt($start)) {
-                $validationContext->setViolation(
+                $validationContext->setViolationFromRule(
+                    rule: $this,
                     field: $violationKey,
                     message: $violationMessage
                 );
@@ -230,9 +241,10 @@ class AvailabilityDateRangeRule extends AbstractRule
                 $this->validateMaxDuration($validationContext, $start, $end);
             }
         } catch (Exception $exception) {
-            $validationContext->setViolation(
+            $validationContext->setViolationFromRule(
+                rule: $this,
                 field: 'date_format',
-                message: sprintf('Invalid date format: %s', $exception->getMessage())
+                message: sprintf('Invalid date format provided: %s', $exception->getMessage())
             );
         }
     }
@@ -262,7 +274,8 @@ class AvailabilityDateRangeRule extends AbstractRule
             $end = Carbon::parse($endValue);
 
             if ($end->lte($start)) {
-                $validationContext->setViolation(
+                $validationContext->setViolationFromRule(
+                    rule: $this,
                     field: $violationKey,
                     message: $violationMessage
                 );
@@ -270,9 +283,10 @@ class AvailabilityDateRangeRule extends AbstractRule
 
             $this->validateMinDuration($validationContext, $start, $end);
         } catch (Exception $exception) {
-            $validationContext->setViolation(
+            $validationContext->setViolationFromRule(
+                rule: $this,
                 field: 'time_format',
-                message: sprintf('Invalid time format: %s', $exception->getMessage())
+                message: sprintf('Invalid time format provided: %s', $exception->getMessage())
             );
         }
     }
@@ -292,9 +306,10 @@ class AvailabilityDateRangeRule extends AbstractRule
         $maxDays = $this->getMaxDays();
 
         if ($start->diffInDays($end) > $maxDays) {
-            $validationContext->setViolation(
+            $validationContext->setViolationFromRule(
+                rule: $this,
                 field: 'max_duration',
-                message: sprintf('Availability period cannot exceed %d days', $maxDays)
+                message: sprintf('Availability validity period cannot exceed %d days', $maxDays)
             );
         }
     }
@@ -315,9 +330,10 @@ class AvailabilityDateRangeRule extends AbstractRule
         $minimumMinutes = 15;
 
         if ($durationInMinutes < $minimumMinutes) {
-            $validationContext->setViolation(
+            $validationContext->setViolationFromRule(
+                rule: $this,
                 field: 'min_duration',
-                message: 'Minimum duration must be at least 15 minutes'
+                message: 'Daily time slot duration must be at least 15 minutes'
             );
         }
     }

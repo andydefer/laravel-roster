@@ -42,6 +42,7 @@ final class AvailabilityDateRangeRuleTest extends TestCase
         $this->configureContextWithValidData($context);
 
         $context->expects($this->never())->method('setViolation');
+        $context->expects($this->never())->method('setViolationFromRule');
 
         // Act: Execute validation
         $this->rule->validate($context);
@@ -65,8 +66,12 @@ final class AvailabilityDateRangeRuleTest extends TestCase
         );
 
         $context->expects($this->once())
-            ->method('setViolation')
-            ->with('validity_date_range', 'End date must be after start date');
+            ->method('setViolationFromRule')
+            ->with(
+                $this->rule,
+                'validity_date_range',
+                'Validity end date must be after start date'
+            );
 
         // Act: Execute validation
         $this->rule->validate($context);
@@ -91,15 +96,17 @@ final class AvailabilityDateRangeRuleTest extends TestCase
 
         $violationCount = 0;
         $context->expects($this->exactly(2))
-            ->method('setViolation')
-            ->willReturnCallback(function (string $field, string $message) use (&$violationCount): void {
+            ->method('setViolationFromRule')
+            ->willReturnCallback(function ($rule, string $field, string $message) use (&$violationCount): void {
                 ++$violationCount;
+                $this->assertSame($this->rule, $rule);
+
                 if ($violationCount === 1) {
                     $this->assertEquals('daily_time_range', $field);
-                    $this->assertEquals('End time must be after start time', $message);
+                    $this->assertEquals('Daily end time must be after start time', $message);
                 } else {
                     $this->assertEquals('min_duration', $field);
-                    $this->assertEquals('Minimum duration must be at least 15 minutes', $message);
+                    $this->assertEquals('Daily time slot duration must be at least 15 minutes', $message);
                 }
             });
 
@@ -125,8 +132,12 @@ final class AvailabilityDateRangeRuleTest extends TestCase
         );
 
         $context->expects($this->once())
-            ->method('setViolation')
-            ->with('min_duration', 'Minimum duration must be at least 15 minutes');
+            ->method('setViolationFromRule')
+            ->with(
+                $this->rule,
+                'min_duration',
+                'Daily time slot duration must be at least 15 minutes'
+            );
 
         // Act: Execute validation
         $this->rule->validate($context);
@@ -152,8 +163,12 @@ final class AvailabilityDateRangeRuleTest extends TestCase
         );
 
         $context->expects($this->once())
-            ->method('setViolation')
-            ->with('max_duration', 'Availability period cannot exceed 365 days');
+            ->method('setViolationFromRule')
+            ->with(
+                $this->rule,
+                'max_duration',
+                'Availability validity period cannot exceed 365 days'
+            );
 
         // Act: Execute validation
         $this->rule->validate($context);
@@ -182,6 +197,7 @@ final class AvailabilityDateRangeRuleTest extends TestCase
         );
 
         $context->expects($this->never())->method('setViolation');
+        $context->expects($this->never())->method('setViolationFromRule');
 
         // Act: Execute validation
         $this->rule->validate($context);
@@ -205,8 +221,12 @@ final class AvailabilityDateRangeRuleTest extends TestCase
         );
 
         $context->expects($this->once())
-            ->method('setViolation')
-            ->with('date_format', $this->stringContains('Invalid date format:'));
+            ->method('setViolationFromRule')
+            ->with(
+                $this->rule,
+                'date_format',
+                $this->stringContains('Invalid date format provided:')
+            );
 
         // Act: Execute validation
         $this->rule->validate($context);
@@ -230,8 +250,12 @@ final class AvailabilityDateRangeRuleTest extends TestCase
         );
 
         $context->expects($this->once())
-            ->method('setViolation')
-            ->with('time_format', $this->stringContains('Invalid time format:'));
+            ->method('setViolationFromRule')
+            ->with(
+                $this->rule,
+                'time_format',
+                $this->stringContains('Invalid time format provided:')
+            );
 
         // Act: Execute validation
         $this->rule->validate($context);
@@ -250,6 +274,7 @@ final class AvailabilityDateRangeRuleTest extends TestCase
 
         $context->expects($this->never())->method('get');
         $context->expects($this->never())->method('setViolation');
+        $context->expects($this->never())->method('setViolationFromRule');
 
         // Act: Execute validation
         $this->rule->validate($context);
@@ -272,6 +297,7 @@ final class AvailabilityDateRangeRuleTest extends TestCase
         );
 
         $context->expects($this->never())->method('setViolation');
+        $context->expects($this->never())->method('setViolationFromRule');
 
         // Act: Execute validation
         $this->rule->validate($context);
@@ -294,6 +320,7 @@ final class AvailabilityDateRangeRuleTest extends TestCase
         );
 
         $context->expects($this->never())->method('setViolation');
+        $context->expects($this->never())->method('setViolationFromRule');
 
         // Act: Execute validation
         $this->rule->validate($context);
@@ -323,6 +350,7 @@ final class AvailabilityDateRangeRuleTest extends TestCase
         );
 
         $context->expects($this->never())->method('setViolation');
+        $context->expects($this->never())->method('setViolationFromRule');
 
         // Act: Execute validation
         $this->rule->validate($context);
@@ -348,11 +376,29 @@ final class AvailabilityDateRangeRuleTest extends TestCase
         );
 
         $context->expects($this->never())->method('setViolation');
+        $context->expects($this->never())->method('setViolationFromRule');
 
         // Act: Execute validation
         $this->rule->validate($context);
 
         // Assert: No violations expected for exact maximum duration
+    }
+
+    /**
+     * Test that getDescription returns a detailed description.
+     */
+    public function test_get_description_returns_detailed_information(): void
+    {
+        // Act: Get description
+        $description = $this->rule->getDescription();
+
+        // Assert: Verify description contains key information
+        $this->assertIsString($description);
+        $this->assertNotEmpty($description);
+        $this->assertStringContainsString('validates', $description);
+        $this->assertStringContainsString('availability', $description);
+        $this->assertStringContainsString('date and time ranges', $description);
+        $this->assertStringContainsString('CREATE and UPDATE', $description);
     }
 
     /**

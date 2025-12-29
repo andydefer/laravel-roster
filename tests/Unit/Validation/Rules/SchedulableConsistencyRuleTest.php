@@ -53,7 +53,7 @@ final class SchedulableConsistencyRuleTest extends TestCase
         );
 
         $context->method('getAvailabilityService')->willReturn($availabilityService);
-        $context->expects($this->never())->method('setViolation');
+        $context->expects($this->never())->method('setViolationFromRule');
 
         // Act: Execute the consistency validation rule
         $this->rule->validate($context);
@@ -88,8 +88,8 @@ final class SchedulableConsistencyRuleTest extends TestCase
         $context->method('getAvailabilityService')->willReturn($availabilityService);
 
         $context->expects($this->once())
-            ->method('setViolation')
-            ->with('schedulable', "Schedulable information does not match the availability's schedulable");
+            ->method('setViolationFromRule')
+            ->with($this->rule, 'schedulable', "Schedulable information does not match the availability's schedulable");
 
         // Act: Execute the consistency validation rule
         $this->rule->validate($context);
@@ -124,8 +124,8 @@ final class SchedulableConsistencyRuleTest extends TestCase
         $context->method('getAvailabilityService')->willReturn($availabilityService);
 
         $context->expects($this->once())
-            ->method('setViolation')
-            ->with('schedulable', "Schedulable information does not match the availability's schedulable");
+            ->method('setViolationFromRule')
+            ->with($this->rule, 'schedulable', "Schedulable information does not match the availability's schedulable");
 
         // Act: Execute the consistency validation rule
         $this->rule->validate($context);
@@ -160,8 +160,8 @@ final class SchedulableConsistencyRuleTest extends TestCase
         $context->method('getAvailabilityService')->willReturn($availabilityService);
 
         $context->expects($this->once())
-            ->method('setViolation')
-            ->with('schedulable', "Schedulable information does not match the availability's schedulable");
+            ->method('setViolationFromRule')
+            ->with($this->rule, 'schedulable', "Schedulable information does not match the availability's schedulable");
 
         // Act: Execute the consistency validation rule
         $this->rule->validate($context);
@@ -184,8 +184,8 @@ final class SchedulableConsistencyRuleTest extends TestCase
         );
 
         $context->expects($this->once())
-            ->method('setViolation')
-            ->with('schedulable', 'Schedulable information is required');
+            ->method('setViolationFromRule')
+            ->with($this->rule, 'schedulable', 'Schedulable information is required');
 
         // Act: Execute the consistency validation rule
         $this->rule->validate($context);
@@ -208,8 +208,8 @@ final class SchedulableConsistencyRuleTest extends TestCase
         );
 
         $context->expects($this->once())
-            ->method('setViolation')
-            ->with('schedulable', 'Schedulable information is required');
+            ->method('setViolationFromRule')
+            ->with($this->rule, 'schedulable', 'Schedulable information is required');
 
         // Act: Execute the consistency validation rule
         $this->rule->validate($context);
@@ -234,7 +234,7 @@ final class SchedulableConsistencyRuleTest extends TestCase
         );
 
         $context->expects($this->never())->method('getAvailabilityService');
-        $context->expects($this->never())->method('setViolation');
+        $context->expects($this->never())->method('setViolationFromRule');
 
         // Act: Execute the consistency validation rule
         $this->rule->validate($context);
@@ -261,7 +261,7 @@ final class SchedulableConsistencyRuleTest extends TestCase
         );
 
         $context->method('getAvailabilityService')->willReturn($availabilityService);
-        $context->expects($this->never())->method('setViolation');
+        $context->expects($this->never())->method('setViolationFromRule');
 
         // Act: Execute the consistency validation rule
         $this->rule->validate($context);
@@ -294,7 +294,7 @@ final class SchedulableConsistencyRuleTest extends TestCase
         );
 
         $context->method('getAvailabilityService')->willReturn($availabilityService);
-        $context->expects($this->never())->method('setViolation');
+        $context->expects($this->never())->method('setViolationFromRule');
 
         // Act: Execute the consistency validation rule for IMPEDIMENT
         $this->rule->validate($context);
@@ -315,7 +315,7 @@ final class SchedulableConsistencyRuleTest extends TestCase
         $context->expects($this->once())->method('getEntityType')->willReturn(EntityType::AVAILABILITY);
         $context->expects($this->never())->method('has');
         $context->expects($this->never())->method('get');
-        $context->expects($this->never())->method('setViolation');
+        $context->expects($this->never())->method('setViolationFromRule');
 
         // Act: Execute the consistency validation rule
         $this->rule->validate($context);
@@ -324,51 +324,47 @@ final class SchedulableConsistencyRuleTest extends TestCase
     }
 
     /**
-     * Test that validation does apply for UPDATE operation.
+     * Test that validation does not apply for UPDATE operation.
      */
-    public function test_does_apply_for_update_operation(): void
+    public function test_does_not_apply_for_update_operation(): void
     {
         // Arrange: Context for UPDATE operation on SCHEDULE entity
-        $context = $this->createValidationContext(
-            entityType: EntityType::SCHEDULE,
-            operationType: OperationType::UPDATE,
-            hasAvailabilityId: false,
-            hasSchedulableId: true,
-            hasSchedulableType: true,
-            schedulableId: 123,
-            schedulableType: 'App\\Models\\User'
-        );
+        $context = $this->createMock(ValidationContextInterface::class);
+        $context->method('getEntityType')->willReturn(EntityType::SCHEDULE);
+        $context->method('getOperation')->willReturn(OperationType::UPDATE);
 
-        $context->expects($this->never())->method('setViolation');
+        $context->expects($this->once())->method('getEntityType')->willReturn(EntityType::SCHEDULE);
+        $context->expects($this->once())->method('getOperation')->willReturn(OperationType::UPDATE);
+        $context->expects($this->never())->method('has');
+        $context->expects($this->never())->method('get');
+        $context->expects($this->never())->method('setViolationFromRule');
 
         // Act: Execute the consistency validation rule for UPDATE
         $this->rule->validate($context);
 
-        // Assert: Validation should proceed for UPDATE operation
+        // Assert: Validation should skip early for UPDATE operation (CREATE only rule)
     }
 
     /**
-     * Test that validation does apply for DELETE operation.
+     * Test that validation does not apply for DELETE operation.
      */
-    public function test_does_apply_for_delete_operation(): void
+    public function test_does_not_apply_for_delete_operation(): void
     {
         // Arrange: Context for DELETE operation on SCHEDULE entity
-        $context = $this->createValidationContext(
-            entityType: EntityType::SCHEDULE,
-            operationType: OperationType::DELETE,
-            hasAvailabilityId: false,
-            hasSchedulableId: true,
-            hasSchedulableType: true,
-            schedulableId: 123,
-            schedulableType: 'App\\Models\\User'
-        );
+        $context = $this->createMock(ValidationContextInterface::class);
+        $context->method('getEntityType')->willReturn(EntityType::SCHEDULE);
+        $context->method('getOperation')->willReturn(OperationType::DELETE);
 
-        $context->expects($this->never())->method('setViolation');
+        $context->expects($this->once())->method('getEntityType')->willReturn(EntityType::SCHEDULE);
+        $context->expects($this->once())->method('getOperation')->willReturn(OperationType::DELETE);
+        $context->expects($this->never())->method('has');
+        $context->expects($this->never())->method('get');
+        $context->expects($this->never())->method('setViolationFromRule');
 
         // Act: Execute the consistency validation rule for DELETE
         $this->rule->validate($context);
 
-        // Assert: Validation should proceed for DELETE operation
+        // Assert: Validation should skip early for DELETE operation (CREATE only rule)
     }
 
     /**
@@ -396,7 +392,7 @@ final class SchedulableConsistencyRuleTest extends TestCase
         );
 
         $context->method('getAvailabilityService')->willReturn($availabilityService);
-        $context->expects($this->never())->method('setViolation');
+        $context->expects($this->never())->method('setViolationFromRule');
 
         // Act: Execute the consistency validation rule
         $this->rule->validate($context);
@@ -429,7 +425,7 @@ final class SchedulableConsistencyRuleTest extends TestCase
         );
 
         $context->method('getAvailabilityService')->willReturn($availabilityService);
-        $context->expects($this->never())->method('setViolation');
+        $context->expects($this->never())->method('setViolationFromRule');
 
         // Act: Execute the consistency validation rule
         $this->rule->validate($context);
@@ -465,7 +461,7 @@ final class SchedulableConsistencyRuleTest extends TestCase
         );
 
         $context->method('getAvailabilityService')->willReturn($availabilityService);
-        $context->expects($this->never())->method('setViolation');
+        $context->expects($this->never())->method('setViolationFromRule');
 
         // Act: Execute the consistency validation rule
         $this->rule->validate($context);
@@ -498,7 +494,7 @@ final class SchedulableConsistencyRuleTest extends TestCase
         );
 
         $context->method('getAvailabilityService')->willReturn($availabilityService);
-        $context->expects($this->never())->method('setViolation');
+        $context->expects($this->never())->method('setViolationFromRule');
 
         // Act: Execute the consistency validation rule
         $this->rule->validate($context);
@@ -531,7 +527,7 @@ final class SchedulableConsistencyRuleTest extends TestCase
         );
 
         $context->method('getAvailabilityService')->willReturn($availabilityService);
-        $context->expects($this->never())->method('setViolation');
+        $context->expects($this->never())->method('setViolationFromRule');
 
         // Act: Execute the consistency validation rule
         $this->rule->validate($context);
@@ -542,7 +538,7 @@ final class SchedulableConsistencyRuleTest extends TestCase
     /**
      * Test that validation works with empty string schedulable_type.
      */
-    public function test_works_with_empty_string_schedulable_type(): void
+    public function test_fails_with_empty_string_schedulable_type(): void
     {
         // Arrange: Both availability and context have empty string schedulable_type
         $availability = $this->createMockAvailability([
@@ -564,12 +560,177 @@ final class SchedulableConsistencyRuleTest extends TestCase
         );
 
         $context->method('getAvailabilityService')->willReturn($availabilityService);
-        $context->expects($this->never())->method('setViolation');
+
+        // Expect violation for empty schedulable_type
+        $context->expects($this->once())
+            ->method('setViolationFromRule')
+            ->with($this->rule, 'schedulable', 'Schedulable information cannot be empty');
 
         // Act: Execute the consistency validation rule
         $this->rule->validate($context);
 
-        // Assert: Should pass with empty string comparison
+        // Assert: Should fail with empty schedulable_type
+    }
+    /**
+     * Test that rule description is available.
+     */
+    public function test_has_description(): void
+    {
+        // Act: Get rule description
+        $description = $this->rule->getDescription();
+
+        // Assert: Description should not be empty
+        $this->assertIsString($description);
+        $this->assertNotEmpty($description);
+    }
+
+    /**
+     * Test that validation works with null schedulable values.
+     */
+    public function test_fails_with_null_schedulable_values(): void
+    {
+        // Arrange: Context with null schedulable values
+        $context = $this->createValidationContext(
+            entityType: EntityType::SCHEDULE,
+            operationType: OperationType::CREATE,
+            hasAvailabilityId: false,
+            hasSchedulableId: true,
+            hasSchedulableType: true,
+            schedulableId: null,
+            schedulableType: null
+        );
+
+        $context->expects($this->once())
+            ->method('setViolationFromRule')
+            ->with($this->rule, 'schedulable', 'Schedulable information cannot be empty');
+
+        // Act: Execute the consistency validation rule
+        $this->rule->validate($context);
+
+        // Assert: Should fail with null values
+    }
+
+    /**
+     * Test that validation works with numeric zero schedulable_id.
+     */
+    public function test_passes_with_numeric_zero_schedulable_id(): void
+    {
+        // Arrange: Context with zero schedulable_id
+        $availability = $this->createMockAvailability([
+            'id' => 456,
+            'schedulable_id' => 0,
+            'schedulable_type' => 'App\\Models\\System',
+        ]);
+
+        $availabilityService = $this->createMock(AvailabilityService::class);
+        $availabilityService->method('find')->willReturn($availability);
+
+        $context = $this->createValidationContext(
+            entityType: EntityType::SCHEDULE,
+            operationType: OperationType::CREATE,
+            hasAvailabilityId: true,
+            availabilityId: 456,
+            schedulableId: 0,
+            schedulableType: 'App\\Models\\System'
+        );
+
+        $context->method('getAvailabilityService')->willReturn($availabilityService);
+        $context->expects($this->never())->method('setViolationFromRule');
+
+        // Act: Execute the consistency validation rule
+        $this->rule->validate($context);
+
+        // Assert: Should pass with zero value (0 is not empty() in PHP for integers)
+    }
+
+    /**
+     * Test that validation fails when both schedulable fields are empty.
+     */
+    public function test_fails_when_both_schedulable_fields_empty(): void
+    {
+        // Arrange: Context with empty schedulable_id and schedulable_type
+        $context = $this->createValidationContext(
+            entityType: EntityType::SCHEDULE,
+            operationType: OperationType::CREATE,
+            hasAvailabilityId: false,
+            hasSchedulableId: true,
+            hasSchedulableType: true,
+            schedulableId: '',
+            schedulableType: ''
+        );
+
+        $context->expects($this->once())
+            ->method('setViolationFromRule')
+            ->with($this->rule, 'schedulable', 'Schedulable information cannot be empty');
+
+        // Act: Execute the consistency validation rule
+        $this->rule->validate($context);
+
+        // Assert: Should fail with empty strings
+    }
+
+    /**
+     * Test that validation works with null schedulable values.
+     */
+    public function test_works_with_null_schedulable_values(): void
+    {
+        // Arrange: Context with null schedulable values
+        $context = $this->createValidationContext(
+            entityType: EntityType::SCHEDULE,
+            operationType: OperationType::CREATE,
+            hasAvailabilityId: false,
+            hasSchedulableId: true,
+            hasSchedulableType: true,
+            schedulableId: null,
+            schedulableType: null
+        );
+
+        // Assert: setViolationFromRule should be called with correct arguments
+        $context->expects($this->once())
+            ->method('setViolationFromRule')
+            ->with(
+                $this->rule,
+                'schedulable', // champ attendu
+                'Schedulable information cannot be empty' // message attendu
+            );
+
+        // Act: Execute the consistency validation rule
+        $this->rule->validate($context);
+
+        // Assert: Should fail with null values
+    }
+
+    /**
+     * Test that validation works with numeric zero schedulable_id.
+     */
+    public function test_works_with_numeric_zero_schedulable_id(): void
+    {
+        // Arrange: Context with zero schedulable_id
+        $availability = $this->createMockAvailability([
+            'id' => 456,
+            'schedulable_id' => 0,
+            'schedulable_type' => 'App\\Models\\System',
+        ]);
+
+        $availabilityService = $this->createMock(AvailabilityService::class);
+        $availabilityService->method('find')->willReturn($availability);
+
+        $context = $this->createValidationContext(
+            entityType: EntityType::SCHEDULE,
+            operationType: OperationType::CREATE,
+            hasAvailabilityId: true,
+            availabilityId: 456,
+            schedulableId: 0,
+            schedulableType: 'App\\Models\\System'
+        );
+
+        $context->method('getAvailabilityService')->willReturn($availabilityService);
+        $context->expects($this->never())->method('setViolationFromRule');
+
+        // Act: Execute the consistency validation rule
+        $this->rule->validate($context);
+
+        // Assert: Should pass with zero value
     }
 
     /**

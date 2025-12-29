@@ -91,7 +91,7 @@ final class AvailabilityServiceDaysCoherenceTest extends TestCase
 
         // Assert: Should throw validation exception
         $this->expectException(ValidationFailedException::class);
-        $this->expectExceptionMessageMatches("/Day 'monday' is not within the validity period/");
+        $this->expectExceptionMessageMatches("/Day 'monday' falls outside the validity period/");
 
         // Act: Attempt to create with invalid days
         availability_for($this->schedulable)->create([
@@ -237,7 +237,7 @@ final class AvailabilityServiceDaysCoherenceTest extends TestCase
 
         // Assert: Should throw validation exception
         $this->expectException(ValidationFailedException::class);
-        $this->expectExceptionMessageMatches("/Day 'saturday' is not within the validity period/");
+        $this->expectExceptionMessageMatches("/Day 'saturday' falls outside the validity period/");
 
         // Act: Attempt update with invalid days
         availability_for($this->schedulable)->update(

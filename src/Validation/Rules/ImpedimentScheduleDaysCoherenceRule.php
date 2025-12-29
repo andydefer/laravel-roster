@@ -62,6 +62,16 @@ class ImpedimentScheduleDaysCoherenceRule extends AbstractRule
     }
 
     /**
+     * Returns a detailed description of what this rule validates.
+     *
+     * @return string Detailed description
+     */
+    public function getDescription(): string
+    {
+        return "This rule validates that impediments and schedules are created only on days authorized by their parent availability. It ensures time periods respect day restrictions defined in the availability's 'days' configuration and fall within the validity period. The validation computes all days spanned by the schedule/impediment and checks each against the availability's allowed days, reporting violations for any unauthorized days encountered.";
+    }
+
+    /**
      * Checks if required datetime fields are present.
      *
      * @param ValidationContextInterface $validationContext Validation context
@@ -150,7 +160,8 @@ class ImpedimentScheduleDaysCoherenceRule extends AbstractRule
         array $allowedDays
     ): void {
         foreach ($unauthorizedDays as $unauthorizedDay) {
-            $validationContext->setViolation(
+            $validationContext->setViolationFromRule(
+                rule: $this,
                 field: 'start_datetime',
                 message: sprintf(
                     "Selected date '%s' is not allowed because this availability only permits: %s",

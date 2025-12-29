@@ -25,6 +25,16 @@ use Roster\Validation\Attributes\ValidationRule;
 class AvailabilityOwnershipRule extends AbstractRule
 {
     /**
+     * Returns a detailed description of what this rule validates.
+     *
+     * @return string Detailed description
+     */
+    public function getDescription(): string
+    {
+        return "This rule validates that schedule and impediment entities are properly linked to availability periods owned by the schedulable entity, ensuring referential integrity and ownership consistency. It verifies that the referenced availability exists, belongs to the same schedulable (matching both ID and type), and prevents unauthorized cross-entity references across CREATE and UPDATE operations.";
+    }
+
+    /**
      * Validates availability ownership for schedule and impediment entities.
      *
      * @param ValidationContextInterface $validationContext Validation context with entity data
@@ -49,9 +59,10 @@ class AvailabilityOwnershipRule extends AbstractRule
         $fromExisting = is_array($resolved) ? $resolved['from_existing'] : false;
 
         if ($operationType === OperationType::CREATE && !$availabilityId) {
-            $validationContext->setViolation(
-                'availability_id',
-                'Must be linked to an availability'
+            $validationContext->setViolationFromRule(
+                rule: $this,
+                field: 'availability_id',
+                message: 'Schedule or impediment must be linked to an availability period'
             );
             return;
         }
@@ -107,9 +118,10 @@ class AvailabilityOwnershipRule extends AbstractRule
         $availability = $validationContext->getAvailabilityService()->find($availabilityId);
 
         if (!$availability instanceof Availability) {
-            $validationContext->setViolation(
-                'availability_id',
-                'Invalid availability ID'
+            $validationContext->setViolationFromRule(
+                rule: $this,
+                field: 'availability_id',
+                message: 'Referenced availability period does not exist or is invalid'
             );
             return;
         }
@@ -118,9 +130,10 @@ class AvailabilityOwnershipRule extends AbstractRule
             && $availability->schedulable_type === get_class($model);
 
         if (!$isOwner) {
-            $validationContext->setViolation(
-                'availability_id',
-                'Availability does not belong to this schedulable'
+            $validationContext->setViolationFromRule(
+                rule: $this,
+                field: 'availability_id',
+                message: 'Referenced availability period does not belong to this schedulable entity'
             );
         }
     }

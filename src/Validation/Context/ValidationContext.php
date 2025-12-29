@@ -218,6 +218,16 @@ class ValidationContext implements ValidationContextInterface
     }
 
     /**
+     * Get the current entity being validated.
+     *
+     * @return mixed The current entity model or null
+     */
+    public function getEntityId(): int
+    {
+        return $this->currentEntity->id;
+    }
+
+    /**
      * Check if a key exists in the data and is not null.
      *
      * @param string $key The key to check

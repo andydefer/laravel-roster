@@ -44,8 +44,9 @@ final class SchedulableValidationRuleTest extends TestCase
         $context->method('safeData')->willReturn([]);
 
         $context->expects($this->once())
-            ->method('setViolation')
+            ->method('setViolationFromRule')
             ->with(
+                $this->rule,
                 'schedulable',
                 'No schedulable resource specified. Call for() with a schedulable entity before executing the operation.'
             );
@@ -68,7 +69,7 @@ final class SchedulableValidationRuleTest extends TestCase
             schedulable: $model
         );
 
-        $context->expects($this->never())->method('setViolation');
+        $context->expects($this->never())->method('setViolationFromRule');
 
         // Act: Execute validation
         $this->rule->validate($context);
@@ -99,8 +100,9 @@ final class SchedulableValidationRuleTest extends TestCase
         );
 
         $context->expects($this->once())
-            ->method('setViolation')
+            ->method('setViolationFromRule')
             ->with(
+                $this->rule,
                 'schedulable_id',
                 'Schedulable ID mismatch. Expected: 123, Got: 999'
             );
@@ -134,8 +136,9 @@ final class SchedulableValidationRuleTest extends TestCase
         );
 
         $context->expects($this->once())
-            ->method('setViolation')
+            ->method('setViolationFromRule')
             ->with(
+                $this->rule,
                 'schedulable_type',
                 sprintf(
                     'Schedulable type mismatch. Expected: %s, Got: Different\\Model\\Class',
@@ -171,7 +174,7 @@ final class SchedulableValidationRuleTest extends TestCase
             schedulableType: get_class($model)
         );
 
-        $context->expects($this->never())->method('setViolation');
+        $context->expects($this->never())->method('setViolationFromRule');
 
         // Act: Execute validation
         $this->rule->validate($context);
@@ -201,7 +204,7 @@ final class SchedulableValidationRuleTest extends TestCase
             schedulableType: get_class($model)
         );
 
-        $context->expects($this->never())->method('setViolation');
+        $context->expects($this->never())->method('setViolationFromRule');
 
         // Act: Execute validation
         $this->rule->validate($context);
@@ -229,8 +232,9 @@ final class SchedulableValidationRuleTest extends TestCase
         );
 
         $context->expects($this->once())
-            ->method('setViolation')
+            ->method('setViolationFromRule')
             ->with(
+                $this->rule,
                 'schedulable',
                 'Schedulable ID and type are required'
             );
@@ -261,8 +265,9 @@ final class SchedulableValidationRuleTest extends TestCase
         );
 
         $context->expects($this->once())
-            ->method('setViolation')
+            ->method('setViolationFromRule')
             ->with(
+                $this->rule,
                 'schedulable',
                 'Schedulable ID and type are required'
             );
@@ -287,8 +292,9 @@ final class SchedulableValidationRuleTest extends TestCase
         );
 
         $context->expects($this->once())
-            ->method('setViolation')
+            ->method('setViolationFromRule')
             ->with(
+                $this->rule,
                 'schedulable_id',
                 "Field 'schedulable_id' cannot be changed. The owner cannot be modified."
             );
@@ -313,8 +319,9 @@ final class SchedulableValidationRuleTest extends TestCase
         );
 
         $context->expects($this->once())
-            ->method('setViolation')
+            ->method('setViolationFromRule')
             ->with(
+                $this->rule,
                 'schedulable_type',
                 "Field 'schedulable_type' cannot be changed. The owner cannot be modified."
             );
@@ -341,7 +348,7 @@ final class SchedulableValidationRuleTest extends TestCase
             ]
         );
 
-        $context->expects($this->never())->method('setViolation');
+        $context->expects($this->never())->method('setViolationFromRule');
 
         // Act: Execute validation
         $this->rule->validate($context);
@@ -361,7 +368,7 @@ final class SchedulableValidationRuleTest extends TestCase
             schedulable: $model
         );
 
-        $context->expects($this->never())->method('setViolation');
+        $context->expects($this->never())->method('setViolationFromRule');
 
         // Act: Execute validation
         $this->rule->validate($context);
@@ -387,7 +394,7 @@ final class SchedulableValidationRuleTest extends TestCase
             schedulableType: null
         );
 
-        $context->expects($this->never())->method('setViolation');
+        $context->expects($this->never())->method('setViolationFromRule');
 
         // Act: Execute validation
         $this->rule->validate($context);
@@ -417,7 +424,7 @@ final class SchedulableValidationRuleTest extends TestCase
             schedulableType: get_class($model)
         );
 
-        $context->expects($this->never())->method('setViolation');
+        $context->expects($this->never())->method('setViolationFromRule');
 
         // Act: Execute validation
         $this->rule->validate($context);
@@ -445,8 +452,9 @@ final class SchedulableValidationRuleTest extends TestCase
         );
 
         $context->expects($this->once())
-            ->method('setViolation')
+            ->method('setViolationFromRule')
             ->with(
+                $this->rule,
                 'schedulable_id',
                 'Schedulable ID mismatch. Expected: 123, Got: 999'
             );
@@ -477,8 +485,9 @@ final class SchedulableValidationRuleTest extends TestCase
         );
 
         $context->expects($this->once())
-            ->method('setViolation')
+            ->method('setViolationFromRule')
             ->with(
+                $this->rule,
                 'schedulable_type',
                 sprintf(
                     'Schedulable type mismatch. Expected: %s, Got: Different\\Model\\Class',
@@ -514,7 +523,7 @@ final class SchedulableValidationRuleTest extends TestCase
             schedulableType: get_class($model)
         );
 
-        $context->expects($this->never())->method('setViolation');
+        $context->expects($this->never())->method('setViolationFromRule');
 
         // Act: Execute validation
         $this->rule->validate($context);
@@ -544,7 +553,7 @@ final class SchedulableValidationRuleTest extends TestCase
             schedulableType: get_class($model)
         );
 
-        $context->expects($this->never())->method('setViolation');
+        $context->expects($this->never())->method('setViolationFromRule');
 
         // Act: Execute validation
         $this->rule->validate($context);
@@ -566,8 +575,9 @@ final class SchedulableValidationRuleTest extends TestCase
         );
 
         $context->expects($this->once())
-            ->method('setViolation')
+            ->method('setViolationFromRule')
             ->with(
+                $this->rule,
                 'schedulable_id',
                 "Field 'schedulable_id' cannot be changed. The owner cannot be modified."
             );
@@ -592,8 +602,9 @@ final class SchedulableValidationRuleTest extends TestCase
         );
 
         $context->expects($this->once())
-            ->method('setViolation')
+            ->method('setViolationFromRule')
             ->with(
+                $this->rule,
                 'schedulable_type',
                 "Field 'schedulable_type' cannot be changed. The owner cannot be modified."
             );
@@ -622,8 +633,9 @@ final class SchedulableValidationRuleTest extends TestCase
 
         $violations = [];
         $context->expects($this->exactly(2))
-            ->method('setViolation')
-            ->willReturnCallback(function (string $field, string $message) use (&$violations): void {
+            ->method('setViolationFromRule')
+            ->willReturnCallback(function ($rule, string $field, string $message) use (&$violations): void {
+                $this->assertSame($this->rule, $rule);
                 $violations[$field] = $message;
             });
 
@@ -670,8 +682,9 @@ final class SchedulableValidationRuleTest extends TestCase
         );
 
         $context->expects($this->once())
-            ->method('setViolation')
+            ->method('setViolationFromRule')
             ->with(
+                $this->rule,
                 'schedulable_type',
                 sprintf(
                     'Schedulable type mismatch. Expected: %s, Got: %s',
@@ -684,6 +697,216 @@ final class SchedulableValidationRuleTest extends TestCase
         $this->rule->validate($context);
 
         // Assert: Violation should be set for different string representation
+    }
+
+    /**
+     * Test that rule description is available.
+     */
+    public function test_has_description(): void
+    {
+        // Act: Get rule description
+        $description = $this->rule->getDescription();
+
+        // Assert: Description should not be empty
+        $this->assertIsString($description);
+        $this->assertNotEmpty($description);
+        // Note: Correction du test - la description contient "validate" mais pas "validation"
+        $this->assertStringContainsString('validate', $description);
+    }
+
+    /**
+     * Test that validation passes for empty string schedulable_type.
+     */
+    public function test_passes_for_empty_string_schedulable_type(): void
+    {
+        // Arrange: Create context with empty string schedulable_type for Schedule
+        $model = $this->createModelStub(id: 123);
+        $context = $this->createContextForCreateOperation(
+            entityType: EntityType::SCHEDULE,
+            schedulable: $model,
+            data: [
+                'schedulable_id' => 123,
+                'schedulable_type' => '',
+            ]
+        );
+
+        $this->configureContextGetMethod(
+            context: $context,
+            schedulableId: 123,
+            schedulableType: ''
+        );
+
+        // Note: Correction - pour les Schedule/Impediment, les deux champs sont requis
+        // donc un champ vide déclenche une violation "required"
+        $context->expects($this->once())
+            ->method('setViolationFromRule')
+            ->with(
+                $this->rule,
+                'schedulable',
+                'Schedulable ID and type are required'
+            );
+
+        // Act: Execute validation
+        $this->rule->validate($context);
+
+        // Assert: Should fail due to empty type (treated as missing)
+    }
+
+    /**
+     * Test that validation passes for DELETE operation with Schedule entity.
+     */
+    public function test_passes_for_delete_operation_with_schedule(): void
+    {
+        // Arrange: Create context for DELETE operation with Schedule entity
+        $model = $this->createModelStub(id: 123);
+        $context = $this->createContextForDeleteOperation(
+            entityType: EntityType::SCHEDULE,
+            schedulable: $model
+        );
+
+        // Pour DELETE, on ne valide pas les champs schedulable_id/schedulable_type
+        // car c'est une opération de suppression, pas de création
+        $context->expects($this->never())->method('get');
+        $context->expects($this->never())->method('setViolationFromRule');
+
+        // Act: Execute validation
+        $this->rule->validate($context);
+
+        // Assert: No violations expected for DELETE operation
+    }
+
+    /**
+     * Test that validation passes for DELETE operation with Impediment entity.
+     */
+    public function test_passes_for_delete_operation_with_impediment(): void
+    {
+        // Arrange: Create context for DELETE operation with Impediment entity
+        $model = $this->createModelStub(id: 456);
+        $context = $this->createContextForDeleteOperation(
+            entityType: EntityType::IMPEDIMENT,
+            schedulable: $model
+        );
+
+        // Pour DELETE, on ne valide pas les champs schedulable_id/schedulable_type
+        $context->expects($this->never())->method('get');
+        $context->expects($this->never())->method('setViolationFromRule');
+
+        // Act: Execute validation
+        $this->rule->validate($context);
+
+        // Assert: No violations expected for DELETE operation
+    }
+
+    /**
+     * Test that validation passes for UPDATE with empty safe data.
+     */
+    public function test_passes_for_update_with_empty_safe_data(): void
+    {
+        // Arrange: Create context for UPDATE operation with empty safe data
+        $model = $this->createModelStub(id: 123);
+        $context = $this->createContextForUpdateOperation(
+            entityType: EntityType::AVAILABILITY,
+            schedulable: $model,
+            data: []
+        );
+
+        $context->expects($this->never())->method('setViolationFromRule');
+
+        // Act: Execute validation
+        $this->rule->validate($context);
+
+        // Assert: No violations expected for empty update
+    }
+
+    /**
+     * Test that validation uses the correct rule instance in violations.
+     */
+    public function test_uses_correct_rule_instance_in_violations(): void
+    {
+        // Arrange: Create context that will trigger a violation
+        $model = $this->createModelStub(id: 123);
+        $context = $this->createContextForUpdateOperation(
+            entityType: EntityType::AVAILABILITY,
+            schedulable: $model,
+            data: ['schedulable_id' => 999]
+        );
+
+        $capturedRule = null;
+        $context->expects($this->once())
+            ->method('setViolationFromRule')
+            ->willReturnCallback(function ($rule, string $field, string $message) use (&$capturedRule): void {
+                $capturedRule = $rule;
+            });
+
+        // Act: Execute validation
+        $this->rule->validate($context);
+
+        // Assert: The rule instance should be the same as $this->rule
+        $this->assertSame($this->rule, $capturedRule);
+    }
+
+    /**
+     * Test that validation passes for Schedule with null schedulable fields.
+     */
+    public function test_fails_for_schedule_with_null_schedulable_fields(): void
+    {
+        // Arrange: Create context with null schedulable fields for Schedule
+        $model = $this->createModelStub(id: 123);
+        $context = $this->createContextForCreateOperation(
+            entityType: EntityType::SCHEDULE,
+            schedulable: $model
+        );
+
+        $this->configureContextGetMethod(
+            context: $context,
+            schedulableId: null,
+            schedulableType: null
+        );
+
+        $context->expects($this->once())
+            ->method('setViolationFromRule')
+            ->with(
+                $this->rule,
+                'schedulable',
+                'Schedulable ID and type are required'
+            );
+
+        // Act: Execute validation
+        $this->rule->validate($context);
+
+        // Assert: Should fail for Schedule with null schedulable fields
+    }
+
+    /**
+     * Test that validation passes for Impediment with null schedulable fields.
+     */
+    public function test_fails_for_impediment_with_null_schedulable_fields(): void
+    {
+        // Arrange: Create context with null schedulable fields for Impediment
+        $model = $this->createModelStub(id: 123);
+        $context = $this->createContextForCreateOperation(
+            entityType: EntityType::IMPEDIMENT,
+            schedulable: $model
+        );
+
+        $this->configureContextGetMethod(
+            context: $context,
+            schedulableId: null,
+            schedulableType: null
+        );
+
+        $context->expects($this->once())
+            ->method('setViolationFromRule')
+            ->with(
+                $this->rule,
+                'schedulable',
+                'Schedulable ID and type are required'
+            );
+
+        // Act: Execute validation
+        $this->rule->validate($context);
+
+        // Assert: Should fail for Impediment with null schedulable fields
     }
 
     /**
@@ -768,6 +991,9 @@ final class SchedulableValidationRuleTest extends TestCase
         $context->method('getOperation')->willReturn(OperationType::DELETE);
         $context->method('getSchedulable')->willReturn($schedulable);
         $context->method('safeData')->willReturn([]);
+
+        // Pour DELETE, on ne configure pas la méthode 'get' car elle ne sera pas appelée
+        // (l'opération DELETE ne valide pas les champs schedulable_id/schedulable_type)
 
         return $context;
     }

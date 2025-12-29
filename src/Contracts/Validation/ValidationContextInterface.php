@@ -46,6 +46,13 @@ interface ValidationContextInterface
     public function getCurrentEntity(): mixed;
 
     /**
+     * Get the current entity id being validated.
+     *
+     * @return mixed The entity id instance or data being validated
+     */
+    public function getEntityId(): int;
+
+    /**
      * Get the availability service instance.
      */
     public function getAvailabilityService(): AvailabilityService;

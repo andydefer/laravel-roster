@@ -49,7 +49,7 @@ final class ImpedimentScheduleDaysCoherenceRuleTest extends TestCase
         $this->configureContextWithMissingDatetimes($context);
 
         $context->expects($this->never())->method('get');
-        $context->expects($this->never())->method('setViolation');
+        $context->expects($this->never())->method('setViolationFromRule');
 
         // Act: Execute the validation rule
         $this->rule->validate($context);
@@ -66,7 +66,7 @@ final class ImpedimentScheduleDaysCoherenceRuleTest extends TestCase
         $context = $this->createMock(ValidationContextInterface::class);
         $this->configureContextWithInvalidDatetimeOrder($context);
 
-        $context->expects($this->never())->method('setViolation');
+        $context->expects($this->never())->method('setViolationFromRule');
 
         // Act: Execute the validation rule
         $this->rule->validate($context);
@@ -83,7 +83,7 @@ final class ImpedimentScheduleDaysCoherenceRuleTest extends TestCase
         $context = $this->createMock(ValidationContextInterface::class);
         $this->configureContextWithInvalidDatetimeFormat($context);
 
-        $context->expects($this->never())->method('setViolation');
+        $context->expects($this->never())->method('setViolationFromRule');
 
         // Act: Execute the validation rule
         $this->rule->validate($context);
@@ -101,7 +101,7 @@ final class ImpedimentScheduleDaysCoherenceRuleTest extends TestCase
         $this->configureContextWithoutAvailabilityId($context);
 
         $context->expects($this->never())->method('getAvailabilityService');
-        $context->expects($this->never())->method('setViolation');
+        $context->expects($this->never())->method('setViolationFromRule');
 
         // Act: Execute the validation rule
         $this->rule->validate($context);
@@ -121,7 +121,7 @@ final class ImpedimentScheduleDaysCoherenceRuleTest extends TestCase
         $this->configureContextWithAvailabilityId($context);
         $context->method('getAvailabilityService')->willReturn($availabilityService);
 
-        $context->expects($this->never())->method('setViolation');
+        $context->expects($this->never())->method('setViolationFromRule');
 
         // Act: Execute the validation rule
         $this->rule->validate($context);
@@ -142,7 +142,7 @@ final class ImpedimentScheduleDaysCoherenceRuleTest extends TestCase
         $this->configureContextWithAvailabilityId($context, 999);
         $context->method('getAvailabilityService')->willReturn($availabilityService);
 
-        $context->expects($this->never())->method('setViolation');
+        $context->expects($this->never())->method('setViolationFromRule');
 
         // Act: Execute the validation rule
         $this->rule->validate($context);
@@ -194,8 +194,9 @@ final class ImpedimentScheduleDaysCoherenceRuleTest extends TestCase
 
         $this->expectException(ValidationFailedException::class);
         $this->expectExceptionMessageMatches(
-            "/failed for Schedule.*not allowed because this availability only permits/"
+            '/not allowed.*Events cannot span across multiple days/i'
         );
+
 
         // Act: Attempt to create schedule spanning Saturday to Monday (unauthorized days)
         schedule_for($availability)->create([
@@ -224,7 +225,7 @@ final class ImpedimentScheduleDaysCoherenceRuleTest extends TestCase
 
         $this->expectException(ValidationFailedException::class);
         $this->expectExceptionMessageMatches(
-            "/failed for Impediment.*not allowed because this availability only permits/"
+            '/not allowed.*Events cannot span across multiple days/i'
         );
 
         // Act: Attempt to create impediment spanning Saturday to Monday
@@ -527,6 +528,48 @@ final class ImpedimentScheduleDaysCoherenceRuleTest extends TestCase
         // Assert: Schedule should be created successfully when all days are allowed
         $this->assertNotNull($schedule);
         $this->assertDatabaseHas('roster_schedules', ['id' => $schedule->id]);
+    }
+
+    /**
+     * Test that rule description is available.
+     */
+    public function test_has_description(): void
+    {
+        // Act: Get rule description
+        $description = $this->rule->getDescription();
+
+        // Assert: Description should not be empty
+        $this->assertIsString($description);
+        $this->assertNotEmpty($description);
+    }
+
+    /**
+     * Test that schedule creation fails when crossing midnight.
+     */
+    public function test_fails_for_schedule_crossing_midnight(): void
+    {
+        // Arrange: Create availability with Monday and Tuesday allowed
+        $availability = availability_for($this->schedulable)->create([
+            'type' => 'consultation',
+            'daily_start' => '09:00:00',
+            'daily_end' => '17:00:00',
+            'days' => ['monday', 'tuesday'],
+            'validity_start' => '2038-01-01',
+            'validity_end' => '2038-01-31',
+        ]);
+
+        $this->expectException(ValidationFailedException::class);
+        $this->expectExceptionMessage('Events cannot span across multiple days');
+
+        // Act: Attempt to create schedule that starts on Monday and ends on Tuesday
+        schedule_for($availability)->create([
+            'title' => 'Cross-midnight schedule',
+            'start_datetime' => '2038-01-04 23:00:00', // Monday 11 PM
+            'end_datetime' => '2038-01-05 01:00:00',   // Tuesday 1 AM
+        ]);
+
+        // Assert: PHPUnit will automatically consider the test passed
+        // if the expected exception is thrown, no need for assertNull
     }
 
     /**

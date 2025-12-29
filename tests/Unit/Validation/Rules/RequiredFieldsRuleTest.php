@@ -48,7 +48,7 @@ final class RequiredFieldsRuleTest extends TestCase
             'validity_end' => '2024-12-31',
         ]);
 
-        $context->expects($this->never())->method('setViolation');
+        $context->expects($this->never())->method('setViolationFromRule');
 
         // Act: Execute validation
         $this->requiredFieldsRule->validate($context);
@@ -73,8 +73,8 @@ final class RequiredFieldsRuleTest extends TestCase
         ]);
 
         $context->expects($this->once())
-            ->method('setViolation')
-            ->with('type', "Field 'type' is required");
+            ->method('setViolationFromRule')
+            ->with($this->requiredFieldsRule, 'type', "Field 'type' is required");
 
         // Act: Execute validation
         $this->requiredFieldsRule->validate($context);
@@ -94,7 +94,7 @@ final class RequiredFieldsRuleTest extends TestCase
             'daily_start' => '10:00:00',
         ]);
 
-        $context->expects($this->never())->method('setViolation');
+        $context->expects($this->never())->method('setViolationFromRule');
 
         // Act: Execute validation
         $this->requiredFieldsRule->validate($context);
@@ -116,8 +116,9 @@ final class RequiredFieldsRuleTest extends TestCase
         ]);
 
         $context->expects($this->once())
-            ->method('setViolation')
+            ->method('setViolationFromRule')
             ->with(
+                $this->requiredFieldsRule,
                 'schedulable_id',
                 "Field 'schedulable_id' cannot be changed. Ownership cannot be modified."
             );
@@ -141,7 +142,7 @@ final class RequiredFieldsRuleTest extends TestCase
             'daily_end' => '18:00:00',
         ]);
 
-        $context->expects($this->never())->method('setViolation');
+        $context->expects($this->never())->method('setViolationFromRule');
 
         // Act: Execute validation
         $this->requiredFieldsRule->validate($context);
@@ -166,7 +167,7 @@ final class RequiredFieldsRuleTest extends TestCase
             'validity_end' => '2024-12-31',
         ]);
 
-        $context->expects($this->never())->method('setViolation');
+        $context->expects($this->never())->method('setViolationFromRule');
 
         // Act: Execute validation
         $this->requiredFieldsRule->validate($context);
@@ -188,8 +189,9 @@ final class RequiredFieldsRuleTest extends TestCase
 
         $violations = [];
         $context->expects($this->exactly(5))
-            ->method('setViolation')
-            ->willReturnCallback(function (string $field, string $message) use (&$violations): void {
+            ->method('setViolationFromRule')
+            ->willReturnCallback(function ($rule, $field, $message) use (&$violations): void {
+                $this->assertSame($this->requiredFieldsRule, $rule);
                 $violations[$field] = $message;
             });
 
@@ -216,7 +218,7 @@ final class RequiredFieldsRuleTest extends TestCase
 
         $context->method('safeData')->willReturn([]);
 
-        $context->expects($this->never())->method('setViolation');
+        $context->expects($this->never())->method('setViolationFromRule');
 
         // Act: Execute validation
         $this->requiredFieldsRule->validate($context);
@@ -227,7 +229,7 @@ final class RequiredFieldsRuleTest extends TestCase
     /**
      * Test that validation does not apply for SCHEDULE entity type.
      */
-    public function test_validation_does_not_apply_for_schedule_entity_type(): void
+    public function test_validation_applies_for_schedule_entity_type(): void
     {
         // Arrange: Create context for SCHEDULE entity type
         $context = $this->createMock(ValidationContextInterface::class);
@@ -240,18 +242,18 @@ final class RequiredFieldsRuleTest extends TestCase
             'end_datetime' => '2024-01-01 11:00:00',
         ]);
 
-        $context->expects($this->never())->method('setViolation');
+        $context->expects($this->never())->method('setViolationFromRule');
 
         // Act: Execute validation
         $this->requiredFieldsRule->validate($context);
 
-        // Assert: No violations for non-availability entity
+        // Assert: No violations for valid schedule data
     }
 
     /**
-     * Test that validation does not apply for IMPEDIMENT entity type.
+     * Test that validation applies for IMPEDIMENT entity type.
      */
-    public function test_validation_does_not_apply_for_impediment_entity_type(): void
+    public function test_validation_applies_for_impediment_entity_type(): void
     {
         // Arrange: Create context for IMPEDIMENT entity type
         $context = $this->createMock(ValidationContextInterface::class);
@@ -264,12 +266,12 @@ final class RequiredFieldsRuleTest extends TestCase
             'end_datetime' => '2024-01-01 11:00:00',
         ]);
 
-        $context->expects($this->never())->method('setViolation');
+        $context->expects($this->never())->method('setViolationFromRule');
 
         // Act: Execute validation
         $this->requiredFieldsRule->validate($context);
 
-        // Assert: No violations for non-availability entity
+        // Assert: No violations for valid impediment data
     }
 
     /**
@@ -287,7 +289,7 @@ final class RequiredFieldsRuleTest extends TestCase
             'days' => ['monday'],
         ]);
 
-        $context->expects($this->exactly(2))->method('setViolation');
+        $context->expects($this->exactly(2))->method('setViolationFromRule');
 
         // Act: Execute validation
         $this->requiredFieldsRule->validate($context);
@@ -309,12 +311,21 @@ final class RequiredFieldsRuleTest extends TestCase
             'daily_start' => '10:00:00',
         ]);
 
-        $context->expects($this->exactly(2))->method('setViolation');
+        $violations = [];
+        $context->expects($this->exactly(2))
+            ->method('setViolationFromRule')
+            ->willReturnCallback(function ($rule, $field, $message) use (&$violations): void {
+                $this->assertSame($this->requiredFieldsRule, $rule);
+                $violations[$field] = $message;
+            });
 
         // Act: Execute validation
         $this->requiredFieldsRule->validate($context);
 
         // Assert: Violations for both ownership fields
+        $this->assertCount(2, $violations);
+        $this->assertArrayHasKey('schedulable_id', $violations);
+        $this->assertArrayHasKey('schedulable_type', $violations);
     }
 
     /**
@@ -334,7 +345,7 @@ final class RequiredFieldsRuleTest extends TestCase
             'validity_end' => '2024-12-31',
         ]);
 
-        $context->expects($this->never())->method('setViolation');
+        $context->expects($this->never())->method('setViolationFromRule');
 
         // Act: Execute validation
         $this->requiredFieldsRule->validate($context);
@@ -361,7 +372,7 @@ final class RequiredFieldsRuleTest extends TestCase
             'priority' => 1,
         ]);
 
-        $context->expects($this->never())->method('setViolation');
+        $context->expects($this->never())->method('setViolationFromRule');
 
         // Act: Execute validation
         $this->requiredFieldsRule->validate($context);
@@ -386,7 +397,7 @@ final class RequiredFieldsRuleTest extends TestCase
             'validity_end' => '2024-12-31',
         ]);
 
-        $context->expects($this->never())->method('setViolation');
+        $context->expects($this->never())->method('setViolationFromRule');
 
         // Act: Execute validation
         $this->requiredFieldsRule->validate($context);
@@ -404,12 +415,19 @@ final class RequiredFieldsRuleTest extends TestCase
 
         $context->method('safeData')->willReturn([]);
 
-        $context->expects($this->exactly(6))->method('setViolation');
+        $violationCount = 0;
+        $context->expects($this->exactly(6))
+            ->method('setViolationFromRule')
+            ->willReturnCallback(function ($rule) use (&$violationCount): void {
+                $this->assertSame($this->requiredFieldsRule, $rule);
+                $violationCount++;
+            });
 
         // Act: Execute validation
         $this->requiredFieldsRule->validate($context);
 
         // Assert: All required fields should generate violations
+        $this->assertSame(6, $violationCount);
     }
 
     /**
@@ -425,12 +443,113 @@ final class RequiredFieldsRuleTest extends TestCase
             'daily_start' => '10:00:00',
         ]);
 
-        $context->expects($this->once())->method('setViolation');
+        $context->expects($this->once())->method('setViolationFromRule');
 
         // Act: Execute validation
         $this->requiredFieldsRule->validate($context);
 
         // Assert: Violation for ownership field presence
+    }
+
+    /**
+     * Test that rule description is available.
+     */
+    public function test_has_description(): void
+    {
+        // Act: Get rule description
+        $description = $this->requiredFieldsRule->getDescription();
+
+        // Assert: Description should not be empty
+        $this->assertIsString($description);
+        $this->assertNotEmpty($description);
+    }
+
+    /**
+     * Test that validation fails for SCHEDULE entity with missing required fields.
+     */
+    public function test_validation_fails_for_schedule_entity_with_missing_required_fields(): void
+    {
+        // Arrange: Create context for SCHEDULE entity with missing fields
+        $context = $this->createMock(ValidationContextInterface::class);
+        $context->method('getOperation')->willReturn(OperationType::CREATE);
+        $context->method('getEntityType')->willReturn(EntityType::SCHEDULE);
+
+        $context->method('safeData')->willReturn([
+            'title' => 'Meeting',
+        ]);
+
+        $context->expects($this->exactly(2))->method('setViolationFromRule');
+
+        // Act: Execute validation
+        $this->requiredFieldsRule->validate($context);
+
+        // Assert: Violations for missing schedule fields
+    }
+
+    /**
+     * Test that validation fails for IMPEDIMENT entity with missing required fields.
+     */
+    public function test_validation_fails_for_impediment_entity_with_missing_required_fields(): void
+    {
+        // Arrange: Create context for IMPEDIMENT entity with missing fields
+        $context = $this->createMock(ValidationContextInterface::class);
+        $context->method('getOperation')->willReturn(OperationType::CREATE);
+        $context->method('getEntityType')->willReturn(EntityType::IMPEDIMENT);
+
+        $context->method('safeData')->willReturn([
+            'reason' => 'Maintenance',
+        ]);
+
+        $context->expects($this->exactly(2))->method('setViolationFromRule');
+
+        // Act: Execute validation
+        $this->requiredFieldsRule->validate($context);
+
+        // Assert: Violations for missing impediment fields
+    }
+
+    /**
+     * Test that validation allows partial UPDATE for SCHEDULE entity.
+     */
+    public function test_validation_allows_partial_update_for_schedule_entity(): void
+    {
+        // Arrange: Create context for SCHEDULE entity UPDATE
+        $context = $this->createMock(ValidationContextInterface::class);
+        $context->method('getOperation')->willReturn(OperationType::UPDATE);
+        $context->method('getEntityType')->willReturn(EntityType::SCHEDULE);
+
+        $context->method('safeData')->willReturn([
+            'title' => 'Updated Meeting',
+        ]);
+
+        $context->expects($this->never())->method('setViolationFromRule');
+
+        // Act: Execute validation
+        $this->requiredFieldsRule->validate($context);
+
+        // Assert: No violations for partial schedule update
+    }
+
+    /**
+     * Test that validation allows partial UPDATE for IMPEDIMENT entity.
+     */
+    public function test_validation_allows_partial_update_for_impediment_entity(): void
+    {
+        // Arrange: Create context for IMPEDIMENT entity UPDATE
+        $context = $this->createMock(ValidationContextInterface::class);
+        $context->method('getOperation')->willReturn(OperationType::UPDATE);
+        $context->method('getEntityType')->willReturn(EntityType::IMPEDIMENT);
+
+        $context->method('safeData')->willReturn([
+            'reason' => 'Updated Reason',
+        ]);
+
+        $context->expects($this->never())->method('setViolationFromRule');
+
+        // Act: Execute validation
+        $this->requiredFieldsRule->validate($context);
+
+        // Assert: No violations for partial impediment update
     }
 
     /**

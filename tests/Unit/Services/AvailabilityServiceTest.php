@@ -438,11 +438,14 @@ final class AvailabilityServiceTest extends TestCase
 
         // Assert: Should throw validation exception
         $this->expectException(ValidationFailedException::class);
-        $this->expectExceptionMessageMatches('/Minimum duration/');
+        $this->expectExceptionMessageMatches(
+            '/Daily time slot duration must be at least 15 minutes/'
+        );
 
         // Act: Attempt to create with insufficient duration
         availability_for($this->schedulable)->create($availabilityData);
     }
+
 
     /**
      * Test validates date range order.
@@ -588,7 +591,10 @@ final class AvailabilityServiceTest extends TestCase
 
         // Assert: Should throw validation exception
         $this->expectException(ValidationFailedException::class);
-        $this->expectExceptionMessage("Day 'not-an-array' is not a valid day of week");
+        $this->expectExceptionMessageMatches(
+            "/not-an-array.*valid day/i"
+        );
+
 
         // Act: Attempt to create with invalid days format
         availability_for($this->schedulable)->create($availabilityData);
@@ -666,7 +672,9 @@ final class AvailabilityServiceTest extends TestCase
 
         // Assert: Should throw validation exception
         $this->expectException(ValidationFailedException::class);
-        $this->expectExceptionMessage("Day 'invalid-day' is not a valid day of week");
+        $this->expectExceptionMessageMatches(
+            "/invalid-day.*valid day/i"
+        );
 
         // Act: Attempt to create with invalid day
         availability_for($this->schedulable)->create($availabilityData);

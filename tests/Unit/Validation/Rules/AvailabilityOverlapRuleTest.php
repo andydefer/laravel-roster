@@ -31,6 +31,24 @@ final class AvailabilityOverlapRuleTest extends TestCase
     }
 
     /**
+     * Test that getDescription returns a detailed description.
+     */
+    public function test_get_description_returns_detailed_information(): void
+    {
+        // Act: Get description
+        $description = $this->rule->getDescription();
+
+        // Assert: Verify description contains key information
+        $this->assertIsString($description);
+        $this->assertNotEmpty($description);
+        $this->assertStringContainsString('validates', $description);
+        $this->assertStringContainsString('availability', $description);
+        $this->assertStringContainsString('overlap', $description);
+        $this->assertStringContainsString('new or updated', $description);
+        $this->assertStringContainsString('temporal conflicts', $description);
+    }
+
+    /**
      * Test that validation passes when there are no overlaps.
      */
     public function test_passes_when_no_overlaps(): void
@@ -52,7 +70,7 @@ final class AvailabilityOverlapRuleTest extends TestCase
 
         $this->app->instance(TemporalConflictService::class, $conflictService);
 
-        $context->expects($this->never())->method('setViolation');
+        $context->expects($this->never())->method('setViolationFromRule');
 
         // Act: Execute the overlap validation rule
         $this->rule->validate($context);
@@ -90,8 +108,12 @@ final class AvailabilityOverlapRuleTest extends TestCase
         $this->app->instance(TemporalConflictService::class, $conflictService);
 
         $context->expects($this->once())
-            ->method('setViolation')
-            ->with('overlap', 'Overlap detected with existing availability');
+            ->method('setViolationFromRule')
+            ->with(
+                $this->identicalTo($this->rule),
+                $this->identicalTo('overlap'),
+                $this->identicalTo('Overlap detected with existing availability')
+            );
 
         // Act: Execute the overlap validation rule
         $this->rule->validate($context);
@@ -114,7 +136,7 @@ final class AvailabilityOverlapRuleTest extends TestCase
 
         $this->configureContextWithBasicAvailabilityData($context);
 
-        $context->expects($this->never())->method('setViolation');
+        $context->expects($this->never())->method('setViolationFromRule');
 
         // Act: Execute the overlap validation rule
         $this->rule->validate($context);
@@ -138,7 +160,7 @@ final class AvailabilityOverlapRuleTest extends TestCase
 
         $this->configureContextWithMissingRequiredFields($context);
 
-        $context->expects($this->never())->method('setViolation');
+        $context->expects($this->never())->method('setViolationFromRule');
 
         // Act: Execute the overlap validation rule
         $this->rule->validate($context);
@@ -168,7 +190,7 @@ final class AvailabilityOverlapRuleTest extends TestCase
 
         $this->app->instance(TemporalConflictService::class, $conflictService);
 
-        $context->expects($this->never())->method('setViolation');
+        $context->expects($this->never())->method('setViolationFromRule');
 
         // Act: Execute the overlap validation rule for UPDATE
         $this->rule->validate($context);
@@ -191,7 +213,7 @@ final class AvailabilityOverlapRuleTest extends TestCase
 
         $this->configureContextWithBasicAvailabilityData($context);
 
-        $context->expects($this->never())->method('setViolation');
+        $context->expects($this->never())->method('setViolationFromRule');
 
         // Act: Execute the overlap validation rule
         $this->rule->validate($context);
@@ -224,7 +246,7 @@ final class AvailabilityOverlapRuleTest extends TestCase
 
         $this->app->instance(TemporalConflictService::class, $conflictService);
 
-        $context->expects($this->never())->method('setViolation');
+        $context->expects($this->never())->method('setViolationFromRule');
 
         // Act: Execute the overlap validation rule with mixed data sources
         $this->rule->validate($context);
@@ -252,22 +274,22 @@ final class AvailabilityOverlapRuleTest extends TestCase
         $conflictService->expects($this->once())
             ->method('checkAvailabilityConflicts')
             ->with(
-                $schedulable,
-                [
+                $this->identicalTo($schedulable),
+                $this->identicalTo([
                     'daily_start' => '09:00:00',
                     'daily_end' => '17:00:00',
                     'days' => ['monday', 'tuesday'],
                     'validity_start' => '2038-01-01',
                     'validity_end' => '2038-12-31',
                     'type' => 'consultation',
-                ],
-                123 // Current entity ID should be excluded
+                ]),
+                $this->identicalTo(123) // Current entity ID should be excluded
             )
             ->willReturn(ConflictResult::noConflict());
 
         $this->app->instance(TemporalConflictService::class, $conflictService);
 
-        $context->expects($this->never())->method('setViolation');
+        $context->expects($this->never())->method('setViolationFromRule');
 
         // Act: Execute the overlap validation rule
         $this->rule->validate($context);
@@ -291,7 +313,7 @@ final class AvailabilityOverlapRuleTest extends TestCase
 
         $this->configureContextWithEmptyDaysArray($context);
 
-        $context->expects($this->never())->method('setViolation');
+        $context->expects($this->never())->method('setViolationFromRule');
 
         // Act: Execute the overlap validation rule
         $this->rule->validate($context);
@@ -321,7 +343,7 @@ final class AvailabilityOverlapRuleTest extends TestCase
 
         $this->app->instance(TemporalConflictService::class, $conflictService);
 
-        $context->expects($this->never())->method('setViolation');
+        $context->expects($this->never())->method('setViolationFromRule');
 
         // Act: Execute the overlap validation rule with exception
         $this->rule->validate($context);
@@ -351,7 +373,7 @@ final class AvailabilityOverlapRuleTest extends TestCase
 
         $this->app->instance(TemporalConflictService::class, $conflictService);
 
-        $context->expects($this->never())->method('setViolation');
+        $context->expects($this->never())->method('setViolationFromRule');
 
         // Act: Execute the overlap validation rule
         $this->rule->validate($context);
@@ -381,7 +403,7 @@ final class AvailabilityOverlapRuleTest extends TestCase
 
         $this->app->instance(TemporalConflictService::class, $conflictService);
 
-        $context->expects($this->never())->method('setViolation');
+        $context->expects($this->never())->method('setViolationFromRule');
 
         // Act: Execute the overlap validation rule
         $this->rule->validate($context);

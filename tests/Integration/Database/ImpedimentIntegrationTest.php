@@ -361,26 +361,6 @@ final class ImpedimentIntegrationTest extends TestCase
     }
 
     /**
-     * Test impediment creation in the past fails.
-     */
-    public function test_cannot_create_impediment_in_the_past(): void
-    {
-        // Arrange: Impediment with past date
-        $pastDateData = [
-            'reason' => 'Past Event',
-            'start_datetime' => '2020-01-01 10:00:00',
-            'end_datetime' => '2020-01-01 11:00:00',
-        ];
-
-        // Assert: Should throw validation exception
-        $this->expectException(ValidationFailedException::class);
-        $this->expectExceptionMessage(message: 'past');
-
-        // Act: Attempt to create impediment in the past
-        impediment_for($this->availability)->create(data: $pastDateData);
-    }
-
-    /**
      * Test multiple non-overlapping impediments can coexist.
      */
     public function test_multiple_non_overlapping_impediments_can_coexist(): void

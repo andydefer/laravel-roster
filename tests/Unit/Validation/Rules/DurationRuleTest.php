@@ -65,7 +65,7 @@ final class DurationRuleTest extends TestCase
             'end_time' => '10:00:00', // 60 minutes > 15 minimum
         ]);
 
-        $context->expects($this->never())->method('setViolation');
+        $context->expects($this->never())->method('setViolationFromRule');
 
         // Act: Execute validation
         $this->rule->validate($context);
@@ -90,8 +90,9 @@ final class DurationRuleTest extends TestCase
         ]);
 
         $context->expects($this->once())
-            ->method('setViolation')
+            ->method('setViolationFromRule')
             ->with(
+                $this->rule,
                 'duration',
                 "Minimum duration of 15 minutes required for availability. Got 10 minutes"
             );
@@ -117,7 +118,7 @@ final class DurationRuleTest extends TestCase
             'type' => 'office',
         ]);
 
-        $context->expects($this->never())->method('setViolation');
+        $context->expects($this->never())->method('setViolationFromRule');
 
         // Act: Execute validation
         $this->rule->validate($context);
@@ -140,7 +141,7 @@ final class DurationRuleTest extends TestCase
             'type' => 'remote',
         ]);
 
-        $context->expects($this->never())->method('setViolation');
+        $context->expects($this->never())->method('setViolationFromRule');
 
         // Act: Execute validation
         $this->rule->validate($context);
@@ -167,7 +168,7 @@ final class DurationRuleTest extends TestCase
             'end_datetime' => $end,
         ]);
 
-        $context->expects($this->never())->method('setViolation');
+        $context->expects($this->never())->method('setViolationFromRule');
 
         // Act: Execute validation
         $this->rule->validate($context);
@@ -195,8 +196,9 @@ final class DurationRuleTest extends TestCase
         ]);
 
         $context->expects($this->once())
-            ->method('setViolation')
+            ->method('setViolationFromRule')
             ->with(
+                $this->rule,
                 'duration',
                 "Minimum duration of 15 minutes required for Schedule. Got 10 minutes"
             );
@@ -226,7 +228,7 @@ final class DurationRuleTest extends TestCase
             'end_datetime' => $end,
         ]);
 
-        $context->expects($this->never())->method('setViolation');
+        $context->expects($this->never())->method('setViolationFromRule');
 
         // Act: Execute validation
         $this->rule->validate($context);
@@ -254,8 +256,9 @@ final class DurationRuleTest extends TestCase
         ]);
 
         $context->expects($this->once())
-            ->method('setViolation')
+            ->method('setViolationFromRule')
             ->with(
+                $this->rule,
                 'duration',
                 "Minimum duration of 5 minutes required for Impediment. Got 3 minutes"
             );
@@ -283,8 +286,9 @@ final class DurationRuleTest extends TestCase
         ]);
 
         $context->expects($this->once())
-            ->method('setViolation')
+            ->method('setViolationFromRule')
             ->with(
+                $this->rule,
                 'time_format',
                 $this->stringContains('Invalid time format:')
             );
@@ -312,8 +316,9 @@ final class DurationRuleTest extends TestCase
         ]);
 
         $context->expects($this->once())
-            ->method('setViolation')
+            ->method('setViolationFromRule')
             ->with(
+                $this->rule,
                 'datetime_format',
                 $this->stringContains('Invalid datetime format:')
             );
@@ -339,7 +344,7 @@ final class DurationRuleTest extends TestCase
             'end_time' => '10:30:00',
         ]);
 
-        $context->expects($this->never())->method('setViolation');
+        $context->expects($this->never())->method('setViolationFromRule');
 
         // Act: Execute validation
         $this->rule->validate($context);
@@ -362,7 +367,7 @@ final class DurationRuleTest extends TestCase
             'end_datetime' => Carbon::now()->addHours(1)->format('Y-m-d H:i:s'),
         ]);
 
-        $context->expects($this->never())->method('setViolation');
+        $context->expects($this->never())->method('setViolationFromRule');
 
         // Act: Execute validation
         $this->rule->validate($context);
@@ -386,7 +391,7 @@ final class DurationRuleTest extends TestCase
             'end_time' => '10:00:00',
         ]);
 
-        $context->expects($this->never())->method('setViolation');
+        $context->expects($this->never())->method('setViolationFromRule');
 
         // Act: Execute validation
         $this->rule->validate($context);
@@ -413,7 +418,7 @@ final class DurationRuleTest extends TestCase
             'end_datetime' => $end,
         ]);
 
-        $context->expects($this->never())->method('setViolation');
+        $context->expects($this->never())->method('setViolationFromRule');
 
         // Act: Execute validation
         $this->rule->validate($context);
@@ -437,7 +442,7 @@ final class DurationRuleTest extends TestCase
             'end_time' => '09:15:00',
         ]);
 
-        $context->expects($this->never())->method('setViolation');
+        $context->expects($this->never())->method('setViolationFromRule');
 
         // Act: Execute validation
         $this->rule->validate($context);
@@ -465,8 +470,9 @@ final class DurationRuleTest extends TestCase
         ]);
 
         $context->expects($this->once())
-            ->method('setViolation')
+            ->method('setViolationFromRule')
             ->with(
+                $this->rule,
                 'duration',
                 "Minimum duration of 15 minutes required for Schedule. Got 10 minutes"
             );
@@ -493,7 +499,7 @@ final class DurationRuleTest extends TestCase
             'end_time' => '09:01:00',
         ]);
 
-        $context->expects($this->never())->method('setViolation');
+        $context->expects($this->never())->method('setViolationFromRule');
 
         // Act: Execute validation
         $this->rule->validate($context);
@@ -518,8 +524,9 @@ final class DurationRuleTest extends TestCase
         ]);
 
         $context->expects($this->once())
-            ->method('setViolation')
+            ->method('setViolationFromRule')
             ->with(
+                $this->rule,
                 'duration',
                 "Minimum duration of 15 minutes required for availability. Got 0 minutes"
             );
@@ -547,8 +554,9 @@ final class DurationRuleTest extends TestCase
         ]);
 
         $context->expects($this->once())
-            ->method('setViolation')
+            ->method('setViolationFromRule')
             ->with(
+                $this->rule,
                 'duration',
                 "Minimum duration of 15 minutes required for availability. Got -60 minutes"
             );
@@ -574,7 +582,7 @@ final class DurationRuleTest extends TestCase
             'start_time' => '08:00:00',
         ]);
 
-        $context->expects($this->never())->method('setViolation');
+        $context->expects($this->never())->method('setViolationFromRule');
 
         // Act: Execute validation
         $this->rule->validate($context);
@@ -597,12 +605,101 @@ final class DurationRuleTest extends TestCase
             'start_datetime' => Carbon::now()->format('Y-m-d H:i:s'),
         ]);
 
-        $context->expects($this->never())->method('setViolation');
+        $context->expects($this->never())->method('setViolationFromRule');
 
         // Act: Execute validation
         $this->rule->validate($context);
 
         // Assert: No violations expected for partial update
+    }
+
+    /**
+     * Test that rule description is available.
+     */
+    public function test_has_description(): void
+    {
+        // Act: Get rule description
+        $description = $this->rule->getDescription();
+
+        // Assert: Description should not be empty
+        $this->assertIsString($description);
+        $this->assertNotEmpty($description);
+    }
+
+    /**
+     * Test that validation handles exact configuration boundaries.
+     */
+    public function test_handles_exact_configuration_boundaries(): void
+    {
+        // Arrange: Configure with exact minimums
+        $this->configureMinimumDurations(
+            availabilityMinutes: 0,
+            scheduleMinutes: 0,
+            impedimentMinutes: 0
+        );
+
+        $context = $this->createMock(ValidationContextInterface::class);
+        $context->method('getEntityType')->willReturn(EntityType::AVAILABILITY);
+        $context->method('getOperation')->willReturn(OperationType::CREATE);
+        $context->method('safeData')->willReturn([
+            'start_time' => '09:00:00',
+            'end_time' => '09:00:00',
+        ]);
+
+        $context->expects($this->never())->method('setViolationFromRule');
+
+        // Act: Execute validation
+        $this->rule->validate($context);
+
+        // Assert: Zero duration should pass when minimum is zero
+    }
+
+    /**
+     * Test that validation handles very large durations.
+     */
+    public function test_handles_very_large_durations(): void
+    {
+        // Arrange: Configure context with very large duration
+        $this->configureMinimumDurations(availabilityMinutes: 15);
+
+        $context = $this->createMock(ValidationContextInterface::class);
+        $context->method('getEntityType')->willReturn(EntityType::AVAILABILITY);
+        $context->method('getOperation')->willReturn(OperationType::CREATE);
+        $context->method('safeData')->willReturn([
+            'start_time' => '00:00:00',
+            'end_time' => '23:59:59',
+        ]);
+
+        $context->expects($this->never())->method('setViolationFromRule');
+
+        // Act: Execute validation
+        $this->rule->validate($context);
+
+        // Assert: Large durations should pass validation
+    }
+
+    /**
+     * Test that validation handles different time formats.
+     */
+    public function test_handles_different_time_formats(): void
+    {
+        // Arrange: Configure context with various time formats
+        $this->configureMinimumDurations(availabilityMinutes: 15);
+
+        $context = $this->createMock(ValidationContextInterface::class);
+        $context->method('getEntityType')->willReturn(EntityType::AVAILABILITY);
+        $context->method('getOperation')->willReturn(OperationType::CREATE);
+        $context->method('safeData')->willReturn([
+            'start_time' => '9:00', // Short format
+            'end_time' => '10:00:00', // Full format
+        ]);
+
+        $context->expects($this->never())->method('setViolationFromRule');
+
+        // Act: Execute validation
+        $this->rule->validate($context);
+
+        // Assert: Different time formats should be handled correctly
     }
 
     /**

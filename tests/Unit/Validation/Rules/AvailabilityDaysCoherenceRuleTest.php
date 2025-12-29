@@ -45,7 +45,7 @@ final class AvailabilityDaysCoherenceRuleTest extends TestCase
             validityEnd: '2038-12-31'
         );
 
-        $context->expects($this->never())->method('setViolation');
+        $context->expects($this->never())->method('setViolationFromRule');
 
         // Act: Execute the validation rule
         $this->rule->validate($context);
@@ -62,7 +62,7 @@ final class AvailabilityDaysCoherenceRuleTest extends TestCase
         $context = $this->createValidationContextWithCreateOperation();
         $this->configureContextWithoutDays($context);
 
-        $context->expects($this->never())->method('setViolation');
+        $context->expects($this->never())->method('setViolationFromRule');
 
         // Act: Execute the validation rule
         $this->rule->validate($context);
@@ -80,8 +80,12 @@ final class AvailabilityDaysCoherenceRuleTest extends TestCase
         $this->configureContextWithNonArrayDays($context);
 
         $context->expects($this->once())
-            ->method('setViolation')
-            ->with('days', 'Days must be an array', AvailabilityDaysCoherenceRule::class);
+            ->method('setViolationFromRule')
+            ->with(
+                $this->identicalTo($this->rule),
+                $this->identicalTo('days'),
+                $this->identicalTo('Days must be provided as an array')
+            );
 
         // Act: Execute the validation rule
         $this->rule->validate($context);
@@ -102,8 +106,12 @@ final class AvailabilityDaysCoherenceRuleTest extends TestCase
         );
 
         $context->expects($this->once())
-            ->method('setViolation')
-            ->with('days', "Day 'invalidday' is not a valid day of week");
+            ->method('setViolationFromRule')
+            ->with(
+                $this->identicalTo($this->rule),
+                $this->identicalTo('days'),
+                $this->identicalTo("Day value 'invalidday' is not recognized as a valid day of the week")
+            );
 
         // Act: Execute the validation rule
         $this->rule->validate($context);
@@ -127,10 +135,11 @@ final class AvailabilityDaysCoherenceRuleTest extends TestCase
 
         $violationCount = 0;
         $context->expects($this->exactly(2))
-            ->method('setViolation')
-            ->willReturnCallback(function (string $field, string $message) use (&$violationCount): void {
-                $this->assertEquals('days', $field);
-                $this->assertStringContainsString('is not within the validity period', $message);
+            ->method('setViolationFromRule')
+            ->willReturnCallback(function ($rule, string $field, string $message) use (&$violationCount): void {
+                $this->assertSame($this->rule, $rule);
+                $this->assertSame('days', $field);
+                $this->assertStringContainsString('falls outside the validity period', $message);
                 ++$violationCount;
             });
 
@@ -138,7 +147,7 @@ final class AvailabilityDaysCoherenceRuleTest extends TestCase
         $this->rule->validate($context);
 
         // Assert: Two violations should be recorded for two out-of-period days
-        $this->assertEquals(2, $violationCount);
+        $this->assertSame(2, $violationCount);
     }
 
     /**
@@ -155,7 +164,7 @@ final class AvailabilityDaysCoherenceRuleTest extends TestCase
             validityEnd: '2038-12-31'
         );
 
-        $context->expects($this->never())->method('setViolation');
+        $context->expects($this->never())->method('setViolationFromRule');
 
         // Act: Execute the validation rule
         $this->rule->validate($context);
@@ -175,7 +184,7 @@ final class AvailabilityDaysCoherenceRuleTest extends TestCase
             days: ['monday', 'tuesday']
         );
 
-        $context->expects($this->never())->method('setViolation');
+        $context->expects($this->never())->method('setViolationFromRule');
 
         // Act: Execute the validation rule
         $this->rule->validate($context);
@@ -196,7 +205,7 @@ final class AvailabilityDaysCoherenceRuleTest extends TestCase
             validityStart: '2038-01-01'
         );
 
-        $context->expects($this->never())->method('setViolation');
+        $context->expects($this->never())->method('setViolationFromRule');
 
         // Act: Execute the validation rule
         $this->rule->validate($context);
@@ -218,7 +227,7 @@ final class AvailabilityDaysCoherenceRuleTest extends TestCase
             validityEnd: '2038-01-01'
         );
 
-        $context->expects($this->never())->method('setViolation');
+        $context->expects($this->never())->method('setViolationFromRule');
 
         // Act: Execute the validation rule
         $this->rule->validate($context);
@@ -240,7 +249,7 @@ final class AvailabilityDaysCoherenceRuleTest extends TestCase
             validityEnd: '2038-01-04'
         );
 
-        $context->expects($this->never())->method('setViolation');
+        $context->expects($this->never())->method('setViolationFromRule');
 
         // Act: Execute the validation rule
         $this->rule->validate($context);
@@ -264,11 +273,12 @@ final class AvailabilityDaysCoherenceRuleTest extends TestCase
 
         $capturedMessages = [];
         $context->expects($this->exactly(2))
-            ->method('setViolation')
-            ->willReturnCallback(function (string $field, string $message) use (&$capturedMessages): void {
+            ->method('setViolationFromRule')
+            ->willReturnCallback(function ($rule, string $field, string $message) use (&$capturedMessages): void {
                 $capturedMessages[] = $message;
-                $this->assertEquals('days', $field);
-                $this->assertStringContainsString('is not within the validity period', $message);
+                $this->assertSame($this->rule, $rule);
+                $this->assertSame('days', $field);
+                $this->assertStringContainsString('falls outside the validity period', $message);
             });
 
         // Act: Execute the validation rule
@@ -298,7 +308,7 @@ final class AvailabilityDaysCoherenceRuleTest extends TestCase
             days: ['monday', 'tuesday']
         );
 
-        $context->expects($this->never())->method('setViolation');
+        $context->expects($this->never())->method('setViolationFromRule');
 
         // Act: Execute the validation rule
         $this->rule->validate($context);
@@ -323,7 +333,7 @@ final class AvailabilityDaysCoherenceRuleTest extends TestCase
             validityEnd: '2038-12-31'
         );
 
-        $context->expects($this->never())->method('setViolation');
+        $context->expects($this->never())->method('setViolationFromRule');
 
         // Act: Execute the validation rule
         $this->rule->validate($context);
@@ -345,7 +355,7 @@ final class AvailabilityDaysCoherenceRuleTest extends TestCase
             validityEnd: '2038-01-01'
         );
 
-        $context->expects($this->never())->method('setViolation');
+        $context->expects($this->never())->method('setViolationFromRule');
 
         // Act: Execute the validation rule
         $this->rule->validate($context);
@@ -365,12 +375,30 @@ final class AvailabilityDaysCoherenceRuleTest extends TestCase
             days: ['monday', 'tuesday']
         );
 
-        $context->expects($this->never())->method('setViolation');
+        $context->expects($this->never())->method('setViolationFromRule');
 
         // Act: Execute the validation rule
         $this->rule->validate($context);
 
         // Assert: No violations for invalid date format (handled by another rule)
+    }
+
+    /**
+     * Test that getDescription returns a detailed description.
+     */
+    public function test_get_description_returns_detailed_information(): void
+    {
+        // Act: Get description
+        $description = $this->rule->getDescription();
+
+        // Assert: Verify description contains key information
+        $this->assertIsString($description);
+        $this->assertNotEmpty($description);
+        $this->assertStringContainsString('validates', $description);
+        $this->assertStringContainsString('coherence', $description);
+        $this->assertStringContainsString('days', $description);
+        $this->assertStringContainsString('validity period', $description);
+        $this->assertStringContainsString('CREATE and UPDATE', $description);
     }
 
     /**

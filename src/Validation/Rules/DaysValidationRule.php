@@ -38,6 +38,16 @@ class DaysValidationRule extends AbstractRule
     }
 
     /**
+     * Returns a detailed description of what this rule validates.
+     *
+     * @return string Detailed description
+     */
+    public function getDescription(): string
+    {
+        return "This rule validates the 'days' configuration for Availability entities, ensuring that the days array is properly formatted, contains valid day names according to the DaysOfWeek enum, and is non-empty. It applies strict validation for CREATE operations to maintain data integrity from the outset, allowing only lowercase day names that match the predefined enum values.";
+    }
+
+    /**
      * Validates days array for creation operations.
      *
      * @param ValidationContextInterface $validationContext Validation context
@@ -61,17 +71,19 @@ class DaysValidationRule extends AbstractRule
     private function validateDaysArray(mixed $days, ValidationContextInterface $validationContext): void
     {
         if (!is_array($days)) {
-            $validationContext->setViolation(
-                'days',
-                'Days must be an array'
+            $validationContext->setViolationFromRule(
+                rule: $this,
+                field: 'days',
+                message: 'Days must be an array'
             );
             return;
         }
 
         if ($days === []) {
-            $validationContext->setViolation(
-                'days',
-                'Days array cannot be empty'
+            $validationContext->setViolationFromRule(
+                rule: $this,
+                field: 'days',
+                message: 'Days array cannot be empty'
             );
             return;
         }
@@ -79,9 +91,10 @@ class DaysValidationRule extends AbstractRule
         $validDays = DaysOfWeek::values();
         foreach ($days as $day) {
             if (!in_array($day, $validDays, true)) {
-                $validationContext->setViolation(
-                    'days',
-                    sprintf("Invalid day '%s'. Valid days are: %s", $day, implode(', ', $validDays))
+                $validationContext->setViolationFromRule(
+                    rule: $this,
+                    field: 'days',
+                    message: sprintf("Invalid day '%s'. Valid days are: %s", $day, implode(', ', $validDays))
                 );
                 return;
             }

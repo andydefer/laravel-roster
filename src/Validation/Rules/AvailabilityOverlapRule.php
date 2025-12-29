@@ -65,11 +65,25 @@ class AvailabilityOverlapRule extends AbstractRule
             );
 
             if ($conflictResult->hasConflicts) {
-                $validationContext->setViolation('overlap', $conflictResult->message);
+                $validationContext->setViolationFromRule(
+                    rule: $this,
+                    field: 'overlap',
+                    message: $conflictResult->message
+                );
             }
         } catch (Exception $exception) {
             report($exception);
         }
+    }
+
+    /**
+     * Returns a detailed description of what this rule validates.
+     *
+     * @return string Detailed description
+     */
+    public function getDescription(): string
+    {
+        return "This rule validates that new or updated availability periods do not overlap with existing ones for the same schedulable entity. It checks temporal conflicts across multiple dimensions: daily time windows (start/end times), active days of the week, and validity date ranges. The rule ensures that overlapping availability periods are prevented, maintaining schedule integrity and preventing double-booking scenarios for the same resource.";
     }
 
     /**

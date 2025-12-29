@@ -49,6 +49,15 @@ class AvailabilityDaysCoherenceRule extends AbstractRule
         $this->validateDaysAgainstPeriod($validationContext, $days);
     }
 
+    /**
+     * Returns a detailed description of what this rule validates.
+     *
+     * @return string Detailed description
+     */
+    public function getDescription(): string
+    {
+        return "This rule validates the coherence between specified days and the validity period of an availability entity, ensuring that all provided days are valid days of the week according to the system's enumeration and fall within the defined validity date range. It prevents scheduling inconsistencies by verifying that days like 'monday', 'tuesday', etc., actually exist within the availability's start and end dates, maintaining data integrity across CREATE and UPDATE operations.";
+    }
 
     /**
      * Check if validation should proceed based on context.
@@ -83,10 +92,10 @@ class AvailabilityDaysCoherenceRule extends AbstractRule
     ): bool {
         // ✅ 1. Format check FIRST
         if (!is_array($days)) {
-            $validationContext->setViolation(
+            $validationContext->setViolationFromRule(
+                rule: $this,
                 field: 'days',
-                message: 'Days must be an array',
-                rule: self::class
+                message: 'Days must be provided as an array'
             );
             return false;
         }
@@ -101,10 +110,10 @@ class AvailabilityDaysCoherenceRule extends AbstractRule
 
         foreach ($days as $day) {
             if (!in_array($day, $validDays, true)) {
-                $validationContext->setViolation(
+                $validationContext->setViolationFromRule(
+                    rule: $this,
                     field: 'days',
-                    message: sprintf("Day '%s' is not a valid day of week", $day),
-                    rule: self::class
+                    message: sprintf("Day value '%s' is not recognized as a valid day of the week", $day)
                 );
                 return false;
             }
@@ -112,8 +121,6 @@ class AvailabilityDaysCoherenceRule extends AbstractRule
 
         return true;
     }
-
-
 
     /**
      * Validate days against validity period.
@@ -200,10 +207,14 @@ class AvailabilityDaysCoherenceRule extends AbstractRule
             if (!in_array($day, $daysInPeriod, true)) {
                 $periodDescription = roster_format_period_days_for_display($daysInPeriod);
 
-                $validationContext->setViolation(
+                $validationContext->setViolationFromRule(
+                    rule: $this,
                     field: 'days',
-                    message: sprintf("Day '%s' is not within the validity period (%s)", $day, $periodDescription),
-                    rule: self::class
+                    message: sprintf(
+                        "Day '%s' falls outside the validity period. Available days in period: %s",
+                        $day,
+                        $periodDescription
+                    )
                 );
             }
         }

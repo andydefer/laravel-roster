@@ -51,6 +51,16 @@ class DurationRule extends AbstractRule
     }
 
     /**
+     * Returns a detailed description of what this rule validates.
+     *
+     * @return string Detailed description
+     */
+    public function getDescription(): string
+    {
+        return "This rule validates minimum duration requirements for time-based entities. For Availability entities, it ensures daily time windows meet the configured minimum duration. For Schedule and Impediment entities, it validates datetime ranges against their respective minimum durations. The rule handles both CREATE and UPDATE operations, accounting for partial updates where only some time fields are provided.";
+    }
+
+    /**
      * Validates minimum duration for availability daily time windows.
      *
      * @param ValidationContextInterface $validationContext Validation context
@@ -81,7 +91,8 @@ class DurationRule extends AbstractRule
             $minimumMinutes = $this->getMinimumDuration(EntityType::AVAILABILITY);
 
             if ($start->diffInMinutes($end) < $minimumMinutes) {
-                $validationContext->setViolation(
+                $validationContext->setViolationFromRule(
+                    rule: $this,
                     field: 'duration',
                     message: sprintf(
                         "Minimum duration of %d minutes required for availability. Got %d minutes",
@@ -91,7 +102,8 @@ class DurationRule extends AbstractRule
                 );
             }
         } catch (Exception $exception) {
-            $validationContext->setViolation(
+            $validationContext->setViolationFromRule(
+                rule: $this,
                 field: 'time_format',
                 message: "Invalid time format: " . $exception->getMessage()
             );
@@ -130,7 +142,8 @@ class DurationRule extends AbstractRule
             $minimumMinutes = $this->getMinimumDuration($entityType);
 
             if ($start->diffInMinutes($end) < $minimumMinutes) {
-                $validationContext->setViolation(
+                $validationContext->setViolationFromRule(
+                    rule: $this,
                     field: 'duration',
                     message: sprintf(
                         "Minimum duration of %d minutes required for %s. Got %d minutes",
@@ -141,7 +154,8 @@ class DurationRule extends AbstractRule
                 );
             }
         } catch (Exception $exception) {
-            $validationContext->setViolation(
+            $validationContext->setViolationFromRule(
+                rule: $this,
                 field: 'datetime_format',
                 message: "Invalid datetime format: " . $exception->getMessage()
             );

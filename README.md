@@ -183,7 +183,7 @@ Roster includes **17 validation rules** that guarantee system consistency:
 - **SchedulableValidationRule** (110) - Verifies schedulable context is present
 - **RequiredFieldsRule** (100) - Validates required fields per operation
 - **AvailabilityTemporalCoherenceRule** (100) - Ensures temporal coherence
-- **ScheduleOverlapRule** (80) - Prevents schedule overlaps
+- **TemporalConflictRule** (80) - Prevents schedule overlaps
 - **AvailabilityOverlapRule** (80) - Prevents availability overlaps
 - **TimeRangeRule** (85) - Validates time ranges (no multi-day spans)
 

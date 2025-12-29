@@ -34,7 +34,7 @@ final class DaysValidationRuleTest extends TestCase
         $validDays = [DaysOfWeek::MONDAY->value, DaysOfWeek::WEDNESDAY->value, DaysOfWeek::FRIDAY->value];
         $context = $this->createValidationContext(OperationType::CREATE, true, $validDays);
 
-        $context->expects($this->never())->method('setViolation');
+        $context->expects($this->never())->method('setViolationFromRule');
 
         // Act: Execute the days validation rule
         $this->rule->validate($context);
@@ -51,8 +51,8 @@ final class DaysValidationRuleTest extends TestCase
         $context = $this->createValidationContext(OperationType::CREATE, true, 'monday,tuesday');
 
         $context->expects($this->once())
-            ->method('setViolation')
-            ->with('days', 'Days must be an array');
+            ->method('setViolationFromRule')
+            ->with($this->rule, 'days', 'Days must be an array');
 
         // Act: Execute the days validation rule
         $this->rule->validate($context);
@@ -69,8 +69,8 @@ final class DaysValidationRuleTest extends TestCase
         $context = $this->createValidationContext(OperationType::CREATE, true, []);
 
         $context->expects($this->once())
-            ->method('setViolation')
-            ->with('days', 'Days array cannot be empty');
+            ->method('setViolationFromRule')
+            ->with($this->rule, 'days', 'Days array cannot be empty');
 
         // Act: Execute the days validation rule
         $this->rule->validate($context);
@@ -89,8 +89,8 @@ final class DaysValidationRuleTest extends TestCase
 
         $validDaysList = implode(', ', DaysOfWeek::values());
         $context->expects($this->once())
-            ->method('setViolation')
-            ->with('days', "Invalid day 'invalid_day'. Valid days are: " . $validDaysList);
+            ->method('setViolationFromRule')
+            ->with($this->rule, 'days', "Invalid day 'invalid_day'. Valid days are: " . $validDaysList);
 
         // Act: Execute the days validation rule
         $this->rule->validate($context);
@@ -109,8 +109,8 @@ final class DaysValidationRuleTest extends TestCase
 
         $validDaysList = implode(', ', DaysOfWeek::values());
         $context->expects($this->once())
-            ->method('setViolation')
-            ->with('days', "Invalid day 'Monday'. Valid days are: " . $validDaysList);
+            ->method('setViolationFromRule')
+            ->with($this->rule, 'days', "Invalid day 'Monday'. Valid days are: " . $validDaysList);
 
         // Act: Execute the days validation rule
         $this->rule->validate($context);
@@ -127,7 +127,7 @@ final class DaysValidationRuleTest extends TestCase
         $context = $this->createValidationContext(OperationType::CREATE, false, null);
 
         $context->expects($this->never())->method('get');
-        $context->expects($this->never())->method('setViolation');
+        $context->expects($this->never())->method('setViolationFromRule');
 
         // Act: Execute the days validation rule
         $this->rule->validate($context);
@@ -147,7 +147,7 @@ final class DaysValidationRuleTest extends TestCase
 
         $context->expects($this->never())->method('has');
         $context->expects($this->never())->method('get');
-        $context->expects($this->never())->method('setViolation');
+        $context->expects($this->never())->method('setViolationFromRule');
 
         // Act: Execute the days validation rule for UPDATE
         $this->rule->validate($context);
@@ -167,7 +167,7 @@ final class DaysValidationRuleTest extends TestCase
 
         $context->expects($this->never())->method('has');
         $context->expects($this->never())->method('get');
-        $context->expects($this->never())->method('setViolation');
+        $context->expects($this->never())->method('setViolationFromRule');
 
         // Act: Execute the days validation rule for DELETE
         $this->rule->validate($context);
@@ -184,7 +184,7 @@ final class DaysValidationRuleTest extends TestCase
         $allDays = DaysOfWeek::values();
         $context = $this->createValidationContext(OperationType::CREATE, true, $allDays);
 
-        $context->expects($this->never())->method('setViolation');
+        $context->expects($this->never())->method('setViolationFromRule');
 
         // Act: Execute the days validation rule
         $this->rule->validate($context);
@@ -201,7 +201,7 @@ final class DaysValidationRuleTest extends TestCase
         $singleDay = [DaysOfWeek::MONDAY->value];
         $context = $this->createValidationContext(OperationType::CREATE, true, $singleDay);
 
-        $context->expects($this->never())->method('setViolation');
+        $context->expects($this->never())->method('setViolationFromRule');
 
         // Act: Execute the days validation rule
         $this->rule->validate($context);
@@ -220,8 +220,8 @@ final class DaysValidationRuleTest extends TestCase
 
         $validDaysList = implode(', ', DaysOfWeek::values());
         $context->expects($this->once())
-            ->method('setViolation')
-            ->with('days', "Invalid day 'invalid1'. Valid days are: " . $validDaysList);
+            ->method('setViolationFromRule')
+            ->with($this->rule, 'days', "Invalid day 'invalid1'. Valid days are: " . $validDaysList);
 
         // Act: Execute the days validation rule
         $this->rule->validate($context);
@@ -238,12 +238,119 @@ final class DaysValidationRuleTest extends TestCase
         $validDays = [DaysOfWeek::TUESDAY->value, DaysOfWeek::THURSDAY->value];
         $context = $this->createValidationContext(OperationType::CREATE, true, $validDays);
 
-        $context->expects($this->never())->method('setViolation');
+        $context->expects($this->never())->method('setViolationFromRule');
 
         // Act: Execute the days validation rule
         $this->rule->validate($context);
 
         // Assert: No violations should occur for availability entity type with valid days
+    }
+
+    /**
+     * Test that rule description is available.
+     */
+    public function test_has_description(): void
+    {
+        // Act: Get rule description
+        $description = $this->rule->getDescription();
+
+        // Assert: Description should not be empty
+        $this->assertIsString($description);
+        $this->assertNotEmpty($description);
+    }
+
+    /**
+     * Test that validation fails when days contains duplicate values.
+     */
+    public function test_passes_when_days_contains_duplicates(): void
+    {
+        // Arrange: Context with duplicate day values
+        $duplicateDays = [DaysOfWeek::MONDAY->value, DaysOfWeek::MONDAY->value, DaysOfWeek::FRIDAY->value];
+        $context = $this->createValidationContext(OperationType::CREATE, true, $duplicateDays);
+
+        $context->expects($this->never())->method('setViolationFromRule');
+
+        // Act: Execute the days validation rule
+        $this->rule->validate($context);
+
+        // Assert: Duplicate values should pass validation (not checked by this rule)
+    }
+
+    /**
+     * Test that validation fails when days contains null value.
+     */
+    public function test_fails_when_days_contains_null_value(): void
+    {
+        // Arrange: Context with null value in days array
+        $daysWithNull = [DaysOfWeek::MONDAY->value, null, DaysOfWeek::FRIDAY->value];
+        $context = $this->createValidationContext(OperationType::CREATE, true, $daysWithNull);
+
+        $validDaysList = implode(', ', DaysOfWeek::values());
+        $context->expects($this->once())
+            ->method('setViolationFromRule')
+            ->with($this->rule, 'days', "Invalid day ''. Valid days are: " . $validDaysList);
+
+        // Act: Execute the days validation rule
+        $this->rule->validate($context);
+
+        // Assert: Null values should trigger violation
+    }
+
+    /**
+     * Test that validation fails when days contains boolean value.
+     */
+    public function test_fails_when_days_contains_boolean_value(): void
+    {
+        // Arrange: Context with boolean value in days array
+        $daysWithBoolean = [DaysOfWeek::MONDAY->value, true, DaysOfWeek::FRIDAY->value];
+        $context = $this->createValidationContext(OperationType::CREATE, true, $daysWithBoolean);
+
+        $validDaysList = implode(', ', DaysOfWeek::values());
+        $context->expects($this->once())
+            ->method('setViolationFromRule')
+            ->with($this->rule, 'days', "Invalid day '1'. Valid days are: " . $validDaysList);
+
+        // Act: Execute the days validation rule
+        $this->rule->validate($context);
+
+        // Assert: Boolean values should trigger violation
+    }
+
+    /**
+     * Test that validation fails when days contains numeric value.
+     */
+    public function test_fails_when_days_contains_numeric_value(): void
+    {
+        // Arrange: Context with numeric value in days array
+        $daysWithNumber = [DaysOfWeek::MONDAY->value, 1, DaysOfWeek::FRIDAY->value];
+        $context = $this->createValidationContext(OperationType::CREATE, true, $daysWithNumber);
+
+        $validDaysList = implode(', ', DaysOfWeek::values());
+        $context->expects($this->once())
+            ->method('setViolationFromRule')
+            ->with($this->rule, 'days', "Invalid day '1'. Valid days are: " . $validDaysList);
+
+        // Act: Execute the days validation rule
+        $this->rule->validate($context);
+
+        // Assert: Numeric values should trigger violation
+    }
+
+    /**
+     * Test that validation passes for mixed order of days.
+     */
+    public function test_passes_for_mixed_order_of_days(): void
+    {
+        // Arrange: Context with days in non-chronological order
+        $mixedOrderDays = [DaysOfWeek::FRIDAY->value, DaysOfWeek::MONDAY->value, DaysOfWeek::WEDNESDAY->value];
+        $context = $this->createValidationContext(OperationType::CREATE, true, $mixedOrderDays);
+
+        $context->expects($this->never())->method('setViolationFromRule');
+
+        // Act: Execute the days validation rule
+        $this->rule->validate($context);
+
+        // Assert: Order of days should not matter for validation
     }
 
     /**

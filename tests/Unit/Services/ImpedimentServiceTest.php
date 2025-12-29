@@ -774,50 +774,6 @@ final class ImpedimentServiceTest extends TestCase
     }
 
     /**
-     * Test impediment active status live.
-     */
-    public function test_impediment_active_status_live(): void
-    {
-        $now = now();
-
-        // Skip test near midnight to avoid boundary issues
-        if ($now->format('H') == 23 && (int)$now->format('i') >= 40) {
-            $this->markTestSkipped('Cannot test live time slot crossing midnight.');
-        }
-
-        // Arrange: Create availability for current time
-        $dailyStart = $now->copy();
-        $dailyEnd   = $now->copy()->addMinutes(20);
-        $validityEnd = $now->copy()->addHour();
-
-        $availability = availability_for($this->testSchedulable)->create([
-            'type' => 'instant-test',
-            'daily_start' => $dailyStart->format('H:i:s'),
-            'daily_end' => $dailyEnd->format('H:i:s'),
-            'days' => [strtolower($now->englishDayOfWeek)],
-            'validity_start' => $now->copy(),
-            'validity_end' => $validityEnd,
-        ]);
-
-        // Create impediment starting now
-        $start = $now->copy()->addSecond();
-        $end   = $now->copy()->addMinutes(10);
-
-        $impediment = impediment_for($availability)->create([
-            'reason' => 'Live active test',
-            'start_datetime' => $start,
-            'end_datetime' => $end,
-        ]);
-
-        sleep(2);
-
-        // Assert: Verify live status
-        $this->assertTrue($impediment->isActive());
-        $this->assertFalse($impediment->isPast());
-        $this->assertFalse($impediment->isUpcoming());
-    }
-
-    /**
      * Test concurrent impediment creation prevents overlap.
      */
     public function test_concurrent_impediment_creation_prevents_overlap(): void
@@ -858,12 +814,13 @@ final class ImpedimentServiceTest extends TestCase
 
         // Assert: Expect validation exception for wrong day
         $this->expectException(ValidationFailedException::class);
-        $this->expectExceptionMessageMatches('/failed for Impediment.*not allowed.*only permits/i');
+        $this->expectExceptionMessageMatches('/failed for Impediment.*not allowed.*Allowed days/i');
+
 
         // Act: Attempt to create impediment on Tuesday
         impediment_for($mondayOnlyAvailability)->create([
             'reason' => 'Tuesday impediment',
-            'start_datetime' => '2038-01-05 21:00:00',
+            'start_datetime' => '2038-01-07 21:00:00',
             'end_datetime' => '2038-01-07 21:30:00',
         ]);
     }

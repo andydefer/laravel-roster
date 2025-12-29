@@ -43,6 +43,16 @@ class TimeSlotDateTimeRule extends AbstractRule
     }
 
     /**
+     * Returns a detailed description of what this rule validates.
+     *
+     * @return string Detailed description
+     */
+    public function getDescription(): string
+    {
+        return "This rule validates the chronological integrity of date-time pairs for schedule and impediment entities, ensuring that start datetime precedes end datetime. For CREATE operations, it validates both provided datetime values. For UPDATE operations, it intelligently handles partial updates by combining updated fields with existing entity values, maintaining temporal consistency across modifications. The rule also validates datetime format compatibility and provides clear error messages for invalid temporal sequences.";
+    }
+
+    /**
      * Validates datetime pairs for creation operations.
      *
      * @param ValidationContextInterface $validationContext Validation context
@@ -112,15 +122,17 @@ class TimeSlotDateTimeRule extends AbstractRule
             $endDateTime = Carbon::parse($endValue);
 
             if ($endDateTime->lte($startDateTime)) {
-                $validationContext->setViolation(
-                    'datetime_range',
-                    'End datetime must be after start datetime'
+                $validationContext->setViolationFromRule(
+                    rule: $this,
+                    field: 'datetime_range',
+                    message: 'End datetime must be after start datetime'
                 );
             }
         } catch (Exception $exception) {
-            $validationContext->setViolation(
-                'datetime_format',
-                "Invalid datetime format: " . $exception->getMessage()
+            $validationContext->setViolationFromRule(
+                rule: $this,
+                field: 'datetime_format',
+                message: "Invalid datetime format: " . $exception->getMessage()
             );
         }
     }

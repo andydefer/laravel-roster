@@ -38,7 +38,7 @@ final class AvailabilityTypeRuleTest extends TestCase
             typeValue: 'office'
         );
 
-        $context->expects($this->never())->method('setViolation');
+        $context->expects($this->never())->method('setViolationFromRule');
 
         // Act: Execute the type validation rule
         $this->rule->validate($context);
@@ -61,8 +61,9 @@ final class AvailabilityTypeRuleTest extends TestCase
         );
 
         $context->expects($this->once())
-            ->method('setViolation')
+            ->method('setViolationFromRule')
             ->with(
+                $this->rule,
                 'type',
                 "Invalid type 'invalid'. Allowed types: office, remote, meeting"
             );
@@ -87,7 +88,7 @@ final class AvailabilityTypeRuleTest extends TestCase
             typeValue: 'any_type'
         );
 
-        $context->expects($this->never())->method('setViolation');
+        $context->expects($this->never())->method('setViolationFromRule');
 
         // Act: Execute the type validation rule with empty configuration
         $this->rule->validate($context);
@@ -109,7 +110,7 @@ final class AvailabilityTypeRuleTest extends TestCase
             typeValue: null
         );
 
-        $context->expects($this->never())->method('setViolation');
+        $context->expects($this->never())->method('setViolationFromRule');
 
         // Act: Execute the type validation rule
         $this->rule->validate($context);
@@ -132,7 +133,7 @@ final class AvailabilityTypeRuleTest extends TestCase
         );
 
         $context->expects($this->never())->method('get');
-        $context->expects($this->never())->method('setViolation');
+        $context->expects($this->never())->method('setViolationFromRule');
 
         // Act: Execute the type validation rule
         $this->rule->validate($context);
@@ -173,8 +174,9 @@ final class AvailabilityTypeRuleTest extends TestCase
         );
 
         $context->expects($this->once())
-            ->method('setViolation')
+            ->method('setViolationFromRule')
             ->with(
+                $this->rule,
                 'type',
                 "Invalid type 'invalid_type'. Allowed types: office, remote, meeting, training, support, maintenance, project, emergency, holiday, sick (see more in configuration: roster.allowed_types)"
             );
@@ -199,7 +201,7 @@ final class AvailabilityTypeRuleTest extends TestCase
             typeValue: 'remote'
         );
 
-        $context->expects($this->never())->method('setViolation');
+        $context->expects($this->never())->method('setViolationFromRule');
 
         // Act: Execute the type validation rule for UPDATE operation
         $this->rule->validate($context);
@@ -221,7 +223,7 @@ final class AvailabilityTypeRuleTest extends TestCase
             typeValue: '1'
         );
 
-        $context->expects($this->never())->method('setViolation');
+        $context->expects($this->never())->method('setViolationFromRule');
 
         // Act: Execute the type validation rule
         $this->rule->validate($context);
@@ -243,7 +245,7 @@ final class AvailabilityTypeRuleTest extends TestCase
             typeValue: 'office'
         );
 
-        $context->expects($this->never())->method('setViolation');
+        $context->expects($this->never())->method('setViolationFromRule');
 
         // Act: Execute the type validation rule
         $this->rule->validate($context);
@@ -266,8 +268,9 @@ final class AvailabilityTypeRuleTest extends TestCase
         );
 
         $context->expects($this->once())
-            ->method('setViolation')
+            ->method('setViolationFromRule')
             ->with(
+                $this->rule,
                 'type',
                 "Invalid type 'wrong_type'. Allowed types: type_a, type_b, type_c"
             );
@@ -276,6 +279,97 @@ final class AvailabilityTypeRuleTest extends TestCase
         $this->rule->validate($context);
 
         // Assert: Error message should be properly formatted with all allowed types
+    }
+
+    /**
+     * Test that rule description is available.
+     */
+    public function test_has_description(): void
+    {
+        // Act: Get rule description
+        $description = $this->rule->getDescription();
+
+        // Assert: Description should not be empty
+        $this->assertIsString($description);
+        $this->assertNotEmpty($description);
+    }
+
+    /**
+     * Test that validation passes when type field has empty string.
+     */
+    public function test_passes_when_type_is_empty_string(): void
+    {
+        // Arrange: Context with empty string type value
+        config(['roster.allowed_types' => ['office', 'remote']]);
+
+        $context = $this->createValidationContext(
+            operationType: OperationType::CREATE,
+            hasTypeField: true,
+            typeValue: ''
+        );
+
+        $context->expects($this->once())
+            ->method('setViolationFromRule')
+            ->with(
+                $this->rule,
+                'type',
+                "Invalid type ''. Allowed types: office, remote"
+            );
+
+        // Act: Execute the type validation rule
+        $this->rule->validate($context);
+
+        // Assert: Empty string should trigger violation if not in allowed list
+    }
+
+    /**
+     * Test that validation handles mixed case types correctly.
+     */
+    public function test_handles_mixed_case_types_correctly(): void
+    {
+        // Arrange: Allowed types with specific case
+        config(['roster.allowed_types' => ['Office', 'Remote', 'MEETING']]);
+
+        $context = $this->createValidationContext(
+            operationType: OperationType::CREATE,
+            hasTypeField: true,
+            typeValue: 'office'  // Lowercase version
+        );
+
+        $context->expects($this->once())
+            ->method('setViolationFromRule')
+            ->with(
+                $this->rule,
+                'type',
+                "Invalid type 'office'. Allowed types: Office, Remote, MEETING"
+            );
+
+        // Act: Execute the type validation rule
+        $this->rule->validate($context);
+
+        // Assert: Case-sensitive comparison should fail for mismatched case
+    }
+
+    /**
+     * Test that validation works with special characters in type names.
+     */
+    public function test_works_with_special_characters_in_types(): void
+    {
+        // Arrange: Allowed types with special characters
+        config(['roster.allowed_types' => ['type-1', 'type_2', 'type@3']]);
+
+        $context = $this->createValidationContext(
+            operationType: OperationType::CREATE,
+            hasTypeField: true,
+            typeValue: 'type-1'
+        );
+
+        $context->expects($this->never())->method('setViolationFromRule');
+
+        // Act: Execute the type validation rule
+        $this->rule->validate($context);
+
+        // Assert: Special characters should be handled correctly
     }
 
     /**

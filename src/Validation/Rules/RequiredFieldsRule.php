@@ -36,12 +36,21 @@ class RequiredFieldsRule extends AbstractRule
         $operationType = $validationContext->getOperation();
         $safeData = $validationContext->safeData();
 
-
         $this->validateOwnershipFields($validationContext, $safeData, $operationType);
 
         if ($operationType === OperationType::CREATE) {
             $this->validateRequiredFields($validationContext, $safeData);
         }
+    }
+
+    /**
+     * Returns a detailed description of what this rule validates.
+     *
+     * @return string Detailed description
+     */
+    public function getDescription(): string
+    {
+        return "This rule validates required fields for entity creation and update operations. For CREATE operations, it ensures all mandatory fields are present based on the entity type (Availability, Schedule, or Impediment). For UPDATE operations, it allows partial updates while preventing modification of ownership-related fields (schedulable_id, schedulable_type) to maintain data integrity and prevent unauthorized ownership changes.";
     }
 
     /**
@@ -64,9 +73,10 @@ class RequiredFieldsRule extends AbstractRule
 
         foreach ($ownershipFields as $ownershipField) {
             if (array_key_exists($ownershipField, $safeData)) {
-                $validationContext->setViolation(
-                    $ownershipField,
-                    sprintf("Field '%s' cannot be changed. Ownership cannot be modified.", $ownershipField)
+                $validationContext->setViolationFromRule(
+                    rule: $this,
+                    field: $ownershipField,
+                    message: sprintf("Field '%s' cannot be changed. Ownership cannot be modified.", $ownershipField)
                 );
             }
         }
@@ -87,9 +97,10 @@ class RequiredFieldsRule extends AbstractRule
 
         foreach ($requiredFields as $requiredField) {
             if (!array_key_exists($requiredField, $safeData)) {
-                $validationContext->setViolation(
-                    $requiredField,
-                    sprintf("Field '%s' is required", $requiredField)
+                $validationContext->setViolationFromRule(
+                    rule: $this,
+                    field: $requiredField,
+                    message: sprintf("Field '%s' is required", $requiredField)
                 );
             }
         }

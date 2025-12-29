@@ -189,16 +189,17 @@ final class ScheduleServiceTest extends TestCase
             'end_datetime' => '2038-01-04 11:00:00',
         ];
 
-        // Assert: Should throw validation exception
+        // Assert: Should throw validation exception with updated message
         $this->expectException(ValidationFailedException::class);
-        $this->expectExceptionMessageMatches('/Invalid availability ID/');
+        $this->expectExceptionMessageMatches('/Referenced availability period does not exist or is invalid/');
+        // Alternative: vérifier que le message contient la partie clé
+        // $this->expectExceptionMessageMatches('/availability period does not exist/');
 
         // Act: Attempt to create schedule for wrong schedulable
         schedule_for($availabilityForSchedulable1)
             ->for($schedulable2)
             ->create($scheduleData);
     }
-
 
     /**
      * Test successful schedule update.
