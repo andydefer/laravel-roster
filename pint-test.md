@@ -1,11 +1,11 @@
 # Pint Formatting Test Report
-*Generated: lun. 29 déc. 2025 01:54:20 WAT*
+*Generated: lun. 29 déc. 2025 02:57:51 WAT*
 
 
-  ⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯..⨯....⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯...⨯...⨯⨯.⨯⨯⨯⨯⨯.⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯.⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯.⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯..⨯.
+  ⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯..⨯....⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯...⨯...⨯⨯⨯⨯⨯⨯⨯⨯.⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯.⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯.⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯..⨯.
 
   ──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────── Laravel  
-    FAIL   ............................................................................................................................................... 146 files, 127 style issues  
+    FAIL   ............................................................................................................................................... 146 files, 128 style issues  
   ⨯ config/roster.php                                                                                                                                           binary_operator_spaces  
   ⨯ database/migrations/2024_01_01_000001_create_roster_availabilities_table.php class_definition, no_superfluous_phpdoc_tags, braces_position, phpdoc_trim, no_unused_imports, no_ex…  
   ⨯ rector.php                                                                                                                                                            concat_space  
@@ -90,6 +90,7 @@
   ⨯ tests/Integration/Database/ImpedimentIntegrationTest.php                                                                                                           ordered_imports  
   ⨯ tests/Integration/Database/ScheduleIntegrationTest.php                                                                                                             ordered_imports  
   ⨯ tests/Integration/Traits/BelongsToSchedulableTest.php                                                                                                              ordered_imports  
+  ⨯ tests/Support/TestSchedulable.php                                                                                                                      class_attributes_separation  
   ⨯ tests/TestCase.php                                                                                             no_superfluous_phpdoc_tags, concat_space, phpdoc_trim, phpdoc_align  
   ⨯ tests/Unit/Commands/CacheRulesCommandTest.php                                                                    new_with_parentheses, concat_space, ordered_imports, phpdoc_align  
   ⨯ tests/Unit/Commands/CapturesOutput.php                                                                                                                                phpdoc_align  

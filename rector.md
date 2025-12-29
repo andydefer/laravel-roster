@@ -1,67 +1,11 @@
 # Rector Refactoring Report
-*Generated: lun. 29 déc. 2025 01:54:29 WAT*
+*Generated: lun. 29 déc. 2025 02:58:00 WAT*
 
 
-37 files with changes
+38 files with changes
 =====================
 
-1) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Validation/Rules/SchedulableValidationRuleTest.php:688
-
-    ---------- begin diff ----------
-@@ @@
-
-     /**
-      * Create a mock model stub with specified ID.
--     *
--     * @param int $id
--     * @return Model
-      */
-     private function createModelStub(int $id): Model
-     {
-@@ @@
-     /**
-      * Create a validation context mock for CREATE operation.
-      *
--     * @param EntityType $entityType
--     * @param Model|null $schedulable
-      * @param array<string, mixed> $data
-      * @return MockObject&ValidationContextInterface
-      */
-@@ @@
-     /**
-      * Create a validation context mock for UPDATE operation.
-      *
--     * @param EntityType $entityType
--     * @param Model $schedulable
-      * @param array<string, mixed> $data
-      * @return MockObject&ValidationContextInterface
-      */
-@@ @@
-     /**
-      * Create a validation context mock for DELETE operation.
-      *
--     * @param EntityType $entityType
--     * @param Model $schedulable
-      * @return MockObject&ValidationContextInterface
-      */
-     private function createContextForDeleteOperation(
-@@ @@
-      * Configure context get method for schedulable fields.
-      *
-      * @param MockObject&ValidationContextInterface $context
--     * @param mixed $schedulableId
--     * @param string|null $schedulableType
-      */
-     private function configureContextGetMethod(
-         MockObject $context,
-    ----------- end diff -----------
-
-Applied rules:
- * RemoveUselessParamTagRector
- * RemoveUselessReturnTagRector
-
-
-2) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Validation/Rules/TimeRangeRuleTest.php:22
+1) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Validation/Rules/TimeRangeRuleTest.php:22
 
     ---------- begin diff ----------
 @@ @@
@@ -80,7 +24,7 @@ Applied rules:
  * NewlineBetweenClassLikeStmtsRector
 
 
-3) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Validation/Rules/TimeSlotDateTimeRuleTest.php:23
+2) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Validation/Rules/TimeSlotDateTimeRuleTest.php:23
 
     ---------- begin diff ----------
 @@ @@
@@ -116,7 +60,7 @@ Applied rules:
  * RemoveUselessReturnTagRector
 
 
-4) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Validation/Rules/TimezoneValidationRuleTest.php:21
+3) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Validation/Rules/TimezoneValidationRuleTest.php:21
 
     ---------- begin diff ----------
 @@ @@
@@ -161,7 +105,7 @@ Applied rules:
  * ClassMethodArrayDocblockParamFromLocalCallsRector
 
 
-5) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Validation/ValidationContextTest.php:4
+4) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Validation/ValidationContextTest.php:4
 
     ---------- begin diff ----------
 @@ @@
@@ -247,7 +191,7 @@ Applied rules:
  * AddClosureVoidReturnTypeWhereNoReturnRector
 
 
-6) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Validation/ValidatorTest.php:4
+5) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Validation/ValidatorTest.php:4
 
     ---------- begin diff ----------
 @@ @@
@@ -753,7 +697,7 @@ Applied rules:
  * AddArrayFunctionClosureParamTypeRector
 
 
-7) /home/andy-kani/pro/sites/packages/laravel-roster/tests/database/migrations/2024_01_01_000000_create_test_schedulables_table.php:18
+6) /home/andy-kani/pro/sites/packages/laravel-roster/tests/database/migrations/2024_01_01_000000_create_test_schedulables_table.php:18
 
     ---------- begin diff ----------
 @@ @@
@@ -780,7 +724,7 @@ Applied rules:
  * RemoveUselessReturnTagRector
 
 
-8) /home/andy-kani/pro/sites/packages/laravel-roster/src/Casts/TimezoneAwareDateTimeCast.php:4
+7) /home/andy-kani/pro/sites/packages/laravel-roster/src/Casts/TimezoneAwareDateTimeCast.php:4
 
     ---------- begin diff ----------
 @@ @@
@@ -822,7 +766,7 @@ Applied rules:
  * RemoveUselessParamTagRector
 
 
-9) /home/andy-kani/pro/sites/packages/laravel-roster/src/Commands/DebugRulesCommand.php:4
+8) /home/andy-kani/pro/sites/packages/laravel-roster/src/Commands/DebugRulesCommand.php:4
 
     ---------- begin diff ----------
 @@ @@
@@ -1045,7 +989,7 @@ Applied rules:
  * AddReturnArrayDocblockBasedOnArrayMapRector
 
 
-10) /home/andy-kani/pro/sites/packages/laravel-roster/src/Domain/Helpers/TimezoneHelper.php:4
+9) /home/andy-kani/pro/sites/packages/laravel-roster/src/Domain/Helpers/TimezoneHelper.php:4
 
     ---------- begin diff ----------
 @@ @@
@@ -1124,7 +1068,7 @@ Applied rules:
  * DisallowedEmptyRuleFixerRector
 
 
-11) /home/andy-kani/pro/sites/packages/laravel-roster/src/Models/Impediment.php:4
+10) /home/andy-kani/pro/sites/packages/laravel-roster/src/Models/Impediment.php:4
 
     ---------- begin diff ----------
 @@ @@
@@ -1166,7 +1110,7 @@ Applied rules:
  * NewlineAfterStatementRector
 
 
-12) /home/andy-kani/pro/sites/packages/laravel-roster/src/Validation/Cache/RuleCacheGenerator.php:148
+11) /home/andy-kani/pro/sites/packages/laravel-roster/src/Validation/Cache/RuleCacheGenerator.php:148
 
     ---------- begin diff ----------
 @@ @@
@@ -1212,7 +1156,7 @@ Applied rules:
  * AddArrayFunctionClosureParamTypeRector
 
 
-13) /home/andy-kani/pro/sites/packages/laravel-roster/src/Validation/Rules/AvailabilityDaysCoherenceRule.php:63
+12) /home/andy-kani/pro/sites/packages/laravel-roster/src/Validation/Rules/AvailabilityDaysCoherenceRule.php:63
 
     ---------- begin diff ----------
 @@ @@
@@ -1255,7 +1199,7 @@ Applied rules:
  * AddParamArrayDocblockFromDimFetchAccessRector
 
 
-14) /home/andy-kani/pro/sites/packages/laravel-roster/src/Validation/Rules/AvailabilityTemporalCoherenceRule.php:116
+13) /home/andy-kani/pro/sites/packages/laravel-roster/src/Validation/Rules/AvailabilityTemporalCoherenceRule.php:116
 
     ---------- begin diff ----------
 @@ @@
@@ -1322,7 +1266,7 @@ Applied rules:
  * AddArrowFunctionReturnTypeRector
 
 
-15) /home/andy-kani/pro/sites/packages/laravel-roster/src/Validation/Rules/TimezoneValidationRule.php:4
+14) /home/andy-kani/pro/sites/packages/laravel-roster/src/Validation/Rules/TimezoneValidationRule.php:4
 
     ---------- begin diff ----------
 @@ @@
@@ -1360,7 +1304,7 @@ Applied rules:
  * RemoveUselessReturnTagRector
 
 
-16) /home/andy-kani/pro/sites/packages/laravel-roster/src/helpers.php:77
+15) /home/andy-kani/pro/sites/packages/laravel-roster/src/helpers.php:77
 
     ---------- begin diff ----------
 @@ @@
@@ -1421,7 +1365,7 @@ Applied rules:
  * RemoveUselessReturnTagRector
 
 
-17) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Feature/Integration/CompleteRosterIntegrationTest.php:954
+16) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Feature/Integration/CompleteRosterIntegrationTest.php:954
 
     ---------- begin diff ----------
 @@ @@
@@ -1457,7 +1401,7 @@ Applied rules:
  * RemoveUselessParamTagRector
 
 
-18) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Integration/Database/AvailabilityIntegrationTest.php:4
+17) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Integration/Database/AvailabilityIntegrationTest.php:4
 
     ---------- begin diff ----------
 @@ @@
@@ -1471,6 +1415,23 @@ Applied rules:
     ----------- end diff -----------
 
 Applied rules:
+
+
+18) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Support/TestSchedulable.php:14
+
+    ---------- begin diff ----------
+@@ @@
+ class TestSchedulable extends Model
+ {
+     use HasRoster;
++
+     /**
+      * The table associated with the model.
+      *
+    ----------- end diff -----------
+
+Applied rules:
+ * NewlineBetweenClassLikeStmtsRector
 
 
 19) /home/andy-kani/pro/sites/packages/laravel-roster/tests/TestCase.php:24
@@ -3163,5 +3124,61 @@ Applied rules:
  * EncapsedStringsToSprintfRector
 
 
- [OK] 37 files would have been changed (dry-run) by Rector                                                              
+38) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Validation/Rules/SchedulableValidationRuleTest.php:688
+
+    ---------- begin diff ----------
+@@ @@
+
+     /**
+      * Create a mock model stub with specified ID.
+-     *
+-     * @param int $id
+-     * @return Model
+      */
+     private function createModelStub(int $id): Model
+     {
+@@ @@
+     /**
+      * Create a validation context mock for CREATE operation.
+      *
+-     * @param EntityType $entityType
+-     * @param Model|null $schedulable
+      * @param array<string, mixed> $data
+      * @return MockObject&ValidationContextInterface
+      */
+@@ @@
+     /**
+      * Create a validation context mock for UPDATE operation.
+      *
+-     * @param EntityType $entityType
+-     * @param Model $schedulable
+      * @param array<string, mixed> $data
+      * @return MockObject&ValidationContextInterface
+      */
+@@ @@
+     /**
+      * Create a validation context mock for DELETE operation.
+      *
+-     * @param EntityType $entityType
+-     * @param Model $schedulable
+      * @return MockObject&ValidationContextInterface
+      */
+     private function createContextForDeleteOperation(
+@@ @@
+      * Configure context get method for schedulable fields.
+      *
+      * @param MockObject&ValidationContextInterface $context
+-     * @param mixed $schedulableId
+-     * @param string|null $schedulableType
+      */
+     private function configureContextGetMethod(
+         MockObject $context,
+    ----------- end diff -----------
+
+Applied rules:
+ * RemoveUselessParamTagRector
+ * RemoveUselessReturnTagRector
+
+
+ [OK] 38 files would have been changed (dry-run) by Rector                                                              
 
