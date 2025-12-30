@@ -26,7 +26,7 @@ final class RosterServiceContext
      * @param callable $callback Operation to execute within authorized context
      * @return mixed Result of the callback execution
      */
-    public static function allowViaHelper(callable $callback): mixed
+    public static function allow(callable $callback): mixed
     {
         try {
             ++self::$allowedDepth;

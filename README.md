@@ -159,7 +159,7 @@ RosterMutationContext::allow(function () {
 
 // 2. Contexte de service (public)
 // Utilisé par les helpers pour autoriser l'utilisation des services
-RosterServiceContext::allowViaHelper(function () {
+RosterServiceContext::allow(function () {
     return $service->create([...]); // Autorisé via le helper
 });
 ```

@@ -226,7 +226,7 @@ if (!function_exists('availability_for')) {
      */
     function availability_for(Model $model): AvailabilityService
     {
-        return RosterServiceContext::allowViaHelper(function () use ($model) {
+        return RosterServiceContext::allow(function () use ($model) {
             /** @var AvailabilityService $service */
             $service = app('roster.availability');
             return $service->for(model: $model);
@@ -246,7 +246,7 @@ if (!function_exists('impediment_for')) {
      */
     function impediment_for(Availability $availability): ImpedimentService
     {
-        return RosterServiceContext::allowViaHelper(function () use ($availability) {
+        return RosterServiceContext::allow(function () use ($availability) {
             $schedulable = $availability->schedulable;
 
             if (!$schedulable) {
@@ -274,7 +274,7 @@ if (!function_exists('schedule_for')) {
      */
     function schedule_for(Availability $availability): ScheduleService
     {
-        return RosterServiceContext::allowViaHelper(function () use ($availability) {
+        return RosterServiceContext::allow(function () use ($availability) {
             $schedulable = $availability->schedulable;
 
             if (!$schedulable) {
