@@ -1,5 +1,5 @@
 # Pint Formatting Test Report
-*Generated: lun. 29 déc. 2025 18:48:41 WAT*
+*Generated: mar. 30 déc. 2025 01:26:58 WAT*
 
 
   ⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯.⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯..⨯....⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯...⨯...⨯⨯⨯⨯⨯⨯⨯⨯..⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯.⨯.⨯⨯⨯⨯⨯⨯⨯⨯⨯.⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯.⨯⨯..⨯.
@@ -73,7 +73,7 @@
   ⨯ src/Validation/Rules/AvailabilityTypeRule.php                                                                                      not_operator_with_successor_space, phpdoc_align  
   ⨯ src/Validation/Rules/DaysValidationRule.php                                                           not_operator_with_successor_space, blank_line_before_statement, phpdoc_align  
   ⨯ src/Validation/Rules/DurationRule.php                                                                  single_quote, concat_space, not_operator_with_successor_space, phpdoc_align  
-  ⨯ src/Validation/Rules/FutureDateRule.php        no_superfluous_phpdoc_tags, concat_space, phpdoc_trim, not_operator_with_successor_space, blank_line_before_statement, phpdoc_align  
+  ⨯ src/Validation/Rules/FutureDateRule.php class_attributes_separation, no_superfluous_phpdoc_tags, concat_space, phpdoc_trim, not_operator_with_successor_space, no_extra_blank_lin…  
   ⨯ src/Validation/Rules/ImpedimentScheduleDaysCoherenceRule.php                       phpdoc_separation, not_operator_with_successor_space, blank_line_before_statement, phpdoc_align  
   ⨯ src/Validation/Rules/RequiredFieldsRule.php                                                                          single_quote, not_operator_with_successor_space, phpdoc_align  
   ⨯ src/Validation/Rules/SchedulableConsistencyRule.php               single_quote, not_operator_with_successor_space, no_extra_blank_lines, blank_line_before_statement, phpdoc_align  
@@ -123,7 +123,7 @@
   ⨯ tests/Unit/Validation/Rules/DateRangeRulesTest.php                    class_attributes_separation, no_empty_statement, new_with_parentheses, function_declaration, ordered_imports  
   ⨯ tests/Unit/Validation/Rules/DaysValidationRuleTest.php                                                                    new_with_parentheses, function_declaration, concat_space  
   ⨯ tests/Unit/Validation/Rules/DurationRuleTest.php                                                      new_with_parentheses, single_quote, no_superfluous_phpdoc_tags, phpdoc_align  
-  ⨯ tests/Unit/Validation/Rules/FutureDateRuleTest.php                        new_with_parentheses, function_declaration, concat_space, no_unused_imports, blank_line_before_statement  
+  ⨯ tests/Unit/Validation/Rules/FutureDateRuleTest.php  new_with_parentheses, function_declaration, concat_space, no_unused_imports, no_extra_blank_lines, blank_line_before_statement  
   ⨯ tests/Unit/Validation/Rules/ImpedimentScheduleDaysCoherenceRuleTest.php class_attributes_separation, new_with_parentheses, function_declaration, single_quote, no_extra_blank_lin…  
   ⨯ tests/Unit/Validation/Rules/RequiredFieldsRuleTest.php                                                                                     new_with_parentheses, no_unused_imports  
   ⨯ tests/Unit/Validation/Rules/SchedulableConsistencyRuleTest.php                                    class_attributes_separation, new_with_parentheses, braces_position, phpdoc_align  

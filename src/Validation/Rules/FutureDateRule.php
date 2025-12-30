@@ -18,7 +18,7 @@ use Roster\Validation\Attributes\ValidationRule;
  * unless explicitly configured to allow past dates.
  */
 #[ValidationRule(
-    priority: 90,
+    priority: 40,
     entities: [EntityType::SCHEDULE, EntityType::IMPEDIMENT, EntityType::AVAILABILITY],
     operations: [OperationType::CREATE, OperationType::UPDATE]
 )]
@@ -34,6 +34,7 @@ class FutureDateRule extends AbstractRule
         if (!$this->shouldValidateFutureDates()) {
             return;
         }
+
 
         if ($this->allowPastDates()) {
             return;
@@ -66,13 +67,11 @@ class FutureDateRule extends AbstractRule
      */
     private function validateFutureAvailability(ValidationContextInterface $validationContext): void
     {
-        // For CREATE operation, validate all fields
         if ($validationContext->getOperation() === OperationType::CREATE) {
             $this->validateNewAvailability($validationContext);
             return;
         }
 
-        // For UPDATE operation, only validate if validity_start is being updated
         if (
             $validationContext->getOperation() === OperationType::UPDATE &&
             $validationContext->has('validity_start')
@@ -95,15 +94,16 @@ class FutureDateRule extends AbstractRule
         try {
             $validityStart = Carbon::parse($validationContext->get('validity_start'));
 
-            // Get daily_start from context or database (for updates)
-            $dailyStart = $validationContext->has('daily_start')
-                ? $validationContext->get('daily_start')
-                : $this->getCurrentDailyStart($validationContext);
+            if (!$validationContext->has('daily_start')) {
+                $dailyStart = '00:00:00';
+            } else {
+                $dailyStart = $validationContext->get('daily_start');
+            }
 
-            // Combine validity_start date with daily_start time
             $combinedDateTime = $this->combineDateAndTime($validityStart, $dailyStart);
 
             if ($combinedDateTime->isPast()) {
+
                 $validationContext->setViolationFromRule(
                     rule: $this,
                     field: 'validity_start',
@@ -116,6 +116,7 @@ class FutureDateRule extends AbstractRule
         }
     }
 
+
     /**
      * Validates updated availability when validity_start is changed.
      *
@@ -126,12 +127,14 @@ class FutureDateRule extends AbstractRule
         try {
             $validityStart = Carbon::parse($validationContext->get('validity_start'));
 
-            // Get daily_start from context or database
             $dailyStart = $validationContext->has('daily_start')
                 ? $validationContext->get('daily_start')
                 : $this->getCurrentDailyStart($validationContext);
 
-            // Combine validity_start date with daily_start time
+            if (empty($dailyStart)) {
+                $dailyStart = '00:00:00';
+            }
+
             $combinedDateTime = $this->combineDateAndTime($validityStart, $dailyStart);
 
             if ($combinedDateTime->isPast()) {
@@ -154,13 +157,11 @@ class FutureDateRule extends AbstractRule
      */
     private function validateFutureDateTime(ValidationContextInterface $validationContext): void
     {
-        // For CREATE operation, validate start_datetime
         if ($validationContext->getOperation() === OperationType::CREATE) {
             $this->validateNewDateTime($validationContext);
             return;
         }
 
-        // For UPDATE operation, only validate if start_datetime is being updated
         if (
             $validationContext->getOperation() === OperationType::UPDATE &&
             $validationContext->has('start_datetime')
@@ -220,7 +221,9 @@ class FutureDateRule extends AbstractRule
     }
 
     /**
-     * Combines date and time strings into a Carbon instance.
+     * Combines date and time strings into a Carbon instance with midnight crossing support.
+     *
+     * Handles the edge case where time is from previous day (23:xx:xx) when current time is between 00:00-01:00.
      *
      * @param Carbon $date
      * @param string|null $time
@@ -228,11 +231,29 @@ class FutureDateRule extends AbstractRule
      */
     private function combineDateAndTime(Carbon $date, ?string $time): Carbon
     {
-        if ($time) {
-            return Carbon::parse($date->format('Y-m-d') . ' ' . $time);
+        if (!$time) {
+            return $date->copy();
         }
 
-        return $date->copy();
+        // Parse l'heure pour avoir un objet Carbon
+        $timeCarbon = Carbon::parse($time);
+
+        // Vérifie si on est dans la fenêtre critique (00:00-01:00)
+        $now = Carbon::now();
+        $isMidnightWindow = $now->hour === 0 && $now->minute >= 0 && $now->minute < 60;
+
+        // Vérifie si l'heure fournie est >= 23:00:00
+        $isLateTime = $timeCarbon->hour >= 23;
+
+        // Si on est entre 00:00 et 01:00 ET que l'heure est tardive (≥23h), on recule d'un jour
+        if ($isMidnightWindow && $isLateTime) {
+            return $date->copy()
+                ->subDay()
+                ->setTimeFrom($timeCarbon);
+        }
+
+        // Comportement normal : combinaison directe
+        return $date->copy()->setTimeFrom($timeCarbon);
     }
 
     /**

@@ -645,6 +645,7 @@ final class FutureDateRuleTest extends TestCase
             dailyStart: $pastTime
         );
 
+
         $context->expects($this->once())
             ->method('setViolationFromRule')
             ->with(
