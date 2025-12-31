@@ -72,7 +72,7 @@ class ValidationResult
     public function toArray(bool $includeRuleDescriptions = false): array
     {
         $violationsArray = array_map(
-            function (ViolationData $violation) use ($includeRuleDescriptions) {
+            function (ViolationData $violation) use ($includeRuleDescriptions): array {
                 $data = [
                     'field' => $violation->getField(),
                     'rule' => $violation->getRule(),

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Validation\Rules;
 
+use stdClass;
 use Exception;
 use Mockery;
 use Mockery\MockInterface;
@@ -19,6 +20,7 @@ use Tests\TestCase;
 final class TimeRangeRuleTest extends TestCase
 {
     private AvailabilityService|MockInterface $availabilityService;
+
     private TimeRangeRule $rule;
 
     /**
@@ -71,7 +73,7 @@ final class TimeRangeRuleTest extends TestCase
             ->with(123)
             ->andReturn($availability);
 
-        $context->expects($this->any())
+        $context
             ->method('getAvailabilityService')
             ->willReturn($this->availabilityService);
 
@@ -113,7 +115,7 @@ final class TimeRangeRuleTest extends TestCase
             ->with(123)
             ->andReturn($availability);
 
-        $context->expects($this->any())
+        $context
             ->method('getAvailabilityService')
             ->willReturn($this->availabilityService);
 
@@ -161,7 +163,7 @@ final class TimeRangeRuleTest extends TestCase
             ->with(123)
             ->andReturn($availability);
 
-        $context->expects($this->any())
+        $context
             ->method('getAvailabilityService')
             ->willReturn($this->availabilityService);
 
@@ -209,7 +211,7 @@ final class TimeRangeRuleTest extends TestCase
             ->with(123)
             ->andReturn($availability);
 
-        $context->expects($this->any())
+        $context
             ->method('getAvailabilityService')
             ->willReturn($this->availabilityService);
 
@@ -257,7 +259,7 @@ final class TimeRangeRuleTest extends TestCase
             ->with(123)
             ->andReturn($availability);
 
-        $context->expects($this->any())
+        $context
             ->method('getAvailabilityService')
             ->willReturn($this->availabilityService);
 
@@ -305,7 +307,7 @@ final class TimeRangeRuleTest extends TestCase
             ->with(123)
             ->andReturn($availability);
 
-        $context->expects($this->any())
+        $context
             ->method('getAvailabilityService')
             ->willReturn($this->availabilityService);
 
@@ -384,7 +386,7 @@ final class TimeRangeRuleTest extends TestCase
             ->with(123)
             ->andReturn($availability);
 
-        $context->expects($this->any())
+        $context
             ->method('getAvailabilityService')
             ->willReturn($this->availabilityService);
 
@@ -418,7 +420,7 @@ final class TimeRangeRuleTest extends TestCase
             ->with(999)
             ->andReturn(null);
 
-        $context->expects($this->any())
+        $context
             ->method('getAvailabilityService')
             ->willReturn($this->availabilityService);
 
@@ -490,7 +492,7 @@ final class TimeRangeRuleTest extends TestCase
             ->with(123)
             ->andReturn($availability);
 
-        $context->expects($this->any())
+        $context
             ->method('getAvailabilityService')
             ->willReturn($this->availabilityService);
 
@@ -594,7 +596,7 @@ final class TimeRangeRuleTest extends TestCase
             ->with(123)
             ->andReturn($availability);
 
-        $context->expects($this->any())
+        $context
             ->method('getAvailabilityService')
             ->willReturn($this->availabilityService);
 
@@ -699,12 +701,12 @@ final class TimeRangeRuleTest extends TestCase
         );
 
         // Mock existing entity with datetime values
-        $entity = new \stdClass();
+        $entity = new stdClass();
         $entity->start_datetime = '2024-01-01 10:00:00';
         $entity->end_datetime = '2024-01-01 16:00:00';
         $entity->availability_id = 123;
 
-        $context->expects($this->any())
+        $context
             ->method('getCurrentEntity')
             ->willReturn($entity);
 
@@ -713,7 +715,7 @@ final class TimeRangeRuleTest extends TestCase
             ->with(123)
             ->andReturn($availability);
 
-        $context->expects($this->any())
+        $context
             ->method('getAvailabilityService')
             ->willReturn($this->availabilityService);
 
@@ -769,6 +771,7 @@ final class TimeRangeRuleTest extends TestCase
 
         return $context;
     }
+
     /**
      * Create an Availability model instance with test data.
      *

@@ -45,7 +45,7 @@ class TimeRangeRule extends AbstractRule
             $this->validateSingleDayEvent($context, $startDatetime, $endDatetime);
 
             $availability = $this->resolveAvailability($context);
-            if ($availability === null) {
+            if (!$availability instanceof Availability) {
                 return;
             }
 

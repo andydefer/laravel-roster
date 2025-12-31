@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Validation\Rules;
 
+use Illuminate\Support\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Roster\Validation\Exceptions\ValidationFailedException;
@@ -302,7 +303,7 @@ final class AvailabilityTemporalCoherenceRuleTest extends TestCase
         $this->assertTrue($result);
         $this->assertDatabaseHas('roster_availabilities', [
             'id' => $availability->id,
-            'validity_end' => \Illuminate\Support\Carbon::parse('2038-01-20')->startOfDay(),
+            'validity_end' => Carbon::parse('2038-01-20')->startOfDay(),
         ]);
     }
 

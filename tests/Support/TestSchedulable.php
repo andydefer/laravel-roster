@@ -14,6 +14,7 @@ use Roster\Traits\HasRoster;
 class TestSchedulable extends Model
 {
     use HasRoster;
+
     /**
      * The table associated with the model.
      *

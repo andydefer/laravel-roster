@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Tests\Unit\DTOs;
 
 use Illuminate\Support\Carbon;
-use Illuminate\Database\Eloquent\Model;
 use Roster\DTOs\AvailabilityData;
 use Roster\Models\Availability;
 use Roster\Support\RosterMutationContext;
@@ -53,15 +52,15 @@ final class AvailabilityDataTest extends TestCase
         $availabilityData = AvailabilityData::fromArray($rawData);
 
         // Assert: Verify all properties are correctly set
-        $this->assertEquals(123, $availabilityData->id);
-        $this->assertEquals('consultation', $availabilityData->type);
-        $this->assertEquals(['monday', 'wednesday', 'friday'], $availabilityData->days);
-        $this->assertEquals('2038-01-01', $availabilityData->validityStart?->format('Y-m-d'));
-        $this->assertEquals('2038-12-31', $availabilityData->validityEnd?->format('Y-m-d'));
-        $this->assertEquals('09:00:00', $availabilityData->dailyStart?->format('H:i:s'));
-        $this->assertEquals('17:00:00', $availabilityData->dailyEnd?->format('H:i:s'));
-        $this->assertEquals(456, $availabilityData->schedulableId);
-        $this->assertEquals('user', $availabilityData->schedulableType);
+        $this->assertSame(123, $availabilityData->id);
+        $this->assertSame('consultation', $availabilityData->type);
+        $this->assertSame(['monday', 'wednesday', 'friday'], $availabilityData->days);
+        $this->assertSame('2038-01-01', $availabilityData->validityStart?->format('Y-m-d'));
+        $this->assertSame('2038-12-31', $availabilityData->validityEnd?->format('Y-m-d'));
+        $this->assertSame('09:00:00', $availabilityData->dailyStart?->format('H:i:s'));
+        $this->assertSame('17:00:00', $availabilityData->dailyEnd?->format('H:i:s'));
+        $this->assertSame(456, $availabilityData->schedulableId);
+        $this->assertSame('user', $availabilityData->schedulableType);
     }
 
     /**
@@ -81,12 +80,12 @@ final class AvailabilityDataTest extends TestCase
 
         // Assert: Verify provided properties are set, others are null
         $this->assertNull($availabilityData->id);
-        $this->assertEquals('training', $availabilityData->type);
+        $this->assertSame('training', $availabilityData->type);
         $this->assertNull($availabilityData->days);
-        $this->assertNull($availabilityData->validityStart);
-        $this->assertNull($availabilityData->validityEnd);
-        $this->assertEquals('08:00:00', $availabilityData->dailyStart?->format('H:i:s'));
-        $this->assertEquals('16:00:00', $availabilityData->dailyEnd?->format('H:i:s'));
+        $this->assertNotInstanceOf(Carbon::class, $availabilityData->validityStart);
+        $this->assertNotInstanceOf(Carbon::class, $availabilityData->validityEnd);
+        $this->assertSame('08:00:00', $availabilityData->dailyStart?->format('H:i:s'));
+        $this->assertSame('16:00:00', $availabilityData->dailyEnd?->format('H:i:s'));
     }
 
     /**
@@ -183,10 +182,10 @@ final class AvailabilityDataTest extends TestCase
         $updatedData = $originalData->withDays(['tuesday', 'thursday']);
 
         // Assert: Verify new instance has updated days, original unchanged
-        $this->assertEquals(['tuesday', 'thursday'], $updatedData->days);
-        $this->assertEquals(['monday'], $originalData->days);
-        $this->assertEquals('consultation', $updatedData->type);
-        $this->assertEquals('09:00:00', $updatedData->dailyStart?->format('H:i:s'));
+        $this->assertSame(['tuesday', 'thursday'], $updatedData->days);
+        $this->assertSame(['monday'], $originalData->days);
+        $this->assertSame('consultation', $updatedData->type);
+        $this->assertSame('09:00:00', $updatedData->dailyStart?->format('H:i:s'));
     }
 
     /**
@@ -286,7 +285,7 @@ final class AvailabilityDataTest extends TestCase
 
         // Act & Assert: Verify isUpdateOperation returns false
         $this->assertFalse($availabilityData->isUpdateOperation());
-        $this->assertNull($availabilityData->getExistingEntity());
+        $this->assertNotInstanceOf(Availability::class, $availabilityData->getExistingEntity());
     }
 
     /**
@@ -327,7 +326,7 @@ final class AvailabilityDataTest extends TestCase
 
         // Act & Assert: Verify getExistingEntity returns null
         $this->assertFalse($availabilityData->isUpdateOperation());
-        $this->assertNull($availabilityData->getExistingEntity());
+        $this->assertNotInstanceOf(Availability::class, $availabilityData->getExistingEntity());
     }
 
     /**
@@ -392,7 +391,7 @@ final class AvailabilityDataTest extends TestCase
 
         // Assert: Verify string days are treated as array with single element
 
-        $this->assertEquals(['monday,tuesday'], $days);
+        $this->assertSame(['monday,tuesday'], $days);
         $this->assertEquals(['monday,tuesday'], $arrayData['days']);
     }
 
@@ -415,7 +414,7 @@ final class AvailabilityDataTest extends TestCase
         ]);
 
         // Assert: Verify correctly parsed days
-        $this->assertEquals(['monday', 'tuesday', 'wednesday'], $availabilityData->days);
+        $this->assertSame(['monday', 'tuesday', 'wednesday'], $availabilityData->days);
     }
 
     /**
@@ -460,7 +459,7 @@ final class AvailabilityDataTest extends TestCase
         ]);
 
         // Act: Create new DTO with schedulable info
-        /**  @var \Roster\DTOs\AvailabilityData $updatedData */
+        /** @var AvailabilityData $updatedData */
         $updatedData = $originalData->withSchedulable(123, 'user');
 
         // Assert: Verify new instance has schedulable info, original unchanged

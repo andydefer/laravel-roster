@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Roster\Domain\Helpers;
 
+use Exception;
 use Illuminate\Support\Carbon;
 use DateTimeZone;
 use InvalidArgumentException;
@@ -15,8 +16,11 @@ use InvalidArgumentException;
 final class TimezoneHelper
 {
     private static ?string $defaultTimezone = null;
+
     private static ?string $userTimezone = null;
+
     private const SYSTEM_TIMEZONE = 'UTC';
+
     private static bool $initialized = false;
 
     /**
@@ -34,7 +38,7 @@ final class TimezoneHelper
         }
 
         if (!self::isValidTimezone($configValue)) {
-            throw new InvalidArgumentException("Invalid timezone configured: {$configValue}");
+            throw new InvalidArgumentException('Invalid timezone configured: ' . $configValue);
         }
 
         self::$defaultTimezone = self::normalizeTimezone($configValue);
@@ -63,8 +67,9 @@ final class TimezoneHelper
 
         if ($timezone !== null) {
             if (!self::isValidTimezone($timezone)) {
-                throw new InvalidArgumentException("Invalid user timezone: {$timezone}");
+                throw new InvalidArgumentException('Invalid user timezone: ' . $timezone);
             }
+
             $timezone = self::normalizeTimezone($timezone);
         }
 
@@ -179,14 +184,14 @@ final class TimezoneHelper
      */
     public static function isValidTimezone(string $timezone): bool
     {
-        if (empty($timezone)) {
+        if ($timezone === '' || $timezone === '0') {
             return false;
         }
 
         try {
             new DateTimeZone($timezone);
             return true;
-        } catch (\Exception) {
+        } catch (Exception) {
             return false;
         }
     }
@@ -200,7 +205,7 @@ final class TimezoneHelper
     public static function normalizeTimezone(string $timezone): string
     {
         $all = DateTimeZone::listIdentifiers();
-        $key = array_search(strtolower($timezone), array_map('strtolower', $all));
+        $key = array_search(strtolower($timezone), array_map('strtolower', $all), true);
         return $key !== false ? $all[$key] : self::SYSTEM_TIMEZONE;
     }
 

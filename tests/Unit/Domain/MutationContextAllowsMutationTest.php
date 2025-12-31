@@ -47,7 +47,7 @@ final class MutationContextAllowsMutationTest extends TestCase
         ];
 
         // Act: Create availability within mutation context
-        $availability = RosterMutationContext::allow(function () use ($testData) {
+        $availability = RosterMutationContext::allow(function () use ($testData): Availability {
             return $this->createAvailability($testData);
         });
 
@@ -63,7 +63,7 @@ final class MutationContextAllowsMutationTest extends TestCase
     public function test_update_inside_context_is_allowed(): void
     {
         // Arrange: Create initial availability
-        $availability = RosterMutationContext::allow(function () {
+        $availability = RosterMutationContext::allow(function (): Availability {
             return $this->createAvailability([
                 'schedulable_id' => 1,
                 'schedulable_type' => TestSchedulable::class,
@@ -94,7 +94,7 @@ final class MutationContextAllowsMutationTest extends TestCase
     public function test_delete_inside_context_is_allowed(): void
     {
         // Arrange: Create availability
-        $availability = RosterMutationContext::allow(function () {
+        $availability = RosterMutationContext::allow(function (): Availability {
             return $this->createAvailability([
                 'schedulable_id' => 1,
                 'schedulable_type' => TestSchedulable::class,
@@ -126,7 +126,6 @@ final class MutationContextAllowsMutationTest extends TestCase
      * Create an availability with the given data.
      *
      * @param array<string, mixed> $data
-     * @return Availability
      */
     private function createAvailability(array $data): Availability
     {

@@ -102,11 +102,11 @@ final class AvailabilityDateRangeRuleTest extends TestCase
                 $this->assertSame($this->rule, $rule);
 
                 if ($violationCount === 1) {
-                    $this->assertEquals('daily_time_range', $field);
-                    $this->assertEquals('Daily end time must be after start time', $message);
+                    $this->assertSame('daily_time_range', $field);
+                    $this->assertSame('Daily end time must be after start time', $message);
                 } else {
-                    $this->assertEquals('min_duration', $field);
-                    $this->assertEquals('Daily time slot duration must be at least 15 minutes', $message);
+                    $this->assertSame('min_duration', $field);
+                    $this->assertSame('Daily time slot duration must be at least 15 minutes', $message);
                 }
             });
 
@@ -419,7 +419,6 @@ final class AvailabilityDateRangeRuleTest extends TestCase
     /**
      * Create a validation context mock for UPDATE operation.
      *
-     * @param Model|null $existingEntity
      * @return MockObject&ValidationContextInterface
      */
     private function createValidationContextWithUpdateOperation(?Model $existingEntity): MockObject
@@ -436,10 +435,6 @@ final class AvailabilityDateRangeRuleTest extends TestCase
      * Configure context with all data fields.
      *
      * @param MockObject&ValidationContextInterface $context
-     * @param string $validityStart
-     * @param string $validityEnd
-     * @param string $dailyStart
-     * @param string $dailyEnd
      */
     private function configureContextWithData(
         MockObject $context,
@@ -482,10 +477,6 @@ final class AvailabilityDateRangeRuleTest extends TestCase
      *
      * @param MockObject&ValidationContextInterface $context
      * @param array<int, string> $fieldsToProvide
-     * @param string|null $validityStart
-     * @param string|null $validityEnd
-     * @param string|null $dailyStart
-     * @param string|null $dailyEnd
      */
     private function configureContextWithPartialData(
         MockObject $context,
@@ -523,12 +514,7 @@ final class AvailabilityDateRangeRuleTest extends TestCase
     /**
      * Create a stub entity with the given date and time values.
      *
-     * @param string $validityStart
-     * @param string $validityEnd
-     * @param string $dailyStart
-     * @param string $dailyEnd
      *
-     * @return Model
      */
     private function createEntityStub(
         string $validityStart,
@@ -538,8 +524,11 @@ final class AvailabilityDateRangeRuleTest extends TestCase
     ): Model {
         $entity = new class extends Model {
             public $validity_start;
+
             public $validity_end;
+
             public $daily_start;
+
             public $daily_end;
 
             public function __construct()

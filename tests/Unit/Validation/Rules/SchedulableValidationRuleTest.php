@@ -911,9 +911,6 @@ final class SchedulableValidationRuleTest extends TestCase
 
     /**
      * Create a mock model stub with specified ID.
-     *
-     * @param int $id
-     * @return Model
      */
     private function createModelStub(int $id): Model
     {
@@ -934,8 +931,6 @@ final class SchedulableValidationRuleTest extends TestCase
     /**
      * Create a validation context mock for CREATE operation.
      *
-     * @param EntityType $entityType
-     * @param Model|null $schedulable
      * @param array<string, mixed> $data
      * @return MockObject&ValidationContextInterface
      */
@@ -956,8 +951,6 @@ final class SchedulableValidationRuleTest extends TestCase
     /**
      * Create a validation context mock for UPDATE operation.
      *
-     * @param EntityType $entityType
-     * @param Model $schedulable
      * @param array<string, mixed> $data
      * @return MockObject&ValidationContextInterface
      */
@@ -978,8 +971,6 @@ final class SchedulableValidationRuleTest extends TestCase
     /**
      * Create a validation context mock for DELETE operation.
      *
-     * @param EntityType $entityType
-     * @param Model $schedulable
      * @return MockObject&ValidationContextInterface
      */
     private function createContextForDeleteOperation(
@@ -1002,8 +993,6 @@ final class SchedulableValidationRuleTest extends TestCase
      * Configure context get method for schedulable fields.
      *
      * @param MockObject&ValidationContextInterface $context
-     * @param mixed $schedulableId
-     * @param string|null $schedulableType
      */
     private function configureContextGetMethod(
         MockObject $context,

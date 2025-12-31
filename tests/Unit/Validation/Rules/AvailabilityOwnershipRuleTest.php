@@ -154,8 +154,7 @@ final class AvailabilityOwnershipRuleTest extends TestCase
     {
         // Arrange: Create context with null schedulable
         $context = $this->createValidationContext(
-            operationType: OperationType::CREATE,
-            schedulable: null
+            operationType: OperationType::CREATE
         );
 
         $this->configureContextHasMethod($context, hasAvailabilityId: true);
@@ -353,8 +352,7 @@ final class AvailabilityOwnershipRuleTest extends TestCase
 
         $context = $this->createValidationContext(
             operationType: OperationType::UPDATE,
-            schedulable: $schedulable,
-            currentEntity: null
+            schedulable: $schedulable
         );
 
         $this->configureContextHasMethod($context, hasAvailabilityId: false);
@@ -453,9 +451,6 @@ final class AvailabilityOwnershipRuleTest extends TestCase
 
     /**
      * Create a schedulable model mock.
-     *
-     * @param int $id
-     * @return Model
      */
     private function createSchedulableMock(int $id): Model
     {
@@ -475,11 +470,6 @@ final class AvailabilityOwnershipRuleTest extends TestCase
 
     /**
      * Create an availability model mock.
-     *
-     * @param int $id
-     * @param int $schedulableId
-     * @param string|null $schedulableClass
-     * @return Availability
      */
     private function createAvailabilityMock(int $id, int $schedulableId, ?string $schedulableClass = null): Availability
     {
@@ -506,13 +496,13 @@ final class AvailabilityOwnershipRuleTest extends TestCase
 
     /**
      * Create a stub schedule entity.
-     *
-     * @param int|null $availabilityId
-     * @return object
      */
     private function createScheduleEntityStub(?int $availabilityId): object
     {
         return new class($availabilityId) {
+            /**
+             * @var int|null
+             */
             public $availability_id;
 
             public function __construct(?int $availabilityId)
@@ -525,10 +515,6 @@ final class AvailabilityOwnershipRuleTest extends TestCase
     /**
      * Create a validation context mock with given parameters.
      *
-     * @param OperationType $operationType
-     * @param Model|null $schedulable
-     * @param object|null $currentEntity
-     * @param AvailabilityService|null $availabilityService
      * @return MockObject&ValidationContextInterface
      */
     private function createValidationContext(
@@ -543,7 +529,7 @@ final class AvailabilityOwnershipRuleTest extends TestCase
         $context->method('getSchedulable')->willReturn($schedulable);
         $context->method('getCurrentEntity')->willReturn($currentEntity);
 
-        if ($availabilityService !== null) {
+        if ($availabilityService instanceof AvailabilityService) {
             $context->method('getAvailabilityService')->willReturn($availabilityService);
         }
 
@@ -554,7 +540,6 @@ final class AvailabilityOwnershipRuleTest extends TestCase
      * Configure the has() method on the validation context.
      *
      * @param MockObject&ValidationContextInterface $context
-     * @param bool $hasAvailabilityId
      */
     private function configureContextHasMethod(MockObject $context, bool $hasAvailabilityId): void
     {
@@ -570,7 +555,6 @@ final class AvailabilityOwnershipRuleTest extends TestCase
      * Configure the get() method on the validation context.
      *
      * @param MockObject&ValidationContextInterface $context
-     * @param int|null $availabilityId
      */
     private function configureContextGetMethod(MockObject $context, ?int $availabilityId): void
     {
@@ -584,10 +568,6 @@ final class AvailabilityOwnershipRuleTest extends TestCase
 
     /**
      * Configure an availability service mock with find() method expectation.
-     *
-     * @param int $availabilityId
-     * @param Availability|null $returnValue
-     * @return AvailabilityService
      */
     private function configureAvailabilityServiceWithFind(int $availabilityId, ?Availability $returnValue): AvailabilityService
     {

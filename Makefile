@@ -31,6 +31,7 @@ enable-cache:
 .PHONY: pre-commit
 pre-commit:
 	@echo "🔍 Running pre-commit checks..."
+	@rm -f all.txt diff.txt
 	@make lint-all-fix-md
 	@make test
 	@echo "✅ Pre-commit checks passed"
@@ -45,6 +46,7 @@ git-commit-push: pre-commit enable-cache update-checklist
 	git add .; \
 	git commit -m "$$commit_message"; \
 	git push
+
 
 .PHONY: git-tag
 git-tag:
@@ -66,56 +68,62 @@ git-tag:
 	git push origin "$$new_tag"; \
 	echo "✅ Released new tag: $$new_tag"; \
 	'
-
 .PHONY: generate-ai-diff
 generate-ai-diff:
-	@echo "📝 Generating clean git diff into diff.txt..."
-	@echo "Tu es un expert en revue de code et en conventions de commits (Conventional Commits)." > diff.txt
-	@echo "" >> diff.txt
-	@echo "À partir du diff Git ci-dessous, fais les choses suivantes :" >> diff.txt
-	@echo "" >> diff.txt
-	@echo "1. Propose un nom de commit clair et concis en anglais" >> diff.txt
-	@echo "   avec le format <type>(<scope>): <description>," >> diff.txt
-	@echo "   en respectant les Conventional Commits" >> diff.txt
-	@echo "   (ex: feat:, fix:, refactor:, test:, chore:, docs:)." >> diff.txt
-	@echo "" >> diff.txt
-	@echo "2. Rédige un résumé du travail effectué en quelques phrases," >> diff.txt
-	@echo "   orienté métier et technique." >> diff.txt
-	@echo "" >> diff.txt
-	@echo "3. Donne une liste d'exemples concrets de changements, en t'appuyant sur le diff :" >> diff.txt
-	@echo "   - méthodes ajoutées, modifiées ou supprimées" >> diff.txt
-	@echo "   - responsabilités déplacées ou clarifiées" >> diff.txt
-	@echo "   - améliorations de validation, de logique ou de structure" >> diff.txt
-	@echo "   - impacts fonctionnels éventuels" >> diff.txt
-	@echo "" >> diff.txt
-	@echo "Contraintes :" >> diff.txt
-	@echo "   - Ne décris que ce qui est réellement visible dans le diff" >> diff.txt
-	@echo "   - Sois précis, factuel et structuré" >> diff.txt
-	@echo "   - Évite les suppositions" >> diff.txt
-	@echo "   - Utilise un ton professionnel" >> diff.txt
-	@echo "" >> diff.txt
-	@echo "4. SI et SEULEMENT SI les changements sont cassants (breaking changes) :" >> diff.txt
-	@echo "   - Génère une entrée de CHANGELOG conforme à Keep a Changelog et SemVer." >> diff.txt
-	@echo "   - Le changelog doit apparaître APRES les recommandations ci-dessus." >> diff.txt
-	@echo "   - Utilise STRICTEMENT la structure suivante :" >> diff.txt
-	@echo "" >> diff.txt
-	@echo "     ## [X.0.0] - YYYY-MM-DD" >> diff.txt
-	@echo "     ### Changed" >> diff.txt
-	@echo "     - Description claire du changement cassant" >> diff.txt
-	@echo "" >> diff.txt
-	@echo "     ### Removed (si applicable)" >> diff.txt
-	@echo "     - API, méthode ou comportement supprimé" >> diff.txt
-	@echo "" >> diff.txt
-	@echo "     ### Security (si applicable)" >> diff.txt
-	@echo "     - Impact sécurité lié au changement" >> diff.txt
-	@echo "" >> diff.txt
-	@echo "   - Ne génère PAS de changelog si aucun breaking change n'est détecté." >> diff.txt
-	@echo "   - N'invente PAS de version." >> diff.txt
-	@echo "" >> diff.txt
-	@echo "Voici le diff :" >> diff.txt
-	@echo "" >> diff.txt
-	@git diff HEAD -- . ':!*.phpunit.result.cache' ':!diff.txt' >> diff.txt
-	@echo "✅ Clean diff.txt generated successfully (excluded test cache files)"
+	@read -p "📁 Enter directory/path(s) to include in the diff (space-separated, leave empty for all changes): " DIR_PATHS; \
+	if [ -z "$$DIR_PATHS" ]; then \
+		echo "📝 Generating git diff for ALL changes into diff.txt..."; \
+		git diff HEAD -- . ':!*.phpunit.result.cache' ':!diff.txt' >> diff.txt; \
+		echo "✅ Clean diff.txt generated successfully for ALL changes (excluded test cache files)"; \
+	else \
+		echo "📝 Generating clean git diff for paths: $${DIR_PATHS} into diff.txt..."; \
+		echo "Tu es un expert en revue de code et en conventions de commits (Conventional Commits)." > diff.txt; \
+		echo "" >> diff.txt; \
+		echo "À partir du diff Git ci-dessous, fais les choses suivantes :" >> diff.txt; \
+		echo "" >> diff.txt; \
+		echo "1. Propose un nom de commit clair et concis en anglais" >> diff.txt; \
+		echo "   avec le format <type>(<scope>): <description>," >> diff.txt; \
+		echo "   en respectant les Conventional Commits" >> diff.txt; \
+		echo "   (ex: feat:, fix:, refactor:, test:, chore:, docs:)." >> diff.txt; \
+		echo "" >> diff.txt; \
+		echo "2. Rédige un résumé du travail effectué en quelques phrases," >> diff.txt; \
+		echo "   orienté métier et technique." >> diff.txt; \
+		echo "" >> diff.txt; \
+		echo "3. Donne une liste d'exemples concrets de changements, en t'appuyant sur le diff :" >> diff.txt; \
+		echo "   - méthodes ajoutées, modifiées ou supprimées" >> diff.txt; \
+		echo "   - responsabilités déplacées ou clarifiées" >> diff.txt; \
+		echo "   - améliorations de validation, de logique ou de structure" >> diff.txt; \
+		echo "   - impacts fonctionnels éventuels" >> diff.txt; \
+		echo "" >> diff.txt; \
+		echo "Contraintes :" >> diff.txt; \
+		echo "   - Ne décris que ce qui est réellement visible dans le diff" >> diff.txt; \
+		echo "   - Sois précis, factuel et structuré" >> diff.txt; \
+		echo "   - Évite les suppositions" >> diff.txt; \
+		echo "   - Utilise un ton professionnel" >> diff.txt; \
+		echo "" >> diff.txt; \
+		echo "4. SI et SEULEMENT SI les changements sont cassants (breaking changes) :" >> diff.txt; \
+		echo "   - Génère une entrée de CHANGELOG conforme à Keep a Changelog et SemVer." >> diff.txt; \
+		echo "   - Le changelog doit apparaître APRES les recommandations ci-dessus." >> diff.txt; \
+		echo "   - Utilise STRICTEMENT la structure suivante :" >> diff.txt; \
+		echo "" >> diff.txt; \
+		echo "     ## [X.0.0] - YYYY-MM-DD" >> diff.txt; \
+		echo "     ### Changed" >> diff.txt; \
+		echo "     - Description claire du changement cassant" >> diff.txt; \
+		echo "" >> diff.txt; \
+		echo "     ### Removed (si applicable)" >> diff.txt; \
+		echo "     - API, méthode ou comportement supprimé" >> diff.txt; \
+		echo "" >> diff.txt; \
+		echo "     ### Security (si applicable)" >> diff.txt; \
+		echo "     - Impact sécurité lié au changement" >> diff.txt; \
+		echo "" >> diff.txt; \
+		echo "   - Ne génère PAS de changelog si aucun breaking change n'est détecté." >> diff.txt; \
+		echo "   - N'invente PAS de version." >> diff.txt; \
+		echo "" >> diff.txt; \
+		echo "Voici le diff :" >> diff.txt; \
+		echo "" >> diff.txt; \
+		git diff HEAD -- $$DIR_PATHS ':!*.phpunit.result.cache' ':!diff.txt' >> diff.txt; \
+		echo "✅ Clean diff.txt generated successfully for paths: $${DIR_PATHS} (excluded test cache files)"; \
+	fi
 
 .PHONY: git-tag-republish
 git-tag-republish:
@@ -215,10 +223,16 @@ update-all: update-checklist list-modified-files
 
 .PHONY: concat-all
 concat-all:
-	@echo "🔗 Concatenating all PHP files into all.txt..."
-	@find $(SOURCE_DIRS) -type f -name "*.php" -exec sh -c 'echo ""; echo "// ==== {} ==="; echo ""; cat {}' \; > all.txt
-	@echo "✅ File all.txt generated successfully"
-
+	@read -p "📁 Enter the source directory path to scan (leave empty for default './app ./database ./routes'): " SOURCE_PATH; \
+	if [ -z "$$SOURCE_PATH" ]; then \
+		SOURCE_DIRS="./app ./database ./routes"; \
+		echo "🔗 Concatenating all PHP files from default directories: $${SOURCE_DIRS} into all.txt..."; \
+	else \
+		SOURCE_DIRS="$$SOURCE_PATH"; \
+		echo "🔗 Concatenating all PHP files from directory: $${SOURCE_DIRS} into all.txt..."; \
+	fi; \
+	find $${SOURCE_DIRS} -type f -name "*.php" -exec sh -c 'echo ""; echo "// ==== {} ==="; echo ""; cat {}' \; > all.txt; \
+	echo "✅ File all.txt generated successfully from: $${SOURCE_DIRS}"
 # ---------------------------------------------------
 # Testing
 # ---------------------------------------------------

@@ -24,8 +24,6 @@ abstract class TestCase extends OrchestraTestCase
 {
     /**
      * Set up the test environment.
-     *
-     * @return void
      */
     protected function setUp(): void
     {
@@ -39,8 +37,6 @@ abstract class TestCase extends OrchestraTestCase
 
     /**
      * Register observers for domain models.
-     *
-     * @return void
      */
     private function registerDomainObservers(): void
     {
@@ -51,8 +47,6 @@ abstract class TestCase extends OrchestraTestCase
 
     /**
      * Load package migrations.
-     *
-     * @return void
      */
     private function loadPackageMigrations(): void
     {
@@ -61,8 +55,6 @@ abstract class TestCase extends OrchestraTestCase
 
     /**
      * Load test-specific migrations.
-     *
-     * @return void
      */
     private function loadTestMigrations(): void
     {
@@ -71,8 +63,6 @@ abstract class TestCase extends OrchestraTestCase
 
     /**
      * Configure in-memory cache for tests.
-     *
-     * @return void
      */
     private function configureMemoryCache(): void
     {
@@ -83,7 +73,6 @@ abstract class TestCase extends OrchestraTestCase
      * Get package service providers.
      *
      * @param mixed $app
-     * @return array
      */
     protected function getPackageProviders($app): array
     {
@@ -96,7 +85,6 @@ abstract class TestCase extends OrchestraTestCase
      * Define the test environment configuration.
      *
      * @param mixed $app
-     * @return void
      */
     protected function defineEnvironment($app): void
     {

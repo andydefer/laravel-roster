@@ -22,8 +22,6 @@ final class DebugRulesCommandTest extends TestCase
 {
     /**
      * Clean up Mockery after each test.
-     *
-     * @return void
      */
     protected function tearDown(): void
     {
@@ -93,7 +91,7 @@ final class DebugRulesCommandTest extends TestCase
         ];
 
         foreach ($expectedOptions as $optionName) {
-            $this->assertArrayHasKey($optionName, $options, "Option '$optionName' is missing");
+            $this->assertArrayHasKey($optionName, $options, sprintf("Option '%s' is missing", $optionName));
         }
 
         // Assert: Verify custom options have correct configurations

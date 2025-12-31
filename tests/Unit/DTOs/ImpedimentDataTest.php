@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Tests\Unit\DTOs;
 
-use Illuminate\Support\Carbon;
-use Illuminate\Database\Eloquent\Model;
+use Exception;
+use ReflectionClass;
 use Illuminate\Support\Carbon as IlluminateCarbon;
 use InvalidArgumentException;
 use Roster\DTOs\ImpedimentData;
@@ -54,16 +54,16 @@ final class ImpedimentDataTest extends TestCase
         $impedimentData = ImpedimentData::fromArray($rawData);
 
         // Assert: Verify all properties are correctly set with UTC timezone
-        $this->assertEquals(123, $impedimentData->id);
-        $this->assertEquals(456, $impedimentData->availabilityId);
-        $this->assertEquals('2038-01-15 09:00:00', $impedimentData->startDatetime?->format('Y-m-d H:i:s'));
+        $this->assertSame(123, $impedimentData->id);
+        $this->assertSame(456, $impedimentData->availabilityId);
+        $this->assertSame('2038-01-15 09:00:00', $impedimentData->startDatetime?->format('Y-m-d H:i:s'));
         $this->assertEquals('UTC', $impedimentData->startDatetime?->getTimezone()->getName());
-        $this->assertEquals('2038-01-15 17:00:00', $impedimentData->endDatetime?->format('Y-m-d H:i:s'));
+        $this->assertSame('2038-01-15 17:00:00', $impedimentData->endDatetime?->format('Y-m-d H:i:s'));
         $this->assertEquals('UTC', $impedimentData->endDatetime?->getTimezone()->getName());
-        $this->assertEquals('Maintenance window', $impedimentData->reason);
-        $this->assertEquals(['type' => 'scheduled', 'impact' => 'high'], $impedimentData->metadata);
-        $this->assertEquals(789, $impedimentData->schedulableId);
-        $this->assertEquals('equipment', $impedimentData->schedulableType);
+        $this->assertSame('Maintenance window', $impedimentData->reason);
+        $this->assertSame(['type' => 'scheduled', 'impact' => 'high'], $impedimentData->metadata);
+        $this->assertSame(789, $impedimentData->schedulableId);
+        $this->assertSame('equipment', $impedimentData->schedulableType);
     }
 
     /**
@@ -84,10 +84,10 @@ final class ImpedimentDataTest extends TestCase
         // Assert: Verify provided properties are set with defaults applied
         $this->assertNull($impedimentData->id);
         $this->assertNull($impedimentData->availabilityId);
-        $this->assertEquals('2038-02-01 08:00:00', $impedimentData->startDatetime?->format('Y-m-d H:i:s'));
-        $this->assertEquals('2038-02-01 12:00:00', $impedimentData->endDatetime?->format('Y-m-d H:i:s'));
-        $this->assertEquals('Team offsite', $impedimentData->reason);
-        $this->assertEquals([], $impedimentData->metadata);
+        $this->assertSame('2038-02-01 08:00:00', $impedimentData->startDatetime?->format('Y-m-d H:i:s'));
+        $this->assertSame('2038-02-01 12:00:00', $impedimentData->endDatetime?->format('Y-m-d H:i:s'));
+        $this->assertSame('Team offsite', $impedimentData->reason);
+        $this->assertSame([], $impedimentData->metadata);
         $this->assertNull($impedimentData->schedulableId);
         $this->assertNull($impedimentData->schedulableType);
     }
@@ -108,9 +108,9 @@ final class ImpedimentDataTest extends TestCase
         $impedimentData = ImpedimentData::fromArray($rawData);
 
         // Assert: Verify Carbon instances are correctly handled
-        $this->assertEquals('System upgrade', $impedimentData->reason);
-        $this->assertEquals('2038-03-10 10:00:00', $impedimentData->startDatetime?->format('Y-m-d H:i:s'));
-        $this->assertEquals('2038-03-10 18:00:00', $impedimentData->endDatetime?->format('Y-m-d H:i:s'));
+        $this->assertSame('System upgrade', $impedimentData->reason);
+        $this->assertSame('2038-03-10 10:00:00', $impedimentData->startDatetime?->format('Y-m-d H:i:s'));
+        $this->assertSame('2038-03-10 18:00:00', $impedimentData->endDatetime?->format('Y-m-d H:i:s'));
         $this->assertEquals('UTC', $impedimentData->startDatetime?->getTimezone()->getName());
         $this->assertEquals('UTC', $impedimentData->endDatetime?->getTimezone()->getName());
     }
@@ -227,7 +227,7 @@ final class ImpedimentDataTest extends TestCase
         ]);
 
         // Act & Assert: Verify metadata is empty array
-        $this->assertEquals([], $impedimentData->metadata);
+        $this->assertSame([], $impedimentData->metadata);
         $this->assertEquals([], $impedimentData->toArray()['metadata']);
     }
 
@@ -262,7 +262,7 @@ final class ImpedimentDataTest extends TestCase
         ];
 
         // Act & Assert: Verify exception is thrown for invalid datetime
-        $this->expectException(\Exception::class);
+        $this->expectException(Exception::class);
 
         ImpedimentData::fromArray($rawData);
     }
@@ -283,9 +283,9 @@ final class ImpedimentDataTest extends TestCase
         $impedimentData = ImpedimentData::fromArray($rawData);
 
         // Assert: Verify empty string creates Carbon instance (current date), null remains null
-        $this->assertNotNull($impedimentData->startDatetime);
         $this->assertInstanceOf(IlluminateCarbon::class, $impedimentData->startDatetime);
-        $this->assertNull($impedimentData->endDatetime);
+        $this->assertInstanceOf(IlluminateCarbon::class, $impedimentData->startDatetime);
+        $this->assertNotInstanceOf(IlluminateCarbon::class, $impedimentData->endDatetime);
     }
 
     /**
@@ -325,8 +325,8 @@ final class ImpedimentDataTest extends TestCase
 
         // Verify timezone is preserved in array conversion
         $arrayData = $impedimentData->toArray();
-        $this->assertStringContainsString('2038-12-25 00:00:00', $arrayData['start_datetime']);
-        $this->assertStringContainsString('2038-12-26 00:00:00', $arrayData['end_datetime']);
+        $this->assertStringContainsString('2038-12-25 00:00:00', (string) $arrayData['start_datetime']);
+        $this->assertStringContainsString('2038-12-26 00:00:00', (string) $arrayData['end_datetime']);
     }
 
     /**
@@ -342,7 +342,7 @@ final class ImpedimentDataTest extends TestCase
         ]);
 
         // Act & Assert: Verify properties are readonly (cannot be modified)
-        $reflection = new \ReflectionClass($impedimentData);
+        $reflection = new ReflectionClass($impedimentData);
 
         foreach ($reflection->getProperties() as $property) {
             $this->assertTrue($property->isReadOnly());
@@ -362,7 +362,7 @@ final class ImpedimentDataTest extends TestCase
         ]);
 
         // Act: Create new DTO with schedulable info
-        /**  @var \Roster\DTOs\ImpedimentData $updatedData */
+        /** @var ImpedimentData $updatedData */
         $updatedData = $originalData->withSchedulable(456, 'team');
 
         // Assert: Verify new instance has schedulable info, original unchanged
@@ -407,7 +407,7 @@ final class ImpedimentDataTest extends TestCase
     public function test_parse_datetime_throws_exception_for_invalid_input_type(): void
     {
         // Arrange: Use reflection to test protected method
-        $reflectionClass = new \ReflectionClass(ImpedimentData::class);
+        $reflectionClass = new ReflectionClass(ImpedimentData::class);
         $method = $reflectionClass->getMethod('parseDateTime');
         $method->setAccessible(true);
 
@@ -423,7 +423,7 @@ final class ImpedimentDataTest extends TestCase
     public function test_parse_datetime_returns_null_for_null_input(): void
     {
         // Arrange: Use reflection to test protected method
-        $reflectionClass = new \ReflectionClass(ImpedimentData::class);
+        $reflectionClass = new ReflectionClass(ImpedimentData::class);
         $method = $reflectionClass->getMethod('parseDateTime');
         $method->setAccessible(true);
 
@@ -443,7 +443,7 @@ final class ImpedimentDataTest extends TestCase
         $carbon = IlluminateCarbon::create(2039, 4, 1, 10, 0, 0, 'UTC');
 
         // Use reflection to test protected method
-        $reflectionClass = new \ReflectionClass(ImpedimentData::class);
+        $reflectionClass = new ReflectionClass(ImpedimentData::class);
         $method = $reflectionClass->getMethod('parseDateTime');
         $method->setAccessible(true);
 
@@ -477,10 +477,8 @@ final class ImpedimentDataTest extends TestCase
 
         // Assert: Verify all non-null data is preserved
         foreach ($originalData as $key => $value) {
-            if ($value !== null) {
-                $this->assertArrayHasKey($key, $convertedData);
-                $this->assertEquals($value, $convertedData[$key]);
-            }
+            $this->assertArrayHasKey($key, $convertedData);
+            $this->assertEquals($value, $convertedData[$key]);
         }
     }
 
@@ -531,7 +529,7 @@ final class ImpedimentDataTest extends TestCase
 
         // Assert: Verify it's exactly 24 hours
         $this->assertEquals(24, $duration);
-        $this->assertEquals('All day event', $impedimentData->reason);
+        $this->assertSame('All day event', $impedimentData->reason);
     }
 
     /**
@@ -546,9 +544,9 @@ final class ImpedimentDataTest extends TestCase
         ]);
 
         // Assert: Verify start date is set, end date is null
-        $this->assertNotNull($impedimentData->startDatetime);
-        $this->assertNull($impedimentData->endDatetime);
-        $this->assertEquals('Start only test', $impedimentData->reason);
+        $this->assertInstanceOf(IlluminateCarbon::class, $impedimentData->startDatetime);
+        $this->assertNotInstanceOf(IlluminateCarbon::class, $impedimentData->endDatetime);
+        $this->assertSame('Start only test', $impedimentData->reason);
 
         $arrayData = $impedimentData->toArray();
         $this->assertArrayHasKey('start_datetime', $arrayData);
@@ -567,9 +565,9 @@ final class ImpedimentDataTest extends TestCase
         ]);
 
         // Assert: Verify end date is set, start date is null
-        $this->assertNull($impedimentData->startDatetime);
-        $this->assertNotNull($impedimentData->endDatetime);
-        $this->assertEquals('End only test', $impedimentData->reason);
+        $this->assertNotInstanceOf(IlluminateCarbon::class, $impedimentData->startDatetime);
+        $this->assertInstanceOf(IlluminateCarbon::class, $impedimentData->endDatetime);
+        $this->assertSame('End only test', $impedimentData->reason);
 
         $arrayData = $impedimentData->toArray();
         $this->assertArrayNotHasKey('start_datetime', $arrayData);

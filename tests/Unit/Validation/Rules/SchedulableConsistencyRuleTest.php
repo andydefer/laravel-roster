@@ -571,6 +571,7 @@ final class SchedulableConsistencyRuleTest extends TestCase
 
         // Assert: Should fail with empty schedulable_type
     }
+
     /**
      * Test that rule description is available.
      */

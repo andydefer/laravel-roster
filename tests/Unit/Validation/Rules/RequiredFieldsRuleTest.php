@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Validation\Rules;
 
-use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\MockObject\MockObject;
 use Roster\Contracts\Validation\ValidationContextInterface;
 use Roster\Enums\EntityType;
@@ -204,7 +203,7 @@ final class RequiredFieldsRuleTest extends TestCase
         $expectedFields = ['daily_start', 'daily_end', 'days', 'validity_start', 'validity_end'];
         foreach ($expectedFields as $field) {
             $this->assertArrayHasKey($field, $violations);
-            $this->assertSame("Field '{$field}' is required", $violations[$field]);
+            $this->assertSame(sprintf("Field '%s' is required", $field), $violations[$field]);
         }
     }
 
@@ -420,7 +419,7 @@ final class RequiredFieldsRuleTest extends TestCase
             ->method('setViolationFromRule')
             ->willReturnCallback(function ($rule) use (&$violationCount): void {
                 $this->assertSame($this->requiredFieldsRule, $rule);
-                $violationCount++;
+                ++$violationCount;
             });
 
         // Act: Execute validation

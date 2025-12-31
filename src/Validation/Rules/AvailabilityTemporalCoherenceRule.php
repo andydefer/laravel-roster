@@ -126,7 +126,7 @@ class AvailabilityTemporalCoherenceRule extends AbstractRule
      *
      * @param ValidationContextInterface $validationContext Validation context
      * @param Availability $availability Original availability
-     * @return array Normalized update data
+     * @return array<string, string|mixed[]|null> Normalized update data
      */
     private function extractUpdateData(ValidationContextInterface $validationContext, Availability $availability): array
     {
@@ -149,7 +149,7 @@ class AvailabilityTemporalCoherenceRule extends AbstractRule
      */
     private function hasRelevantChanges(array $updateData): bool
     {
-        return !empty(array_filter($updateData, fn($value) => $value !== null));
+        return array_filter($updateData, fn($value): bool => $value !== null) !== [];
     }
 
     /**
@@ -190,7 +190,7 @@ class AvailabilityTemporalCoherenceRule extends AbstractRule
      *
      * @param string $entityClass Entity class to validate against
      * @param Availability $availability Availability being modified
-     * @param array $updateData Normalized update data
+     * @param array<string, mixed> $updateData Normalized update data
      * @param ValidationContextInterface $validationContext Validation context
      * @param Carbon $referenceTime Reference time for "future" determination
      */
@@ -216,7 +216,7 @@ class AvailabilityTemporalCoherenceRule extends AbstractRule
      * Validate date boundaries for a specific entity.
      *
      * @param object $entity Existing entity to check
-     * @param array $updateData Normalized update data
+     * @param array<string, mixed> $updateData Normalized update data
      * @param string $entityClass Entity class name
      * @param ValidationContextInterface $validationContext Validation context
      */
@@ -322,7 +322,7 @@ class AvailabilityTemporalCoherenceRule extends AbstractRule
     /**
      * Check if specific days are missing from new days array.
      *
-     * @param array $entityDays Days used by the entity
+     * @param string[] $entityDays Days used by the entity
      * @param array $newDays New days array
      * @param object $entity Existing entity
      * @param string $entityClass Entity class name
@@ -378,7 +378,7 @@ class AvailabilityTemporalCoherenceRule extends AbstractRule
      */
     private function extractDaysFromPeriod(?Carbon $start, ?Carbon $end): array
     {
-        if ($start === null || $end === null || $end->lt($start)) {
+        if (!$start instanceof Carbon || !$end instanceof Carbon || $end->lt($start)) {
             return [];
         }
 

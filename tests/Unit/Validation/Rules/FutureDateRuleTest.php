@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Validation\Rules;
 
-use Exception;
 use Illuminate\Support\Carbon;
 use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\MockObject\MockObject;
@@ -566,8 +565,7 @@ final class FutureDateRuleTest extends TestCase
             operationType: OperationType::CREATE,
             hasValidityStart: true,
             validityStart: $futureDate,
-            hasDailyStart: false,
-            dailyStart: null
+            hasDailyStart: false
         );
 
         $context->expects($this->never())->method('setViolationFromRule');
@@ -704,9 +702,11 @@ final class FutureDateRuleTest extends TestCase
                 if ($key === 'validity_start') {
                     return $hasValidityStart;
                 }
+
                 if ($key === 'daily_start') {
                     return $hasDailyStart;
                 }
+
                 return false;
             }
         );
@@ -716,9 +716,11 @@ final class FutureDateRuleTest extends TestCase
                 if ($key === 'validity_start') {
                     return $validityStart;
                 }
+
                 if ($key === 'daily_start') {
                     return $dailyStart;
                 }
+
                 return null;
             }
         );

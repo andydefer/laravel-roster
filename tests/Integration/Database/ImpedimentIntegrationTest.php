@@ -287,7 +287,7 @@ final class ImpedimentIntegrationTest extends TestCase
 
         $trashed = ImpedimentModel::withTrashed()->find(id: $impediment->id);
         $this->assertNotNull($trashed);
-        $this->assertNotNull($trashed->deleted_at);
+        $this->assertInstanceOf(Carbon::class, $trashed->deleted_at);
     }
 
     /**

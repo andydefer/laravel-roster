@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Domain\Helpers;
 
+use PHPUnit\Framework\Attributes\CoversClass;
 use Illuminate\Support\Carbon;
 use InvalidArgumentException;
 use Roster\Domain\Helpers\TimezoneHelper;
@@ -12,8 +13,8 @@ use Illuminate\Support\Facades\Config;
 
 /**
  * Test suite for TimezoneHelper functionality.
- * @covers \Roster\Domain\Helpers\TimezoneHelper
  */
+#[CoversClass(\Roster\Domain\Helpers\TimezoneHelper::class)]
 final class TimezoneHelperTest extends TestCase
 {
     /**
@@ -208,7 +209,7 @@ final class TimezoneHelperTest extends TestCase
      */
     public function test_to_system_conversion_with_null(): void
     {
-        $this->assertNull(TimezoneHelper::toSystem(null));
+        $this->assertNotInstanceOf(Carbon::class, TimezoneHelper::toSystem(null));
     }
 
     /**
@@ -253,7 +254,7 @@ final class TimezoneHelperTest extends TestCase
      */
     public function test_to_user_conversion_with_null(): void
     {
-        $this->assertNull(TimezoneHelper::toUser(null));
+        $this->assertNotInstanceOf(Carbon::class, TimezoneHelper::toUser(null));
     }
 
     /**
@@ -464,7 +465,7 @@ final class TimezoneHelperTest extends TestCase
     public function test_with_only_app_timezone_configured(): void
     {
         // Arrange: Clear roster timezone, set app timezone
-        Config::set('roster.timezone', null);
+        Config::set('roster.timezone');
         Config::set('app.timezone', 'Australia/Sydney');
 
         // Act: Initialize helper

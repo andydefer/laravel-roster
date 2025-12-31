@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Roster\Casts;
 
-use Carbon\CarbonTimeZone;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Contracts\Database\Eloquent\CastsAttributes;
 use Illuminate\Support\Carbon;
 use Roster\Domain\Helpers\TimezoneHelper;
@@ -21,10 +21,8 @@ class TimezoneAwareDateTimeCast implements CastsAttributes
     /**
      * Convert the stored UTC datetime to the user's timezone.
      *
-     * @param \Illuminate\Database\Eloquent\Model $model
-     * @param string $key
+     * @param Model $model
      * @param mixed $value The UTC datetime string from database
-     * @param array $attributes
      * @return Carbon|null Carbon instance in user timezone or null
      */
     public function get($model, string $key, $value, array $attributes): ?Carbon
@@ -41,10 +39,8 @@ class TimezoneAwareDateTimeCast implements CastsAttributes
     /**
      * Convert the datetime value to UTC format for database storage.
      *
-     * @param \Illuminate\Database\Eloquent\Model $model
-     * @param string $key
+     * @param Model $model
      * @param mixed $value Carbon instance or datetime string
-     * @param array $attributes
      * @return string|null UTC datetime string in 'Y-m-d H:i:s' format or null
      */
     public function set($model, string $key, $value, array $attributes): ?string

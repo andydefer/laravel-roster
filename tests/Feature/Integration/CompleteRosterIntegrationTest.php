@@ -954,7 +954,7 @@ final class CompleteRosterIntegrationTest extends TestCase
         foreach ($createdSchedules as $createdSchedule) {
             $scheduleAvailability = $availabilityByScheduleId[$createdSchedule->id] ?? null;
 
-            if ($scheduleAvailability) {
+            if ($scheduleAvailability instanceof AvailabilityModel) {
                 try {
                     schedule_for($scheduleAvailability)->delete($createdSchedule->id);
                 } catch (Exception $e) {
@@ -1389,7 +1389,6 @@ final class CompleteRosterIntegrationTest extends TestCase
     /**
      * Create multiple impediments for a given availability.
      *
-     * @param AvailabilityModel $availability
      * @return array<int, ImpedimentModel>
      */
     private function createImpedimentsForAvailability(AvailabilityModel $availability): array
@@ -1425,7 +1424,6 @@ final class CompleteRosterIntegrationTest extends TestCase
     /**
      * Create multiple schedules for a given availability.
      *
-     * @param AvailabilityModel $availability
      * @param array<int, AvailabilityModel> $availabilityByScheduleId
      * @return array<int, ScheduleModel>
      */

@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Validation\Context;
 
-use Exception;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Schema;
@@ -36,6 +35,7 @@ final class ValidationContextTest extends TestCase
     use RefreshDatabase;
 
     private TestSchedulable $schedulable;
+
     private Availability $availability;
 
     /**
@@ -209,7 +209,9 @@ final class ValidationContextTest extends TestCase
         $this->createTestTable('test_entity_for_update');
         $currentEntity = new class extends Model {
             protected $table = 'test_entity_for_update';
+
             protected $guarded = [];
+
             public $timestamps = false;
 
             protected $attributes = [
@@ -453,13 +455,15 @@ final class ValidationContextTest extends TestCase
     public function test_resolves_owner_from_current_entity_with_availability_method(): void
     {
         // Arrange: Create entity with availability relationship
-        $this->createTestTable('test_entity_with_availability', function ($table) {
+        $this->createTestTable('test_entity_with_availability', function ($table): void {
             $table->foreignId('availability_id')->nullable()->constrained('roster_availabilities')->nullOnDelete();
         });
 
         $currentEntity = new class extends Model {
             protected $table = 'test_entity_with_availability';
+
             protected $guarded = [];
+
             public $timestamps = false;
 
             public function availability()
@@ -638,7 +642,9 @@ final class ValidationContextTest extends TestCase
         $this->createTestTable('test_partial_updates');
         $currentEntity = new class extends Model {
             protected $table = 'test_partial_updates';
+
             protected $guarded = [];
+
             public $timestamps = false;
 
             protected $attributes = [
@@ -808,10 +814,10 @@ final class ValidationContextTest extends TestCase
 
         $violation = $violations[0];
         $this->assertInstanceOf(ViolationData::class, $violation);
-        $this->assertEquals('test_field', $violation->getField());
-        $this->assertEquals('Test violation message', $violation->getMessage());
-        $this->assertEquals('TestRule', $violation->getRule());
-        $this->assertEquals('Test rule description', $violation->getRuleDescription());
+        $this->assertSame('test_field', $violation->getField());
+        $this->assertSame('Test violation message', $violation->getMessage());
+        $this->assertSame('TestRule', $violation->getRule());
+        $this->assertSame('Test rule description', $violation->getRuleDescription());
     }
 
     /**
@@ -958,9 +964,7 @@ final class ValidationContextTest extends TestCase
         $this->assertIsArray($violations);
         $this->assertCount(2, $violations);
 
-        foreach ($violations as $violation) {
-            $this->assertInstanceOf(ViolationData::class, $violation);
-        }
+        $this->assertContainsOnlyInstancesOf(ViolationData::class, $violations);
 
         $this->assertEquals('field1', $violations[0]->getField());
         $this->assertEquals('field2', $violations[1]->getField());
@@ -972,12 +976,12 @@ final class ValidationContextTest extends TestCase
     private function createTestTable(string $tableName, ?callable $callback = null): void
     {
         if (!Schema::hasTable($tableName)) {
-            Schema::create($tableName, function ($table) use ($callback) {
+            Schema::create($tableName, function ($table) use ($callback): void {
                 $table->id();
                 $table->string('name')->nullable();
                 $table->integer('count')->nullable();
 
-                if ($callback) {
+                if ($callback !== null) {
                     $callback($table);
                 }
             });
@@ -991,6 +995,7 @@ final class ValidationContextTest extends TestCase
     {
         $entity = new class extends Model {
             protected $guarded = [];
+
             public $timestamps = false;
         };
 

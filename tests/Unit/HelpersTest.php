@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit;
 
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Config;
 use InvalidArgumentException;
@@ -315,7 +316,7 @@ final class HelpersTest extends TestCase
      */
     public function test_roster_to_utc_with_null(): void
     {
-        $this->assertNull(roster_to_utc(null));
+        $this->assertNotInstanceOf(Carbon::class, roster_to_utc(null));
     }
 
     /**
@@ -341,7 +342,7 @@ final class HelpersTest extends TestCase
      */
     public function test_roster_to_user_timezone_with_null(): void
     {
-        $this->assertNull(roster_to_user_timezone(null));
+        $this->assertNotInstanceOf(Carbon::class, roster_to_user_timezone(null));
     }
 
     /**
@@ -497,12 +498,10 @@ final class HelpersTest extends TestCase
 
     /**
      * Create a mock schedulable model for testing.
-     *
-     * @return \Illuminate\Database\Eloquent\Model
      */
-    private function createMockSchedulable(): \Illuminate\Database\Eloquent\Model
+    private function createMockSchedulable(): Model
     {
-        return new class extends \Illuminate\Database\Eloquent\Model {};
+        return new class extends Model {};
     }
 
     /**

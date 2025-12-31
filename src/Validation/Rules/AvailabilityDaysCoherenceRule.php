@@ -72,12 +72,7 @@ class AvailabilityDaysCoherenceRule extends AbstractRule
         }
 
         $days = $validationContext->get('days');
-
-        if ($days === null || $days === []) {
-            return false;
-        }
-
-        return true;
+        return $days !== null && $days !== [];
     }
 
     /**
@@ -174,7 +169,7 @@ class AvailabilityDaysCoherenceRule extends AbstractRule
     /**
      * Check if validity period is valid (start < end and parseable).
      *
-     * @param array $period Validity period with 'start' and 'end'
+     * @param array<string, mixed> $period Validity period with 'start' and 'end'
      * @return bool True if period is valid
      */
     private function isValidPeriod(array $period): bool
@@ -194,7 +189,7 @@ class AvailabilityDaysCoherenceRule extends AbstractRule
      *
      * @param ValidationContextInterface $validationContext Validation context
      * @param array $days Days to check
-     * @param array $period Validity period
+     * @param array<string, mixed> $period Validity period
      */
     private function checkDaysWithinPeriod(
         ValidationContextInterface $validationContext,

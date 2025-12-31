@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Integration\Database;
 
-use PHPUnit\Framework\Attributes\Group;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Collection;
 use Roster\Models\Availability as AvailabilityModel;

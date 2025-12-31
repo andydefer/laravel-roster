@@ -192,6 +192,7 @@ abstract class AbstractService implements ServiceInterface
                 $this->getEntityTypeEnum()
             );
         }
+
         $deleteData = [
             'id' => $id,
             'schedulable_id' => $entity->schedulable_id ?? $this->schedulable->id,

@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Tests\Unit\Validation\Rules;
 
 use Illuminate\Support\Carbon;
-use PHPUnit\Framework\MockObject\MockObject;
 use Roster\Contracts\Validation\ValidationContextInterface;
 use Roster\Enums\EntityType;
 use Roster\Enums\OperationType;
@@ -700,26 +699,5 @@ final class DurationRuleTest extends TestCase
         $this->rule->validate($context);
 
         // Assert: Different time formats should be handled correctly
-    }
-
-    /**
-     * Create a mock validation context with specific configuration.
-     *
-     * @param EntityType $entityType
-     * @param OperationType $operationType
-     * @param array<string, mixed> $data
-     * @return MockObject&ValidationContextInterface
-     */
-    private function createValidationContext(
-        EntityType $entityType,
-        OperationType $operationType,
-        array $data = []
-    ): MockObject {
-        $context = $this->createMock(ValidationContextInterface::class);
-        $context->method('getEntityType')->willReturn($entityType);
-        $context->method('getOperation')->willReturn($operationType);
-        $context->method('safeData')->willReturn($data);
-
-        return $context;
     }
 }

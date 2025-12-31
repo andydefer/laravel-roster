@@ -4,7 +4,8 @@ declare(strict_types=1);
 
 namespace Tests\Unit\DTOs;
 
-use Illuminate\Database\Eloquent\Model;
+use Exception;
+use ReflectionClass;
 use Illuminate\Support\Carbon;
 use InvalidArgumentException;
 use Roster\DTOs\ScheduleData;
@@ -56,18 +57,18 @@ final class ScheduleDataTest extends TestCase
         $scheduleData = ScheduleData::fromArray($rawData);
 
         // Assert: Verify all properties are correctly set with UTC timezone
-        $this->assertEquals(123, $scheduleData->id);
-        $this->assertEquals(456, $scheduleData->availabilityId);
-        $this->assertEquals('Team Meeting', $scheduleData->title);
-        $this->assertEquals('Weekly team sync to discuss project progress', $scheduleData->description);
-        $this->assertEquals('2038-01-15 09:00:00', $scheduleData->startDatetime?->format('Y-m-d H:i:s'));
+        $this->assertSame(123, $scheduleData->id);
+        $this->assertSame(456, $scheduleData->availabilityId);
+        $this->assertSame('Team Meeting', $scheduleData->title);
+        $this->assertSame('Weekly team sync to discuss project progress', $scheduleData->description);
+        $this->assertSame('2038-01-15 09:00:00', $scheduleData->startDatetime?->format('Y-m-d H:i:s'));
         $this->assertEquals('UTC', $scheduleData->startDatetime?->getTimezone()->getName());
-        $this->assertEquals('2038-01-15 10:30:00', $scheduleData->endDatetime?->format('Y-m-d H:i:s'));
+        $this->assertSame('2038-01-15 10:30:00', $scheduleData->endDatetime?->format('Y-m-d H:i:s'));
         $this->assertEquals('UTC', $scheduleData->endDatetime?->getTimezone()->getName());
-        $this->assertEquals(['room' => 'Conference A', 'priority' => 'high'], $scheduleData->metadata);
-        $this->assertEquals(ScheduleStatus::BOOKED, $scheduleData->status);
-        $this->assertEquals(789, $scheduleData->schedulableId);
-        $this->assertEquals('team', $scheduleData->schedulableType);
+        $this->assertSame(['room' => 'Conference A', 'priority' => 'high'], $scheduleData->metadata);
+        $this->assertSame(ScheduleStatus::BOOKED, $scheduleData->status);
+        $this->assertSame(789, $scheduleData->schedulableId);
+        $this->assertSame('team', $scheduleData->schedulableType);
     }
 
     /**
@@ -88,12 +89,12 @@ final class ScheduleDataTest extends TestCase
         // Assert: Verify provided properties are set with defaults applied
         $this->assertNull($scheduleData->id);
         $this->assertNull($scheduleData->availabilityId);
-        $this->assertEquals('Client Call', $scheduleData->title);
+        $this->assertSame('Client Call', $scheduleData->title);
         $this->assertNull($scheduleData->description);
-        $this->assertEquals('2038-02-01 14:00:00', $scheduleData->startDatetime?->format('Y-m-d H:i:s'));
-        $this->assertEquals('2038-02-01 15:00:00', $scheduleData->endDatetime?->format('Y-m-d H:i:s'));
-        $this->assertEquals([], $scheduleData->metadata);
-        $this->assertEquals(ScheduleStatus::AVAILABLE, $scheduleData->status);
+        $this->assertSame('2038-02-01 14:00:00', $scheduleData->startDatetime?->format('Y-m-d H:i:s'));
+        $this->assertSame('2038-02-01 15:00:00', $scheduleData->endDatetime?->format('Y-m-d H:i:s'));
+        $this->assertSame([], $scheduleData->metadata);
+        $this->assertSame(ScheduleStatus::AVAILABLE, $scheduleData->status);
         $this->assertNull($scheduleData->schedulableId);
         $this->assertNull($scheduleData->schedulableType);
     }
@@ -114,9 +115,9 @@ final class ScheduleDataTest extends TestCase
         $scheduleData = ScheduleData::fromArray($rawData);
 
         // Assert: Verify Carbon instances are correctly handled
-        $this->assertEquals('Training Session', $scheduleData->title);
-        $this->assertEquals('2038-03-10 10:00:00', $scheduleData->startDatetime?->format('Y-m-d H:i:s'));
-        $this->assertEquals('2038-03-10 12:00:00', $scheduleData->endDatetime?->format('Y-m-d H:i:s'));
+        $this->assertSame('Training Session', $scheduleData->title);
+        $this->assertSame('2038-03-10 10:00:00', $scheduleData->startDatetime?->format('Y-m-d H:i:s'));
+        $this->assertSame('2038-03-10 12:00:00', $scheduleData->endDatetime?->format('Y-m-d H:i:s'));
         $this->assertEquals('UTC', $scheduleData->startDatetime?->getTimezone()->getName());
         $this->assertEquals('UTC', $scheduleData->endDatetime?->getTimezone()->getName());
     }
@@ -137,9 +138,9 @@ final class ScheduleDataTest extends TestCase
         $scheduleData = ScheduleData::fromArray($rawData);
 
         // Assert: Verify instances sont correctement gérés (même si conversion)
-        $this->assertEquals('Carbon Carbon Test', $scheduleData->title);
-        $this->assertEquals('2038-06-10 10:00:00', $scheduleData->startDatetime?->format('Y-m-d H:i:s'));
-        $this->assertEquals('2038-06-10 12:00:00', $scheduleData->endDatetime?->format('Y-m-d H:i:s'));
+        $this->assertSame('Carbon Carbon Test', $scheduleData->title);
+        $this->assertSame('2038-06-10 10:00:00', $scheduleData->startDatetime?->format('Y-m-d H:i:s'));
+        $this->assertSame('2038-06-10 12:00:00', $scheduleData->endDatetime?->format('Y-m-d H:i:s'));
         $this->assertEquals('UTC', $scheduleData->startDatetime?->getTimezone()->getName());
     }
 
@@ -266,7 +267,7 @@ final class ScheduleDataTest extends TestCase
         ]);
 
         // Act & Assert: Verify metadata is empty array
-        $this->assertEquals([], $scheduleData->metadata);
+        $this->assertSame([], $scheduleData->metadata);
         $this->assertEquals([], $scheduleData->toArray()['metadata']);
     }
 
@@ -283,7 +284,7 @@ final class ScheduleDataTest extends TestCase
         ]);
 
         // Act & Assert: Verify default status is AVAILABLE
-        $this->assertEquals(ScheduleStatus::AVAILABLE, $scheduleData->status);
+        $this->assertSame(ScheduleStatus::AVAILABLE, $scheduleData->status);
         $this->assertEquals(ScheduleStatus::AVAILABLE, $scheduleData->toArray()['status']);
     }
 
@@ -300,7 +301,7 @@ final class ScheduleDataTest extends TestCase
         ];
 
         // Act & Assert: Verify exception is thrown for invalid datetime
-        $this->expectException(\Exception::class);
+        $this->expectException(Exception::class);
 
         ScheduleData::fromArray($rawData);
     }
@@ -321,9 +322,9 @@ final class ScheduleDataTest extends TestCase
         $scheduleData = ScheduleData::fromArray($rawData);
 
         // Assert: Verify empty string creates Carbon instance (current date), null remains null
-        $this->assertNotNull($scheduleData->startDatetime);
         $this->assertInstanceOf(Carbon::class, $scheduleData->startDatetime);
-        $this->assertNull($scheduleData->endDatetime);
+        $this->assertInstanceOf(Carbon::class, $scheduleData->startDatetime);
+        $this->assertNotInstanceOf(Carbon::class, $scheduleData->endDatetime);
     }
 
     /**
@@ -363,8 +364,8 @@ final class ScheduleDataTest extends TestCase
 
         // Verify timezone is preserved in array conversion
         $arrayData = $scheduleData->toArray();
-        $this->assertStringContainsString('2038-12-25 14:00:00', $arrayData['start_datetime']);
-        $this->assertStringContainsString('2038-12-25 15:30:00', $arrayData['end_datetime']);
+        $this->assertStringContainsString('2038-12-25 14:00:00', (string) $arrayData['start_datetime']);
+        $this->assertStringContainsString('2038-12-25 15:30:00', (string) $arrayData['end_datetime']);
     }
 
     /**
@@ -380,7 +381,7 @@ final class ScheduleDataTest extends TestCase
         ]);
 
         // Act & Assert: Verify properties are readonly (cannot be modified)
-        $reflection = new \ReflectionClass($scheduleData);
+        $reflection = new ReflectionClass($scheduleData);
 
         foreach ($reflection->getProperties() as $property) {
             $this->assertTrue($property->isReadOnly());
@@ -400,7 +401,7 @@ final class ScheduleDataTest extends TestCase
         ]);
 
         // Act: Create new DTO with schedulable info
-        /**  @var \Roster\DTOs\ScheduleData $updatedData */
+        /** @var ScheduleData $updatedData */
         $updatedData = $originalData->withSchedulable(456, 'team');
 
         // Assert: Verify new instance has schedulable info, original unchanged
@@ -445,7 +446,7 @@ final class ScheduleDataTest extends TestCase
     public function test_parse_datetime_throws_exception_for_invalid_input_type(): void
     {
         // Arrange: Use reflection to test protected method
-        $reflectionClass = new \ReflectionClass(ScheduleData::class);
+        $reflectionClass = new ReflectionClass(ScheduleData::class);
         $method = $reflectionClass->getMethod('parseDateTime');
         $method->setAccessible(true);
 
@@ -461,7 +462,7 @@ final class ScheduleDataTest extends TestCase
     public function test_parse_datetime_returns_null_for_null_input(): void
     {
         // Arrange: Use reflection to test protected method
-        $reflectionClass = new \ReflectionClass(ScheduleData::class);
+        $reflectionClass = new ReflectionClass(ScheduleData::class);
         $method = $reflectionClass->getMethod('parseDateTime');
         $method->setAccessible(true);
 
@@ -481,7 +482,7 @@ final class ScheduleDataTest extends TestCase
         $carbon = Carbon::create(2039, 4, 1, 10, 0, 0, 'UTC');
 
         // Use reflection to test protected method
-        $reflectionClass = new \ReflectionClass(ScheduleData::class);
+        $reflectionClass = new ReflectionClass(ScheduleData::class);
         $method = $reflectionClass->getMethod('parseDateTime');
         $method->setAccessible(true);
 
@@ -517,10 +518,8 @@ final class ScheduleDataTest extends TestCase
 
         // Assert: Verify all non-null data is preserved
         foreach ($originalData as $key => $value) {
-            if ($value !== null) {
-                $this->assertArrayHasKey($key, $convertedData);
-                $this->assertEquals($value, $convertedData[$key]);
-            }
+            $this->assertArrayHasKey($key, $convertedData);
+            $this->assertEquals($value, $convertedData[$key]);
         }
     }
 }

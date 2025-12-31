@@ -116,7 +116,7 @@ class ValidationFailedException extends InvalidArgumentException
     public function toArray(): array
     {
         $violationsArray = array_map(
-            fn(ViolationData $violation) => [
+            fn(ViolationData $violation): array => [
                 'field' => $violation->getField(),
                 'rule' => $violation->getRule(),
                 'message' => $violation->getMessage(),
@@ -150,7 +150,7 @@ class ValidationFailedException extends InvalidArgumentException
     public function toDetailedArray(): array
     {
         $violationsArray = array_map(
-            fn(ViolationData $violation) => $violation->toArray(),
+            fn(ViolationData $violation): array => $violation->toArray(),
             $this->violations
         );
 
@@ -278,7 +278,7 @@ class ValidationFailedException extends InvalidArgumentException
         $latestViolations = $this->keepLatestViolationPerField($violations);
 
         $messages = array_map(
-            fn(ViolationData $violation) => $violation->getMessage(),
+            fn(ViolationData $violation): string => $violation->getMessage(),
             $latestViolations
         );
 
@@ -291,7 +291,7 @@ class ValidationFailedException extends InvalidArgumentException
      * @param array<int, mixed> $violations
      * @return array<int, ViolationData>
      *
-     * @throws \InvalidArgumentException If an element is not a ViolationData instance
+     * @throws InvalidArgumentException If an element is not a ViolationData instance
      */
     private function keepLatestViolationPerField(array $violations): array
     {
@@ -299,7 +299,7 @@ class ValidationFailedException extends InvalidArgumentException
 
         foreach ($violations as $violation) {
             if (!$violation instanceof ViolationData) {
-                throw new \InvalidArgumentException(
+                throw new InvalidArgumentException(
                     sprintf(
                         'Expected instance of ViolationData, got %s',
                         is_object($violation) ? get_class($violation) : gettype($violation)

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Validation\Rules;
 
+use Roster\Validation\DTOs\ViolationData;
 use stdClass;
 use Roster\Enums\EntityType;
 use Roster\Enums\OperationType;
@@ -24,7 +25,9 @@ use Roster\Support\RosterMutationContext;
 final class DateRangeRulesTest extends TestCase
 {
     private AvailabilityDateRangeRule $availabilityDateRangeRule;
+
     private TimeSlotDateTimeRule $timeSlotDateTimeRule;
+
     private TestSchedulable $testSchedulable;
 
     /**
@@ -236,10 +239,10 @@ final class DateRangeRulesTest extends TestCase
 
         $violation = array_values(array_filter(
             $validationContext->getViolations(),
-            fn($v) => $v->getField() === 'max_duration'
+            fn(ViolationData $v): bool => $v->getField() === 'max_duration'
         ))[0] ?? null;
 
-        $this->assertNotNull($violation);
+        $this->assertInstanceOf(ViolationData::class, $violation);
         $this->assertStringContainsString('cannot exceed 365 days', $violation->getMessage());
     }
 

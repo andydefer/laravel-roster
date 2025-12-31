@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Http\Middleware;
 
+use Illuminate\Contracts\Routing\ResponseFactory;
+use Illuminate\Http\Response;
+use stdClass;
 use Illuminate\Http\Request;
 use Illuminate\Session\Store;
 use Mockery;
@@ -54,10 +57,10 @@ final class SetUserTimezoneTest extends TestCase
     public function testSetsTimezoneFromHeader(): void
     {
         // Arrange: Create request with timezone header
-        $request = Request::create(uri: '/', method: 'GET');
+        $request = Request::create(uri: '/', method: \Symfony\Component\HttpFoundation\Request::METHOD_GET);
         $request->headers->set('X-Timezone', 'America/New_York');
 
-        $next = function ($req) {
+        $next = function ($req): ResponseFactory|Response {
             // Assert: Verify timezone is set correctly during request handling
             $this->assertSame('America/New_York', TimezoneHelper::getEffectiveTimezone());
             return response('OK');
@@ -67,7 +70,7 @@ final class SetUserTimezoneTest extends TestCase
         $response = $this->middleware->handle($request, $next);
 
         // Assert: Verify successful response
-        $this->assertSame(200, $response->getStatusCode());
+        $this->assertSame(\Symfony\Component\HttpFoundation\Response::HTTP_OK, $response->getStatusCode(), (string) $response->getContent());
     }
 
     /**
@@ -84,10 +87,10 @@ final class SetUserTimezoneTest extends TestCase
             ->with('timezone')
             ->andReturn('Asia/Tokyo');
 
-        $request = Request::create(uri: '/', method: 'GET');
+        $request = Request::create(uri: '/', method: \Symfony\Component\HttpFoundation\Request::METHOD_GET);
         $request->setLaravelSession($session);
 
-        $next = function ($req) {
+        $next = function ($req): ResponseFactory|Response {
             // Assert: Verify session timezone is applied
             $this->assertSame('Asia/Tokyo', TimezoneHelper::getEffectiveTimezone());
             return response('OK');
@@ -97,7 +100,7 @@ final class SetUserTimezoneTest extends TestCase
         $response = $this->middleware->handle($request, $next);
 
         // Assert: Verify successful response
-        $this->assertSame(200, $response->getStatusCode());
+        $this->assertSame(\Symfony\Component\HttpFoundation\Response::HTTP_OK, $response->getStatusCode(), (string) $response->getContent());
     }
 
     /**
@@ -107,16 +110,16 @@ final class SetUserTimezoneTest extends TestCase
     {
         // Arrange: Create user with timezone preference
         $user = new class {
-            public function getTimezone()
+            public function getTimezone(): string
             {
                 return 'Australia/Sydney';
             }
         };
 
-        $request = Request::create(uri: '/', method: 'GET');
-        $request->setUserResolver(fn() => $user);
+        $request = Request::create(uri: '/', method: \Symfony\Component\HttpFoundation\Request::METHOD_GET);
+        $request->setUserResolver(fn(): object => $user);
 
-        $next = function ($req) {
+        $next = function ($req): ResponseFactory|Response {
             // Assert: Verify user timezone is applied
             $this->assertSame('Australia/Sydney', TimezoneHelper::getEffectiveTimezone());
             return response('OK');
@@ -126,7 +129,7 @@ final class SetUserTimezoneTest extends TestCase
         $response = $this->middleware->handle($request, $next);
 
         // Assert: Verify successful response
-        $this->assertSame(200, $response->getStatusCode());
+        $this->assertSame(\Symfony\Component\HttpFoundation\Response::HTTP_OK, $response->getStatusCode(), (string) $response->getContent());
     }
 
     /**
@@ -135,10 +138,10 @@ final class SetUserTimezoneTest extends TestCase
     public function testSetsTimezoneFromClientHeader(): void
     {
         // Arrange: Create request with client timezone header
-        $request = Request::create(uri: '/', method: 'GET');
+        $request = Request::create(uri: '/', method: \Symfony\Component\HttpFoundation\Request::METHOD_GET);
         $request->headers->set('X-Client-Timezone', 'Pacific/Honolulu');
 
-        $next = function ($req) {
+        $next = function ($req): ResponseFactory|Response {
             // Assert: Verify client timezone is applied
             $this->assertSame('Pacific/Honolulu', TimezoneHelper::getEffectiveTimezone());
             return response('OK');
@@ -148,7 +151,7 @@ final class SetUserTimezoneTest extends TestCase
         $response = $this->middleware->handle($request, $next);
 
         // Assert: Verify successful response
-        $this->assertSame(200, $response->getStatusCode());
+        $this->assertSame(\Symfony\Component\HttpFoundation\Response::HTTP_OK, $response->getStatusCode(), (string) $response->getContent());
     }
 
     /**
@@ -157,9 +160,9 @@ final class SetUserTimezoneTest extends TestCase
     public function testUsesDefaultWhenNoTimezoneSource(): void
     {
         // Arrange: Create request without any timezone sources
-        $request = Request::create(uri: '/', method: 'GET');
+        $request = Request::create(uri: '/', method: \Symfony\Component\HttpFoundation\Request::METHOD_GET);
 
-        $next = function ($req) {
+        $next = function ($req): ResponseFactory|Response {
             // Assert: Verify default timezone is used
             $this->assertSame('Europe/Paris', TimezoneHelper::getEffectiveTimezone());
             return response('OK');
@@ -169,7 +172,7 @@ final class SetUserTimezoneTest extends TestCase
         $response = $this->middleware->handle($request, $next);
 
         // Assert: Verify successful response
-        $this->assertSame(200, $response->getStatusCode());
+        $this->assertSame(\Symfony\Component\HttpFoundation\Response::HTTP_OK, $response->getStatusCode(), (string) $response->getContent());
     }
 
     /**
@@ -186,11 +189,11 @@ final class SetUserTimezoneTest extends TestCase
             ->with('timezone')
             ->andReturn('Europe/London');
 
-        $request = Request::create(uri: '/', method: 'GET');
+        $request = Request::create(uri: '/', method: \Symfony\Component\HttpFoundation\Request::METHOD_GET);
         $request->setLaravelSession($session);
         $request->headers->set('X-Timezone', 'America/Chicago');
 
-        $next = function ($req) {
+        $next = function ($req): ResponseFactory|Response {
             // Assert: Verify header takes priority over session
             $this->assertSame('America/Chicago', TimezoneHelper::getEffectiveTimezone());
             return response('OK');
@@ -200,7 +203,7 @@ final class SetUserTimezoneTest extends TestCase
         $response = $this->middleware->handle($request, $next);
 
         // Assert: Verify successful response
-        $this->assertSame(200, $response->getStatusCode());
+        $this->assertSame(\Symfony\Component\HttpFoundation\Response::HTTP_OK, $response->getStatusCode(), (string) $response->getContent());
     }
 
     /**
@@ -209,10 +212,10 @@ final class SetUserTimezoneTest extends TestCase
     public function testHandlesInvalidTimezoneInHeader(): void
     {
         // Arrange: Create request with invalid timezone header
-        $request = Request::create(uri: '/', method: 'GET');
+        $request = Request::create(uri: '/', method: \Symfony\Component\HttpFoundation\Request::METHOD_GET);
         $request->headers->set('X-Timezone', 'Invalid/Timezone');
 
-        $next = function ($req) {
+        $next = function ($req): ResponseFactory|Response {
             // Assert: Verify fallback to default timezone
             $this->assertSame('Europe/Paris', TimezoneHelper::getEffectiveTimezone());
             return response('OK');
@@ -222,7 +225,7 @@ final class SetUserTimezoneTest extends TestCase
         $response = $this->middleware->handle($request, $next);
 
         // Assert: Verify successful response
-        $this->assertSame(200, $response->getStatusCode());
+        $this->assertSame(\Symfony\Component\HttpFoundation\Response::HTTP_OK, $response->getStatusCode(), (string) $response->getContent());
     }
 
     /**
@@ -231,10 +234,10 @@ final class SetUserTimezoneTest extends TestCase
     public function testNormalizesTimezoneNames(): void
     {
         // Arrange: Create request with lowercase timezone name
-        $request = Request::create(uri: '/', method: 'GET');
+        $request = Request::create(uri: '/', method: \Symfony\Component\HttpFoundation\Request::METHOD_GET);
         $request->headers->set('X-Timezone', 'america/new_york');
 
-        $next = function ($req) {
+        $next = function ($req): ResponseFactory|Response {
             // Assert: Verify timezone is properly normalized
             $this->assertSame('America/New_York', TimezoneHelper::getEffectiveTimezone());
             return response('OK');
@@ -244,7 +247,7 @@ final class SetUserTimezoneTest extends TestCase
         $response = $this->middleware->handle($request, $next);
 
         // Assert: Verify successful response
-        $this->assertSame(200, $response->getStatusCode());
+        $this->assertSame(\Symfony\Component\HttpFoundation\Response::HTTP_OK, $response->getStatusCode(), (string) $response->getContent());
     }
 
     /**
@@ -253,12 +256,12 @@ final class SetUserTimezoneTest extends TestCase
     public function testWithUserWithoutGetTimezoneMethod(): void
     {
         // Arrange: Create user object without timezone method
-        $user = new \stdClass();
+        $user = new stdClass();
 
-        $request = Request::create(uri: '/', method: 'GET');
-        $request->setUserResolver(fn() => $user);
+        $request = Request::create(uri: '/', method: \Symfony\Component\HttpFoundation\Request::METHOD_GET);
+        $request->setUserResolver(fn(): stdClass => $user);
 
-        $next = function ($req) {
+        $next = function ($req): ResponseFactory|Response {
             // Assert: Verify default timezone is used
             $this->assertSame('Europe/Paris', TimezoneHelper::getEffectiveTimezone());
             return response('OK');
@@ -268,7 +271,7 @@ final class SetUserTimezoneTest extends TestCase
         $response = $this->middleware->handle($request, $next);
 
         // Assert: Verify successful response
-        $this->assertSame(200, $response->getStatusCode());
+        $this->assertSame(\Symfony\Component\HttpFoundation\Response::HTTP_OK, $response->getStatusCode(), (string) $response->getContent());
     }
 
     /**
@@ -278,16 +281,16 @@ final class SetUserTimezoneTest extends TestCase
     {
         // Arrange: Create user that returns null timezone
         $user = new class {
-            public function getTimezone()
+            public function getTimezone(): null
             {
                 return null;
             }
         };
 
-        $request = Request::create(uri: '/', method: 'GET');
-        $request->setUserResolver(fn() => $user);
+        $request = Request::create(uri: '/', method: \Symfony\Component\HttpFoundation\Request::METHOD_GET);
+        $request->setUserResolver(fn(): object => $user);
 
-        $next = function ($req) {
+        $next = function ($req): ResponseFactory|Response {
             // Assert: Verify default timezone is used
             $this->assertSame('Europe/Paris', TimezoneHelper::getEffectiveTimezone());
             return response('OK');
@@ -297,7 +300,7 @@ final class SetUserTimezoneTest extends TestCase
         $response = $this->middleware->handle($request, $next);
 
         // Assert: Verify successful response
-        $this->assertSame(200, $response->getStatusCode());
+        $this->assertSame(\Symfony\Component\HttpFoundation\Response::HTTP_OK, $response->getStatusCode(), (string) $response->getContent());
     }
 
     /**
@@ -314,10 +317,10 @@ final class SetUserTimezoneTest extends TestCase
             ->with('timezone')
             ->andReturn('Invalid/Timezone');
 
-        $request = Request::create(uri: '/', method: 'GET');
+        $request = Request::create(uri: '/', method: \Symfony\Component\HttpFoundation\Request::METHOD_GET);
         $request->setLaravelSession($session);
 
-        $next = function ($req) {
+        $next = function ($req): ResponseFactory|Response {
             // Assert: Verify fallback to default timezone
             $this->assertSame('Europe/Paris', TimezoneHelper::getEffectiveTimezone());
             return response('OK');
@@ -327,7 +330,7 @@ final class SetUserTimezoneTest extends TestCase
         $response = $this->middleware->handle($request, $next);
 
         // Assert: Verify successful response
-        $this->assertSame(200, $response->getStatusCode());
+        $this->assertSame(\Symfony\Component\HttpFoundation\Response::HTTP_OK, $response->getStatusCode(), (string) $response->getContent());
     }
 
     /**
@@ -336,9 +339,9 @@ final class SetUserTimezoneTest extends TestCase
     public function testWithoutSession(): void
     {
         // Arrange: Create request without session
-        $request = Request::create(uri: '/', method: 'GET');
+        $request = Request::create(uri: '/', method: \Symfony\Component\HttpFoundation\Request::METHOD_GET);
 
-        $next = function ($req) {
+        $next = function ($req): ResponseFactory|Response {
             // Assert: Verify default timezone is used
             $this->assertSame('Europe/Paris', TimezoneHelper::getEffectiveTimezone());
             return response('OK');
@@ -348,7 +351,7 @@ final class SetUserTimezoneTest extends TestCase
         $response = $this->middleware->handle($request, $next);
 
         // Assert: Verify successful response
-        $this->assertSame(200, $response->getStatusCode());
+        $this->assertSame(\Symfony\Component\HttpFoundation\Response::HTTP_OK, $response->getStatusCode(), (string) $response->getContent());
     }
 
     /**
@@ -366,19 +369,19 @@ final class SetUserTimezoneTest extends TestCase
             ->andReturn('Europe/London');
 
         $user = new class {
-            public function getTimezone()
+            public function getTimezone(): string
             {
                 return 'Asia/Dubai';
             }
         };
 
-        $request = Request::create(uri: '/', method: 'GET');
+        $request = Request::create(uri: '/', method: \Symfony\Component\HttpFoundation\Request::METHOD_GET);
         $request->setLaravelSession($session);
-        $request->setUserResolver(fn() => $user);
+        $request->setUserResolver(fn(): object => $user);
         $request->headers->set('X-Timezone', 'America/Los_Angeles');
         $request->headers->set('X-Client-Timezone', 'Pacific/Auckland');
 
-        $next = function ($req) {
+        $next = function ($req): ResponseFactory|Response {
             // Assert: Verify X-Timezone header has highest priority
             $this->assertSame('America/Los_Angeles', TimezoneHelper::getEffectiveTimezone());
             return response('OK');
@@ -388,7 +391,7 @@ final class SetUserTimezoneTest extends TestCase
         $response = $this->middleware->handle($request, $next);
 
         // Assert: Verify successful response
-        $this->assertSame(200, $response->getStatusCode());
+        $this->assertSame(\Symfony\Component\HttpFoundation\Response::HTTP_OK, $response->getStatusCode(), (string) $response->getContent());
     }
 
     /**
@@ -397,10 +400,10 @@ final class SetUserTimezoneTest extends TestCase
     public function testWithOnlyClientTimezoneHeader(): void
     {
         // Arrange: Create request with only client timezone header
-        $request = Request::create(uri: '/', method: 'GET');
+        $request = Request::create(uri: '/', method: \Symfony\Component\HttpFoundation\Request::METHOD_GET);
         $request->headers->set('X-Client-Timezone', 'Asia/Shanghai');
 
-        $next = function ($req) {
+        $next = function ($req): ResponseFactory|Response {
             // Assert: Verify client timezone is used
             $this->assertSame('Asia/Shanghai', TimezoneHelper::getEffectiveTimezone());
             return response('OK');
@@ -410,7 +413,7 @@ final class SetUserTimezoneTest extends TestCase
         $response = $this->middleware->handle($request, $next);
 
         // Assert: Verify successful response
-        $this->assertSame(200, $response->getStatusCode());
+        $this->assertSame(\Symfony\Component\HttpFoundation\Response::HTTP_OK, $response->getStatusCode(), (string) $response->getContent());
     }
 
     /**
@@ -419,10 +422,10 @@ final class SetUserTimezoneTest extends TestCase
     public function testWithEmptyTimezoneHeader(): void
     {
         // Arrange: Create request with empty timezone header
-        $request = Request::create(uri: '/', method: 'GET');
+        $request = Request::create(uri: '/', method: \Symfony\Component\HttpFoundation\Request::METHOD_GET);
         $request->headers->set('X-Timezone', '');
 
-        $next = function ($req) {
+        $next = function ($req): ResponseFactory|Response {
             // Assert: Verify default timezone is used
             $this->assertSame('Europe/Paris', TimezoneHelper::getEffectiveTimezone());
             return response('OK');
@@ -432,7 +435,7 @@ final class SetUserTimezoneTest extends TestCase
         $response = $this->middleware->handle($request, $next);
 
         // Assert: Verify successful response
-        $this->assertSame(200, $response->getStatusCode());
+        $this->assertSame(\Symfony\Component\HttpFoundation\Response::HTTP_OK, $response->getStatusCode(), (string) $response->getContent());
     }
 
     /**
@@ -449,10 +452,10 @@ final class SetUserTimezoneTest extends TestCase
             ->with('timezone')
             ->andReturn('');
 
-        $request = Request::create(uri: '/', method: 'GET');
+        $request = Request::create(uri: '/', method: \Symfony\Component\HttpFoundation\Request::METHOD_GET);
         $request->setLaravelSession($session);
 
-        $next = function ($req) {
+        $next = function ($req): ResponseFactory|Response {
             // Assert: Verify default timezone is used
             $this->assertSame('Europe/Paris', TimezoneHelper::getEffectiveTimezone());
             return response('OK');
@@ -462,7 +465,7 @@ final class SetUserTimezoneTest extends TestCase
         $response = $this->middleware->handle($request, $next);
 
         // Assert: Verify successful response
-        $this->assertSame(200, $response->getStatusCode());
+        $this->assertSame(\Symfony\Component\HttpFoundation\Response::HTTP_OK, $response->getStatusCode(), (string) $response->getContent());
     }
 
     /**
@@ -471,22 +474,22 @@ final class SetUserTimezoneTest extends TestCase
     public function testResetsTimezoneAfterRequest(): void
     {
         // Arrange: First request with specific timezone
-        $request1 = Request::create(uri: '/', method: 'GET');
+        $request1 = Request::create(uri: '/', method: \Symfony\Component\HttpFoundation\Request::METHOD_GET);
         $request1->headers->set('X-Timezone', 'America/New_York');
 
         // Arrange: Second request with different timezone
-        $request2 = Request::create(uri: '/', method: 'GET');
+        $request2 = Request::create(uri: '/', method: \Symfony\Component\HttpFoundation\Request::METHOD_GET);
         $request2->headers->set('X-Timezone', 'Europe/Berlin');
 
         // First request handler
-        $next1 = function ($req) {
+        $next1 = function ($req): ResponseFactory|Response {
             // Assert: Verify first request timezone
             $this->assertSame('America/New_York', TimezoneHelper::getEffectiveTimezone());
             return response('OK');
         };
 
         // Second request handler
-        $next2 = function ($req) {
+        $next2 = function ($req): ResponseFactory|Response {
             // Assert: Verify second request timezone
             $this->assertSame('Europe/Berlin', TimezoneHelper::getEffectiveTimezone());
             return response('OK');
@@ -494,7 +497,7 @@ final class SetUserTimezoneTest extends TestCase
 
         // Act & Assert: Process first request
         $response1 = $this->middleware->handle($request1, $next1);
-        $this->assertSame(200, $response1->getStatusCode());
+        $this->assertSame(\Symfony\Component\HttpFoundation\Response::HTTP_OK, $response1->getStatusCode(), (string) $response1->getContent());
 
         // Reset timezone state between requests
         TimezoneHelper::resetUserTimezone();
@@ -502,6 +505,6 @@ final class SetUserTimezoneTest extends TestCase
 
         // Act & Assert: Process second request
         $response2 = $this->middleware->handle($request2, $next2);
-        $this->assertSame(200, $response2->getStatusCode());
+        $this->assertSame(\Symfony\Component\HttpFoundation\Response::HTTP_OK, $response2->getStatusCode(), (string) $response2->getContent());
     }
 }

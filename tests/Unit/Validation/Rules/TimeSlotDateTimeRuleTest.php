@@ -5,9 +5,7 @@ declare(strict_types=1);
 namespace Tests\Unit\Validation\Rules;
 
 use Illuminate\Support\Carbon;
-use Illuminate\Database\Eloquent\Model;
 use Mockery;
-use Mockery\MockInterface;
 use Roster\Enums\EntityType;
 use Roster\Enums\OperationType;
 use Roster\Validation\Rules\TimeSlotDateTimeRule;
@@ -617,8 +615,6 @@ final class TimeSlotDateTimeRuleTest extends TestCase
      * @param bool $hasEndDatetime Whether end_datetime is present
      * @param string|null $endDatetime The end datetime string or null
      * @param object|null $currentEntity The current entity for UPDATE operations
-     *
-     * @return MockObject&ValidationContextInterface
      */
     private function createValidationContext(
         OperationType $operationType,
@@ -664,8 +660,6 @@ final class TimeSlotDateTimeRuleTest extends TestCase
      *
      * @param string|null $startDatetime The start datetime string or null
      * @param string|null $endDatetime The end datetime string or null
-     *
-     * @return object
      */
     private function createMockEntity(?string $startDatetime, ?string $endDatetime): object
     {

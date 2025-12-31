@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Validation\Rules;
 
-use Carbon\Carbon;
 use Exception;
 use Mockery;
 use Mockery\MockInterface;
@@ -26,6 +25,7 @@ use Illuminate\Support\Facades\Config;
 final class TimezoneValidationRuleTest extends TestCase
 {
     private TimezoneValidationRule $rule;
+
     private Model|MockInterface $schedulable;
 
     /**
@@ -80,7 +80,7 @@ final class TimezoneValidationRuleTest extends TestCase
             // Configure get() method - shouldn't be called since has() returns false
             $context->method('get')->willReturnCallback(
                 function (string $key): mixed {
-                    $this->fail("get() should not be called when has() returns false for field '{$key}'");
+                    $this->fail(sprintf("get() should not be called when has() returns false for field '%s'", $key));
                 }
             );
 
@@ -112,7 +112,7 @@ final class TimezoneValidationRuleTest extends TestCase
             // Configure get() method - shouldn't be called since has() returns false
             $context->method('get')->willReturnCallback(
                 function (string $key): mixed {
-                    $this->fail("get() should not be called when has() returns false for field '{$key}'");
+                    $this->fail(sprintf("get() should not be called when has() returns false for field '%s'", $key));
                 }
             );
 
@@ -139,7 +139,7 @@ final class TimezoneValidationRuleTest extends TestCase
         // Mais on configure quand même has() pour être sûr
         $context->method('has')->willReturnCallback(
             function (string $key): bool {
-                $this->fail("has() should not be called for DELETE operation, but was called with field '{$key}'");
+                $this->fail(sprintf("has() should not be called for DELETE operation, but was called with field '%s'", $key));
             }
         );
 
@@ -506,7 +506,7 @@ final class TimezoneValidationRuleTest extends TestCase
                 $this->rule->validate($context);
                 $this->addToAssertionCount(1); // Test executed without exception
             } catch (Exception $exception) {
-                $this->fail("Validation threw exception for date format '{$dateFormat}': " . $exception->getMessage());
+                $this->fail(sprintf("Validation threw exception for date format '%s': ", $dateFormat) . $exception->getMessage());
             }
         }
     }

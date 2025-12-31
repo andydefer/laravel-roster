@@ -94,11 +94,7 @@ class FutureDateRule extends AbstractRule
         try {
             $validityStart = Carbon::parse($validationContext->get('validity_start'));
 
-            if (!$validationContext->has('daily_start')) {
-                $dailyStart = '00:00:00';
-            } else {
-                $dailyStart = $validationContext->get('daily_start');
-            }
+            $dailyStart = $validationContext->has('daily_start') ? $validationContext->get('daily_start') : '00:00:00';
 
             $combinedDateTime = $this->combineDateAndTime($validityStart, $dailyStart);
 
@@ -224,10 +220,6 @@ class FutureDateRule extends AbstractRule
      * Combines date and time strings into a Carbon instance with midnight crossing support.
      *
      * Handles the edge case where time is from previous day (23:xx:xx) when current time is between 00:00-01:00.
-     *
-     * @param Carbon $date
-     * @param string|null $time
-     * @return Carbon
      */
     private function combineDateAndTime(Carbon $date, ?string $time): Carbon
     {
@@ -258,9 +250,6 @@ class FutureDateRule extends AbstractRule
 
     /**
      * Gets current daily_start from database (for update operations).
-     *
-     * @param ValidationContextInterface $validationContext
-     * @return string|null
      */
     private function getCurrentDailyStart(ValidationContextInterface $validationContext): ?string
     {

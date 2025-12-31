@@ -18,8 +18,6 @@ return new class extends Migration
      * Run the migrations.
      *
      * Creates the test_schedulables table with necessary columns for testing.
-     *
-     * @return void
      */
     public function up(): void
     {
@@ -37,8 +35,6 @@ return new class extends Migration
      * Reverse the migrations.
      *
      * Drops the test_schedulables table.
-     *
-     * @return void
      */
     public function down(): void
     {

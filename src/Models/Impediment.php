@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Roster\Models;
 
+use InvalidArgumentException;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -87,12 +88,14 @@ class Impediment extends Model
                 if ($value === null) {
                     return null;
                 }
+
                 return is_string($value) ? json_decode($value, true, 512, JSON_THROW_ON_ERROR) : $value;
             },
             set: function ($value): ?string {
                 if ($value === null) {
                     return null;
                 }
+
                 return is_array($value) ? json_encode($value, JSON_THROW_ON_ERROR) : $value;
             }
         );
@@ -125,7 +128,7 @@ class Impediment extends Model
      * @param Carbon $end End time of the period to check
      * @return bool True if there is any overlap
      *
-     * @throws \InvalidArgumentException When the time window is not valid
+     * @throws InvalidArgumentException When the time window is not valid
      */
     public function overlapsWith(Carbon $start, Carbon $end): bool
     {

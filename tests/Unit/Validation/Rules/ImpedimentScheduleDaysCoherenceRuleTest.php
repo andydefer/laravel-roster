@@ -27,6 +27,7 @@ final class ImpedimentScheduleDaysCoherenceRuleTest extends TestCase
     use RefreshDatabase;
 
     private Model $schedulable;
+
     private ImpedimentScheduleDaysCoherenceRule $rule;
 
     /**

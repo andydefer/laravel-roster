@@ -370,8 +370,8 @@ class ValidationContext implements ValidationContextInterface
     ): void {
         $this->violations[] = new ViolationData(
             field: $field,
-            rule: $rule,
             message: $message,
+            rule: $rule,
             ruleDescription: $ruleDescription
         );
     }
@@ -390,8 +390,8 @@ class ValidationContext implements ValidationContextInterface
     ): void {
         $this->violations[] = new ViolationData(
             field: $field,
-            rule: $rule->getName(),
             message: $message,
+            rule: $rule->getName(),
             ruleDescription: $rule->getDescription()
         );
     }

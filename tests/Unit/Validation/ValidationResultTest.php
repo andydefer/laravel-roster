@@ -93,7 +93,7 @@ final class ValidationResultTest extends TestCase
         $this->assertTrue($result->isValid());
         $this->assertEmpty($result->getViolations());
         $this->assertFalse($result->hasViolations());
-        $this->assertEquals(0, $result->countViolations());
+        $this->assertSame(0, $result->countViolations());
 
         // Vérification du tableau
         $array = $result->toArray();
@@ -119,7 +119,7 @@ final class ValidationResultTest extends TestCase
         $this->assertFalse($result->isValid());
         $this->assertSame($violations, $result->getViolations());
         $this->assertTrue($result->hasViolations());
-        $this->assertEquals(2, $result->countViolations());
+        $this->assertSame(2, $result->countViolations());
 
         // Vérification du tableau
         $array = $result->toArray();
@@ -230,6 +230,6 @@ final class ValidationResultTest extends TestCase
         $result = ValidationResult::failed($violations);
 
         // Assert
-        $this->assertEquals(3, $result->countViolations());
+        $this->assertSame(3, $result->countViolations());
     }
 }

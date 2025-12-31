@@ -39,7 +39,6 @@ class TimezoneValidationRule extends AbstractRule
      * Validates timezone and datetime fields in the validation context.
      *
      * @param ValidationContextInterface $validationContext The context containing data to validate
-     * @return void
      */
     public function validate(ValidationContextInterface $validationContext): void
     {

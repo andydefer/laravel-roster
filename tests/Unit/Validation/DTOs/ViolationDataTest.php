@@ -26,9 +26,9 @@ final class ViolationDataTest extends TestCase
         $violation = new ViolationData($field, $message, $rule);
 
         // Assert: Verify all fields are correctly set
-        $this->assertEquals($field, $violation->getField());
-        $this->assertEquals($message, $violation->getMessage());
-        $this->assertEquals($rule, $violation->getRule());
+        $this->assertSame($field, $violation->getField());
+        $this->assertSame($message, $violation->getMessage());
+        $this->assertSame($rule, $violation->getRule());
         $this->assertNull($violation->getRuleDescription());
         $this->assertFalse($violation->hasRuleDescription());
     }
@@ -48,10 +48,10 @@ final class ViolationDataTest extends TestCase
         $violation = new ViolationData($field, $message, $rule, $description);
 
         // Assert: Verify all fields including description
-        $this->assertEquals($field, $violation->getField());
-        $this->assertEquals($message, $violation->getMessage());
-        $this->assertEquals($rule, $violation->getRule());
-        $this->assertEquals($description, $violation->getRuleDescription());
+        $this->assertSame($field, $violation->getField());
+        $this->assertSame($message, $violation->getMessage());
+        $this->assertSame($rule, $violation->getRule());
+        $this->assertSame($description, $violation->getRuleDescription());
         $this->assertTrue($violation->hasRuleDescription());
     }
 
@@ -68,7 +68,7 @@ final class ViolationDataTest extends TestCase
         $violation = new ViolationData($field, $message);
 
         // Assert: Verify default rule name
-        $this->assertEquals('unknown', $violation->getRule());
+        $this->assertSame('unknown', $violation->getRule());
         $this->assertNull($violation->getRuleDescription());
     }
 
@@ -87,7 +87,7 @@ final class ViolationDataTest extends TestCase
         $violation = new ViolationData($field, $message, $rule, $description);
 
         // Assert: Verify empty description is not considered as having description
-        $this->assertEquals('', $violation->getRuleDescription());
+        $this->assertSame('', $violation->getRuleDescription());
         $this->assertFalse($violation->hasRuleDescription());
     }
 
@@ -124,7 +124,7 @@ final class ViolationDataTest extends TestCase
         $array = $violation->toArray();
 
         // Assert: Verify array structure with description
-        $this->assertEquals([
+        $this->assertSame([
             'field' => 'email',
             'rule' => 'required',
             'message' => 'Required field',
@@ -144,7 +144,7 @@ final class ViolationDataTest extends TestCase
         $violation = new ViolationData('email', 'Invalid field', 'format', $description);
 
         // Assert: Verify new lines are preserved
-        $this->assertEquals($description, $violation->getRuleDescription());
+        $this->assertSame($description, $violation->getRuleDescription());
     }
 
     /**
@@ -157,24 +157,24 @@ final class ViolationDataTest extends TestCase
             new ViolationData('email', 'Required', 'required'),
             new ViolationData('email', 'Invalid format', 'email', 'Validates email format'),
             new ViolationData('password', 'Too short', 'min:8', 'Ensures minimum length of 8 characters'),
-            new ViolationData('name', 'Required', null), // No rule specified
+            new ViolationData('name', 'Required'), // No rule specified
         ];
 
         // Act & Assert: Verify each instance
-        $this->assertEquals('email', $violations[0]->getField());
-        $this->assertEquals('required', $violations[0]->getRule());
+        $this->assertSame('email', $violations[0]->getField());
+        $this->assertSame('required', $violations[0]->getRule());
         $this->assertNull($violations[0]->getRuleDescription());
 
-        $this->assertEquals('email', $violations[1]->getField());
-        $this->assertEquals('email', $violations[1]->getRule());
-        $this->assertEquals('Validates email format', $violations[1]->getRuleDescription());
+        $this->assertSame('email', $violations[1]->getField());
+        $this->assertSame('email', $violations[1]->getRule());
+        $this->assertSame('Validates email format', $violations[1]->getRuleDescription());
 
-        $this->assertEquals('password', $violations[2]->getField());
-        $this->assertEquals('min:8', $violations[2]->getRule());
-        $this->assertEquals('Ensures minimum length of 8 characters', $violations[2]->getRuleDescription());
+        $this->assertSame('password', $violations[2]->getField());
+        $this->assertSame('min:8', $violations[2]->getRule());
+        $this->assertSame('Ensures minimum length of 8 characters', $violations[2]->getRuleDescription());
 
-        $this->assertEquals('name', $violations[3]->getField());
-        $this->assertEquals('unknown', $violations[3]->getRule()); // Default when null
+        $this->assertSame('name', $violations[3]->getField());
+        $this->assertSame('unknown', $violations[3]->getRule()); // Default when null
         $this->assertNull($violations[3]->getRuleDescription());
     }
 }

@@ -4,8 +4,11 @@ declare(strict_types=1);
 
 namespace Roster\Commands;
 
+use ValueError;
+use Exception;
+use Roster\Validation\Attributes\ValidationRule;
+use ReflectionType;
 use Illuminate\Console\Command;
-use Illuminate\Database\Eloquent\Model;
 use Roster\Enums\EntityType;
 use Roster\Enums\OperationType;
 use Roster\Validation\RuleScanner;
@@ -74,11 +77,11 @@ class DebugRulesCommand extends Command
             }
 
             return self::SUCCESS;
-        } catch (Throwable $exception) {
-            $this->error($exception->getMessage());
+        } catch (Throwable $throwable) {
+            $this->error($throwable->getMessage());
 
             if ($this->option('verbose')) {
-                $this->error($exception->getTraceAsString());
+                $this->error($throwable->getTraceAsString());
             }
 
             return self::FAILURE;
@@ -103,7 +106,7 @@ class DebugRulesCommand extends Command
     ): void {
         $entityType = $this->resolveEntityType($entityInput);
 
-        $this->line("🔍 Debugging validation rules for: {$entityInput}");
+        $this->line('🔍 Debugging validation rules for: ' . $entityInput);
         $this->line("📊 Entity Type: " . $entityType->value);
         $this->newLine();
 
@@ -113,7 +116,7 @@ class DebugRulesCommand extends Command
             validator: $validator
         );
 
-        if (empty($rules)) {
+        if ($rules === []) {
             $this->warn('No validation rules found for this entity/operation combination.');
             return;
         }
@@ -169,8 +172,8 @@ class DebugRulesCommand extends Command
     {
         try {
             return EntityType::from(strtolower($input));
-        } catch (\ValueError) {
-            $this->warn("Entity '{$input}' not found in EntityType enum. Using AVAILABILITY as default.");
+        } catch (ValueError) {
+            $this->warn(sprintf("Entity '%s' not found in EntityType enum. Using AVAILABILITY as default.", $input));
             return EntityType::AVAILABILITY;
         }
     }
@@ -203,10 +206,6 @@ class DebugRulesCommand extends Command
             : $supportedOperations;
 
         foreach ($operations as $operation) {
-            if (!$operation instanceof OperationType) {
-                continue;
-            }
-
             // Skip RETRIEVE operation as validation rules don't apply to read operations
             if ($operation === OperationType::RETRIEVE) {
                 continue;
@@ -251,15 +250,15 @@ class DebugRulesCommand extends Command
         EntityType $entityType,
         ?string $operationFilter
     ): void {
-        $this->line("📋 Rules for {$entityType->value}" .
-            ($operationFilter ? " (Operation: {$operationFilter})" : ""));
+        $this->line('📋 Rules for ' . $entityType->value .
+            ($operationFilter ? sprintf(' (Operation: %s)', $operationFilter) : ""));
         $this->newLine();
 
         $groupedRules = $this->groupRulesByClassName($rules);
         $sortedRules = $this->sortRulesByPriority($groupedRules);
         $filteredRules = $this->filterRulesByProperty($sortedRules, $propertyFilter);
 
-        if (empty($filteredRules)) {
+        if ($filteredRules === []) {
             $this->warn("No rules match the specified filters.");
             return;
         }
@@ -409,7 +408,7 @@ class DebugRulesCommand extends Command
     private function formatRuleProperties(object $rule): string
     {
         $properties = $this->extractRuleProperties($rule);
-        return !empty($properties) ? implode(', ', $properties) : '(class-level)';
+        return $properties === [] ? '(class-level)' : implode(', ', $properties);
     }
 
     /**
@@ -438,7 +437,7 @@ class DebugRulesCommand extends Command
             }
 
             return array_unique($properties);
-        } catch (ReflectionException $exception) {
+        } catch (ReflectionException $reflectionException) {
             $this->warn("Could not analyze properties for rule: " . get_class($rule));
             return [];
         }
@@ -507,7 +506,7 @@ class DebugRulesCommand extends Command
             $startLine = max(0, $method->getStartLine() - 1);
             $endLine = $method->getEndLine();
 
-            for ($i = $startLine; $i < $endLine && $i < count($methodSource); $i++) {
+            for ($i = $startLine; $i < $endLine && $i < count($methodSource); ++$i) {
                 $line = $methodSource[$i];
                 $properties = array_merge(
                     $properties,
@@ -516,7 +515,7 @@ class DebugRulesCommand extends Command
             }
 
             return $properties;
-        } catch (\Exception) {
+        } catch (Exception) {
             return [];
         }
     }
@@ -553,7 +552,7 @@ class DebugRulesCommand extends Command
         try {
             $reflection = new ReflectionClass($rule);
 
-            if (!empty($reflection->getAttributes(\Roster\Validation\Attributes\ValidationRule::class))) {
+            if ($reflection->getAttributes(ValidationRule::class) !== []) {
                 return 'Attribute';
             }
 
@@ -603,7 +602,7 @@ class DebugRulesCommand extends Command
      */
     private function displayRuleMethodDetails(object $rule, array $operations): void
     {
-        $this->line("Rule: " . $rule->getName() . " (Priority: {$rule->getPriority()})");
+        $this->line("Rule: " . $rule->getName() . sprintf(' (Priority: %s)', $rule->getPriority()));
         $this->line("Operations: " . implode(', ', $operations));
         $this->line("Class: " . get_class($rule));
 
@@ -614,7 +613,7 @@ class DebugRulesCommand extends Command
                     $this->displayMethodInfo($method);
                 }
             }
-        } catch (ReflectionException $exception) {
+        } catch (ReflectionException $reflectionException) {
             $this->warn("    Could not analyze methods for: " . get_class($rule));
         }
 
@@ -628,11 +627,11 @@ class DebugRulesCommand extends Command
      */
     private function displayMethodInfo(ReflectionMethod $method): void
     {
-        $this->line("  📝 Method: {$method->getName()}()");
-        $this->line("    📍 File: {$method->getFileName()}:{$method->getStartLine()}");
+        $this->line(sprintf('  📝 Method: %s()', $method->getName()));
+        $this->line(sprintf('    📍 File: %s:%s', $method->getFileName(), $method->getStartLine()));
 
         $parameters = $this->extractMethodParameters($method);
-        if (!empty($parameters)) {
+        if ($parameters !== []) {
             $this->line("    🔧 Params: " . implode(', ', $parameters));
         }
     }
@@ -648,8 +647,8 @@ class DebugRulesCommand extends Command
         $parameters = [];
 
         foreach ($method->getParameters() as $parameter) {
-            $type = $parameter->getType() ? $parameter->getType()->getName() : 'mixed';
-            $parameters[] = "{$type} \${$parameter->getName()}";
+            $type = $parameter->getType() instanceof ReflectionType ? $parameter->getType()->getName() : 'mixed';
+            $parameters[] = sprintf('%s $%s', $type, $parameter->getName());
         }
 
         return $parameters;
@@ -795,7 +794,7 @@ class DebugRulesCommand extends Command
     /**
      * Display all scanned rules.
      *
-     * @param array $scannedRules Scanned rules data
+     * @param array<string, ValidationRule> $scannedRules Scanned rules data
      */
     private function displayScannedRulesTable(array $scannedRules): void
     {
@@ -857,7 +856,7 @@ class DebugRulesCommand extends Command
      * @param string $className Rule class name
      * @param object $ruleData Rule data object
      * @param int $index Row index
-     * @return array Table row data
+     * @return array<int, mixed> Table row data
      */
     private function createScannedRuleRow(string $className, object $ruleData, int $index): array
     {
@@ -896,7 +895,7 @@ class DebugRulesCommand extends Command
      * Get entity values from scanned rule data.
      *
      * @param object $ruleData Scanned rule data
-     * @return array Entity values
+     * @return string[] Entity values
      */
     private function getEntityValuesFromScannedRule(object $ruleData): array
     {

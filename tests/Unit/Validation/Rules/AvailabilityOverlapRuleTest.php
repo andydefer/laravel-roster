@@ -591,11 +591,17 @@ final class AvailabilityOverlapRuleTest extends TestCase
     {
         return new class {
             public $id = 123;
+
             public $daily_start = '09:00:00';
+
             public $daily_end = '17:00:00';
+
             public $days = ['monday', 'tuesday'];
+
             public $validity_start = '2038-01-01';
+
             public $validity_end = '2038-12-31';
+
             public $type = 'consultation';
         };
     }

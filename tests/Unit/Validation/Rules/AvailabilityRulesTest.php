@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Validation\Rules;
 
+use Roster\Validation\DTOs\ViolationData;
 use Roster\Enums\EntityType;
 use Roster\Enums\OperationType;
 use Roster\Validation\Context\ValidationContext;
@@ -21,7 +22,9 @@ use Tests\TestCase;
 final class AvailabilityRulesTest extends TestCase
 {
     private RequiredFieldsRule $requiredFieldsRule;
+
     private AvailabilityOverlapRule $availabilityOverlapRule;
+
     private TestSchedulable $testSchedulable;
 
     /**
@@ -100,16 +103,16 @@ final class AvailabilityRulesTest extends TestCase
 
         $validityStartViolation = array_values(array_filter(
             $violations,
-            fn($v) => $v->getField() === 'validity_start'
+            fn(ViolationData $v): bool => $v->getField() === 'validity_start'
         ))[0] ?? null;
-        $this->assertNotNull($validityStartViolation);
+        $this->assertInstanceOf(ViolationData::class, $validityStartViolation);
         $this->assertStringContainsString('required', $validityStartViolation->getMessage());
 
         $dailyEndViolation = array_values(array_filter(
             $violations,
-            fn($v) => $v->getField() === 'daily_end'
+            fn(ViolationData $v): bool => $v->getField() === 'daily_end'
         ))[0] ?? null;
-        $this->assertNotNull($dailyEndViolation);
+        $this->assertInstanceOf(ViolationData::class, $dailyEndViolation);
         $this->assertStringContainsString('required', $dailyEndViolation->getMessage());
     }
 
@@ -168,16 +171,16 @@ final class AvailabilityRulesTest extends TestCase
 
         $schedulableIdViolation = array_values(array_filter(
             $violations,
-            fn($v) => $v->getField() === 'schedulable_id'
+            fn(ViolationData $v): bool => $v->getField() === 'schedulable_id'
         ))[0] ?? null;
-        $this->assertNotNull($schedulableIdViolation);
+        $this->assertInstanceOf(ViolationData::class, $schedulableIdViolation);
         $this->assertStringContainsString('cannot be changed', $schedulableIdViolation->getMessage());
 
         $schedulableTypeViolation = array_values(array_filter(
             $violations,
-            fn($v) => $v->getField() === 'schedulable_type'
+            fn(ViolationData $v): bool => $v->getField() === 'schedulable_type'
         ))[0] ?? null;
-        $this->assertNotNull($schedulableTypeViolation);
+        $this->assertInstanceOf(ViolationData::class, $schedulableTypeViolation);
         $this->assertStringContainsString('cannot be changed', $schedulableTypeViolation->getMessage());
     }
 

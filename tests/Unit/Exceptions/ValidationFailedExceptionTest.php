@@ -145,7 +145,7 @@ final class ValidationFailedExceptionTest extends TestCase
             '- [time_after] validity_end: Validity end must be after start',
         ];
 
-        $this->assertEquals(implode("\n", $expectedLines), $message);
+        $this->assertSame(implode("\n", $expectedLines), $message);
     }
 
     /**
@@ -190,7 +190,7 @@ final class ValidationFailedExceptionTest extends TestCase
             '',
         ];
 
-        $this->assertEquals(implode("\n", $expectedLines), $message);
+        $this->assertSame(implode("\n", $expectedLines), $message);
     }
 
     /**
@@ -214,7 +214,7 @@ final class ValidationFailedExceptionTest extends TestCase
         $firstViolation = $exception->getFirstViolation();
 
         // Assert: Verify first violation message
-        $this->assertEquals('Daily start is required', $firstViolation);
+        $this->assertSame('Daily start is required', $firstViolation);
     }
 
     /**

@@ -148,6 +148,7 @@ PHP;
         foreach ($rules as $className => $validationRule) {
             $body .= $this->buildRuleEntry($className, $validationRule);
         }
+
         return $body;
     }
 
@@ -160,8 +161,8 @@ PHP;
      */
     private function buildRuleEntry(string $className, ValidationRule $validationRule): string
     {
-        $entities = $this->extractEnumValues($validationRule->entities, EntityType::class);
-        $operations = $this->extractEnumValues($validationRule->operations, OperationType::class);
+        $entities = $this->extractEnumValues($validationRule->entities);
+        $operations = $this->extractEnumValues($validationRule->operations);
 
         $indent = '    ';
         $entry = $indent . "'" . addslashes($className) . "' => [\n";
@@ -177,13 +178,12 @@ PHP;
      * Extracts string values from enum arrays.
      *
      * @param array<EntityType|OperationType> $enums Array of enum instances
-     * @param string $enumClass The enum class for type hinting
      * @return array<string> Array of string values
      */
-    private function extractEnumValues(array $enums, string $enumClass): array
+    private function extractEnumValues(array $enums): array
     {
         return array_map(
-            fn($enum): string => $enum->value,
+            fn(EntityType|OperationType $enum): string => $enum->value,
             $enums
         );
     }

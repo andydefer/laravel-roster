@@ -155,8 +155,8 @@ final class ScheduleTest extends TestCase
             // Act: Create schedule with specific status
             $schedule = schedule_for($this->testAvailability)->create([
                 'title' => 'Test Schedule',
-                'start_datetime' => "2038-07-01 {$startTimes[$index]}:00",
-                'end_datetime'   => "2038-07-01 {$endTimes[$index]}:00",
+                'start_datetime' => sprintf('2038-07-01 %s:00', $startTimes[$index]),
+                'end_datetime'   => sprintf('2038-07-01 %s:00', $endTimes[$index]),
                 'status' => ScheduleStatus::from($testCase['input']),
                 'metadata' => null,
             ]);
@@ -625,7 +625,7 @@ final class ScheduleTest extends TestCase
         $schedule = $this->createScheduleModelInstance();
 
         // Act: Soft delete schedule inside allowed mutation context
-        RosterMutationContext::allow(function () use ($schedule) {
+        RosterMutationContext::allow(function () use ($schedule): void {
             $schedule->delete();
         });
 
@@ -635,7 +635,7 @@ final class ScheduleTest extends TestCase
         ]);
 
         // Restore the schedule inside allowed mutation context
-        RosterMutationContext::allow(function () use ($schedule) {
+        RosterMutationContext::allow(function () use ($schedule): void {
             $schedule->restore();
         });
 
@@ -679,8 +679,8 @@ final class ScheduleTest extends TestCase
             // Act: Create schedule with specific status
             $schedule = schedule_for($this->testAvailability)->create([
                 'title' => $testCase['title'],
-                'start_datetime' => "2038-07-01 {$startTimes[$index]}:00",
-                'end_datetime' => "2038-07-01 {$endTimes[$index]}:00",
+                'start_datetime' => sprintf('2038-07-01 %s:00', $startTimes[$index]),
+                'end_datetime' => sprintf('2038-07-01 %s:00', $endTimes[$index]),
                 'status' => $testCase['status'],
                 'metadata' => null,
             ]);

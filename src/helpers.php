@@ -77,7 +77,7 @@ if (!function_exists('roster_format_period_days_for_display')) {
      */
     function roster_format_period_days_for_display(array $days): string
     {
-        if (empty($days)) {
+        if ($days === []) {
             return '';
         }
 
@@ -104,7 +104,7 @@ if (!function_exists('roster_format_days_for_display')) {
      */
     function roster_format_days_for_display(array $days): string
     {
-        if (empty($days)) {
+        if ($days === []) {
             return '';
         }
 
@@ -221,7 +221,6 @@ if (!function_exists('availability_for')) {
      * Creates an Availability service instance for a given schedulable model.
      *
      * @param Model $model The schedulable model instance
-     * @return AvailabilityService
      * @throws BindingResolutionException If the service cannot be resolved from the container
      */
     function availability_for(Model $model): AvailabilityService
@@ -240,7 +239,6 @@ if (!function_exists('impediment_for')) {
      * Automatically extracts the schedulable from the availability's polymorphic relationship.
      *
      * @param Availability $availability The availability model instance
-     * @return ImpedimentService
      * @throws InvalidArgumentException If the availability has no schedulable relationship
      * @throws BindingResolutionException If the service cannot be resolved from the container
      */
@@ -268,7 +266,6 @@ if (!function_exists('schedule_for')) {
      * Automatically extracts the schedulable from the availability's polymorphic relationship.
      *
      * @param Availability $availability The availability model instance
-     * @return ScheduleService
      * @throws InvalidArgumentException If the availability has no schedulable relationship
      * @throws BindingResolutionException If the service cannot be resolved from the container
      */
@@ -380,7 +377,7 @@ if (!function_exists('is_continuous_sequence')) {
             $days
         );
 
-        for ($index = 0; $index < count($dayIndices) - 1; $index++) {
+        for ($index = 0; $index < count($dayIndices) - 1; ++$index) {
             $currentIndex = $dayIndices[$index];
             $nextIndex = $dayIndices[$index + 1];
 

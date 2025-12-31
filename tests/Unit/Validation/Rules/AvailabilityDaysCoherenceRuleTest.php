@@ -555,11 +555,12 @@ final class AvailabilityDaysCoherenceRuleTest extends TestCase
     {
         $entity = new class extends Model {
             public $validity_start;
+
             public $validity_end;
 
             public function __construct()
             {
-                parent::__construct([]);
+                parent::__construct();
             }
         };
 

@@ -62,7 +62,7 @@ final class AbstractRuleTest extends TestCase
         $description = $rule->getDescription();
 
         // Assert: Verify custom description is returned
-        $this->assertEquals($customDescription, $description);
+        $this->assertSame($customDescription, $description);
     }
 
     /**
