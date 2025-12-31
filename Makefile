@@ -33,25 +33,24 @@ pre-commit:
 	@echo "🔍 Running pre-commit checks..."
 	@rm -f all.txt diff.txt
 	@make lint-all-fix-md
-	@make toggle-prompts-gitignore
 	@make test
 	@echo "✅ Pre-commit checks passed"
 
-.PHONY: toggle-prompts-gitignore
-toggle-prompts-gitignore:
-	@read -p "Do you want to comment (c) or uncomment (u) prompts/? [c/u]: " action; \
-	if [ "$$action" = "c" ]; then \
-		sed -i.bak 's/^\(prompts\/\)/#\1/' .gitignore; \
+.PHONY: toggle-prompts
+toggle-prompts:
+	@if grep -q '^prompts/' .gitignore; then \
+		# Il est décommenté → on commente \
+		sed -i.bak 's/^prompts\//#prompts\//' .gitignore; \
 		echo "✅ prompts/ commented in .gitignore"; \
-	elif [ "$$action" = "u" ]; then \
+	else \
+		# Il est commenté → on décommente \
 		sed -i.bak 's/^#\s*prompts\//prompts\//' .gitignore; \
 		echo "✅ prompts/ uncommented in .gitignore"; \
-	else \
-		echo "❌ Invalid option"; \
 	fi
 
 .PHONY: git-commit-push
 git-commit-push: pre-commit enable-cache update-checklist
+	@make toggle-prompts
 	@read -p "Enter commit message: " commit_message; \
 	if [ -z "$$commit_message" ]; then \
 		echo "❌ Error: Commit message cannot be empty"; \
@@ -60,6 +59,7 @@ git-commit-push: pre-commit enable-cache update-checklist
 	git add .; \
 	git commit -m "$$commit_message"; \
 	git push
+	@make toggle-prompts
 
 
 .PHONY: git-tag
