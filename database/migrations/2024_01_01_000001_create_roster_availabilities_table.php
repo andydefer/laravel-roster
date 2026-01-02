@@ -42,7 +42,6 @@ return new class extends Migration
             $table->time('daily_end')->comment('Daily end time of the availability slot');
 
             $table->json('days')
-                ->default(json_encode(DaysOfWeek::values()))
                 ->comment('Recurring days of the week (e.g., ["monday","wednesday"])');
 
             $table->timestamp('validity_start')->comment('Start timestamp of the availability validity period');

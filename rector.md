@@ -1,5 +1,5 @@
 # Rector Refactoring Report
-*Generated: mer. 31 déc. 2025 19:57:36 WAT*
+*Generated: ven. 02 janv. 2026 10:30:57 WAT*
 
 
 7 files with changes
@@ -153,5 +153,5 @@ Applied rules:
  * AssertEqualsToSameRector
 
 
- [OK] 7 files would have been changed (dry-run) by Rector                       
+ [OK] 7 files would have been changed (dry-run) by Rector                                                               
 
