@@ -1,11 +1,31 @@
 # Rector Refactoring Report
-*Generated: sam. 03 janv. 2026 18:01:43 WAT*
+*Generated: sam. 03 janv. 2026 18:42:13 WAT*
 
 
 32 files with changes
 =====================
 
-1) /home/andy-kani/pro/sites/packages/laravel-roster/src/Commands/DebugRulesCommand.php:814
+1) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Validation/ValidationContextTest.php:966
+
+    ---------- begin diff ----------
+@@ @@
+
+         $this->assertContainsOnlyInstancesOf(ViolationData::class, $violations);
+
+-        $this->assertEquals('field1', $violations[0]->getField());
+-        $this->assertEquals('field2', $violations[1]->getField());
++        $this->assertSame('field1', $violations[0]->getField());
++        $this->assertSame('field2', $violations[1]->getField());
+     }
+
+     /**
+    ----------- end diff -----------
+
+Applied rules:
+ * AssertEqualsToSameRector
+
+
+2) /home/andy-kani/pro/sites/packages/laravel-roster/src/Commands/DebugRulesCommand.php:814
 
     ---------- begin diff ----------
 @@ @@
@@ -23,7 +43,7 @@ Applied rules:
  * ClassMethodArrayDocblockParamFromLocalCallsRector
 
 
-2) /home/andy-kani/pro/sites/packages/laravel-roster/src/Contracts/Repository/ScheduleRepositoryInterface.php:62
+3) /home/andy-kani/pro/sites/packages/laravel-roster/src/Contracts/Repository/ScheduleRepositoryInterface.php:62
 
     ---------- begin diff ----------
 @@ @@
@@ -80,7 +100,7 @@ Applied rules:
  * RemoveUselessReturnTagRector
 
 
-3) /home/andy-kani/pro/sites/packages/laravel-roster/src/Contracts/Services/ScheduleServiceInterface.php:13
+4) /home/andy-kani/pro/sites/packages/laravel-roster/src/Contracts/Services/ScheduleServiceInterface.php:13
 
     ---------- begin diff ----------
 @@ @@
@@ -144,7 +164,7 @@ Applied rules:
  * RemoveUselessReturnTagRector
 
 
-4) /home/andy-kani/pro/sites/packages/laravel-roster/src/Contracts/Services/ServiceInterface.php:82
+5) /home/andy-kani/pro/sites/packages/laravel-roster/src/Contracts/Services/ServiceInterface.php:82
 
     ---------- begin diff ----------
 @@ @@
@@ -190,7 +210,7 @@ Applied rules:
  * RemoveUselessReturnTagRector
 
 
-5) /home/andy-kani/pro/sites/packages/laravel-roster/src/DTOs/AvailabilityData.php:235
+6) /home/andy-kani/pro/sites/packages/laravel-roster/src/DTOs/AvailabilityData.php:235
 
     ---------- begin diff ----------
 @@ @@
@@ -207,7 +227,7 @@ Applied rules:
  * PostIncDecToPreIncDecRector
 
 
-6) /home/andy-kani/pro/sites/packages/laravel-roster/src/Repositories/AbstractRepository.php:269
+7) /home/andy-kani/pro/sites/packages/laravel-roster/src/Repositories/AbstractRepository.php:269
 
     ---------- begin diff ----------
 @@ @@
@@ -239,7 +259,7 @@ Applied rules:
  * RemoveUselessReturnTagRector
 
 
-7) /home/andy-kani/pro/sites/packages/laravel-roster/src/Repositories/ScheduleRepository.php:93
+8) /home/andy-kani/pro/sites/packages/laravel-roster/src/Repositories/ScheduleRepository.php:93
 
     ---------- begin diff ----------
 @@ @@
@@ -317,7 +337,7 @@ Applied rules:
  * AddClosureVoidReturnTypeWhereNoReturnRector
 
 
-8) /home/andy-kani/pro/sites/packages/laravel-roster/src/Services/AvailabilityService.php:6
+9) /home/andy-kani/pro/sites/packages/laravel-roster/src/Services/AvailabilityService.php:6
 
     ---------- begin diff ----------
 @@ @@
@@ -359,7 +379,7 @@ Applied rules:
  * RemoveUselessVarTagRector
 
 
-9) /home/andy-kani/pro/sites/packages/laravel-roster/src/Services/Core/AbstractService.php:125
+10) /home/andy-kani/pro/sites/packages/laravel-roster/src/Services/Core/AbstractService.php:125
 
     ---------- begin diff ----------
 @@ @@
@@ -492,7 +512,7 @@ Applied rules:
  * RemoveUselessReturnTagRector
 
 
-10) /home/andy-kani/pro/sites/packages/laravel-roster/src/Services/ScheduleService.php:4
+11) /home/andy-kani/pro/sites/packages/laravel-roster/src/Services/ScheduleService.php:4
 
     ---------- begin diff ----------
 @@ @@
@@ -604,7 +624,7 @@ Applied rules:
 Applied rules:
 
 
-11) /home/andy-kani/pro/sites/packages/laravel-roster/src/Traits/AttachableToSchedules.php:84
+12) /home/andy-kani/pro/sites/packages/laravel-roster/src/Traits/AttachableToSchedules.php:84
 
     ---------- begin diff ----------
 @@ @@
@@ -637,7 +657,7 @@ Applied rules:
  * RemoveUselessReturnTagRector
 
 
-12) /home/andy-kani/pro/sites/packages/laravel-roster/src/Validation/Rules/AvailabilityDaysInPeriodRule.php:19
+13) /home/andy-kani/pro/sites/packages/laravel-roster/src/Validation/Rules/AvailabilityDaysInPeriodRule.php:19
 
     ---------- begin diff ----------
 @@ @@
@@ -664,7 +684,7 @@ Applied rules:
  * ClassMethodArrayDocblockParamFromLocalCallsRector
 
 
-13) /home/andy-kani/pro/sites/packages/laravel-roster/src/Validation/Rules/AvailabilityTemporalCoherenceRule.php:144
+14) /home/andy-kani/pro/sites/packages/laravel-roster/src/Validation/Rules/AvailabilityTemporalCoherenceRule.php:144
 
     ---------- begin diff ----------
 @@ @@
@@ -689,7 +709,7 @@ Applied rules:
  * AddArrayFunctionClosureParamTypeRector
 
 
-14) /home/andy-kani/pro/sites/packages/laravel-roster/src/helpers.php:43
+15) /home/andy-kani/pro/sites/packages/laravel-roster/src/helpers.php:43
 
     ---------- begin diff ----------
 @@ @@
@@ -720,7 +740,7 @@ Applied rules:
  * ClosureReturnTypeRector
 
 
-15) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Feature/Services/AvailabilityServiceDaysCoherenceTest.php:237
+16) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Feature/Services/AvailabilityServiceDaysCoherenceTest.php:237
 
     ---------- begin diff ----------
 @@ @@
@@ -742,7 +762,7 @@ Applied rules:
  * ClosureReturnTypeRector
 
 
-16) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Domain/Helpers/TimezoneHelperTest.php:14
+17) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Domain/Helpers/TimezoneHelperTest.php:14
 
     ---------- begin diff ----------
 @@ @@
@@ -759,7 +779,7 @@ Applied rules:
 Applied rules:
 
 
-17) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Domain/RepositoryMutationTest.php:4
+18) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Domain/RepositoryMutationTest.php:4
 
     ---------- begin diff ----------
 @@ @@
@@ -785,7 +805,7 @@ Applied rules:
  * AssertEmptyNullableObjectToAssertInstanceofRector
 
 
-18) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Models/AttachableToSchedulesTest.php:5
+19) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Models/AttachableToSchedulesTest.php:5
 
     ---------- begin diff ----------
 @@ @@
@@ -810,7 +830,7 @@ Applied rules:
  * FinalizeTestCaseClassRector
 
 
-19) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Models/ScheduleTest.php:11
+20) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Models/ScheduleTest.php:11
 
     ---------- begin diff ----------
 @@ @@
@@ -827,7 +847,7 @@ Applied rules:
 Applied rules:
 
 
-20) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Services/AvailabilityServiceTest.php:194
+21) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Services/AvailabilityServiceTest.php:194
 
     ---------- begin diff ----------
 @@ @@
@@ -884,7 +904,7 @@ Applied rules:
  * ClassMethodArrayDocblockParamFromLocalCallsRector
 
 
-21) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Services/ImpedimentServiceTest.php:293
+22) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Services/ImpedimentServiceTest.php:293
 
     ---------- begin diff ----------
 @@ @@
@@ -921,7 +941,7 @@ Applied rules:
  * AssertEmptyNullableObjectToAssertInstanceofRector
 
 
-22) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Services/ScheduleService/AvailabilitySearchTest.php:9
+23) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Services/ScheduleService/AvailabilitySearchTest.php:9
 
     ---------- begin diff ----------
 @@ @@
@@ -936,7 +956,7 @@ Applied rules:
 Applied rules:
 
 
-23) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Services/ScheduleService/BasicOperationsTest.php:422
+24) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Services/ScheduleService/BasicOperationsTest.php:422
 
     ---------- begin diff ----------
 @@ @@
@@ -973,7 +993,7 @@ Applied rules:
  * AssertEmptyNullableObjectToAssertInstanceofRector
 
 
-24) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Services/ScheduleService/ConflictDetectionTest.php:4
+25) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Services/ScheduleService/ConflictDetectionTest.php:4
 
     ---------- begin diff ----------
 @@ @@
@@ -1012,7 +1032,7 @@ Applied rules:
 Applied rules:
 
 
-25) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Services/ScheduleService/ScheduleLinksAdvancedTest.php:4
+26) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Services/ScheduleService/ScheduleLinksAdvancedTest.php:4
 
     ---------- begin diff ----------
 @@ @@
@@ -1059,7 +1079,7 @@ Applied rules:
  * NarrowUnusedSetUpDefinedPropertyRector
 
 
-26) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Services/ScheduleService/ScheduleLinksEdgeCasesTest.php:4
+27) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Services/ScheduleService/ScheduleLinksEdgeCasesTest.php:4
 
     ---------- begin diff ----------
 @@ @@
@@ -1106,7 +1126,7 @@ Applied rules:
  * NarrowUnusedSetUpDefinedPropertyRector
 
 
-27) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Services/ScheduleService/ScheduleLinksMixedTypesTest.php:4
+28) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Services/ScheduleService/ScheduleLinksMixedTypesTest.php:4
 
     ---------- begin diff ----------
 @@ @@
@@ -1145,7 +1165,7 @@ Applied rules:
  * NarrowUnusedSetUpDefinedPropertyRector
 
 
-28) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Services/ScheduleService/ScheduleLinksTest.php:4
+29) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Services/ScheduleService/ScheduleLinksTest.php:4
 
     ---------- begin diff ----------
 @@ @@
@@ -1243,7 +1263,7 @@ Applied rules:
 Applied rules:
 
 
-29) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Validation/Rules/AvailabilityDateRangeRuleTest.php:530
+30) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Validation/Rules/AvailabilityDateRangeRuleTest.php:530
 
     ---------- begin diff ----------
 @@ @@
@@ -1264,7 +1284,7 @@ Applied rules:
  * RemoveParentDelegatingConstructorRector
 
 
-30) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Validation/Rules/AvailabilityDaysCoherenceRuleTest.php:557
+31) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Validation/Rules/AvailabilityDaysCoherenceRuleTest.php:557
 
     ---------- begin diff ----------
 @@ @@
@@ -1285,7 +1305,7 @@ Applied rules:
  * RemoveParentDelegatingConstructorRector
 
 
-31) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Validation/Rules/FutureDateRuleTest.php:667
+32) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Validation/Rules/FutureDateRuleTest.php:667
 
     ---------- begin diff ----------
 @@ @@
@@ -1319,26 +1339,6 @@ Applied rules:
 
 Applied rules:
  * RemoveUselessReturnTagRector
-
-
-32) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Validation/ValidationContextTest.php:966
-
-    ---------- begin diff ----------
-@@ @@
-
-         $this->assertContainsOnlyInstancesOf(ViolationData::class, $violations);
-
--        $this->assertEquals('field1', $violations[0]->getField());
--        $this->assertEquals('field2', $violations[1]->getField());
-+        $this->assertSame('field1', $violations[0]->getField());
-+        $this->assertSame('field2', $violations[1]->getField());
-     }
-
-     /**
-    ----------- end diff -----------
-
-Applied rules:
- * AssertEqualsToSameRector
 
 
  [OK] 32 files would have been changed (dry-run) by Rector                                                              

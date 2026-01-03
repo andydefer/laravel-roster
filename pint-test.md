@@ -1,5 +1,5 @@
 # Pint Formatting Test Report
-*Generated: sam. 03 janv. 2026 18:01:34 WAT*
+*Generated: sam. 03 janv. 2026 18:42:03 WAT*
 
 
   ⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯.⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯..⨯....⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯...⨯...⨯⨯⨯..⨯⨯⨯⨯⨯⨯⨯.⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯.⨯.⨯⨯⨯⨯.⨯⨯⨯⨯.⨯⨯⨯⨯⨯⨯..⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯.⨯⨯⨯⨯⨯...⨯.
@@ -64,7 +64,7 @@
   ⨯ src/Validation/Attributes/ValidationRule.php                                                                                 braces_position, single_line_empty_body, phpdoc_align  
   ⨯ src/Validation/Cache/RuleCacheGenerator.php                                   function_declaration, concat_space, not_operator_with_successor_space, ordered_imports, phpdoc_align  
   ⨯ src/Validation/Context/ValidationContext.php class_attributes_separation, function_declaration, concat_space, phpdoc_separation, not_operator_with_successor_space, ordered_impor…  
-  ⨯ src/Validation/Exceptions/ValidationFailedException.php function_declaration, single_quote, concat_space, not_operator_with_successor_space, blank_line_before_statement, phpdoc_…  
+  ⨯ src/Validation/Exceptions/ValidationFailedException.php function_declaration, single_quote, concat_space, not_operator_with_successor_space, no_extra_blank_lines, blank_line_bef…  
   ⨯ src/Validation/RuleScanner.php new_with_parentheses, function_declaration, concat_space, trailing_comma_in_multiline, phpdoc_separation, not_operator_with_successor_space, blank…  
   ⨯ src/Validation/Rules/AbstractRule.php                                                   concat_space, not_operator_with_successor_space, blank_line_before_statement, phpdoc_align  
   ⨯ src/Validation/Rules/AvailabilityDateRangeRule.php                                                  single_quote, not_operator_with_successor_space, ordered_imports, phpdoc_align  

@@ -124,6 +124,7 @@ class ValidationFailedException extends InvalidArgumentException
             $this->violations
         );
 
+
         return [
             'message' => $this->getMessage(),
             'violations' => $violationsArray,
