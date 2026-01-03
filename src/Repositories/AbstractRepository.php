@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace Roster\Repositories;
 
-use InvalidArgumentException;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
+use InvalidArgumentException;
 use LogicException;
 use Roster\Contracts\Repository\RepositoryInterface;
 use Roster\Domain\Helpers\TimeWindowHelper;
@@ -45,13 +45,15 @@ abstract class AbstractRepository implements RepositoryInterface
      */
     protected array $filters = [];
 
+    /* ========= CRUD Operations ========= */
+
     /**
-     * Creates a new entity.
+     * Create a new entity associated with a schedulable resource.
      *
-     * @param array<string, mixed> $data Entity data
-     * @param Model $schedulable Schedulable entity
-     * @param Model|null $owner Owning entity (for nested resources)
-     * @return Model Created entity
+     * @param array<string, mixed> $data Entity attributes
+     * @param Model $schedulable The schedulable resource model
+     * @param Model|null $owner Optional owner model for access control
+     * @return Model The created entity instance
      * @throws MissingSchedulableException If schedulable not provided
      * @throws InvalidOwnerException If owner provided for Availability model
      * @throws MissingOwnerException If owner required but not provided
@@ -66,18 +68,19 @@ abstract class AbstractRepository implements RepositoryInterface
             $data = $this->injectOwnerIntoData($data, $owner);
 
             $model = $this->getModel();
+
             return $model::create($data);
         });
     }
 
     /**
-     * Updates an existing entity.
+     * Update an existing entity.
      *
      * @param int $id Entity identifier
-     * @param Model $schedulable Schedulable entity
-     * @param Model|null $owner Owning entity (for nested resources)
-     * @param array<string, mixed> $data Update data
-     * @return bool True if update successful
+     * @param Model $schedulable The schedulable resource model
+     * @param Model|null $owner Optional owner model for access control
+     * @param array<string, mixed> $data Updated entity attributes
+     * @return bool True if update was successful, false otherwise
      * @throws MissingSchedulableException If schedulable not provided
      * @throws InvalidOwnerException If owner provided for Availability model
      * @throws MissingOwnerException If owner required but not provided
@@ -94,7 +97,7 @@ abstract class AbstractRepository implements RepositoryInterface
 
             $model = $query->first();
 
-            if (!$model) {
+            if ($model === null) {
                 return false;
             }
 
@@ -103,12 +106,12 @@ abstract class AbstractRepository implements RepositoryInterface
     }
 
     /**
-     * Deletes an entity.
+     * Delete an entity.
      *
      * @param int $id Entity identifier
-     * @param Model $schedulable Schedulable entity
-     * @param Model|null $owner Owning entity (for nested resources)
-     * @return bool True if deletion successful
+     * @param Model $schedulable The schedulable resource model
+     * @param Model|null $owner Optional owner model for access control
+     * @return bool True if deletion was successful, false otherwise
      * @throws MissingSchedulableException If schedulable not provided
      * @throws InvalidOwnerException If owner provided for Availability model
      * @throws MissingOwnerException If owner required but not provided
@@ -130,13 +133,13 @@ abstract class AbstractRepository implements RepositoryInterface
     }
 
     /**
-     * Finds an entity by its identifier.
+     * Find an entity by its ID with optional schedulable and ownership constraints.
      *
      * @param int $id Entity identifier
-     * @param Model|null $schedulable Schedulable entity
-     * @param Model|null $owner Owning entity (for nested resources)
-     * @param array<string, mixed> $filters Additional filters
-     * @return Model|null Found entity or null
+     * @param Model|null $schedulable Optional schedulable resource for scoping
+     * @param Model|null $owner Optional owner model for access control
+     * @param array<string, mixed> $filters Additional query filters
+     * @return Model|null The found entity or null if not found
      * @throws MissingSchedulableException If schedulable not provided
      * @throws InvalidOwnerException If owner provided for Availability model
      * @throws MissingOwnerException If owner required but not provided
@@ -158,12 +161,34 @@ abstract class AbstractRepository implements RepositoryInterface
     }
 
     /**
-     * Retrieves all entities.
+     * Retrieve the first entity matching schedulable, owner, and filters.
      *
      * @param Model $schedulable Schedulable entity
-     * @param Model|null $owner Owning entity (for nested resources)
-     * @param array<string, mixed> $filters Query filters
-     * @return Collection All matching entities
+     * @param Model|null $owner Optional owner entity
+     * @param array<string, mixed> $filters Optional filters
+     * @return Model|null First matching entity or null if none found
+     */
+    final public function first(Model $schedulable, ?Model $owner = null, array $filters = []): ?Model
+    {
+        $this->validateSchedulableAndOwner($schedulable, $owner);
+
+        $query = $this->buildSchedulableScopedQuery($schedulable);
+        $query = $this->applyOwnerScope($query, $owner);
+
+        if ($filters !== []) {
+            $query = $this->applyFilters($query, $filters);
+        }
+
+        return $query->first();
+    }
+
+    /**
+     * Get all entities for a schedulable resource with optional filtering.
+     *
+     * @param Model $schedulable The schedulable resource model
+     * @param Model|null $owner Optional owner model for access control
+     * @param array<string, mixed> $filters Query filters to apply
+     * @return Collection<int, Model> Collection of entities
      * @throws MissingSchedulableException If schedulable not provided
      * @throws InvalidOwnerException If owner provided for Availability model
      * @throws MissingOwnerException If owner required but not provided
@@ -183,16 +208,16 @@ abstract class AbstractRepository implements RepositoryInterface
     }
 
     /**
-     * Paginates entities.
+     * Get paginated entities for a schedulable resource.
      *
-     * @param Model $schedulable Schedulable entity
-     * @param Model|null $owner Owning entity (for nested resources)
-     * @param array<string, mixed> $filters Query filters
-     * @param int $perPage Items per page
-     * @param array<string> $columns Columns to select
-     * @param string $pageName Pagination parameter name
+     * @param Model $schedulable The schedulable resource model
+     * @param Model|null $owner Optional owner model for access control
+     * @param array<string, mixed> $filters Query filters to apply
+     * @param int $perPage Number of items per page
+     * @param array<int, string> $columns Columns to select
+     * @param string $pageName Query parameter name for pagination
      * @param int|null $page Current page number
-     * @return LengthAwarePaginator Paginated results
+     * @return LengthAwarePaginator Paginated collection of entities
      * @throws MissingSchedulableException If schedulable not provided
      * @throws InvalidOwnerException If owner provided for Availability model
      * @throws MissingOwnerException If owner required but not provided
@@ -219,6 +244,8 @@ abstract class AbstractRepository implements RepositoryInterface
         );
     }
 
+    /* ========= Specialized Queries ========= */
+
     /**
      * Finds impediments overlapping with a specific time slot.
      *
@@ -241,30 +268,16 @@ abstract class AbstractRepository implements RepositoryInterface
             ->get();
     }
 
-    /**
-     * Builds a query with schedulable scope and applied filters.
-     *
-     * @param Model $model Schedulable entity
-     * @param array<string, mixed> $filters Query filters
-     * @return Builder Query builder
-     * @throws MissingSchedulableException If schedulable not provided
-     */
-    public function buildQueryWithFilters(Model $model, array $filters): Builder
-    {
-        $this->validateSchedulable($model);
-
-        $builder = $this->buildSchedulableScopedQuery($model);
-        return $this->applyFilters($builder, $filters);
-    }
+    /* ========= Filter Management ========= */
 
     /**
      * Sets a filter value.
      *
      * @param string $key Filter key
      * @param mixed $value Filter value
-     * @return $this
+     * @return static
      */
-    public function setFilter(string $key, mixed $value): self
+    public function setFilter(string $key, mixed $value): static
     {
         $this->filters[$key] = $value;
         return $this;
@@ -273,9 +286,9 @@ abstract class AbstractRepository implements RepositoryInterface
     /**
      * Clears all active filters.
      *
-     * @return $this
+     * @return static
      */
-    public function clearFilters(): self
+    public function clearFilters(): static
     {
         $this->filters = [];
         return $this;
@@ -300,6 +313,63 @@ abstract class AbstractRepository implements RepositoryInterface
     public function hasFilter(string $key): bool
     {
         return array_key_exists($key, $this->filters);
+    }
+
+    /* ========= Protected Helper Methods ========= */
+
+    /**
+     * Builds a query with schedulable scope and applied filters.
+     *
+     * @param Model $schedulable Schedulable entity
+     * @param array<string, mixed> $filters Query filters
+     * @return Builder Query builder
+     * @throws MissingSchedulableException If schedulable not provided
+     */
+    public function buildQueryWithFilters(Model $schedulable, array $filters): Builder
+    {
+        $this->validateSchedulable($schedulable);
+
+        $builder = $this->buildSchedulableScopedQuery($schedulable);
+        return $this->applyFilters($builder, $filters);
+    }
+
+    /**
+     * Applies filters to a query builder.
+     *
+     * Supports:
+     * - Array values: WHERE IN clause
+     * - Fields containing 'start': WHERE >= value
+     * - Fields containing 'end': WHERE <= value
+     * - String values: WHERE LIKE pattern
+     * - Other values: WHERE = value
+     *
+     * @param Builder $builder Query builder
+     * @param array<string, mixed> $filters Filters to apply
+     * @return Builder Modified query builder
+     */
+    protected function applyFilters(Builder $builder, array $filters = []): Builder
+    {
+        foreach ($filters as $field => $value) {
+            if ($value === null) {
+                continue;
+            }
+
+            $lowerField = strtolower($field);
+
+            match (true) {
+                is_array($value) => $builder->whereIn($field, $value),
+
+                str_contains($lowerField, 'start') => $builder->where($field, '>=', $value),
+
+                str_contains($lowerField, 'end') => $builder->where($field, '<=', $value),
+
+                is_string($value) => $builder->where($field, 'LIKE', '%' . $value . '%'),
+
+                default => $builder->where($field, $value),
+            };
+        }
+
+        return $builder;
     }
 
     /**
@@ -327,48 +397,18 @@ abstract class AbstractRepository implements RepositoryInterface
         return app()->make($this->modelClass);
     }
 
+    /* ========= Private Helper Methods ========= */
+
     /**
-     * Applies filters to a query builder.
+     * Determines if the managed model is an Availability or its subclass.
      *
-     * Supports:
-     * - Array values: WHERE IN clause
-     * - Fields containing 'start': WHERE >= value
-     * - Fields containing 'end': WHERE <= value
-     * - String values: WHERE LIKE pattern
-     * - Other values: WHERE = value
-     *
-     * @param Builder $builder Query builder
-     * @param array<string, mixed> $filters Filters to apply
-     * @return Builder Modified query builder
+     * @return bool True if model is Availability
      */
-    protected function applyFilters(Builder $builder, array $filters = []): Builder
+    private function isAvailabilityModel(): bool
     {
-        foreach ($filters as $field => $value) {
-            if ($value === null) {
-                continue;
-            }
+        $modelClass = $this->getModelClass();
 
-            $lowerField = strtolower($field);
-
-            match (true) {
-                is_array($value) =>
-                $builder->whereIn($field, $value),
-
-                str_contains($lowerField, 'start') =>
-                $builder->where($field, '>=', $value),
-
-                str_contains($lowerField, 'end') =>
-                $builder->where($field, '<=', $value),
-
-                is_string($value) =>
-                $builder->where($field, 'LIKE', '%' . $value . '%'),
-
-                default =>
-                $builder->where($field, $value),
-            };
-        }
-
-        return $builder;
+        return $modelClass === Availability::class || is_subclass_of($modelClass, Availability::class);
     }
 
     /**
@@ -397,25 +437,14 @@ abstract class AbstractRepository implements RepositoryInterface
     }
 
     /**
-     * Determines if the managed model is an Availability or its subclass.
-     *
-     * @return bool True if model is Availability
-     */
-    private function isAvailabilityModel(): bool
-    {
-        $modelClass = $this->getModelClass();
-        return $modelClass === Availability::class || is_subclass_of($modelClass, Availability::class);
-    }
-
-    /**
      * Validates that a schedulable entity is provided.
      *
-     * @param Model|null $model Schedulable entity
+     * @param Model|null $schedulable Schedulable entity
      * @throws MissingSchedulableException When no schedulable is provided
      */
-    private function validateSchedulable(?Model $model): void
+    private function validateSchedulable(?Model $schedulable): void
     {
-        if (!$model instanceof Model) {
+        if (!$schedulable instanceof Model) {
             throw MissingSchedulableException::create();
         }
     }
@@ -423,12 +452,12 @@ abstract class AbstractRepository implements RepositoryInterface
     /**
      * Validates that no owner is provided for Availability models.
      *
-     * @param Model|null $model Owning entity
+     * @param Model|null $owner Owning entity
      * @throws InvalidOwnerException When owner is provided for Availability model
      */
-    private function validateOwnerForAvailability(?Model $model): void
+    private function validateOwnerForAvailability(?Model $owner): void
     {
-        if ($model instanceof Model && $this->isAvailabilityModel()) {
+        if ($owner instanceof Model && $this->isAvailabilityModel()) {
             throw InvalidOwnerException::forAvailability();
         }
     }
@@ -436,12 +465,12 @@ abstract class AbstractRepository implements RepositoryInterface
     /**
      * Validates that an owner is provided for non-Availability models.
      *
-     * @param Model|null $model Owning entity
+     * @param Model|null $owner Owning entity
      * @throws MissingOwnerException When owner is not provided for non-Availability model
      */
-    private function validateOwnerForNonAvailability(?Model $model): void
+    private function validateOwnerForNonAvailability(?Model $owner): void
     {
-        if (!$this->isAvailabilityModel() && !$model instanceof Model) {
+        if (!$this->isAvailabilityModel() && !$owner instanceof Model) {
             throw MissingOwnerException::create($this->getModelClass());
         }
     }
@@ -483,13 +512,13 @@ abstract class AbstractRepository implements RepositoryInterface
      * Applies owner constraint to a query builder for non-Availability models.
      *
      * @param Builder $builder Query builder
-     * @param Model|null $model Owning entity
+     * @param Model|null $owner Owning entity
      * @return Builder Modified query builder
      */
-    private function applyOwnerScope(Builder $builder, ?Model $model): Builder
+    private function applyOwnerScope(Builder $builder, ?Model $owner): Builder
     {
-        if ($model instanceof Model && !$this->isAvailabilityModel()) {
-            $builder->where('availability_id', $model->id);
+        if ($owner instanceof Model && !$this->isAvailabilityModel()) {
+            $builder->where('availability_id', $owner->id);
         }
 
         return $builder;
@@ -499,16 +528,16 @@ abstract class AbstractRepository implements RepositoryInterface
      * Injects owner relationship into data array for non-Availability models.
      *
      * @param array<string, mixed> $data Entity data
-     * @param Model|null $model Owning entity
+     * @param Model|null $owner Owning entity
      * @return array<string, mixed> Modified data
      * @throws MissingOwnerException When owner is required but not provided
      */
-    private function injectOwnerIntoData(array $data, ?Model $model): array
+    private function injectOwnerIntoData(array $data, ?Model $owner): array
     {
-        $this->validateOwnerForNonAvailability($model);
+        $this->validateOwnerForNonAvailability($owner);
 
-        if ($model instanceof Model && !$this->isAvailabilityModel()) {
-            $data['availability_id'] = $model->id;
+        if ($owner instanceof Model && !$this->isAvailabilityModel()) {
+            $data['availability_id'] = $owner->id;
         }
 
         return $data;

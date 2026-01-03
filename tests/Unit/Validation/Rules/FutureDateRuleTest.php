@@ -19,7 +19,7 @@ final class FutureDateRuleTest extends TestCase
     private FutureDateRule $rule;
 
     /**
-     * Set up the test case with a fresh rule instance.
+     * {@inheritdoc}
      */
     protected function setUp(): void
     {
@@ -34,7 +34,7 @@ final class FutureDateRuleTest extends TestCase
     {
         // Arrange: Future start datetime for SCHEDULE entity CREATE operation
         $futureDate = Carbon::now()->addDays(1)->format('Y-m-d H:i:s');
-        $context = $this->createValidationContext(
+        $context = $this->createScheduleImpedimentContext(
             entityType: EntityType::SCHEDULE,
             operationType: OperationType::CREATE,
             hasStartDatetime: true,
@@ -56,7 +56,7 @@ final class FutureDateRuleTest extends TestCase
     {
         // Arrange: Past start datetime for SCHEDULE entity CREATE operation
         $pastDate = Carbon::now()->subDays(1)->format('Y-m-d H:i:s');
-        $context = $this->createValidationContext(
+        $context = $this->createScheduleImpedimentContext(
             entityType: EntityType::SCHEDULE,
             operationType: OperationType::CREATE,
             hasStartDatetime: true,
@@ -84,7 +84,7 @@ final class FutureDateRuleTest extends TestCase
     {
         // Arrange: Past start datetime for IMPEDIMENT entity CREATE operation
         $pastDate = Carbon::now()->subHours(2)->format('Y-m-d H:i:s');
-        $context = $this->createValidationContext(
+        $context = $this->createScheduleImpedimentContext(
             entityType: EntityType::IMPEDIMENT,
             operationType: OperationType::CREATE,
             hasStartDatetime: true,
@@ -112,7 +112,7 @@ final class FutureDateRuleTest extends TestCase
     {
         // Arrange: Future start datetime for IMPEDIMENT entity CREATE operation
         $futureDate = Carbon::now()->addHours(2)->format('Y-m-d H:i:s');
-        $context = $this->createValidationContext(
+        $context = $this->createScheduleImpedimentContext(
             entityType: EntityType::IMPEDIMENT,
             operationType: OperationType::CREATE,
             hasStartDatetime: true,
@@ -133,7 +133,7 @@ final class FutureDateRuleTest extends TestCase
     public function test_passes_when_start_datetime_not_present(): void
     {
         // Arrange: Missing start_datetime field for SCHEDULE entity
-        $context = $this->createValidationContext(
+        $context = $this->createScheduleImpedimentContext(
             entityType: EntityType::SCHEDULE,
             operationType: OperationType::CREATE,
             hasStartDatetime: false,
@@ -156,7 +156,7 @@ final class FutureDateRuleTest extends TestCase
     {
         // Arrange: UPDATE operation with past datetime should be validated
         $pastDate = Carbon::now()->subDays(1)->format('Y-m-d H:i:s');
-        $context = $this->createValidationContext(
+        $context = $this->createScheduleImpedimentContext(
             entityType: EntityType::SCHEDULE,
             operationType: OperationType::UPDATE,
             hasStartDatetime: true,
@@ -183,7 +183,7 @@ final class FutureDateRuleTest extends TestCase
     public function test_does_not_validate_for_update_operation_when_start_datetime_not_present(): void
     {
         // Arrange: UPDATE operation without start_datetime should not be validated
-        $context = $this->createValidationContext(
+        $context = $this->createScheduleImpedimentContext(
             entityType: EntityType::SCHEDULE,
             operationType: OperationType::UPDATE,
             hasStartDatetime: false,
@@ -204,7 +204,7 @@ final class FutureDateRuleTest extends TestCase
     public function test_does_not_validate_for_delete_operation(): void
     {
         // Arrange: DELETE operation should bypass validation
-        $context = $this->createValidationContext(
+        $context = $this->createScheduleImpedimentContext(
             entityType: EntityType::SCHEDULE,
             operationType: OperationType::DELETE,
             hasStartDatetime: false,
@@ -225,7 +225,7 @@ final class FutureDateRuleTest extends TestCase
     public function test_handles_invalid_datetime_format_gracefully(): void
     {
         // Arrange: Invalid datetime format should not trigger violation
-        $context = $this->createValidationContext(
+        $context = $this->createScheduleImpedimentContext(
             entityType: EntityType::SCHEDULE,
             operationType: OperationType::CREATE,
             hasStartDatetime: true,
@@ -247,7 +247,7 @@ final class FutureDateRuleTest extends TestCase
     {
         // Arrange: IMPEDIMENT entity should show specific error message
         $pastDate = Carbon::now()->subMinutes(30)->format('Y-m-d H:i:s');
-        $context = $this->createValidationContext(
+        $context = $this->createScheduleImpedimentContext(
             entityType: EntityType::IMPEDIMENT,
             operationType: OperationType::CREATE,
             hasStartDatetime: true,
@@ -275,7 +275,7 @@ final class FutureDateRuleTest extends TestCase
     {
         // Arrange: Current time is considered past for validation purposes
         $currentTime = Carbon::now()->format('Y-m-d H:i:s');
-        $context = $this->createValidationContext(
+        $context = $this->createScheduleImpedimentContext(
             entityType: EntityType::SCHEDULE,
             operationType: OperationType::CREATE,
             hasStartDatetime: true,
@@ -350,7 +350,7 @@ final class FutureDateRuleTest extends TestCase
     {
         // Arrange: Datetime one second in the past
         $oneSecondAgo = Carbon::now()->subSecond()->format('Y-m-d H:i:s');
-        $context = $this->createValidationContext(
+        $context = $this->createScheduleImpedimentContext(
             entityType: EntityType::SCHEDULE,
             operationType: OperationType::CREATE,
             hasStartDatetime: true,
@@ -378,7 +378,7 @@ final class FutureDateRuleTest extends TestCase
     {
         // Arrange: Datetime one second in the future
         $oneSecondFuture = Carbon::now()->addSecond()->format('Y-m-d H:i:s');
-        $context = $this->createValidationContext(
+        $context = $this->createScheduleImpedimentContext(
             entityType: EntityType::SCHEDULE,
             operationType: OperationType::CREATE,
             hasStartDatetime: true,
@@ -402,7 +402,7 @@ final class FutureDateRuleTest extends TestCase
         $futureDate = Carbon::now()->addDays(1)->format('Y-m-d');
         $futureTime = '10:00:00';
 
-        $context = $this->createValidationContextForAvailability(
+        $context = $this->createAvailabilityContext(
             operationType: OperationType::CREATE,
             hasValidityStart: true,
             validityStart: $futureDate,
@@ -427,7 +427,7 @@ final class FutureDateRuleTest extends TestCase
         $pastDate = Carbon::now()->subDays(1)->format('Y-m-d');
         $pastTime = '10:00:00';
 
-        $context = $this->createValidationContextForAvailability(
+        $context = $this->createAvailabilityContext(
             operationType: OperationType::CREATE,
             hasValidityStart: true,
             validityStart: $pastDate,
@@ -456,7 +456,7 @@ final class FutureDateRuleTest extends TestCase
     public function test_passes_for_availability_without_validity_start(): void
     {
         // Arrange: Missing validity_start for AVAILABILITY entity
-        $context = $this->createValidationContextForAvailability(
+        $context = $this->createAvailabilityContext(
             operationType: OperationType::CREATE,
             hasValidityStart: false,
             validityStart: null,
@@ -482,7 +482,7 @@ final class FutureDateRuleTest extends TestCase
         $futureDate = Carbon::now()->addDays(1)->format('Y-m-d');
         $futureTime = '10:00:00';
 
-        $context = $this->createValidationContextForAvailability(
+        $context = $this->createAvailabilityContext(
             operationType: OperationType::UPDATE,
             hasValidityStart: true,
             validityStart: $futureDate,
@@ -507,7 +507,7 @@ final class FutureDateRuleTest extends TestCase
         $pastDate = Carbon::now()->subDays(1)->format('Y-m-d');
         $pastTime = '10:00:00';
 
-        $context = $this->createValidationContextForAvailability(
+        $context = $this->createAvailabilityContext(
             operationType: OperationType::UPDATE,
             hasValidityStart: true,
             validityStart: $pastDate,
@@ -536,7 +536,7 @@ final class FutureDateRuleTest extends TestCase
     public function test_passes_for_availability_update_without_validity_start(): void
     {
         // Arrange: UPDATE operation without validity_start for AVAILABILITY entity
-        $context = $this->createValidationContextForAvailability(
+        $context = $this->createAvailabilityContext(
             operationType: OperationType::UPDATE,
             hasValidityStart: false,
             validityStart: null,
@@ -561,7 +561,7 @@ final class FutureDateRuleTest extends TestCase
         // Arrange: Future validity_start without daily_start for AVAILABILITY entity
         $futureDate = Carbon::now()->addDays(1)->format('Y-m-d');
 
-        $context = $this->createValidationContextForAvailability(
+        $context = $this->createAvailabilityContext(
             operationType: OperationType::CREATE,
             hasValidityStart: true,
             validityStart: $futureDate,
@@ -585,7 +585,7 @@ final class FutureDateRuleTest extends TestCase
         $futureDate = Carbon::now()->addDays(2)->format('Y-m-d');
         $time = '09:00:00';
 
-        $context = $this->createValidationContextForAvailability(
+        $context = $this->createAvailabilityContext(
             operationType: OperationType::UPDATE,
             hasValidityStart: true,
             validityStart: $futureDate,
@@ -606,11 +606,13 @@ final class FutureDateRuleTest extends TestCase
      */
     public function test_passes_for_availability_with_current_date_future_time(): void
     {
+        Carbon::setTestNow('2026-01-03 10:00:00');
+
         // Arrange: Current date with future time for AVAILABILITY
         $currentDate = Carbon::now()->format('Y-m-d');
         $futureTime = Carbon::now()->addHours(1)->format('H:i:s');
 
-        $context = $this->createValidationContextForAvailability(
+        $context = $this->createAvailabilityContext(
             operationType: OperationType::CREATE,
             hasValidityStart: true,
             validityStart: $currentDate,
@@ -635,14 +637,13 @@ final class FutureDateRuleTest extends TestCase
         $currentDate = Carbon::now()->format('Y-m-d');
         $pastTime = Carbon::now()->subHours(1)->format('H:i:s');
 
-        $context = $this->createValidationContextForAvailability(
+        $context = $this->createAvailabilityContext(
             operationType: OperationType::CREATE,
             hasValidityStart: true,
             validityStart: $currentDate,
             hasDailyStart: true,
             dailyStart: $pastTime
         );
-
 
         $context->expects($this->once())
             ->method('setViolationFromRule')
@@ -660,9 +661,16 @@ final class FutureDateRuleTest extends TestCase
     }
 
     /**
-     * Create a validation context mock for SCHEDULE/IMPEDIMENT entities.
+     * Create a validation context mock for SCHEDULE and IMPEDIMENT entities.
+     *
+     * @param EntityType $entityType The entity type (SCHEDULE or IMPEDIMENT)
+     * @param OperationType $operationType The operation type
+     * @param bool $hasStartDatetime Whether start_datetime field is present
+     * @param string|null $startDatetime The start datetime value
+     *
+     * @return MockObject&ValidationContextInterface
      */
-    private function createValidationContext(
+    private function createScheduleImpedimentContext(
         EntityType $entityType,
         OperationType $operationType,
         bool $hasStartDatetime,
@@ -685,8 +693,16 @@ final class FutureDateRuleTest extends TestCase
 
     /**
      * Create a validation context mock for AVAILABILITY entities.
+     *
+     * @param OperationType $operationType The operation type
+     * @param bool $hasValidityStart Whether validity_start field is present
+     * @param string|null $validityStart The validity start date value
+     * @param bool $hasDailyStart Whether daily_start field is present
+     * @param string|null $dailyStart The daily start time value
+     *
+     * @return MockObject&ValidationContextInterface
      */
-    private function createValidationContextForAvailability(
+    private function createAvailabilityContext(
         OperationType $operationType,
         bool $hasValidityStart,
         ?string $validityStart,
@@ -699,29 +715,21 @@ final class FutureDateRuleTest extends TestCase
 
         $context->method('has')->willReturnCallback(
             function (string $key) use ($hasValidityStart, $hasDailyStart): bool {
-                if ($key === 'validity_start') {
-                    return $hasValidityStart;
-                }
-
-                if ($key === 'daily_start') {
-                    return $hasDailyStart;
-                }
-
-                return false;
+                return match ($key) {
+                    'validity_start' => $hasValidityStart,
+                    'daily_start' => $hasDailyStart,
+                    default => false,
+                };
             }
         );
 
         $context->method('get')->willReturnCallback(
             function (string $key) use ($validityStart, $dailyStart): mixed {
-                if ($key === 'validity_start') {
-                    return $validityStart;
-                }
-
-                if ($key === 'daily_start') {
-                    return $dailyStart;
-                }
-
-                return null;
+                return match ($key) {
+                    'validity_start' => $validityStart,
+                    'daily_start' => $dailyStart,
+                    default => null,
+                };
             }
         );
 
@@ -730,6 +738,11 @@ final class FutureDateRuleTest extends TestCase
 
     /**
      * Create a mocked FutureDateRule with specific configuration methods.
+     *
+     * @param bool $shouldValidateFutureDates Whether future date validation should be enabled
+     * @param bool $allowPastDates Whether past dates are allowed
+     *
+     * @return MockObject&FutureDateRule
      */
     private function createMockWithConfigMethods(
         bool $shouldValidateFutureDates,

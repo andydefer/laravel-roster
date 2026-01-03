@@ -41,11 +41,11 @@ if (!function_exists('roster_day_of_week')) {
 
 if (!function_exists('roster_days_in_period')) {
     /**
-     * Returns all days occurring within a date period.
+     * Returns all days occurring within a date period, in standard week order.
      *
-     * @param DateTimeInterface|WeekDay|Month|string|int|float|null $startDate Start date
-     * @param DateTimeInterface|WeekDay|Month|string|int|float|null $endDate End date
-     * @return array<string> Unique lowercase day names within the period
+     * @param DateTimeInterface|WeekDay|Month|string|int|float|null $startDate
+     * @param DateTimeInterface|WeekDay|Month|string|int|float|null $endDate
+     * @return array<string> Unique lowercase day names within the period, sorted Monday → Sunday
      */
     function roster_days_in_period(
         DateTimeInterface|WeekDay|Month|string|int|float|null $startDate,
@@ -60,7 +60,15 @@ if (!function_exists('roster_days_in_period')) {
                 $days[] = strtolower($currentDate->format('l'));
             }
 
-            return array_unique($days);
+            $days = array_unique($days);
+
+            $weekOrder = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+
+            usort($days, function ($a, $b) use ($weekOrder) {
+                return array_search($a, $weekOrder) <=> array_search($b, $weekOrder);
+            });
+
+            return $days;
         } catch (Exception) {
             return [];
         }

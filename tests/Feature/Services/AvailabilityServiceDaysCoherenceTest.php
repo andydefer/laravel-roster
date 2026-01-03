@@ -218,9 +218,10 @@ final class AvailabilityServiceDaysCoherenceTest extends TestCase
     /**
      * Test update validation fails when new days are not within new period.
      */
-    public function test_update_validation_fails_when_new_days_not_in_new_period(): void
+    public function test_update_warns_when_new_days_not_in_new_period(): void
     {
-        // Arrange: Existing availability and invalid new days
+        config()->set('roster.reconciliation_warning', true);
+        // Arrange
         $originalDays = ['monday', 'wednesday', 'friday'];
         $invalidNewDays = ['monday', 'saturday'];
         $originalValidityEnd = '2038-07-18';
@@ -235,11 +236,15 @@ final class AvailabilityServiceDaysCoherenceTest extends TestCase
             'validity_end' => $originalValidityEnd,
         ]);
 
-        // Assert: Should throw validation exception
-        $this->expectException(ValidationFailedException::class);
-        $this->expectExceptionMessageMatches("/Day 'saturday' falls outside the validity period/");
+        $wasWarned = false;
+        set_error_handler(function ($errno, $errstr) use (&$wasWarned) {
+            if ($errno === E_USER_WARNING && str_contains($errstr, 'outside the validity period')) {
+                $wasWarned = true;
+            }
+            return true; // continue execution
+        });
 
-        // Act: Attempt update with invalid days
+        // Act
         availability_for($this->schedulable)->update(
             id: $availability->id,
             data: [
@@ -247,6 +252,11 @@ final class AvailabilityServiceDaysCoherenceTest extends TestCase
                 'validity_end' => $newValidityEnd,
             ]
         );
+
+        restore_error_handler();
+
+        // Assert
+        $this->assertTrue($wasWarned, 'Expected a warning when invalid days are provided.');
     }
 
     /**

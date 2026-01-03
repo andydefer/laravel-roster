@@ -912,6 +912,65 @@ final class ImpedimentServiceTest extends TestCase
         $this->assertSame('2038-01-04 17:00:00', $slots[1]['end']->format('Y-m-d H:i:s'));
     }
 
+    public function test_first_returns_first_impediment(): void
+    {
+        // Arrange: Create multiple impediments
+        $impediment1 = impediment_for($this->testAvailability)->create([
+            'reason' => 'Morning maintenance',
+            'start_datetime' => '2038-01-04 09:00:00',
+            'end_datetime' => '2038-01-04 10:00:00',
+        ]);
+
+        $impediment2 = impediment_for($this->testAvailability)->create([
+            'reason' => 'Afternoon meeting',
+            'start_datetime' => '2038-01-04 14:00:00',
+            'end_datetime' => '2038-01-04 15:00:00',
+        ]);
+
+        // Act: Get the first impediment
+        $result = impediment_for($this->testAvailability)->first();
+
+        // Assert: Should return the first created impediment
+        $this->assertInstanceOf(ImpedimentModel::class, $result);
+        $this->assertSame($impediment1->id, $result->id);
+    }
+
+    public function test_first_returns_first_impediment_with_filter(): void
+    {
+        // Arrange: Create multiple impediments
+        impediment_for($this->testAvailability)->create([
+            'reason' => 'Morning maintenance',
+            'start_datetime' => '2038-01-04 09:00:00',
+            'end_datetime' => '2038-01-04 10:00:00',
+        ]);
+
+        $impediment2 = impediment_for($this->testAvailability)->create([
+            'reason' => 'Afternoon meeting',
+            'start_datetime' => '2038-01-04 14:00:00',
+            'end_datetime' => '2038-01-04 15:00:00',
+        ]);
+
+        // Act: Apply reason filter
+        $result = impediment_for($this->testAvailability)
+            ->setFilter('reason', 'Afternoon')
+            ->first();
+
+        // Assert: Should return the filtered impediment
+        $this->assertInstanceOf(ImpedimentModel::class, $result);
+        $this->assertSame($impediment2->id, $result->id);
+    }
+
+    public function test_first_returns_null_when_no_impediments(): void
+    {
+        // Arrange: No impediments created
+
+        // Act: Attempt to get the first impediment
+        $result = impediment_for($this->testAvailability)->first();
+
+        // Assert: Should return null
+        $this->assertNull($result);
+    }
+
     /**
      * Test complete blocking scenario.
      */

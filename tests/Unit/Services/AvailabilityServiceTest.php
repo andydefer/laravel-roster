@@ -40,14 +40,7 @@ final class AvailabilityServiceTest extends TestCase
     public function test_can_create_an_availability(): void
     {
         // Arrange: Data for new availability
-        $availabilityData = [
-            'type' => 'consultation',
-            'daily_start' => '09:00:00',
-            'daily_end' => '17:00:00',
-            'days' => ['monday', 'wednesday', 'friday'],
-            'validity_start' => '2038-07-01',
-            'validity_end' => '2038-07-31',
-        ];
+        $availabilityData = $this->createValidAvailabilityData();
 
         // Act: Create availability
         $availability = availability_for($this->schedulable)->create($availabilityData);
@@ -73,13 +66,7 @@ final class AvailabilityServiceTest extends TestCase
     public function test_days_default_to_all_days_when_not_provided(): void
     {
         // Arrange: Availability data without days
-        $availabilityData = [
-            'type' => 'consultation',
-            'daily_start' => '09:00:00',
-            'daily_end' => '17:00:00',
-            'validity_start' => '2038-07-01',
-            'validity_end' => '2038-07-31',
-        ];
+        $availabilityData = $this->createValidAvailabilityData(days: []);
 
         // Act: Create availability
         $availability = availability_for($this->schedulable)->create($availabilityData);
@@ -98,14 +85,7 @@ final class AvailabilityServiceTest extends TestCase
     public function test_can_update_an_existing_availability(): void
     {
         // Arrange: Create initial availability
-        $availability = availability_for($this->schedulable)->create([
-            'type' => 'consultation',
-            'daily_start' => '09:00:00',
-            'daily_end' => '17:00:00',
-            'days' => ['monday', 'wednesday'],
-            'validity_start' => '2038-07-01',
-            'validity_end' => '2038-07-31',
-        ]);
+        $availability = $this->createTestAvailability();
 
         $updateData = [
             'daily_start' => '10:00:00',
@@ -151,14 +131,7 @@ final class AvailabilityServiceTest extends TestCase
     public function test_can_delete_an_availability(): void
     {
         // Arrange: Create availability
-        $availability = availability_for($this->schedulable)->create([
-            'type' => 'consultation',
-            'daily_start' => '09:00:00',
-            'daily_end' => '17:00:00',
-            'days' => ['monday'],
-            'validity_start' => '2038-07-01',
-            'validity_end' => '2038-07-31',
-        ]);
+        $availability = $this->createTestAvailability();
 
         // Act: Delete availability
         $result = availability_for($this->schedulable)->delete($availability->id);
@@ -198,14 +171,7 @@ final class AvailabilityServiceTest extends TestCase
     public function test_can_find_an_availability_by_id(): void
     {
         // Arrange: Create availability
-        $availability = availability_for($this->schedulable)->create([
-            'type' => 'consultation',
-            'daily_start' => '09:00:00',
-            'daily_end' => '17:00:00',
-            'days' => ['monday', 'wednesday', 'friday'],
-            'validity_start' => '2038-07-01',
-            'validity_end' => '2038-07-31',
-        ]);
+        $availability = $this->createTestAvailability();
 
         // Act: Find availability by ID
         $result = availability_for($this->schedulable)->find($availability->id);
@@ -232,28 +198,96 @@ final class AvailabilityServiceTest extends TestCase
     }
 
     /**
+     * Test first returns first availability.
+     */
+    public function test_first_returns_first_availability(): void
+    {
+        // Arrange: Create multiple availabilities
+        $availability1 = $this->createTestAvailability(
+            type: 'consultation',
+            dailyStart: '09:00:00',
+            dailyEnd: '12:00:00',
+            days: ['monday']
+        );
+
+        $availability2 = $this->createTestAvailability(
+            type: 'training',
+            dailyStart: '14:00:00',
+            dailyEnd: '17:00:00',
+            days: ['tuesday']
+        );
+
+        // Act: Get the first availability
+        $result = availability_for($this->schedulable)->first();
+
+        // Assert: Should return the first created availability
+        $this->assertInstanceOf(AvailabilityModel::class, $result);
+        $this->assertSame($availability1->id, $result->id);
+    }
+
+    /**
+     * Test first returns first availability with filter.
+     */
+    public function test_first_returns_first_availability_with_filter(): void
+    {
+        // Arrange: Create multiple availabilities
+        $this->createTestAvailability(
+            type: 'consultation',
+            dailyStart: '09:00:00',
+            dailyEnd: '12:00:00',
+            days: ['monday']
+        );
+
+        $availability2 = $this->createTestAvailability(
+            type: 'training',
+            dailyStart: '14:00:00',
+            dailyEnd: '17:00:00',
+            days: ['tuesday']
+        );
+
+        // Act: Apply a type filter
+        $result = availability_for($this->schedulable)
+            ->whereType('training')
+            ->first();
+
+        // Assert: Should return the filtered availability
+        $this->assertInstanceOf(AvailabilityModel::class, $result);
+        $this->assertSame($availability2->id, $result->id);
+    }
+
+    /**
+     * Test first returns null when no availabilities.
+     */
+    public function test_first_returns_null_when_no_availabilities(): void
+    {
+        // Arrange: No availabilities created
+
+        // Act: Attempt to get the first availability
+        $result = availability_for($this->schedulable)->first();
+
+        // Assert: Should return null
+        $this->assertNull($result);
+    }
+
+    /**
      * Test getting all availabilities with filters.
      */
     public function test_can_get_all_availabilities_with_filters(): void
     {
         // Arrange: Create multiple availabilities with different types
-        availability_for($this->schedulable)->create([
-            'type' => 'consultation',
-            'daily_start' => '09:00:00',
-            'daily_end' => '12:00:00',
-            'days' => ['monday'],
-            'validity_start' => '2038-07-01',
-            'validity_end' => '2038-07-31',
-        ]);
+        $this->createTestAvailability(
+            type: 'consultation',
+            dailyStart: '09:00:00',
+            dailyEnd: '12:00:00',
+            days: ['monday']
+        );
 
-        availability_for($this->schedulable)->create([
-            'type' => 'training',
-            'daily_start' => '14:00:00',
-            'daily_end' => '17:00:00',
-            'days' => ['tuesday'],
-            'validity_start' => '2038-07-01',
-            'validity_end' => '2038-07-31',
-        ]);
+        $this->createTestAvailability(
+            type: 'training',
+            dailyStart: '14:00:00',
+            dailyEnd: '17:00:00',
+            days: ['tuesday']
+        );
 
         // Act: Filter by type
         $result = availability_for($this->schedulable)
@@ -271,14 +305,10 @@ final class AvailabilityServiceTest extends TestCase
     public function test_handles_validation_failure_during_creation(): void
     {
         // Arrange: Invalid data with end time before start time
-        $availabilityData = [
-            'type' => 'consultation',
-            'daily_start' => '17:00:00',
-            'daily_end' => '09:00:00',
-            'days' => ['monday'],
-            'validity_start' => '2038-07-01',
-            'validity_end' => '2038-07-31',
-        ];
+        $availabilityData = $this->createValidAvailabilityData(
+            dailyStart: '17:00:00',
+            dailyEnd: '09:00:00'
+        );
 
         // Assert: Should throw validation exception
         $this->expectException(ValidationFailedException::class);
@@ -293,14 +323,7 @@ final class AvailabilityServiceTest extends TestCase
     public function test_handles_validation_failure_during_update(): void
     {
         // Arrange: Create valid availability
-        $availability = availability_for($this->schedulable)->create([
-            'type' => 'consultation',
-            'daily_start' => '09:00:00',
-            'daily_end' => '17:00:00',
-            'days' => ['monday'],
-            'validity_start' => '2038-07-01',
-            'validity_end' => '2038-07-31',
-        ]);
+        $availability = $this->createTestAvailability();
 
         $updateData = [
             'validity_end' => '2038-06-30',
@@ -319,14 +342,7 @@ final class AvailabilityServiceTest extends TestCase
     public function test_validate_partial_date_update_fails_when_end_before_existing_start(): void
     {
         // Arrange: Create availability
-        $availability = availability_for($this->schedulable)->create([
-            'type' => 'consultation',
-            'daily_start' => '09:00:00',
-            'daily_end' => '17:00:00',
-            'days' => ['monday'],
-            'validity_start' => '2038-07-01',
-            'validity_end' => '2038-07-31',
-        ]);
+        $availability = $this->createTestAvailability();
 
         $updateData = [
             'validity_end' => '2038-06-30',
@@ -345,13 +361,8 @@ final class AvailabilityServiceTest extends TestCase
     public function test_validation_fails_when_required_fields_missing(): void
     {
         // Arrange: Missing required field (daily_start)
-        $availabilityData = [
-            'type' => 'consultation',
-            'daily_end' => '17:00:00',
-            'days' => ['monday'],
-            'validity_start' => '2038-07-01',
-            'validity_end' => '2038-07-31',
-        ];
+        $availabilityData = $this->createValidAvailabilityData();
+        unset($availabilityData['daily_start']);
 
         // Assert: Should throw validation exception
         $this->expectException(ValidationFailedException::class);
@@ -386,23 +397,15 @@ final class AvailabilityServiceTest extends TestCase
     public function test_does_not_merge_non_adjacent_availabilities(): void
     {
         // Arrange: Create first availability
-        $existingAvailability = availability_for($this->schedulable)->create([
-            'type' => 'consultation',
-            'daily_start' => '09:00:00',
-            'daily_end' => '12:00:00',
-            'days' => ['monday'],
-            'validity_start' => '2038-07-01',
-            'validity_end' => '2038-07-31',
-        ]);
+        $existingAvailability = $this->createTestAvailability(
+            dailyStart: '09:00:00',
+            dailyEnd: '12:00:00'
+        );
 
-        $newData = [
-            'type' => 'consultation',
-            'daily_start' => '14:00:00',
-            'daily_end' => '17:00:00',
-            'days' => ['monday'],
-            'validity_start' => '2038-07-01',
-            'validity_end' => '2038-07-31',
-        ];
+        $newData = $this->createValidAvailabilityData(
+            dailyStart: '14:00:00',
+            dailyEnd: '17:00:00'
+        );
 
         // Act: Create second non-adjacent availability
         $availability = availability_for($this->schedulable)->create($newData);
@@ -427,14 +430,10 @@ final class AvailabilityServiceTest extends TestCase
     public function test_validates_minimum_duration(): void
     {
         // Arrange: Availability with duration less than minimum
-        $availabilityData = [
-            'type' => 'consultation',
-            'daily_start' => '09:00:00',
-            'daily_end' => '09:04:00',
-            'days' => ['monday'],
-            'validity_start' => '2038-07-01',
-            'validity_end' => '2038-07-31',
-        ];
+        $availabilityData = $this->createValidAvailabilityData(
+            dailyStart: '09:00:00',
+            dailyEnd: '09:04:00'
+        );
 
         // Assert: Should throw validation exception
         $this->expectException(ValidationFailedException::class);
@@ -446,21 +445,16 @@ final class AvailabilityServiceTest extends TestCase
         availability_for($this->schedulable)->create($availabilityData);
     }
 
-
     /**
      * Test validates date range order.
      */
     public function test_validates_date_range_order(): void
     {
         // Arrange: Invalid date range (end before start)
-        $availabilityData = [
-            'type' => 'consultation',
-            'daily_start' => '09:00:00',
-            'daily_end' => '17:00:00',
-            'days' => ['monday'],
-            'validity_start' => '2038-07-31',
-            'validity_end' => '2038-07-01',
-        ];
+        $availabilityData = $this->createValidAvailabilityData(
+            validityStart: '2038-07-31',
+            validityEnd: '2038-07-01'
+        );
 
         // Assert: Should throw validation exception
         $this->expectException(ValidationFailedException::class);
@@ -475,14 +469,7 @@ final class AvailabilityServiceTest extends TestCase
     public function test_cannot_update_schedulable_fields(): void
     {
         // Arrange: Create availability
-        $availability = availability_for($this->schedulable)->create([
-            'type' => 'consultation',
-            'daily_start' => '09:00:00',
-            'daily_end' => '17:00:00',
-            'days' => ['monday'],
-            'validity_start' => '2038-07-01',
-            'validity_end' => '2038-07-31',
-        ]);
+        $availability = $this->createTestAvailability();
 
         $anotherSchedulable = TestSchedulable::create();
 
@@ -505,23 +492,17 @@ final class AvailabilityServiceTest extends TestCase
     public function test_can_get_availabilities_by_type_filter(): void
     {
         // Arrange: Create multiple availabilities
-        availability_for($this->schedulable)->create([
-            'type' => 'consultation',
-            'daily_start' => '09:00:00',
-            'daily_end' => '12:00:00',
-            'days' => ['monday'],
-            'validity_start' => '2038-07-01',
-            'validity_end' => '2038-07-31',
-        ]);
+        $this->createTestAvailability(
+            type: 'consultation',
+            dailyStart: '09:00:00',
+            dailyEnd: '12:00:00'
+        );
 
-        availability_for($this->schedulable)->create([
-            'type' => 'training',
-            'daily_start' => '14:00:00',
-            'daily_end' => '17:00:00',
-            'days' => ['monday'],
-            'validity_start' => '2038-07-01',
-            'validity_end' => '2038-07-31',
-        ]);
+        $this->createTestAvailability(
+            type: 'training',
+            dailyStart: '14:00:00',
+            dailyEnd: '17:00:00'
+        );
 
         // Act: Filter by consultation type
         $result = availability_for($this->schedulable)
@@ -558,14 +539,7 @@ final class AvailabilityServiceTest extends TestCase
     public function test_can_filter_by_availability_id(): void
     {
         // Arrange: Create availability
-        $availability = availability_for($this->schedulable)->create([
-            'type' => 'consultation',
-            'daily_start' => '09:00:00',
-            'daily_end' => '17:00:00',
-            'days' => ['monday'],
-            'validity_start' => '2038-07-01',
-            'validity_end' => '2038-07-31',
-        ]);
+        $availability = $this->createTestAvailability();
 
         // Act: Find by ID
         $result = availability_for($this->schedulable)->find($availability->id);
@@ -580,48 +554,16 @@ final class AvailabilityServiceTest extends TestCase
     public function test_validate_invalid_days_format(): void
     {
         // Arrange: Invalid days format (string instead of array)
-        $availabilityData = [
-            'type' => 'consultation',
-            'daily_start' => '09:00:00',
-            'daily_end' => '17:00:00',
-            'days' => 'not-an-array',
-            'validity_start' => '2038-07-01',
-            'validity_end' => '2038-07-31',
-        ];
+        $availabilityData = $this->createValidAvailabilityData(days: 'not-an-array');
 
         // Assert: Should throw validation exception
         $this->expectException(ValidationFailedException::class);
-        $this->expectExceptionMessageMatches(
-            "/not-an-array.*valid day/i"
-        );
-
+        $this->expectExceptionMessageMatches("/not-an-array.*valid day/i");
 
         // Act: Attempt to create with invalid days format
         availability_for($this->schedulable)->create($availabilityData);
     }
 
-    /**
-     * Test validation of empty days array.
-     */
-    public function test_validate_empty_days_array(): void
-    {
-        // Arrange: Empty days array
-        $availabilityData = [
-            'type' => 'consultation',
-            'daily_start' => '09:00:00',
-            'daily_end' => '17:00:00',
-            'days' => [],
-            'validity_start' => '2038-07-01',
-            'validity_end' => '2038-07-31',
-        ];
-
-        // Assert: Should throw validation exception
-        $this->expectException(ValidationFailedException::class);
-        $this->expectExceptionMessage('Days array cannot be empty');
-
-        // Act: Attempt to create with empty days array
-        availability_for($this->schedulable)->create($availabilityData);
-    }
 
     /**
      * Test partial update is allowed.
@@ -629,14 +571,7 @@ final class AvailabilityServiceTest extends TestCase
     public function test_partial_update_allowed(): void
     {
         // Arrange: Create availability
-        $availability = availability_for($this->schedulable)->create([
-            'type' => 'consultation',
-            'daily_start' => '09:00:00',
-            'daily_end' => '17:00:00',
-            'days' => ['monday', 'wednesday'],
-            'validity_start' => '2038-07-01',
-            'validity_end' => '2038-07-31',
-        ]);
+        $availability = $this->createTestAvailability();
 
         $updateData = [
             'daily_end' => '18:00:00',
@@ -661,20 +596,13 @@ final class AvailabilityServiceTest extends TestCase
     public function test_validate_invalid_day_value(): void
     {
         // Arrange: Invalid day name
-        $availabilityData = [
-            'type' => 'consultation',
-            'daily_start' => '09:00:00',
-            'daily_end' => '17:00:00',
-            'days' => ['monday', 'invalid-day'],
-            'validity_start' => '2038-07-01',
-            'validity_end' => '2038-07-31',
-        ];
+        $availabilityData = $this->createValidAvailabilityData(
+            days: ['monday', 'invalid-day']
+        );
 
         // Assert: Should throw validation exception
         $this->expectException(ValidationFailedException::class);
-        $this->expectExceptionMessageMatches(
-            "/invalid-day.*valid day/i"
-        );
+        $this->expectExceptionMessageMatches("/invalid-day.*valid day/i");
 
         // Act: Attempt to create with invalid day
         availability_for($this->schedulable)->create($availabilityData);
@@ -694,14 +622,7 @@ final class AvailabilityServiceTest extends TestCase
             'support',
         ]);
 
-        $availabilityData = [
-            'type' => 'invalid-type',
-            'daily_start' => '09:00:00',
-            'daily_end' => '17:00:00',
-            'days' => ['monday'],
-            'validity_start' => '2038-07-01',
-            'validity_end' => '2038-07-31',
-        ];
+        $availabilityData = $this->createValidAvailabilityData(type: 'invalid-type');
 
         // Assert: Should throw validation exception
         $this->expectException(ValidationFailedException::class);
@@ -740,23 +661,15 @@ final class AvailabilityServiceTest extends TestCase
     public function test_update_does_not_trigger_merge(): void
     {
         // Arrange: Create two separate availabilities
-        $availability1 = availability_for($this->schedulable)->create([
-            'type' => 'consultation',
-            'daily_start' => '09:00:00',
-            'daily_end' => '12:00:00',
-            'days' => ['monday'],
-            'validity_start' => '2038-07-01',
-            'validity_end' => '2038-07-31',
-        ]);
+        $availability1 = $this->createTestAvailability(
+            dailyStart: '09:00:00',
+            dailyEnd: '12:00:00'
+        );
 
-        $availability2 = availability_for($this->schedulable)->create([
-            'type' => 'consultation',
-            'daily_start' => '14:00:00',
-            'daily_end' => '17:00:00',
-            'days' => ['monday'],
-            'validity_start' => '2038-07-01',
-            'validity_end' => '2038-07-31',
-        ]);
+        $availability2 = $this->createTestAvailability(
+            dailyStart: '14:00:00',
+            dailyEnd: '17:00:00'
+        );
 
         $updateData = [
             'daily_start' => '12:00:00',
@@ -777,6 +690,66 @@ final class AvailabilityServiceTest extends TestCase
         $this->assertDatabaseHas('roster_availabilities', [
             'id' => $availability2->id,
             'daily_start' => '12:00:00',
+        ]);
+    }
+
+    /**
+     * Create a valid availability data array for testing.
+     *
+     * @param string $type The availability type
+     * @param string $dailyStart The daily start time
+     * @param string $dailyEnd The daily end time
+     * @param array|string $days The days of week
+     * @param string $validityStart The validity start date
+     * @param string $validityEnd The validity end date
+     *
+     * @return array The availability data array
+     */
+    private function createValidAvailabilityData(
+        string $type = 'consultation',
+        string $dailyStart = '09:00:00',
+        string $dailyEnd = '17:00:00',
+        array|string $days = ['monday', 'wednesday', 'friday'],
+        string $validityStart = '2038-07-01',
+        string $validityEnd = '2038-07-31'
+    ): array {
+        return [
+            'type' => $type,
+            'daily_start' => $dailyStart,
+            'daily_end' => $dailyEnd,
+            'days' => $days,
+            'validity_start' => $validityStart,
+            'validity_end' => $validityEnd,
+        ];
+    }
+
+    /**
+     * Create and return a test availability instance.
+     *
+     * @param string $type The availability type
+     * @param string $dailyStart The daily start time
+     * @param string $dailyEnd The daily end time
+     * @param array $days The days of week
+     * @param string $validityStart The validity start date
+     * @param string $validityEnd The validity end date
+     *
+     * @return AvailabilityModel The created availability instance
+     */
+    private function createTestAvailability(
+        string $type = 'consultation',
+        string $dailyStart = '09:00:00',
+        string $dailyEnd = '17:00:00',
+        array $days = ['monday', 'wednesday'],
+        string $validityStart = '2038-07-01',
+        string $validityEnd = '2038-07-31'
+    ): AvailabilityModel {
+        return availability_for($this->schedulable)->create([
+            'type' => $type,
+            'daily_start' => $dailyStart,
+            'daily_end' => $dailyEnd,
+            'days' => $days,
+            'validity_start' => $validityStart,
+            'validity_end' => $validityEnd,
         ]);
     }
 }

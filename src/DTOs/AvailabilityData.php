@@ -70,7 +70,7 @@ class AvailabilityData extends AbstractData
         return new self(
             id: $data['id'] ?? null,
             type: $data['type'] ?? null,
-            days: isset($data['days']) ? (array) $data['days'] : null,
+            days: isset($data['days']) ? (array) $data['days'] : [],
             validityStart: self::parseDateTime($data['validity_start'] ?? null),
             validityEnd: self::parseDateTime($data['validity_end'] ?? null),
             dailyStart: self::parseTime($data['daily_start'] ?? null),
@@ -111,6 +111,7 @@ class AvailabilityData extends AbstractData
         // On ajuste automatiquement les jours
         $adjustedDays = $this->getAdjustedDays();
 
+
         return [
             'id' => $this->id,
             'type' => $this->type,
@@ -147,7 +148,6 @@ class AvailabilityData extends AbstractData
     {
         // Déterminer si c'est une mise à jour (entité existante chargée)
         $isUpdate = $this->availability instanceof Availability;
-
         // Récupérer les données existantes si disponible
         $existingDays = $this->availability?->days;
         $existingValidityStart = $this->availability?->validity_start;
@@ -225,6 +225,21 @@ class AvailabilityData extends AbstractData
     public function isUpdateOperation(): bool
     {
         return $this->availability instanceof Availability;
+    }
+
+    /**
+     * Get all days of the week in English lowercase.
+     *
+     * @return array<int, string> ['monday', 'tuesday', ...]
+     */
+    public static function getDaysOfWeek(): array
+    {
+        $daysOfWeek = [];
+        for ($i = 0; $i < 7; $i++) {
+            $daysOfWeek[] = strtolower(Carbon::now()->startOfWeek()->addDays($i)->format('l'));
+        }
+
+        return $daysOfWeek;
     }
 
     /**

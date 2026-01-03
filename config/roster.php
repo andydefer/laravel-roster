@@ -70,4 +70,16 @@ return [
         'always_cache_in_production' => true,
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Reconciliation
+    |--------------------------------------------------------------------------
+    |
+    | If true, when days are outside the validity period during an update, a
+    | PHP warning will be triggered. If false, the days are silently reconciled.
+    |
+    */
+    'reconciliation_warning' => env('ROSTER_RECONCILIATION_WARNING', false),
+
+
 ];

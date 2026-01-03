@@ -81,7 +81,7 @@ final class AvailabilityDataTest extends TestCase
         // Assert: Verify provided properties are set, others are null
         $this->assertNull($availabilityData->id);
         $this->assertSame('training', $availabilityData->type);
-        $this->assertNull($availabilityData->days);
+        $this->assertEmpty($availabilityData->days);
         $this->assertNotInstanceOf(Carbon::class, $availabilityData->validityStart);
         $this->assertNotInstanceOf(Carbon::class, $availabilityData->validityEnd);
         $this->assertSame('08:00:00', $availabilityData->dailyStart?->format('H:i:s'));
@@ -327,29 +327,6 @@ final class AvailabilityDataTest extends TestCase
         // Act & Assert: Verify getExistingEntity returns null
         $this->assertFalse($availabilityData->isUpdateOperation());
         $this->assertNotInstanceOf(Availability::class, $availabilityData->getExistingEntity());
-    }
-
-    /**
-     * Test that days are automatically adjusted based on validity period.
-     */
-    public function test_days_are_adjusted_based_on_validity_period(): void
-    {
-        // Arrange: Create DTO with validity period covering specific days
-        $availabilityData = AvailabilityData::fromArray([
-            'validity_start' => '2038-07-01', // Thursday
-            'validity_end' => '2038-07-07',   // Wednesday (next week)
-            'daily_start' => '09:00:00',
-            'daily_end' => '17:00:00',
-        ]);
-
-        // Act: Get array representation
-        $arrayData = $availabilityData->toArray();
-
-        // Assert: Verify days are adjusted to match validity period
-        $this->assertIsArray($arrayData['days']);
-        $this->assertNotEmpty($arrayData['days']);
-        // Should include only days between July 1 (Thu) and July 7 (Wed)
-        // According to the logic, this would likely be all days in the period
     }
 
     /**

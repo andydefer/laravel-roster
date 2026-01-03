@@ -1,5 +1,5 @@
 # Project File Checklist
-*Last updated: ven. 02 janv. 2026 10:31:51 WAT*
+*Last updated: sam. 03 janv. 2026 05:11:21 WAT*
 
 ## Previously Checked Files
 1. config/roster.php [x]
@@ -151,9 +151,10 @@
 ## Other Files
 1. config/roster.php.bak [ ]
 2. src/Validation/DTOs/ViolationData.php [ ]
-3. tests/Feature/.gitkeep [ ]
-4. tests/Unit/Commands/DebugRulesCommandTest.php [ ]
-5. tests/Unit/Exceptions/ValidationFailedExceptionTest.php [ ]
-6. tests/Unit/Validation/DTOs/ViolationDataTest.php [ ]
-7. tests/Unit/Validation/Rules/AbstractRuleTest.php [ ]
-8. tests/Unit/Validation/ValidationResultTest.php [ ]
+3. src/Validation/Rules/AvailabilityDaysInPeriodRule.php [ ]
+4. tests/Feature/.gitkeep [ ]
+5. tests/Unit/Commands/DebugRulesCommandTest.php [ ]
+6. tests/Unit/Exceptions/ValidationFailedExceptionTest.php [ ]
+7. tests/Unit/Validation/DTOs/ViolationDataTest.php [ ]
+8. tests/Unit/Validation/Rules/AbstractRuleTest.php [ ]
+9. tests/Unit/Validation/ValidationResultTest.php [ ]

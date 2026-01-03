@@ -175,6 +175,62 @@ Les helpers `availability_for()`, `schedule_for()`, et `impediment_for()` créen
 // 3. La prévention de la réutilisation
 ```
 
+## 🔍 Recherche avancée et cohérence des données
+
+### Méthode `first()` pour une recherche ciblée
+
+```php
+// Récupérer la première disponibilité correspondant à des critères
+$availability = availability_for($doctor)
+    ->whereType('consultation')
+    ->first();
+
+// Récupérer le premier rendez-vous à venir
+$nextAppointment = schedule_for($availability)
+    ->setFilter('start_datetime', '>', now())
+    ->first();
+
+// Récupérer le premier empêchement programmé
+$firstImpediment = impediment_for($availability)
+    ->setFilter('reason', 'like', '%training%')
+    ->first();
+```
+
+### Cohérence automatique des jours
+
+Le système assure automatiquement la cohérence entre les jours spécifiés et les périodes de validité :
+
+```php
+// Lors d'une mise à jour, les jours hors période sont automatiquement réconciliés
+$availability = availability_for($doctor)->create([
+    'validity_start' => '2024-01-01',
+    'validity_end' => '2024-01-07', // Semaine du 1 au 7 janvier
+    'days' => ['monday', 'wednesday', 'friday'],
+]);
+
+// Si vous étendez la période, les jours sont automatiquement ajustés
+availability_for($doctor)->update($availability->id, [
+    'validity_end' => '2024-01-14', // Deux semaines
+    // Les jours restent cohérents avec la nouvelle période
+]);
+
+// Configuration du comportement de réconciliation
+// Dans config/roster.php :
+'reconciliation_warning' => env('ROSTER_RECONCILIATION_WARNING', false),
+// Si true : avertissement PHP lorsque des jours sont hors période
+// Si false : réconciliation silencieuse
+```
+
+### Tri standardisé des jours
+
+Les fonctions utilitaires retournent toujours les jours dans l'ordre standard de la semaine (lundi → dimanche) :
+
+```php
+$days = roster_days_in_period('2024-01-01', '2024-01-07');
+// Retourne: ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']
+// Trié automatiquement dans l'ordre standard
+```
+
 ## 🎯 Validation métier exhaustive
 
 Roster inclut **17 règles de validation** qui garantissent la cohérence du système :
@@ -226,6 +282,11 @@ $appointment = schedule_for($availability)->create([
     ],
 ]);
 
+// Recherche rapide de la prochaine disponibilité
+$nextAvailability = availability_for($cardiologist)
+    ->setFilter('validity_start', '>', now())
+    ->first();
+
 // Gestion d'indisponibilité (formation)
 impediment_for($availability)->create([
     'reason' => 'Formation continue',
@@ -260,6 +321,11 @@ $doctor2Availability = availability_for($doctor2)->create([
     'validity_start' => '2024-01-01',
     'validity_end' => '2024-12-31',
 ]);
+
+// Recherche de la première disponibilité pour un créneau urgent
+$urgentSlot = schedule_for($doctor1Availability)
+    ->setFilter('status', ScheduleStatus::AVAILABLE)
+    ->first();
 
 // Le système empêche automatiquement les conflits
 schedule_for($doctor1Availability)->create([
@@ -301,6 +367,11 @@ foreach ($weekdays as $weekday) {
     ]);
 }
 
+// Trouver le premier créneau disponible après les empêchements
+$firstAvailableSlot = schedule_for($weeklyAvailability)
+    ->setFilter('start_datetime', '>', now())
+    ->first();
+
 // Trouver des créneaux disponibles malgré les empêchements
 $availableSlots = schedule_for($weeklyAvailability)->findAvailableSlots(
     startDate: '2024-01-08',
@@ -324,6 +395,7 @@ availability_for($schedulable)->delete($id);
 // Recherche
 availability_for($schedulable)->all();
 availability_for($schedulable)->setFilter('type', 'consultation')->all();
+availability_for($schedulable)->first(); // Nouvelle méthode
 
 // Vérifications
 availability_for($schedulable)->isAvailableOnDate($date, $type);
@@ -341,6 +413,7 @@ schedule_for($availability)->delete($id);
 // Recherche de créneaux
 schedule_for($availability)->findNextSlot($durationMinutes, $type, $startFrom);
 schedule_for($availability)->findAvailableSlots($startDate, $endDate, $durationMinutes, $type);
+schedule_for($availability)->first(); // Nouvelle méthode
 
 // Vérifications
 schedule_for($availability)->isTimeSlotAvailable($start, $end, $type);
@@ -354,6 +427,9 @@ schedule_for($availability)->isPeriodAvailable($start, $end, $type);
 impediment_for($availability)->create($data);
 impediment_for($availability)->update($id, $data);
 impediment_for($availability)->delete($id);
+
+// Recherche
+impediment_for($availability)->first(); // Nouvelle méthode
 
 // Vérifications
 impediment_for($availability)->isTimeSlotBlocked($start, $end);
@@ -392,6 +468,13 @@ return [
         'cache_file' => storage_path('framework/cache/roster_rules.php'),
         'cache_max_age_hours' => 24,
     ],
+
+    // Réconciliation des jours
+    'reconciliation_warning' => env('ROSTER_RECONCILIATION_WARNING', false),
+    // Contrôle le comportement lors des mises à jour lorsque des jours sont
+    // en dehors de la période de validité :
+    // - true : déclenche un avertissement PHP (E_USER_WARNING)
+    // - false : réconciliation silencieuse
 ];
 ```
 
@@ -400,6 +483,7 @@ return [
 ```env
 ROSTER_TIMEZONE=Europe/Paris
 ROSTER_CACHE_ENABLED=true
+ROSTER_RECONCILIATION_WARNING=false
 ```
 
 ## 🧪 Tests complets
@@ -430,6 +514,8 @@ php artisan test --filter=test_real_world_complex_scenario
 - ✅ Tests de performance avec données massives
 - ✅ Récupération après erreurs
 - ✅ Scénario complexe réaliste (hôpital avec multiples spécialistes)
+- ✅ Cohérence des données avec réconciliation automatique
+- ✅ Méthode `first()` pour la recherche ciblée
 
 ## 🚨 Gestion des erreurs
 
@@ -456,6 +542,31 @@ try {
         'violations' => $detailedReport['violations'],
     ], 422);
 }
+```
+
+### Gestion des avertissements de réconciliation
+
+```php
+// Configuration pour activer les avertissements
+config()->set('roster.reconciliation_warning', true);
+
+// Capturer les avertissements
+set_error_handler(function ($errno, $errstr) {
+    if ($errno === E_USER_WARNING && str_contains($errstr, 'outside the validity period')) {
+        // Journaliser ou traiter l'avertissement
+        Log::warning('Réconciliation de jours détectée', ['message' => $errstr]);
+        return true; // Empêche la propagation
+    }
+    return false;
+});
+
+// Lors d'une mise à jour avec des jours hors période :
+availability_for($doctor)->update($availability->id, [
+    'validity_end' => '2024-01-10',
+    'days' => ['monday', 'saturday'], // 'saturday' sera filtré avec avertissement
+]);
+
+restore_error_handler();
 ```
 
 ## 📊 Outils de développement
@@ -530,3 +641,5 @@ Ce package est open-source et disponible sous licence [MIT](LICENSE).
 ---
 
 **Roster** - Une solution professionnelle pour la gestion avancée d'emplois du temps, conçue pour les applications critiques où chaque minute compte. ⚕️⏰✨
+
+Avec des fonctionnalités avancées de recherche, de cohérence des données et de validation métier exhaustive, Roster assure l'intégrité de vos systèmes de planification dans les environnements les plus exigeants.

@@ -43,6 +43,16 @@ interface RepositoryInterface
     ): ?Model;
 
     /**
+     * Retrieve the first entity matching schedulable, owner, and filters.
+     *
+     * @param Model $schedulable Schedulable entity
+     * @param Model|null $owner Optional owner entity
+     * @param array<string, mixed> $filters Optional filters
+     * @return Model|null First matching entity or null if none found
+     */
+    public function first(Model $schedulable, ?Model $owner = null, array $filters = []): ?Model;
+
+    /**
      * Get all entities for a schedulable resource with optional filtering.
      *
      * @param Model $schedulable The schedulable resource model
@@ -101,6 +111,6 @@ interface RepositoryInterface
     public function delete(
         int $id,
         Model $schedulable,
-        ?Model $owner = null,
+        ?Model $owner = null
     ): bool;
 }

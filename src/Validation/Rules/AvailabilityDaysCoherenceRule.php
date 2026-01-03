@@ -85,7 +85,6 @@ class AvailabilityDaysCoherenceRule extends AbstractRule
         ValidationContextInterface $validationContext,
         mixed $days
     ): bool {
-        // ✅ 1. Format check FIRST
         if (!is_array($days)) {
             $validationContext->setViolationFromRule(
                 rule: $this,
@@ -95,12 +94,10 @@ class AvailabilityDaysCoherenceRule extends AbstractRule
             return false;
         }
 
-        // ✅ 2. Empty array is allowed (tests expect it)
         if ($days === []) {
             return true;
         }
 
-        // ✅ 3. Validate each day value
         $validDays = DaysOfWeek::values();
 
         foreach ($days as $day) {

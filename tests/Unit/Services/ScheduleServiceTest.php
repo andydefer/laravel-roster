@@ -509,6 +509,109 @@ final class ScheduleServiceTest extends TestCase
     }
 
     /**
+     * Test retrieving the first schedule when schedules exist.
+     */
+    public function test_first_returns_first_schedule(): void
+    {
+        // Arrange: Create multiple schedules
+        $availability = availability_for($this->schedulable)->create([
+            'type' => 'consultation',
+            'daily_start' => '09:00:00',
+            'daily_end' => '17:00:00',
+            'days' => ['monday', 'tuesday'],
+            'validity_start' => '2038-01-01',
+            'validity_end' => '2038-01-31',
+        ]);
+
+        $schedule1 = schedule_for($availability)->create([
+            'title' => 'First meeting',
+            'start_datetime' => '2038-01-04 10:00:00',
+            'end_datetime' => '2038-01-04 11:00:00',
+        ]);
+
+        $schedule2 = schedule_for($availability)->create([
+            'title' => 'Second meeting',
+            'start_datetime' => '2038-01-04 12:00:00',
+            'end_datetime' => '2038-01-04 13:00:00',
+        ]);
+
+        // Act: Get first schedule
+        $first = schedule_for($availability)->first();
+
+        // Assert: Should return the earliest schedule
+        $this->assertInstanceOf(ScheduleModel::class, $first);
+        $this->assertSame($schedule1->id, $first->id);
+        $this->assertSame('First meeting', $first->title);
+    }
+
+    /**
+     * Test retrieving the first schedule returns null when no schedules exist.
+     */
+    public function test_first_returns_null_when_no_schedule(): void
+    {
+        // Arrange: Availability with no schedules
+        $availability = availability_for($this->schedulable)->create([
+            'type' => 'consultation',
+            'daily_start' => '09:00:00',
+            'daily_end' => '17:00:00',
+            'days' => ['monday'],
+            'validity_start' => '2038-01-01',
+            'validity_end' => '2038-01-31',
+        ]);
+
+        // Act: Get first schedule
+        $first = schedule_for($availability)->first();
+
+        // Assert: Should return null
+        $this->assertNull($first);
+    }
+
+    /**
+     * Test first schedule respects type filter.
+     */
+    public function test_first_respects_type_filter(): void
+    {
+        // Arrange: Create multiple schedules with different types
+        $availabilityConsultation = availability_for($this->schedulable)->create([
+            'type' => 'consultation',
+            'daily_start' => '09:00:00',
+            'daily_end' => '12:00:00',
+            'days' => ['monday'],
+            'validity_start' => '2038-01-01',
+            'validity_end' => '2038-01-31',
+        ]);
+
+        $availabilityTraining = availability_for($this->schedulable)->create([
+            'type' => 'training',
+            'daily_start' => '13:00:00',
+            'daily_end' => '17:00:00',
+            'days' => ['monday'],
+            'validity_start' => '2038-01-01',
+            'validity_end' => '2038-01-31',
+        ]);
+
+        schedule_for($availabilityConsultation)->create([
+            'title' => 'Consultation meeting',
+            'start_datetime' => '2038-01-04 09:00:00',
+            'end_datetime' => '2038-01-04 10:00:00',
+        ]);
+
+        schedule_for($availabilityTraining)->create([
+            'title' => 'Training meeting',
+            'start_datetime' => '2038-01-04 14:00:00',
+            'end_datetime' => '2038-01-04 15:00:00',
+        ]);
+
+        // Act: Get first schedule of type consultation
+        $first = schedule_for($availabilityConsultation)->setFilter('title', 'Consultation meeting')->first();
+
+        // Assert: Should return first consultation schedule only
+        $this->assertInstanceOf(ScheduleModel::class, $first);
+        $this->assertSame('Consultation meeting', $first->title);
+    }
+
+
+    /**
      * Test retrieving all schedules.
      */
     public function test_all_schedules(): void
