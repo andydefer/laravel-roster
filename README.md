@@ -107,6 +107,179 @@ $isAvailable = schedule_for($availability)->isTimeSlotAvailable(
 );
 ```
 
+## 🔗 Système de liens polymorphiques pour horaires
+
+Roster inclut un système avancé permettant d'associer n'importe quel modèle Eloquent à des horaires avec des métadonnées personnalisables.
+
+### Attacher des ressources aux horaires
+
+```php
+use Roster\Traits\AttachableToSchedules;
+
+// Ajouter le trait à vos modèles
+class Room extends Model
+{
+    use AttachableToSchedules;
+}
+
+class Vehicle extends Model
+{
+    use AttachableToSchedules;
+}
+
+class Equipment extends Model
+{
+    use AttachableToSchedules;
+}
+
+// Utilisation : attacher des ressources à un horaire
+$schedule = schedule_for($availability)->create([
+    'title' => 'Chirurgie programmée',
+    'start_datetime' => '2038-01-04 08:00:00',
+    'end_datetime' => '2038-01-04 12:00:00',
+]);
+
+// Attacher des ressources avec métadonnées
+$room = Room::find(1);
+$vehicle = Vehicle::find(1);
+$doctor = Doctor::find(1);
+
+$service = schedule_for($availability)->schedule($schedule);
+
+$service->attach($room, ['role' => 'salle_opératoire', 'equipement' => 'chirurgical']);
+$service->attach($vehicle, ['role' => 'transport', 'urgent' => true]);
+$service->attach($doctor, ['role' => 'chirurgien', 'specialite' => 'orthopédie']);
+
+// Attacher plusieurs ressources en une fois
+$service->attachMany([$room, $vehicle, $doctor], ['operation_id' => 'OP123']);
+```
+
+### Gérer les ressources attachées
+
+```php
+// Vérifier si une ressource est attachée
+$service->hasAttached($room); // true
+
+// Récupérer toutes les ressources attachées
+$attachedResources = $service->getAttached();
+// Collection contenant room, vehicle, doctor
+
+// Filtrer par type de modèle
+$rooms = $service->getAttachedByType(Room::class);
+$doctors = $service->getAttachedByType(Doctor::class);
+
+// Détacher des ressources
+$service->detach($vehicle);
+$service->detachMany([$room, $doctor]);
+
+// Synchroniser complètement les ressources
+$service->sync([$room, $doctor], ['session' => 'matin']);
+
+// Détacher toutes les ressources
+$service->detachAll();
+```
+
+### Utilisation directe depuis les modèles
+
+```php
+// Depuis un modèle attachable
+$room->isAttachedToSchedule($schedule); // true/false
+$room->attachToSchedule($schedule, ['role' => 'consultation']);
+$room->detachFromSchedule($schedule);
+
+// Récupérer tous les horaires avec métadonnées
+$schedulesWithMetadata = $room->attachedSchedulesWithLinkMetadata();
+
+// Filtrer par métadonnées
+$surgeries = $room->attachedSchedulesWithMetadata('role', 'salle_opératoire');
+
+// Synchroniser les horaires
+$room->syncSchedules([$schedule1, $schedule2], ['default_room' => true]);
+```
+
+### Relations Eloquent
+
+```php
+// La relation polymorphique est automatiquement disponible
+$room->attachedSchedules; // Collection d'horaires
+$schedule->linkables; // Collection de modèles attachés (via pivot)
+
+// Avec métadonnées du lien
+$room->attachedSchedules()->withPivot('metadata')->get();
+```
+
+### Cas d'utilisation avancés
+
+#### 1. Gestion de bloc opératoire
+
+```php
+// Préparer une chirurgie avec toutes les ressources nécessaires
+$surgerySchedule = schedule_for($availability)->create([
+    'title' => 'Arthroscopie du genou',
+    'start_datetime' => '2038-01-04 08:00:00',
+    'end_datetime' => '2038-01-04 10:00:00',
+]);
+
+$service = schedule_for($availability)->schedule($surgerySchedule);
+
+$service->attach($operatingRoom, [
+    'role' => 'salle_operation',
+    'equipment' => ['arthroscope', 'moniteur', 'instruments'],
+    'sterilization' => 'niveau_2'
+]);
+
+$service->attach($surgeon, [
+    'role' => 'chirurgien_principal',
+    'specialty' => 'orthopedie',
+    'assistant_required' => true
+]);
+
+$service->attach($anesthesiologist, [
+    'role' => 'anesthesiste',
+    'type_anesthesia' => 'generale'
+]);
+
+$service->attach($nurse, [
+    'role' => 'infirmiere_instrumentiste',
+    'experience' => 'senior'
+]);
+```
+
+#### 2. Réservation de ressources partagées
+
+```php
+// Deux horaires différents partageant les mêmes ressources
+$schedule1 = schedule_for($availability)->create([...]);
+$schedule2 = schedule_for($availability)->create([...]);
+
+$sharedRoom = Room::find(1);
+$sharedEquipment = Equipment::find(1);
+
+$service1 = schedule_for($availability)->schedule($schedule1);
+$service2 = schedule_for($availability)->schedule($schedule2);
+
+$service1->attach($sharedRoom, ['usage' => 'consultation']);
+$service2->attach($sharedRoom, ['usage' => 'formation']);
+
+$service1->attach($sharedEquipment, ['reserved' => true]);
+// Le système permet de suivre quelle ressource est utilisée où et quand
+```
+
+#### 3. Métadonnées complexes pour le suivi
+
+```php
+$service->attach($patient, [
+    'medical_history' => ['hypertension', 'diabetes'],
+    'insurance' => 'ABC Assurance',
+    'priority' => 'high',
+    'contact' => [
+        'phone' => '555-0123',
+        'email' => 'patient@example.com'
+    ],
+    'notes' => ['allergic to penicillin', 'needs interpreter']
+]);
+```
+
 ## 📖 Concepts de base
 
 ### Le principe d'immuabilité
@@ -418,6 +591,13 @@ schedule_for($availability)->first(); // Nouvelle méthode
 // Vérifications
 schedule_for($availability)->isTimeSlotAvailable($start, $end, $type);
 schedule_for($availability)->isPeriodAvailable($start, $end, $type);
+
+// Gestion des liens polymorphiques
+schedule_for($availability)->schedule($scheduleModel); // Définir le contexte
+schedule_for($availability)->schedule($scheduleModel)->attach($model, $metadata);
+schedule_for($availability)->schedule($scheduleModel)->detach($model);
+schedule_for($availability)->schedule($scheduleModel)->getAttached();
+schedule_for($availability)->schedule($scheduleModel)->sync($models, $metadata);
 ```
 
 ### Service Impediment
@@ -488,7 +668,7 @@ ROSTER_RECONCILIATION_WARNING=false
 
 ## 🧪 Tests complets
 
-Le package inclut **760 tests** couvrant tous les scénarios :
+Le package inclut **2300 tests** couvrant tous les scénarios :
 
 ```bash
 # Exécuter tous les tests
@@ -516,6 +696,9 @@ php artisan test --filter=test_real_world_complex_scenario
 - ✅ Scénario complexe réaliste (hôpital avec multiples spécialistes)
 - ✅ Cohérence des données avec réconciliation automatique
 - ✅ Méthode `first()` pour la recherche ciblée
+- ✅ Système de liens polymorphiques avec métadonnées
+- ✅ Gestion des ressources attachées (salles, véhicules, équipements)
+- ✅ Tests de synchronisation et de détachement
 
 ## 🚨 Gestion des erreurs
 
@@ -642,4 +825,4 @@ Ce package est open-source et disponible sous licence [MIT](LICENSE).
 
 **Roster** - Une solution professionnelle pour la gestion avancée d'emplois du temps, conçue pour les applications critiques où chaque minute compte. ⚕️⏰✨
 
-Avec des fonctionnalités avancées de recherche, de cohérence des données et de validation métier exhaustive, Roster assure l'intégrité de vos systèmes de planification dans les environnements les plus exigeants.
+Avec des fonctionnalités avancées de recherche, de cohérence des données, de validation métier exhaustive et un système complet de liens polymorphiques, Roster assure l'intégrité de vos systèmes de planification dans les environnements les plus exigeants.

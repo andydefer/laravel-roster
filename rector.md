@@ -1,610 +1,11 @@
 # Rector Refactoring Report
-*Generated: sam. 03 janv. 2026 17:52:36 WAT*
+*Generated: sam. 03 janv. 2026 18:01:43 WAT*
 
 
 32 files with changes
 =====================
 
-1) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Validation/Rules/AvailabilityDateRangeRuleTest.php:530
-
-    ---------- begin diff ----------
-@@ @@
-             public $daily_start;
-
-             public $daily_end;
--
--            public function __construct()
--            {
--                parent::__construct();
--            }
-         };
-
-         $entity->validity_start = Carbon::parse($validityStart);
-    ----------- end diff -----------
-
-Applied rules:
- * RemoveParentDelegatingConstructorRector
-
-
-2) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Validation/Rules/AvailabilityDaysCoherenceRuleTest.php:557
-
-    ---------- begin diff ----------
-@@ @@
-             public $validity_start;
-
-             public $validity_end;
--
--            public function __construct()
--            {
--                parent::__construct();
--            }
-         };
-
-         if ($validityStart !== null) {
-    ----------- end diff -----------
-
-Applied rules:
- * RemoveParentDelegatingConstructorRector
-
-
-3) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Validation/Rules/FutureDateRuleTest.php:667
-
-    ---------- begin diff ----------
-@@ @@
-      * @param OperationType $operationType The operation type
-      * @param bool $hasStartDatetime Whether start_datetime field is present
-      * @param string|null $startDatetime The start datetime value
--     *
--     * @return MockObject&ValidationContextInterface
-      */
-     private function createScheduleImpedimentContext(
-         EntityType $entityType,
-@@ @@
-      * @param string|null $validityStart The validity start date value
-      * @param bool $hasDailyStart Whether daily_start field is present
-      * @param string|null $dailyStart The daily start time value
--     *
--     * @return MockObject&ValidationContextInterface
-      */
-     private function createAvailabilityContext(
-         OperationType $operationType,
-@@ @@
-      *
-      * @param bool $shouldValidateFutureDates Whether future date validation should be enabled
-      * @param bool $allowPastDates Whether past dates are allowed
--     *
--     * @return MockObject&FutureDateRule
-      */
-     private function createMockWithConfigMethods(
-         bool $shouldValidateFutureDates,
-    ----------- end diff -----------
-
-Applied rules:
- * RemoveUselessReturnTagRector
-
-
-4) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Validation/ValidationContextTest.php:966
-
-    ---------- begin diff ----------
-@@ @@
-
-         $this->assertContainsOnlyInstancesOf(ViolationData::class, $violations);
-
--        $this->assertEquals('field1', $violations[0]->getField());
--        $this->assertEquals('field2', $violations[1]->getField());
-+        $this->assertSame('field1', $violations[0]->getField());
-+        $this->assertSame('field2', $violations[1]->getField());
-     }
-
-     /**
-    ----------- end diff -----------
-
-Applied rules:
- * AssertEqualsToSameRector
-
-
-5) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Domain/Helpers/TimezoneHelperTest.php:14
-
-    ---------- begin diff ----------
-@@ @@
- /**
-  * Test suite for TimezoneHelper functionality.
-  */
--#[CoversClass(\Roster\Domain\Helpers\TimezoneHelper::class)]
-+#[CoversClass(TimezoneHelper::class)]
- final class TimezoneHelperTest extends TestCase
- {
-     /**
-    ----------- end diff -----------
-
-Applied rules:
-
-
-6) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Domain/RepositoryMutationTest.php:4
-
-    ---------- begin diff ----------
-@@ @@
-
- namespace Tests\Unit\Domain;
-
-+use Illuminate\Support\Carbon;
- use Illuminate\Database\Eloquent\Model;
- use Illuminate\Foundation\Testing\RefreshDatabase;
- use Roster\Exceptions\ForbiddenModelMutationException;
-@@ @@
-         // Verify record exists in trash
-         $trashed = ScheduleModel::withTrashed()->find($schedule->id);
-         $this->assertNotNull($trashed);
--        $this->assertNotNull($trashed->deleted_at);
-+        $this->assertInstanceOf(Carbon::class, $trashed->deleted_at);
-     }
-
-     /**
-    ----------- end diff -----------
-
-Applied rules:
- * AssertEmptyNullableObjectToAssertInstanceofRector
-
-
-7) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Models/AttachableToSchedulesTest.php:5
-
-    ---------- begin diff ----------
-@@ @@
- namespace Tests\Unit\Models;
-
- use Illuminate\Foundation\Testing\RefreshDatabase;
--use Illuminate\Support\Carbon;
- use Roster\Enums\ScheduleStatus;
- use Tests\Support\TestCar;
- use Tests\Support\TestDoctor;
-@@ @@
-  * Validates that models can be attached to schedules and manage
-  * their schedule relationships through the attachable trait.
-  */
--class AttachableToSchedulesTest extends TestCase
-+final class AttachableToSchedulesTest extends TestCase
- {
-     use RefreshDatabase;
-    ----------- end diff -----------
-
-Applied rules:
- * FinalizeTestCaseClassRector
-
-
-8) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Models/ScheduleTest.php:11
-
-    ---------- begin diff ----------
-@@ @@
- use Roster\Models\Availability;
- use Roster\Models\Schedule as ScheduleModel;
- use Roster\Support\RosterMutationContext;
--use Tests\Support\TestCar;
--use Tests\Support\TestDoctor;
--use Tests\Support\TestRoom;
- use Tests\Support\TestSchedulable;
- use Tests\TestCase;
-    ----------- end diff -----------
-
-Applied rules:
-
-
-9) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Services/AvailabilityServiceTest.php:194
-
-    ---------- begin diff ----------
-@@ @@
-         $result = availability_for($this->schedulable)->find($availabilityId);
-
-         // Assert: Should return null
--        $this->assertNull($result);
-+        $this->assertNotInstanceOf(Model::class, $result);
-     }
-
-     /**
-@@ @@
-             days: ['monday']
-         );
-
--        $availability2 = $this->createTestAvailability(
-+        $this->createTestAvailability(
-             type: 'training',
-             dailyStart: '14:00:00',
-             dailyEnd: '17:00:00',
-@@ @@
-         $result = availability_for($this->schedulable)->first();
-
-         // Assert: Should return null
--        $this->assertNull($result);
-+        $this->assertNotInstanceOf(Model::class, $result);
-     }
-
-     /**
-@@ @@
-      * @param string $validityStart The validity start date
-      * @param string $validityEnd The validity end date
-      *
--     * @return array The availability data array
-+     * @return array<string, string|mixed[]> The availability data array
-      */
-     private function createValidAvailabilityData(
-         string $type = 'consultation',
-@@ @@
-      * @param string $type The availability type
-      * @param string $dailyStart The daily start time
-      * @param string $dailyEnd The daily end time
--     * @param array $days The days of week
-+     * @param string[] $days The days of week
-      * @param string $validityStart The validity start date
-      * @param string $validityEnd The validity end date
-      *
-    ----------- end diff -----------
-
-Applied rules:
- * RemoveUnusedVariableAssignRector
- * AssertEmptyNullableObjectToAssertInstanceofRector
- * DocblockReturnArrayFromDirectArrayInstanceRector
- * ClassMethodArrayDocblockParamFromLocalCallsRector
-
-
-10) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Services/ImpedimentServiceTest.php:293
-
-    ---------- begin diff ----------
-@@ @@
-         $found = impediment_for($this->testAvailability)->find($impediment->id);
-
-         // Assert: Verify impediment not found in wrong context
--        $this->assertNull($found);
-+        $this->assertNotInstanceOf(Model::class, $found);
-     }
-
-     /**
-@@ @@
-             'end_datetime' => '2038-01-04 10:00:00',
-         ]);
-
--        $impediment2 = impediment_for($this->testAvailability)->create([
-+        impediment_for($this->testAvailability)->create([
-             'reason' => 'Afternoon meeting',
-             'start_datetime' => '2038-01-04 14:00:00',
-             'end_datetime' => '2038-01-04 15:00:00',
-@@ @@
-         $result = impediment_for($this->testAvailability)->first();
-
-         // Assert: Should return null
--        $this->assertNull($result);
-+        $this->assertNotInstanceOf(Model::class, $result);
-     }
-
-     /**
-    ----------- end diff -----------
-
-Applied rules:
- * RemoveUnusedVariableAssignRector
- * AssertEmptyNullableObjectToAssertInstanceofRector
-
-
-11) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Services/ScheduleService/AvailabilitySearchTest.php:9
-
-    ---------- begin diff ----------
-@@ @@
- use Illuminate\Support\Carbon;
- use Illuminate\Support\Collection;
- use Illuminate\Support\Facades\Config;
--use Roster\Enums\ScheduleStatus;
- use Tests\Support\TestSchedulable;
- use Tests\TestCase;
-    ----------- end diff -----------
-
-Applied rules:
-
-
-12) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Services/ScheduleService/BasicOperationsTest.php:422
-
-    ---------- begin diff ----------
-@@ @@
-         $found = schedule_for($availability1)->find($scheduleForSchedulable2->id);
-
-         // Assert: Should return null for cross-schedulable access
--        $this->assertNull($found);
-+        $this->assertNotInstanceOf(Model::class, $found);
-     }
-
-     /**
-@@ @@
-             'end_datetime' => '2038-01-04 11:00:00',
-         ]);
-
--        $schedule2 = schedule_for($availability)->create([
-+        schedule_for($availability)->create([
-             'title' => 'Second meeting',
-             'start_datetime' => '2038-01-04 12:00:00',
-             'end_datetime' => '2038-01-04 13:00:00',
-@@ @@
-         $first = schedule_for($availability)->first();
-
-         // Assert: Should return null
--        $this->assertNull($first);
-+        $this->assertNotInstanceOf(Model::class, $first);
-     }
-
-     /**
-    ----------- end diff -----------
-
-Applied rules:
- * RemoveUnusedVariableAssignRector
- * AssertEmptyNullableObjectToAssertInstanceofRector
-
-
-13) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Services/ScheduleService/ConflictDetectionTest.php:4
-
-    ---------- begin diff ----------
-@@ @@
-
- namespace Tests\Unit\Services\ScheduleService;
-
-+use Roster\Models\Schedule;
- use Illuminate\Database\Eloquent\Model;
- use Illuminate\Foundation\Testing\RefreshDatabase;
- use Illuminate\Support\Carbon;
- use Illuminate\Support\Facades\Config;
--use Roster\Enums\ScheduleStatus;
- use Roster\Validation\Exceptions\ValidationFailedException;
- use Tests\Support\TestSchedulable;
- use Tests\TestCase;
-@@ @@
-         ]);
-
-         // Assert: Should allow adjacent schedules
--        $this->assertInstanceOf(\Roster\Models\Schedule::class, $schedule2);
-+        $this->assertInstanceOf(Schedule::class, $schedule2);
-         $this->assertSame('2038-01-04 11:00:00', $schedule2->start_datetime->format('Y-m-d H:i:s'));
-     }
-
-@@ @@
-             'end_datetime' => $slot['end']->format('Y-m-d H:i:s'),
-         ]);
-
--        $this->assertInstanceOf(\Roster\Models\Schedule::class, $schedule);
-+        $this->assertInstanceOf(Schedule::class, $schedule);
-
-         // 4. Verify cannot recreate same slot
-         $this->expectException(ValidationFailedException::class);
-    ----------- end diff -----------
-
-Applied rules:
-
-
-14) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Services/ScheduleService/ScheduleLinksAdvancedTest.php:4
-
-    ---------- begin diff ----------
-@@ @@
-
- namespace Tests\Unit\Services\ScheduleService;
-
--use Illuminate\Database\Eloquent\Model;
-+use RuntimeException;
- use Illuminate\Foundation\Testing\RefreshDatabase;
- use Illuminate\Support\Collection;
- use Illuminate\Support\Facades\Config;
-@@ @@
- {
-     use RefreshDatabase;
-
--    /** @var Model The schedulable model used for testing */
--    private Model $schedulable;
--
-     /**
-      * Set up test environment.
-      */
-@@ @@
-     {
-         parent::setUp();
-
--        $this->schedulable = TestSchedulable::create();
-+        TestSchedulable::create();
-
-         Config::set('roster.durations.default_slot_interval_minutes', 15);
-         Config::set('roster.durations.max_search_period_days', 30);
-@@ @@
-
-         // 10. Test that operations require schedule context
-         $serviceWithoutSchedule = schedule_for($availability);
--        $this->expectException(\RuntimeException::class);
-+        $this->expectException(RuntimeException::class);
-         $this->expectExceptionMessage('No schedule set for link operations. Use schedule() method first.');
-         $serviceWithoutSchedule->attach($doctor);
-     }
-    ----------- end diff -----------
-
-Applied rules:
- * RemoveUnusedVariableAssignRector
- * NarrowUnusedSetUpDefinedPropertyRector
-
-
-15) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Services/ScheduleService/ScheduleLinksEdgeCasesTest.php:4
-
-    ---------- begin diff ----------
-@@ @@
-
- namespace Tests\Unit\Services\ScheduleService;
-
--use Illuminate\Database\Eloquent\Model;
- use Illuminate\Foundation\Testing\RefreshDatabase;
- use Illuminate\Support\Facades\Config;
- use Roster\Enums\ScheduleStatus;
-@@ @@
- {
-     use RefreshDatabase;
-
--    /** @var Model The schedulable model used for testing */
--    private Model $schedulable;
--
-     /**
-      * Set up test environment.
-      */
-@@ @@
-     {
-         parent::setUp();
-
--        $this->schedulable = TestSchedulable::create();
-+        TestSchedulable::create();
-
-         Config::set('roster.durations.default_slot_interval_minutes', 15);
-         Config::set('roster.durations.max_search_period_days', 30);
-@@ @@
-
-         // 6. Test attaching null metadata
-         $doctor = TestDoctor::create(['name' => 'Dr. Test', 'specialty' => 'testing']);
--        $service->attach($doctor, null);
-+        $service->attach($doctor);
-         $this->assertTrue($service->hasAttached($doctor), 'Should attach with null metadata');
-     }
- }
-    ----------- end diff -----------
-
-Applied rules:
- * RemoveUnusedVariableAssignRector
- * RemoveNullArgOnNullDefaultParamRector
- * NarrowUnusedSetUpDefinedPropertyRector
-
-
-16) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Services/ScheduleService/ScheduleLinksMixedTypesTest.php:4
-
-    ---------- begin diff ----------
-@@ @@
-
- namespace Tests\Unit\Services\ScheduleService;
-
--use Illuminate\Database\Eloquent\Model;
- use Illuminate\Foundation\Testing\RefreshDatabase;
--use Illuminate\Support\Collection;
- use Illuminate\Support\Facades\Config;
- use Roster\Enums\ScheduleStatus;
- use Tests\Support\TestCar;
-@@ @@
- {
-     use RefreshDatabase;
-
--    /** @var Model The schedulable model used for testing */
--    private Model $schedulable;
--
-     /**
-      * Set up test environment.
-      */
-@@ @@
-     {
-         parent::setUp();
-
--        $this->schedulable = TestSchedulable::create();
-+        TestSchedulable::create();
-
-         Config::set('roster.durations.default_slot_interval_minutes', 15);
-         Config::set('roster.durations.max_search_period_days', 30);
-    ----------- end diff -----------
-
-Applied rules:
- * RemoveUnusedVariableAssignRector
- * NarrowUnusedSetUpDefinedPropertyRector
-
-
-17) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Services/ScheduleService/ScheduleLinksTest.php:4
-
-    ---------- begin diff ----------
-@@ @@
-
- namespace Tests\Unit\Services\ScheduleService;
-
-+use Roster\Services\ScheduleService;
-+use RuntimeException;
- use Illuminate\Database\Eloquent\Model;
- use Illuminate\Foundation\Testing\RefreshDatabase;
- use Illuminate\Support\Collection;
- use Illuminate\Support\Facades\Config;
--use Roster\Enums\ScheduleStatus;
- use Tests\Support\TestSchedulable;
- use Tests\TestCase;
-
-@@ @@
-         $service = schedule_for($availability)->schedule($schedule);
-
-         // Assert: Should return service instance with schedule set
--        $this->assertInstanceOf(\Roster\Services\ScheduleService::class, $service);
-+        $this->assertInstanceOf(ScheduleService::class, $service);
-
-         // Note: The currentSchedule property is private, so we test through public API
-         // Attempt to use a link operation which would fail without schedule
--        $this->expectException(\RuntimeException::class);
-+        $this->expectException(RuntimeException::class);
-
-         // Create new service without schedule set and try link operation
-         $serviceWithoutSchedule = schedule_for($availability);
-@@ @@
-             ->attach($modelToAttach, ['role' => 'participant', 'priority' => 'high']);
-
-         // Assert: Should return service instance for chaining
--        $this->assertInstanceOf(\Roster\Services\ScheduleService::class, $service);
-+        $this->assertInstanceOf(ScheduleService::class, $service);
-     }
-
-     /**
-@@ @@
-             ->attachMany($models, ['type' => 'required']);
-
-         // Assert: Should return service instance for chaining
--        $this->assertInstanceOf(\Roster\Services\ScheduleService::class, $service);
-+        $this->assertInstanceOf(ScheduleService::class, $service);
-     }
-
-     /**
-@@ @@
-             ->detach($modelToDetach);
-
-         // Assert: Should return service instance
--        $this->assertInstanceOf(\Roster\Services\ScheduleService::class, $service);
-+        $this->assertInstanceOf(ScheduleService::class, $service);
-     }
-
-     /**
-@@ @@
-             ->sync($models, ['batch' => 'initial']);
-
-         // Assert: Should return service instance
--        $this->assertInstanceOf(\Roster\Services\ScheduleService::class, $service);
-+        $this->assertInstanceOf(ScheduleService::class, $service);
-     }
-
-     /**
-@@ @@
-         $model = TestSchedulable::create(['name' => 'Test Model']);
-
-         // Assert: Should throw exception when no schedule is set
--        $this->expectException(\RuntimeException::class);
-+        $this->expectException(RuntimeException::class);
-         $this->expectExceptionMessage('No schedule set for link operations. Use schedule() method first.');
-
-         // Act: Try to attach without setting schedule
-@@ @@
-             ->detach($model1);
-
-         // Assert: Should return service instance for chaining
--        $this->assertInstanceOf(\Roster\Services\ScheduleService::class, $service);
-+        $this->assertInstanceOf(ScheduleService::class, $service);
-     }
-
-     /**
-@@ @@
-             ->detachAll();
-
-         // Assert: Should return service instance
--        $this->assertInstanceOf(\Roster\Services\ScheduleService::class, $service);
-+        $this->assertInstanceOf(ScheduleService::class, $service);
-     }
- }
-    ----------- end diff -----------
-
-Applied rules:
-
-
-18) /home/andy-kani/pro/sites/packages/laravel-roster/src/Commands/DebugRulesCommand.php:814
+1) /home/andy-kani/pro/sites/packages/laravel-roster/src/Commands/DebugRulesCommand.php:814
 
     ---------- begin diff ----------
 @@ @@
@@ -622,7 +23,7 @@ Applied rules:
  * ClassMethodArrayDocblockParamFromLocalCallsRector
 
 
-19) /home/andy-kani/pro/sites/packages/laravel-roster/src/Contracts/Repository/ScheduleRepositoryInterface.php:62
+2) /home/andy-kani/pro/sites/packages/laravel-roster/src/Contracts/Repository/ScheduleRepositoryInterface.php:62
 
     ---------- begin diff ----------
 @@ @@
@@ -679,7 +80,7 @@ Applied rules:
  * RemoveUselessReturnTagRector
 
 
-20) /home/andy-kani/pro/sites/packages/laravel-roster/src/Contracts/Services/ScheduleServiceInterface.php:13
+3) /home/andy-kani/pro/sites/packages/laravel-roster/src/Contracts/Services/ScheduleServiceInterface.php:13
 
     ---------- begin diff ----------
 @@ @@
@@ -743,7 +144,7 @@ Applied rules:
  * RemoveUselessReturnTagRector
 
 
-21) /home/andy-kani/pro/sites/packages/laravel-roster/src/Contracts/Services/ServiceInterface.php:82
+4) /home/andy-kani/pro/sites/packages/laravel-roster/src/Contracts/Services/ServiceInterface.php:82
 
     ---------- begin diff ----------
 @@ @@
@@ -789,7 +190,7 @@ Applied rules:
  * RemoveUselessReturnTagRector
 
 
-22) /home/andy-kani/pro/sites/packages/laravel-roster/src/DTOs/AvailabilityData.php:235
+5) /home/andy-kani/pro/sites/packages/laravel-roster/src/DTOs/AvailabilityData.php:235
 
     ---------- begin diff ----------
 @@ @@
@@ -806,7 +207,7 @@ Applied rules:
  * PostIncDecToPreIncDecRector
 
 
-23) /home/andy-kani/pro/sites/packages/laravel-roster/src/Repositories/AbstractRepository.php:269
+6) /home/andy-kani/pro/sites/packages/laravel-roster/src/Repositories/AbstractRepository.php:269
 
     ---------- begin diff ----------
 @@ @@
@@ -838,7 +239,7 @@ Applied rules:
  * RemoveUselessReturnTagRector
 
 
-24) /home/andy-kani/pro/sites/packages/laravel-roster/src/Repositories/ScheduleRepository.php:93
+7) /home/andy-kani/pro/sites/packages/laravel-roster/src/Repositories/ScheduleRepository.php:93
 
     ---------- begin diff ----------
 @@ @@
@@ -916,7 +317,7 @@ Applied rules:
  * AddClosureVoidReturnTypeWhereNoReturnRector
 
 
-25) /home/andy-kani/pro/sites/packages/laravel-roster/src/Services/AvailabilityService.php:6
+8) /home/andy-kani/pro/sites/packages/laravel-roster/src/Services/AvailabilityService.php:6
 
     ---------- begin diff ----------
 @@ @@
@@ -958,7 +359,7 @@ Applied rules:
  * RemoveUselessVarTagRector
 
 
-26) /home/andy-kani/pro/sites/packages/laravel-roster/src/Services/Core/AbstractService.php:125
+9) /home/andy-kani/pro/sites/packages/laravel-roster/src/Services/Core/AbstractService.php:125
 
     ---------- begin diff ----------
 @@ @@
@@ -1091,7 +492,7 @@ Applied rules:
  * RemoveUselessReturnTagRector
 
 
-27) /home/andy-kani/pro/sites/packages/laravel-roster/src/Services/ScheduleService.php:4
+10) /home/andy-kani/pro/sites/packages/laravel-roster/src/Services/ScheduleService.php:4
 
     ---------- begin diff ----------
 @@ @@
@@ -1203,7 +604,7 @@ Applied rules:
 Applied rules:
 
 
-28) /home/andy-kani/pro/sites/packages/laravel-roster/src/Traits/AttachableToSchedules.php:84
+11) /home/andy-kani/pro/sites/packages/laravel-roster/src/Traits/AttachableToSchedules.php:84
 
     ---------- begin diff ----------
 @@ @@
@@ -1236,7 +637,7 @@ Applied rules:
  * RemoveUselessReturnTagRector
 
 
-29) /home/andy-kani/pro/sites/packages/laravel-roster/src/Validation/Rules/AvailabilityDaysInPeriodRule.php:19
+12) /home/andy-kani/pro/sites/packages/laravel-roster/src/Validation/Rules/AvailabilityDaysInPeriodRule.php:19
 
     ---------- begin diff ----------
 @@ @@
@@ -1263,7 +664,7 @@ Applied rules:
  * ClassMethodArrayDocblockParamFromLocalCallsRector
 
 
-30) /home/andy-kani/pro/sites/packages/laravel-roster/src/Validation/Rules/AvailabilityTemporalCoherenceRule.php:144
+13) /home/andy-kani/pro/sites/packages/laravel-roster/src/Validation/Rules/AvailabilityTemporalCoherenceRule.php:144
 
     ---------- begin diff ----------
 @@ @@
@@ -1288,7 +689,7 @@ Applied rules:
  * AddArrayFunctionClosureParamTypeRector
 
 
-31) /home/andy-kani/pro/sites/packages/laravel-roster/src/helpers.php:43
+14) /home/andy-kani/pro/sites/packages/laravel-roster/src/helpers.php:43
 
     ---------- begin diff ----------
 @@ @@
@@ -1319,7 +720,7 @@ Applied rules:
  * ClosureReturnTypeRector
 
 
-32) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Feature/Services/AvailabilityServiceDaysCoherenceTest.php:237
+15) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Feature/Services/AvailabilityServiceDaysCoherenceTest.php:237
 
     ---------- begin diff ----------
 @@ @@
@@ -1339,6 +740,605 @@ Applied rules:
 Applied rules:
  * NewlineAfterStatementRector
  * ClosureReturnTypeRector
+
+
+16) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Domain/Helpers/TimezoneHelperTest.php:14
+
+    ---------- begin diff ----------
+@@ @@
+ /**
+  * Test suite for TimezoneHelper functionality.
+  */
+-#[CoversClass(\Roster\Domain\Helpers\TimezoneHelper::class)]
++#[CoversClass(TimezoneHelper::class)]
+ final class TimezoneHelperTest extends TestCase
+ {
+     /**
+    ----------- end diff -----------
+
+Applied rules:
+
+
+17) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Domain/RepositoryMutationTest.php:4
+
+    ---------- begin diff ----------
+@@ @@
+
+ namespace Tests\Unit\Domain;
+
++use Illuminate\Support\Carbon;
+ use Illuminate\Database\Eloquent\Model;
+ use Illuminate\Foundation\Testing\RefreshDatabase;
+ use Roster\Exceptions\ForbiddenModelMutationException;
+@@ @@
+         // Verify record exists in trash
+         $trashed = ScheduleModel::withTrashed()->find($schedule->id);
+         $this->assertNotNull($trashed);
+-        $this->assertNotNull($trashed->deleted_at);
++        $this->assertInstanceOf(Carbon::class, $trashed->deleted_at);
+     }
+
+     /**
+    ----------- end diff -----------
+
+Applied rules:
+ * AssertEmptyNullableObjectToAssertInstanceofRector
+
+
+18) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Models/AttachableToSchedulesTest.php:5
+
+    ---------- begin diff ----------
+@@ @@
+ namespace Tests\Unit\Models;
+
+ use Illuminate\Foundation\Testing\RefreshDatabase;
+-use Illuminate\Support\Carbon;
+ use Roster\Enums\ScheduleStatus;
+ use Tests\Support\TestCar;
+ use Tests\Support\TestDoctor;
+@@ @@
+  * Validates that models can be attached to schedules and manage
+  * their schedule relationships through the attachable trait.
+  */
+-class AttachableToSchedulesTest extends TestCase
++final class AttachableToSchedulesTest extends TestCase
+ {
+     use RefreshDatabase;
+    ----------- end diff -----------
+
+Applied rules:
+ * FinalizeTestCaseClassRector
+
+
+19) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Models/ScheduleTest.php:11
+
+    ---------- begin diff ----------
+@@ @@
+ use Roster\Models\Availability;
+ use Roster\Models\Schedule as ScheduleModel;
+ use Roster\Support\RosterMutationContext;
+-use Tests\Support\TestCar;
+-use Tests\Support\TestDoctor;
+-use Tests\Support\TestRoom;
+ use Tests\Support\TestSchedulable;
+ use Tests\TestCase;
+    ----------- end diff -----------
+
+Applied rules:
+
+
+20) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Services/AvailabilityServiceTest.php:194
+
+    ---------- begin diff ----------
+@@ @@
+         $result = availability_for($this->schedulable)->find($availabilityId);
+
+         // Assert: Should return null
+-        $this->assertNull($result);
++        $this->assertNotInstanceOf(Model::class, $result);
+     }
+
+     /**
+@@ @@
+             days: ['monday']
+         );
+
+-        $availability2 = $this->createTestAvailability(
++        $this->createTestAvailability(
+             type: 'training',
+             dailyStart: '14:00:00',
+             dailyEnd: '17:00:00',
+@@ @@
+         $result = availability_for($this->schedulable)->first();
+
+         // Assert: Should return null
+-        $this->assertNull($result);
++        $this->assertNotInstanceOf(Model::class, $result);
+     }
+
+     /**
+@@ @@
+      * @param string $validityStart The validity start date
+      * @param string $validityEnd The validity end date
+      *
+-     * @return array The availability data array
++     * @return array<string, string|mixed[]> The availability data array
+      */
+     private function createValidAvailabilityData(
+         string $type = 'consultation',
+@@ @@
+      * @param string $type The availability type
+      * @param string $dailyStart The daily start time
+      * @param string $dailyEnd The daily end time
+-     * @param array $days The days of week
++     * @param string[] $days The days of week
+      * @param string $validityStart The validity start date
+      * @param string $validityEnd The validity end date
+      *
+    ----------- end diff -----------
+
+Applied rules:
+ * RemoveUnusedVariableAssignRector
+ * AssertEmptyNullableObjectToAssertInstanceofRector
+ * DocblockReturnArrayFromDirectArrayInstanceRector
+ * ClassMethodArrayDocblockParamFromLocalCallsRector
+
+
+21) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Services/ImpedimentServiceTest.php:293
+
+    ---------- begin diff ----------
+@@ @@
+         $found = impediment_for($this->testAvailability)->find($impediment->id);
+
+         // Assert: Verify impediment not found in wrong context
+-        $this->assertNull($found);
++        $this->assertNotInstanceOf(Model::class, $found);
+     }
+
+     /**
+@@ @@
+             'end_datetime' => '2038-01-04 10:00:00',
+         ]);
+
+-        $impediment2 = impediment_for($this->testAvailability)->create([
++        impediment_for($this->testAvailability)->create([
+             'reason' => 'Afternoon meeting',
+             'start_datetime' => '2038-01-04 14:00:00',
+             'end_datetime' => '2038-01-04 15:00:00',
+@@ @@
+         $result = impediment_for($this->testAvailability)->first();
+
+         // Assert: Should return null
+-        $this->assertNull($result);
++        $this->assertNotInstanceOf(Model::class, $result);
+     }
+
+     /**
+    ----------- end diff -----------
+
+Applied rules:
+ * RemoveUnusedVariableAssignRector
+ * AssertEmptyNullableObjectToAssertInstanceofRector
+
+
+22) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Services/ScheduleService/AvailabilitySearchTest.php:9
+
+    ---------- begin diff ----------
+@@ @@
+ use Illuminate\Support\Carbon;
+ use Illuminate\Support\Collection;
+ use Illuminate\Support\Facades\Config;
+-use Roster\Enums\ScheduleStatus;
+ use Tests\Support\TestSchedulable;
+ use Tests\TestCase;
+    ----------- end diff -----------
+
+Applied rules:
+
+
+23) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Services/ScheduleService/BasicOperationsTest.php:422
+
+    ---------- begin diff ----------
+@@ @@
+         $found = schedule_for($availability1)->find($scheduleForSchedulable2->id);
+
+         // Assert: Should return null for cross-schedulable access
+-        $this->assertNull($found);
++        $this->assertNotInstanceOf(Model::class, $found);
+     }
+
+     /**
+@@ @@
+             'end_datetime' => '2038-01-04 11:00:00',
+         ]);
+
+-        $schedule2 = schedule_for($availability)->create([
++        schedule_for($availability)->create([
+             'title' => 'Second meeting',
+             'start_datetime' => '2038-01-04 12:00:00',
+             'end_datetime' => '2038-01-04 13:00:00',
+@@ @@
+         $first = schedule_for($availability)->first();
+
+         // Assert: Should return null
+-        $this->assertNull($first);
++        $this->assertNotInstanceOf(Model::class, $first);
+     }
+
+     /**
+    ----------- end diff -----------
+
+Applied rules:
+ * RemoveUnusedVariableAssignRector
+ * AssertEmptyNullableObjectToAssertInstanceofRector
+
+
+24) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Services/ScheduleService/ConflictDetectionTest.php:4
+
+    ---------- begin diff ----------
+@@ @@
+
+ namespace Tests\Unit\Services\ScheduleService;
+
++use Roster\Models\Schedule;
+ use Illuminate\Database\Eloquent\Model;
+ use Illuminate\Foundation\Testing\RefreshDatabase;
+ use Illuminate\Support\Carbon;
+ use Illuminate\Support\Facades\Config;
+-use Roster\Enums\ScheduleStatus;
+ use Roster\Validation\Exceptions\ValidationFailedException;
+ use Tests\Support\TestSchedulable;
+ use Tests\TestCase;
+@@ @@
+         ]);
+
+         // Assert: Should allow adjacent schedules
+-        $this->assertInstanceOf(\Roster\Models\Schedule::class, $schedule2);
++        $this->assertInstanceOf(Schedule::class, $schedule2);
+         $this->assertSame('2038-01-04 11:00:00', $schedule2->start_datetime->format('Y-m-d H:i:s'));
+     }
+
+@@ @@
+             'end_datetime' => $slot['end']->format('Y-m-d H:i:s'),
+         ]);
+
+-        $this->assertInstanceOf(\Roster\Models\Schedule::class, $schedule);
++        $this->assertInstanceOf(Schedule::class, $schedule);
+
+         // 4. Verify cannot recreate same slot
+         $this->expectException(ValidationFailedException::class);
+    ----------- end diff -----------
+
+Applied rules:
+
+
+25) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Services/ScheduleService/ScheduleLinksAdvancedTest.php:4
+
+    ---------- begin diff ----------
+@@ @@
+
+ namespace Tests\Unit\Services\ScheduleService;
+
+-use Illuminate\Database\Eloquent\Model;
++use RuntimeException;
+ use Illuminate\Foundation\Testing\RefreshDatabase;
+ use Illuminate\Support\Collection;
+ use Illuminate\Support\Facades\Config;
+@@ @@
+ {
+     use RefreshDatabase;
+
+-    /** @var Model The schedulable model used for testing */
+-    private Model $schedulable;
+-
+     /**
+      * Set up test environment.
+      */
+@@ @@
+     {
+         parent::setUp();
+
+-        $this->schedulable = TestSchedulable::create();
++        TestSchedulable::create();
+
+         Config::set('roster.durations.default_slot_interval_minutes', 15);
+         Config::set('roster.durations.max_search_period_days', 30);
+@@ @@
+
+         // 10. Test that operations require schedule context
+         $serviceWithoutSchedule = schedule_for($availability);
+-        $this->expectException(\RuntimeException::class);
++        $this->expectException(RuntimeException::class);
+         $this->expectExceptionMessage('No schedule set for link operations. Use schedule() method first.');
+         $serviceWithoutSchedule->attach($doctor);
+     }
+    ----------- end diff -----------
+
+Applied rules:
+ * RemoveUnusedVariableAssignRector
+ * NarrowUnusedSetUpDefinedPropertyRector
+
+
+26) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Services/ScheduleService/ScheduleLinksEdgeCasesTest.php:4
+
+    ---------- begin diff ----------
+@@ @@
+
+ namespace Tests\Unit\Services\ScheduleService;
+
+-use Illuminate\Database\Eloquent\Model;
+ use Illuminate\Foundation\Testing\RefreshDatabase;
+ use Illuminate\Support\Facades\Config;
+ use Roster\Enums\ScheduleStatus;
+@@ @@
+ {
+     use RefreshDatabase;
+
+-    /** @var Model The schedulable model used for testing */
+-    private Model $schedulable;
+-
+     /**
+      * Set up test environment.
+      */
+@@ @@
+     {
+         parent::setUp();
+
+-        $this->schedulable = TestSchedulable::create();
++        TestSchedulable::create();
+
+         Config::set('roster.durations.default_slot_interval_minutes', 15);
+         Config::set('roster.durations.max_search_period_days', 30);
+@@ @@
+
+         // 6. Test attaching null metadata
+         $doctor = TestDoctor::create(['name' => 'Dr. Test', 'specialty' => 'testing']);
+-        $service->attach($doctor, null);
++        $service->attach($doctor);
+         $this->assertTrue($service->hasAttached($doctor), 'Should attach with null metadata');
+     }
+ }
+    ----------- end diff -----------
+
+Applied rules:
+ * RemoveUnusedVariableAssignRector
+ * RemoveNullArgOnNullDefaultParamRector
+ * NarrowUnusedSetUpDefinedPropertyRector
+
+
+27) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Services/ScheduleService/ScheduleLinksMixedTypesTest.php:4
+
+    ---------- begin diff ----------
+@@ @@
+
+ namespace Tests\Unit\Services\ScheduleService;
+
+-use Illuminate\Database\Eloquent\Model;
+ use Illuminate\Foundation\Testing\RefreshDatabase;
+-use Illuminate\Support\Collection;
+ use Illuminate\Support\Facades\Config;
+ use Roster\Enums\ScheduleStatus;
+ use Tests\Support\TestCar;
+@@ @@
+ {
+     use RefreshDatabase;
+
+-    /** @var Model The schedulable model used for testing */
+-    private Model $schedulable;
+-
+     /**
+      * Set up test environment.
+      */
+@@ @@
+     {
+         parent::setUp();
+
+-        $this->schedulable = TestSchedulable::create();
++        TestSchedulable::create();
+
+         Config::set('roster.durations.default_slot_interval_minutes', 15);
+         Config::set('roster.durations.max_search_period_days', 30);
+    ----------- end diff -----------
+
+Applied rules:
+ * RemoveUnusedVariableAssignRector
+ * NarrowUnusedSetUpDefinedPropertyRector
+
+
+28) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Services/ScheduleService/ScheduleLinksTest.php:4
+
+    ---------- begin diff ----------
+@@ @@
+
+ namespace Tests\Unit\Services\ScheduleService;
+
++use Roster\Services\ScheduleService;
++use RuntimeException;
+ use Illuminate\Database\Eloquent\Model;
+ use Illuminate\Foundation\Testing\RefreshDatabase;
+ use Illuminate\Support\Collection;
+ use Illuminate\Support\Facades\Config;
+-use Roster\Enums\ScheduleStatus;
+ use Tests\Support\TestSchedulable;
+ use Tests\TestCase;
+
+@@ @@
+         $service = schedule_for($availability)->schedule($schedule);
+
+         // Assert: Should return service instance with schedule set
+-        $this->assertInstanceOf(\Roster\Services\ScheduleService::class, $service);
++        $this->assertInstanceOf(ScheduleService::class, $service);
+
+         // Note: The currentSchedule property is private, so we test through public API
+         // Attempt to use a link operation which would fail without schedule
+-        $this->expectException(\RuntimeException::class);
++        $this->expectException(RuntimeException::class);
+
+         // Create new service without schedule set and try link operation
+         $serviceWithoutSchedule = schedule_for($availability);
+@@ @@
+             ->attach($modelToAttach, ['role' => 'participant', 'priority' => 'high']);
+
+         // Assert: Should return service instance for chaining
+-        $this->assertInstanceOf(\Roster\Services\ScheduleService::class, $service);
++        $this->assertInstanceOf(ScheduleService::class, $service);
+     }
+
+     /**
+@@ @@
+             ->attachMany($models, ['type' => 'required']);
+
+         // Assert: Should return service instance for chaining
+-        $this->assertInstanceOf(\Roster\Services\ScheduleService::class, $service);
++        $this->assertInstanceOf(ScheduleService::class, $service);
+     }
+
+     /**
+@@ @@
+             ->detach($modelToDetach);
+
+         // Assert: Should return service instance
+-        $this->assertInstanceOf(\Roster\Services\ScheduleService::class, $service);
++        $this->assertInstanceOf(ScheduleService::class, $service);
+     }
+
+     /**
+@@ @@
+             ->sync($models, ['batch' => 'initial']);
+
+         // Assert: Should return service instance
+-        $this->assertInstanceOf(\Roster\Services\ScheduleService::class, $service);
++        $this->assertInstanceOf(ScheduleService::class, $service);
+     }
+
+     /**
+@@ @@
+         $model = TestSchedulable::create(['name' => 'Test Model']);
+
+         // Assert: Should throw exception when no schedule is set
+-        $this->expectException(\RuntimeException::class);
++        $this->expectException(RuntimeException::class);
+         $this->expectExceptionMessage('No schedule set for link operations. Use schedule() method first.');
+
+         // Act: Try to attach without setting schedule
+@@ @@
+             ->detach($model1);
+
+         // Assert: Should return service instance for chaining
+-        $this->assertInstanceOf(\Roster\Services\ScheduleService::class, $service);
++        $this->assertInstanceOf(ScheduleService::class, $service);
+     }
+
+     /**
+@@ @@
+             ->detachAll();
+
+         // Assert: Should return service instance
+-        $this->assertInstanceOf(\Roster\Services\ScheduleService::class, $service);
++        $this->assertInstanceOf(ScheduleService::class, $service);
+     }
+ }
+    ----------- end diff -----------
+
+Applied rules:
+
+
+29) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Validation/Rules/AvailabilityDateRangeRuleTest.php:530
+
+    ---------- begin diff ----------
+@@ @@
+             public $daily_start;
+
+             public $daily_end;
+-
+-            public function __construct()
+-            {
+-                parent::__construct();
+-            }
+         };
+
+         $entity->validity_start = Carbon::parse($validityStart);
+    ----------- end diff -----------
+
+Applied rules:
+ * RemoveParentDelegatingConstructorRector
+
+
+30) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Validation/Rules/AvailabilityDaysCoherenceRuleTest.php:557
+
+    ---------- begin diff ----------
+@@ @@
+             public $validity_start;
+
+             public $validity_end;
+-
+-            public function __construct()
+-            {
+-                parent::__construct();
+-            }
+         };
+
+         if ($validityStart !== null) {
+    ----------- end diff -----------
+
+Applied rules:
+ * RemoveParentDelegatingConstructorRector
+
+
+31) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Validation/Rules/FutureDateRuleTest.php:667
+
+    ---------- begin diff ----------
+@@ @@
+      * @param OperationType $operationType The operation type
+      * @param bool $hasStartDatetime Whether start_datetime field is present
+      * @param string|null $startDatetime The start datetime value
+-     *
+-     * @return MockObject&ValidationContextInterface
+      */
+     private function createScheduleImpedimentContext(
+         EntityType $entityType,
+@@ @@
+      * @param string|null $validityStart The validity start date value
+      * @param bool $hasDailyStart Whether daily_start field is present
+      * @param string|null $dailyStart The daily start time value
+-     *
+-     * @return MockObject&ValidationContextInterface
+      */
+     private function createAvailabilityContext(
+         OperationType $operationType,
+@@ @@
+      *
+      * @param bool $shouldValidateFutureDates Whether future date validation should be enabled
+      * @param bool $allowPastDates Whether past dates are allowed
+-     *
+-     * @return MockObject&FutureDateRule
+      */
+     private function createMockWithConfigMethods(
+         bool $shouldValidateFutureDates,
+    ----------- end diff -----------
+
+Applied rules:
+ * RemoveUselessReturnTagRector
+
+
+32) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Validation/ValidationContextTest.php:966
+
+    ---------- begin diff ----------
+@@ @@
+
+         $this->assertContainsOnlyInstancesOf(ViolationData::class, $violations);
+
+-        $this->assertEquals('field1', $violations[0]->getField());
+-        $this->assertEquals('field2', $violations[1]->getField());
++        $this->assertSame('field1', $violations[0]->getField());
++        $this->assertSame('field2', $violations[1]->getField());
+     }
+
+     /**
+    ----------- end diff -----------
+
+Applied rules:
+ * AssertEqualsToSameRector
 
 
  [OK] 32 files would have been changed (dry-run) by Rector                                                              
