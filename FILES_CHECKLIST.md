@@ -1,5 +1,5 @@
 # Project File Checklist
-*Last updated: sam. 03 janv. 2026 05:11:21 WAT*
+*Last updated: sam. 03 janv. 2026 17:53:43 WAT*
 
 ## Previously Checked Files
 1. config/roster.php [x]
@@ -150,11 +150,28 @@
 
 ## Other Files
 1. config/roster.php.bak [ ]
-2. src/Validation/DTOs/ViolationData.php [ ]
-3. src/Validation/Rules/AvailabilityDaysInPeriodRule.php [ ]
-4. tests/Feature/.gitkeep [ ]
-5. tests/Unit/Commands/DebugRulesCommandTest.php [ ]
-6. tests/Unit/Exceptions/ValidationFailedExceptionTest.php [ ]
-7. tests/Unit/Validation/DTOs/ViolationDataTest.php [ ]
-8. tests/Unit/Validation/Rules/AbstractRuleTest.php [ ]
-9. tests/Unit/Validation/ValidationResultTest.php [ ]
+2. database/migrations/2024_01_01_000004_create_roster_schedule_links_table.php [ ]
+3. src/Contracts/Services/ScheduleServiceInterface.php [ ]
+4. src/Traits/AttachableToSchedules.php [ ]
+5. src/Validation/DTOs/ViolationData.php [ ]
+6. src/Validation/Rules/AvailabilityDaysInPeriodRule.php [ ]
+7. tests/database/migrations/2024_01_01_000000_create_test_cars_table.php [ ]
+8. tests/database/migrations/2024_01_01_000000_create_test_doctors_table copy.php [ ]
+9. tests/database/migrations/2024_01_01_000000_create_test_rooms_table.php [ ]
+10. tests/Feature/.gitkeep [ ]
+11. tests/Support/TestCar.php [ ]
+12. tests/Support/TestDoctor.php [ ]
+13. tests/Support/TestRoom.php [ ]
+14. tests/Unit/Commands/DebugRulesCommandTest.php [ ]
+15. tests/Unit/Exceptions/ValidationFailedExceptionTest.php [ ]
+16. tests/Unit/Models/AttachableToSchedulesTest.php [ ]
+17. tests/Unit/Services/ScheduleService/AvailabilitySearchTest.php [ ]
+18. tests/Unit/Services/ScheduleService/BasicOperationsTest.php [ ]
+19. tests/Unit/Services/ScheduleService/ConflictDetectionTest.php [ ]
+20. tests/Unit/Services/ScheduleService/ScheduleLinksAdvancedTest.php [ ]
+21. tests/Unit/Services/ScheduleService/ScheduleLinksEdgeCasesTest.php [ ]
+22. tests/Unit/Services/ScheduleService/ScheduleLinksMixedTypesTest.php [ ]
+23. tests/Unit/Services/ScheduleService/ScheduleLinksTest.php [ ]
+24. tests/Unit/Validation/DTOs/ViolationDataTest.php [ ]
+25. tests/Unit/Validation/Rules/AbstractRuleTest.php [ ]
+26. tests/Unit/Validation/ValidationResultTest.php [ ]

@@ -1,11 +1,11 @@
 # Pint Formatting Test Report
-*Generated: sam. 03 janv. 2026 05:10:13 WAT*
+*Generated: sam. 03 janv. 2026 17:52:29 WAT*
 
 
-  ⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯.⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯..⨯....⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯...⨯...⨯⨯.⨯⨯⨯⨯⨯⨯.⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯.⨯.⨯⨯⨯⨯.⨯⨯⨯⨯.⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯.⨯⨯..⨯.
+  ⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯.⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯..⨯....⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯...⨯...⨯⨯⨯..⨯⨯⨯⨯⨯⨯⨯.⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯.⨯.⨯⨯⨯⨯.⨯⨯⨯⨯.⨯⨯⨯⨯⨯⨯..⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯.⨯⨯⨯⨯⨯...⨯.
 
   ──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────── Laravel  
-    FAIL   ............................................................................................................................................... 152 files, 129 style issues  
+    FAIL   ............................................................................................................................................... 168 files, 141 style issues  
   ⨯ config/roster.php                                                                                                                     no_extra_blank_lines, binary_operator_spaces  
   ⨯ database/migrations/2024_01_01_000001_create_roster_availabilities_table.php class_definition, no_superfluous_phpdoc_tags, braces_position, phpdoc_trim, no_unused_imports, no_ex…  
   ⨯ rector.php                                                                                                                                                            concat_space  
@@ -16,7 +16,8 @@
   ⨯ src/Contracts/Repository/AvailabilityRepositoryInterface.php                                                                                                          phpdoc_align  
   ⨯ src/Contracts/Repository/ImpedimentRepositoryInterface.php                                                                                           ordered_imports, phpdoc_align  
   ⨯ src/Contracts/Repository/RepositoryInterface.php                                                                                                                      phpdoc_align  
-  ⨯ src/Contracts/Repository/ScheduleRepositoryInterface.php                                                                                             ordered_imports, phpdoc_align  
+  ⨯ src/Contracts/Repository/ScheduleRepositoryInterface.php                                                                 no_superfluous_phpdoc_tags, ordered_imports, phpdoc_align  
+  ⨯ src/Contracts/Services/ScheduleServiceInterface.php                                                                          no_superfluous_phpdoc_tags, phpdoc_trim, phpdoc_align  
   ⨯ src/Contracts/Services/ServiceInterface.php                                                                                  no_superfluous_phpdoc_tags, phpdoc_trim, phpdoc_align  
   ⨯ src/Contracts/Validation/RuleInterface.php                                                                                                         phpdoc_separation, phpdoc_align  
   ⨯ src/Contracts/Validation/ValidationContextInterface.php                                                                                                               phpdoc_align  
@@ -50,14 +51,15 @@
   ⨯ src/Repositories/AbstractRepository.php no_superfluous_phpdoc_tags, concat_space, phpdoc_separation, phpdoc_trim, not_operator_with_successor_space, blank_line_before_statement,…  
   ⨯ src/Repositories/AvailabilityRepository.php                                        trailing_comma_in_multiline, phpdoc_separation, not_operator_with_successor_space, phpdoc_align  
   ⨯ src/Repositories/ImpedimentRepository.php                                                                                                                             phpdoc_align  
-  ⨯ src/Repositories/ScheduleRepository.php                                                                                                                               phpdoc_align  
+  ⨯ src/Repositories/ScheduleRepository.php                                                     new_with_parentheses, not_operator_with_successor_space, ordered_imports, phpdoc_align  
   ⨯ src/RosterServiceProvider.php                                                                                                                           concat_space, phpdoc_align  
   ⨯ src/Services/AvailabilityService.php no_superfluous_phpdoc_tags, trailing_comma_in_multiline, phpdoc_separation, phpdoc_trim, no_unused_imports, not_operator_with_successor_spac…  
   ⨯ src/Services/Core/AbstractService.php no_superfluous_phpdoc_tags, concat_space, trailing_comma_in_multiline, phpdoc_separation, phpdoc_trim, not_operator_with_successor_space, b…  
   ⨯ src/Services/ImpedimentService.php                    class_attributes_separation, trailing_comma_in_multiline, phpdoc_separation, not_operator_with_successor_space, phpdoc_align  
-  ⨯ src/Services/ScheduleService.php                                                         class_attributes_separation, cast_spaces, not_operator_with_successor_space, phpdoc_align  
+  ⨯ src/Services/ScheduleService.php                                      phpdoc_separation, cast_spaces, not_operator_with_successor_space, blank_line_before_statement, phpdoc_align  
   ⨯ src/Support/RosterMutationContext.php                                                   increment_style, phpdoc_no_package, phpdoc_trim, blank_line_before_statement, phpdoc_align  
   ⨯ src/Support/RosterServiceContext.php                                                                                    increment_style, blank_line_before_statement, phpdoc_align  
+  ⨯ src/Traits/AttachableToSchedules.php                                                                                        no_superfluous_phpdoc_tags, concat_space, phpdoc_align  
   ⨯ src/Traits/BelongsToSchedulable.php                                                                                                                phpdoc_separation, phpdoc_align  
   ⨯ src/Validation/Attributes/ValidationRule.php                                                                                 braces_position, single_line_empty_body, phpdoc_align  
   ⨯ src/Validation/Cache/RuleCacheGenerator.php                                   function_declaration, concat_space, not_operator_with_successor_space, ordered_imports, phpdoc_align  
@@ -92,6 +94,8 @@
   ⨯ tests/Integration/Database/ImpedimentIntegrationTest.php                                                                                                           ordered_imports  
   ⨯ tests/Integration/Database/ScheduleIntegrationTest.php                                                                                                             ordered_imports  
   ⨯ tests/Integration/Traits/BelongsToSchedulableTest.php                                                                                                              ordered_imports  
+  ⨯ tests/Support/TestDoctor.php                                                                                                                                        ordered_traits  
+  ⨯ tests/Support/TestSchedulable.php                                                                                                                                   ordered_traits  
   ⨯ tests/TestCase.php                                                                                                                                      concat_space, phpdoc_align  
   ⨯ tests/Unit/Commands/CacheRulesCommandTest.php                                                                    new_with_parentheses, concat_space, ordered_imports, phpdoc_align  
   ⨯ tests/Unit/Commands/CapturesOutput.php                                                                                                                                phpdoc_align  
@@ -105,13 +109,18 @@
   ⨯ tests/Unit/Domain/RepositoryMutationTest.php                                                                                                                       ordered_imports  
   ⨯ tests/Unit/HelpersTest.php                                                                             new_with_parentheses, braces_position, single_line_empty_body, phpdoc_align  
   ⨯ tests/Unit/Http/Middleware/SetUserTimezoneTest.php new_with_parentheses, function_declaration, php_unit_method_casing, braces_position, blank_line_before_statement, ordered_impo…  
+  ⨯ tests/Unit/Models/AttachableToSchedulesTest.php                                                                                                                  no_unused_imports  
   ⨯ tests/Unit/Models/AvailabilityTest.php                                                                                                               ordered_imports, phpdoc_align  
   ⨯ tests/Unit/Models/ImpedimentTest.php                                                                                                                 ordered_imports, phpdoc_align  
-  ⨯ tests/Unit/Models/ScheduleTest.php                                                                               class_attributes_separation, binary_operator_spaces, phpdoc_align  
+  ⨯ tests/Unit/Models/ScheduleTest.php                                                            class_attributes_separation, no_unused_imports, binary_operator_spaces, phpdoc_align  
   ⨯ tests/Unit/RosterServiceProviderTest.php                                                                                                                           ordered_imports  
   ⨯ tests/Unit/Services/AvailabilityServiceTest.php                                                         class_attributes_separation, single_quote, phpdoc_separation, phpdoc_align  
   ⨯ tests/Unit/Services/ImpedimentServiceTest.php                                                   increment_style, single_quote, concat_space, no_extra_blank_lines, ordered_imports  
-  ⨯ tests/Unit/Services/ScheduleServiceTest.php                                                                                           class_attributes_separation, ordered_imports  
+  ⨯ tests/Unit/Services/ScheduleService/AvailabilitySearchTest.php                                                                                                   no_unused_imports  
+  ⨯ tests/Unit/Services/ScheduleService/ConflictDetectionTest.php                                                                                                    no_unused_imports  
+  ⨯ tests/Unit/Services/ScheduleService/ScheduleLinksAdvancedTest.php                                                                                      trailing_comma_in_multiline  
+  ⨯ tests/Unit/Services/ScheduleService/ScheduleLinksMixedTypesTest.php                                                                 trailing_comma_in_multiline, no_unused_imports  
+  ⨯ tests/Unit/Services/ScheduleService/ScheduleLinksTest.php                                                                                                        no_unused_imports  
   ⨯ tests/Unit/Validation/Rules/AbstractRuleTest.php                                                                                           braces_position, single_line_empty_body  
   ⨯ tests/Unit/Validation/Rules/AvailabilityDateRangeRuleTest.php              new_with_parentheses, function_declaration, increment_style, braces_position, phpdoc_trim, phpdoc_align  
   ⨯ tests/Unit/Validation/Rules/AvailabilityDaysCoherenceRuleTest.php      new_with_parentheses, function_declaration, increment_style, braces_position, ordered_imports, phpdoc_align  
@@ -134,5 +143,8 @@
   ⨯ tests/Unit/Validation/ValidationContextTest.php new_with_parentheses, trailing_comma_in_multiline, braces_position, not_operator_with_successor_space, no_blank_lines_after_phpdo…  
   ⨯ tests/Unit/Validation/ValidatorTest.php                                       new_with_parentheses, function_declaration, braces_position, single_line_empty_body, ordered_imports  
   ⨯ tests/bootstrap.php                                                   phpdoc_no_package, concat_space, phpdoc_trim, not_operator_with_successor_space, no_blank_lines_after_phpdoc  
+  ⨯ tests/database/migrations/2024_01_01_000000_create_test_cars_table.php                                        class_definition, braces_position, not_operator_with_successor_space  
+  ⨯ tests/database/migrations/2024_01_01_000000_create_test_doctors_table copy.php                                class_definition, braces_position, not_operator_with_successor_space  
+  ⨯ tests/database/migrations/2024_01_01_000000_create_test_rooms_table.php                                       class_definition, braces_position, not_operator_with_successor_space  
   ⨯ tests/database/migrations/2024_01_01_000000_create_test_schedulables_table.php                                class_definition, braces_position, not_operator_with_successor_space  
 

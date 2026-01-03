@@ -8,6 +8,7 @@ use Roster\Models\Schedule;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
+use Illuminate\Database\Eloquent\Model;
 
 interface ScheduleRepositoryInterface extends RepositoryInterface
 {
@@ -54,4 +55,87 @@ interface ScheduleRepositoryInterface extends RepositoryInterface
         Carbon $end,
         array $filters = []
     ): Collection;
+
+    /**
+     * Attach a model to a schedule.
+     *
+     * @param int $scheduleId The ID of the schedule
+     * @param Model $model The model to attach
+     * @param array|null $metadata Optional metadata for the relationship
+     * @return void
+     */
+    public function attach(int $scheduleId, Model $model, ?array $metadata = null): void;
+
+    /**
+     * Attach multiple models to a schedule.
+     *
+     * @param int $scheduleId The ID of the schedule
+     * @param array<Model> $models The models to attach
+     * @param array|null $metadata Optional metadata for the relationships
+     * @return void
+     */
+    public function attachMany(int $scheduleId, array $models, ?array $metadata = null): void;
+
+    /**
+     * Detach a model from a schedule.
+     *
+     * @param int $scheduleId The ID of the schedule
+     * @param Model $model The model to detach
+     * @return void
+     */
+    public function detach(int $scheduleId, Model $model): void;
+
+    /**
+     * Detach multiple models from a schedule.
+     *
+     * @param int $scheduleId The ID of the schedule
+     * @param array<Model> $models The models to detach
+     * @return void
+     */
+    public function detachMany(int $scheduleId, array $models): void;
+
+    /**
+     * Detach all models from a schedule.
+     *
+     * @param int $scheduleId The ID of the schedule
+     * @return void
+     */
+    public function detachAll(int $scheduleId): void;
+
+    /**
+     * Check if a model is attached to a schedule.
+     *
+     * @param int $scheduleId The ID of the schedule
+     * @param Model $model The model to check
+     * @return bool True if the model is attached
+     */
+    public function hasAttached(int $scheduleId, Model $model): bool;
+
+    /**
+     * Get all models attached to a schedule.
+     *
+     * @param int $scheduleId The ID of the schedule
+     * @return Collection<int, Model> Collection of attached models
+     */
+    public function getAttached(int $scheduleId): Collection;
+
+    /**
+     * Get models of a specific type attached to a schedule.
+     *
+     * @param int $scheduleId The ID of the schedule
+     * @param string $modelClass The class name of the model type
+     * @return Collection<int, Model> Collection of attached models of the specified type
+     */
+    public function getAttachedByType(int $scheduleId, string $modelClass): Collection;
+
+    /**
+     * Synchronize attached models for a schedule.
+     * Detaches all current models and attaches the new ones.
+     *
+     * @param int $scheduleId The ID of the schedule
+     * @param array<Model> $models The models to attach
+     * @param array|null $metadata Optional metadata for the relationships
+     * @return void
+     */
+    public function sync(int $scheduleId, array $models, ?array $metadata = null): void;
 }

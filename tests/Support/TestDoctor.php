@@ -9,10 +9,9 @@ use Roster\Traits\AttachableToSchedules;
 use Roster\Traits\HasRoster;
 
 /**
- * Test model for schedulable entities in test environments.
- * Provides a concrete implementation for testing scheduling functionality.
+ * Test model for doctors that can both have schedules and be attached to schedules.
  */
-class TestSchedulable extends Model
+class TestDoctor extends Model
 {
     use HasRoster;
     use AttachableToSchedules;
@@ -22,7 +21,7 @@ class TestSchedulable extends Model
      *
      * @var string
      */
-    protected $table = 'test_schedulables';
+    protected $table = 'test_doctors';
 
     /**
      * The attributes that are mass assignable.
@@ -31,6 +30,7 @@ class TestSchedulable extends Model
      */
     protected $fillable = [
         'name',
+        'specialty',
         'email',
     ];
 }

@@ -11,6 +11,9 @@ use Roster\Enums\ScheduleStatus;
 use Roster\Models\Availability;
 use Roster\Models\Schedule as ScheduleModel;
 use Roster\Support\RosterMutationContext;
+use Tests\Support\TestCar;
+use Tests\Support\TestDoctor;
+use Tests\Support\TestRoom;
 use Tests\Support\TestSchedulable;
 use Tests\TestCase;
 

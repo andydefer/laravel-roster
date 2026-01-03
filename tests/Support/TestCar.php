@@ -6,15 +6,12 @@ namespace Tests\Support;
 
 use Illuminate\Database\Eloquent\Model;
 use Roster\Traits\AttachableToSchedules;
-use Roster\Traits\HasRoster;
 
 /**
- * Test model for schedulable entities in test environments.
- * Provides a concrete implementation for testing scheduling functionality.
+ * Test model for cars that can be attached to schedules.
  */
-class TestSchedulable extends Model
+class TestCar extends Model
 {
-    use HasRoster;
     use AttachableToSchedules;
 
     /**
@@ -22,7 +19,7 @@ class TestSchedulable extends Model
      *
      * @var string
      */
-    protected $table = 'test_schedulables';
+    protected $table = 'test_cars';
 
     /**
      * The attributes that are mass assignable.
@@ -30,7 +27,17 @@ class TestSchedulable extends Model
      * @var array<int, string>
      */
     protected $fillable = [
-        'name',
-        'email',
+        'model',
+        'license_plate',
+        'type',
+    ];
+
+    /**
+     * The attributes that should be cast.
+     *
+     * @var array<string, string>
+     */
+    protected $casts = [
+        'capacity' => 'integer',
     ];
 }
