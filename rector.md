@@ -1,11 +1,68 @@
 # Rector Refactoring Report
-*Generated: sam. 03 janv. 2026 18:42:13 WAT*
+*Generated: dim. 04 janv. 2026 05:53:40 WAT*
 
 
-32 files with changes
+35 files with changes
 =====================
 
-1) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Validation/ValidationContextTest.php:966
+1) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Validation/Rules/AvailabilityDaysCoherenceRuleTest.php:557
+
+    ---------- begin diff ----------
+@@ @@
+             public $validity_start;
+
+             public $validity_end;
+-
+-            public function __construct()
+-            {
+-                parent::__construct();
+-            }
+         };
+
+         if ($validityStart !== null) {
+    ----------- end diff -----------
+
+Applied rules:
+ * RemoveParentDelegatingConstructorRector
+
+
+2) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Validation/Rules/FutureDateRuleTest.php:667
+
+    ---------- begin diff ----------
+@@ @@
+      * @param OperationType $operationType The operation type
+      * @param bool $hasStartDatetime Whether start_datetime field is present
+      * @param string|null $startDatetime The start datetime value
+-     *
+-     * @return MockObject&ValidationContextInterface
+      */
+     private function createScheduleImpedimentContext(
+         EntityType $entityType,
+@@ @@
+      * @param string|null $validityStart The validity start date value
+      * @param bool $hasDailyStart Whether daily_start field is present
+      * @param string|null $dailyStart The daily start time value
+-     *
+-     * @return MockObject&ValidationContextInterface
+      */
+     private function createAvailabilityContext(
+         OperationType $operationType,
+@@ @@
+      *
+      * @param bool $shouldValidateFutureDates Whether future date validation should be enabled
+      * @param bool $allowPastDates Whether past dates are allowed
+-     *
+-     * @return MockObject&FutureDateRule
+      */
+     private function createMockWithConfigMethods(
+         bool $shouldValidateFutureDates,
+    ----------- end diff -----------
+
+Applied rules:
+ * RemoveUselessReturnTagRector
+
+
+3) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Validation/ValidationContextTest.php:966
 
     ---------- begin diff ----------
 @@ @@
@@ -25,7 +82,7 @@ Applied rules:
  * AssertEqualsToSameRector
 
 
-2) /home/andy-kani/pro/sites/packages/laravel-roster/src/Commands/DebugRulesCommand.php:814
+4) /home/andy-kani/pro/sites/packages/laravel-roster/src/Commands/DebugRulesCommand.php:814
 
     ---------- begin diff ----------
 @@ @@
@@ -43,7 +100,7 @@ Applied rules:
  * ClassMethodArrayDocblockParamFromLocalCallsRector
 
 
-3) /home/andy-kani/pro/sites/packages/laravel-roster/src/Contracts/Repository/ScheduleRepositoryInterface.php:62
+5) /home/andy-kani/pro/sites/packages/laravel-roster/src/Contracts/Repository/ScheduleRepositoryInterface.php:62
 
     ---------- begin diff ----------
 @@ @@
@@ -100,7 +157,7 @@ Applied rules:
  * RemoveUselessReturnTagRector
 
 
-4) /home/andy-kani/pro/sites/packages/laravel-roster/src/Contracts/Services/ScheduleServiceInterface.php:13
+6) /home/andy-kani/pro/sites/packages/laravel-roster/src/Contracts/Services/ScheduleServiceInterface.php:13
 
     ---------- begin diff ----------
 @@ @@
@@ -164,7 +221,7 @@ Applied rules:
  * RemoveUselessReturnTagRector
 
 
-5) /home/andy-kani/pro/sites/packages/laravel-roster/src/Contracts/Services/ServiceInterface.php:82
+7) /home/andy-kani/pro/sites/packages/laravel-roster/src/Contracts/Services/ServiceInterface.php:82
 
     ---------- begin diff ----------
 @@ @@
@@ -210,7 +267,7 @@ Applied rules:
  * RemoveUselessReturnTagRector
 
 
-6) /home/andy-kani/pro/sites/packages/laravel-roster/src/DTOs/AvailabilityData.php:235
+8) /home/andy-kani/pro/sites/packages/laravel-roster/src/DTOs/AvailabilityData.php:235
 
     ---------- begin diff ----------
 @@ @@
@@ -227,7 +284,7 @@ Applied rules:
  * PostIncDecToPreIncDecRector
 
 
-7) /home/andy-kani/pro/sites/packages/laravel-roster/src/Repositories/AbstractRepository.php:269
+9) /home/andy-kani/pro/sites/packages/laravel-roster/src/Repositories/AbstractRepository.php:269
 
     ---------- begin diff ----------
 @@ @@
@@ -259,7 +316,7 @@ Applied rules:
  * RemoveUselessReturnTagRector
 
 
-8) /home/andy-kani/pro/sites/packages/laravel-roster/src/Repositories/ScheduleRepository.php:93
+10) /home/andy-kani/pro/sites/packages/laravel-roster/src/Repositories/ScheduleRepository.php:93
 
     ---------- begin diff ----------
 @@ @@
@@ -337,7 +394,7 @@ Applied rules:
  * AddClosureVoidReturnTypeWhereNoReturnRector
 
 
-9) /home/andy-kani/pro/sites/packages/laravel-roster/src/Services/AvailabilityService.php:6
+11) /home/andy-kani/pro/sites/packages/laravel-roster/src/Services/AvailabilityService.php:6
 
     ---------- begin diff ----------
 @@ @@
@@ -379,7 +436,7 @@ Applied rules:
  * RemoveUselessVarTagRector
 
 
-10) /home/andy-kani/pro/sites/packages/laravel-roster/src/Services/Core/AbstractService.php:125
+12) /home/andy-kani/pro/sites/packages/laravel-roster/src/Services/Core/AbstractService.php:125
 
     ---------- begin diff ----------
 @@ @@
@@ -512,7 +569,7 @@ Applied rules:
  * RemoveUselessReturnTagRector
 
 
-11) /home/andy-kani/pro/sites/packages/laravel-roster/src/Services/ScheduleService.php:4
+13) /home/andy-kani/pro/sites/packages/laravel-roster/src/Services/ScheduleService.php:4
 
     ---------- begin diff ----------
 @@ @@
@@ -624,7 +681,7 @@ Applied rules:
 Applied rules:
 
 
-12) /home/andy-kani/pro/sites/packages/laravel-roster/src/Traits/AttachableToSchedules.php:84
+14) /home/andy-kani/pro/sites/packages/laravel-roster/src/Traits/AttachableToSchedules.php:84
 
     ---------- begin diff ----------
 @@ @@
@@ -657,7 +714,7 @@ Applied rules:
  * RemoveUselessReturnTagRector
 
 
-13) /home/andy-kani/pro/sites/packages/laravel-roster/src/Validation/Rules/AvailabilityDaysInPeriodRule.php:19
+15) /home/andy-kani/pro/sites/packages/laravel-roster/src/Validation/Rules/AvailabilityDaysInPeriodRule.php:19
 
     ---------- begin diff ----------
 @@ @@
@@ -684,7 +741,7 @@ Applied rules:
  * ClassMethodArrayDocblockParamFromLocalCallsRector
 
 
-14) /home/andy-kani/pro/sites/packages/laravel-roster/src/Validation/Rules/AvailabilityTemporalCoherenceRule.php:144
+16) /home/andy-kani/pro/sites/packages/laravel-roster/src/Validation/Rules/AvailabilityTemporalCoherenceRule.php:144
 
     ---------- begin diff ----------
 @@ @@
@@ -709,7 +766,7 @@ Applied rules:
  * AddArrayFunctionClosureParamTypeRector
 
 
-15) /home/andy-kani/pro/sites/packages/laravel-roster/src/helpers.php:43
+17) /home/andy-kani/pro/sites/packages/laravel-roster/src/helpers.php:43
 
     ---------- begin diff ----------
 @@ @@
@@ -740,7 +797,7 @@ Applied rules:
  * ClosureReturnTypeRector
 
 
-16) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Feature/Services/AvailabilityServiceDaysCoherenceTest.php:237
+18) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Feature/Services/AvailabilityServiceDaysCoherenceTest.php:237
 
     ---------- begin diff ----------
 @@ @@
@@ -762,7 +819,7 @@ Applied rules:
  * ClosureReturnTypeRector
 
 
-17) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Domain/Helpers/TimezoneHelperTest.php:14
+19) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Domain/Helpers/TimezoneHelperTest.php:14
 
     ---------- begin diff ----------
 @@ @@
@@ -779,7 +836,7 @@ Applied rules:
 Applied rules:
 
 
-18) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Domain/RepositoryMutationTest.php:4
+20) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Domain/RepositoryMutationTest.php:4
 
     ---------- begin diff ----------
 @@ @@
@@ -805,7 +862,205 @@ Applied rules:
  * AssertEmptyNullableObjectToAssertInstanceofRector
 
 
-19) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Models/AttachableToSchedulesTest.php:5
+21) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Http/Resources/AvailabilityResource.php:4
+
+    ---------- begin diff ----------
+@@ @@
+
+ namespace Roster\Http\Resources;
+
++use DateTimeInterface;
++use Illuminate\Database\Eloquent\Collection;
+ use Illuminate\Http\Request;
+ use Illuminate\Http\Resources\Json\JsonResource;
+ use Roster\Models\Availability;
+@@ @@
+  * @property-read string $schedulable_type
+  * @property-read string $type
+  * @property-read array $days
+- * @property-read \DateTimeInterface|null $daily_start
+- * @property-read \DateTimeInterface|null $daily_end
+- * @property-read \DateTimeInterface|null $validity_start
+- * @property-read \DateTimeInterface|null $validity_end
+- * @property-read \DateTimeInterface|null $created_at
+- * @property-read \DateTimeInterface|null $updated_at
+- * @property-read \DateTimeInterface|null $deleted_at
+- * @property-read \Illuminate\Database\Eloquent\Collection|null $schedules
+- * @property-read \Illuminate\Database\Eloquent\Collection|null $impediments
++ * @property-read DateTimeInterface|null $daily_start
++ * @property-read DateTimeInterface|null $daily_end
++ * @property-read DateTimeInterface|null $validity_start
++ * @property-read DateTimeInterface|null $validity_end
++ * @property-read DateTimeInterface|null $created_at
++ * @property-read DateTimeInterface|null $updated_at
++ * @property-read DateTimeInterface|null $deleted_at
++ * @property-read Collection|null $schedules
++ * @property-read Collection|null $impediments
+  *
+  * @mixin Availability
+  */
+@@ @@
+     /**
+      * Transform the resource into an array
+      *
+-     * @param Request $request
+      * @return array<string, mixed>
+      */
+     public function toArray(Request $request): array
+@@ @@
+
+     /**
+      * Format time to H:i:s format if not null
+-     *
+-     * @param \DateTimeInterface|null $time
+-     * @return string|null
+      */
+-    private function formatTimeOrNull(?\DateTimeInterface $time): ?string
++    private function formatTimeOrNull(?DateTimeInterface $time): ?string
+     {
+         return $time?->format('H:i:s');
+     }
+@@ @@
+
+     /**
+      * Format datetime to ISO 8601 string if not null
+-     *
+-     * @param \DateTimeInterface|null $dateTime
+-     * @return string|null
+      */
+-    private function formatDateTimeToIso8601(?\DateTimeInterface $dateTime): ?string
++    private function formatDateTimeToIso8601(?DateTimeInterface $dateTime): ?string
+     {
+         return $dateTime?->format('c'); // format('c') returns ISO 8601 date
+     }
+    ----------- end diff -----------
+
+Applied rules:
+ * RemoveUselessParamTagRector
+ * RemoveUselessReturnTagRector
+
+
+22) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Http/Resources/ImpedimentResource.php:4
+
+    ---------- begin diff ----------
+@@ @@
+
+ namespace Roster\Http\Resources;
+
++use DateTimeInterface;
+ use Illuminate\Http\Request;
+ use Illuminate\Http\Resources\Json\JsonResource;
+ use Roster\Models\Impediment;
+@@ @@
+  * @property-read int $schedulable_id
+  * @property-read string $schedulable_type
+  * @property-read string $reason
+- * @property-read \DateTimeInterface|null $start_datetime
+- * @property-read \DateTimeInterface|null $end_datetime
++ * @property-read DateTimeInterface|null $start_datetime
++ * @property-read DateTimeInterface|null $end_datetime
+  * @property-read array|null $metadata
+  * @property-read int $duration_minutes
+- * @property-read \DateTimeInterface|null $created_at
+- * @property-read \DateTimeInterface|null $updated_at
+- * @property-read \DateTimeInterface|null $deleted_at
++ * @property-read DateTimeInterface|null $created_at
++ * @property-read DateTimeInterface|null $updated_at
++ * @property-read DateTimeInterface|null $deleted_at
+  *
+  * @mixin Impediment
+  */
+@@ @@
+     /**
+      * Transform the resource into an array
+      *
+-     * @param Request $request
+      * @return array<string, mixed>
+      */
+     public function toArray(Request $request): array
+@@ @@
+
+     /**
+      * Format datetime to ISO 8601 string if not null
+-     *
+-     * @param \DateTimeInterface|null $dateTime
+-     * @return string|null
+      */
+-    private function formatDateTimeToIso8601(?\DateTimeInterface $dateTime): ?string
++    private function formatDateTimeToIso8601(?DateTimeInterface $dateTime): ?string
+     {
+         return $dateTime?->format('c');
+     }
+    ----------- end diff -----------
+
+Applied rules:
+ * RemoveUselessParamTagRector
+ * RemoveUselessReturnTagRector
+
+
+23) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Http/Resources/ScheduleResource.php:4
+
+    ---------- begin diff ----------
+@@ @@
+
+ namespace Roster\Http\Resources;
+
++use DateTimeInterface;
++use Roster\Enums\ScheduleStatus;
+ use Illuminate\Http\Request;
+ use Illuminate\Http\Resources\Json\JsonResource;
+ use Roster\Models\Schedule;
+@@ @@
+  * @property-read string $schedulable_type
+  * @property-read string $title
+  * @property-read string|null $description
+- * @property-read \DateTimeInterface|null $start_datetime
+- * @property-read \DateTimeInterface|null $end_datetime
+- * @property-read \Roster\Enums\ScheduleStatus $status
++ * @property-read DateTimeInterface|null $start_datetime
++ * @property-read DateTimeInterface|null $end_datetime
++ * @property-read ScheduleStatus $status
+  * @property-read array|null $metadata
+  * @property-read string $type
+  * @property-read int $duration_minutes
+- * @property-read \DateTimeInterface|null $created_at
+- * @property-read \DateTimeInterface|null $updated_at
+- * @property-read \DateTimeInterface|null $deleted_at
++ * @property-read DateTimeInterface|null $created_at
++ * @property-read DateTimeInterface|null $updated_at
++ * @property-read DateTimeInterface|null $deleted_at
+  *
+  * @mixin Schedule
+  */
+@@ @@
+     /**
+      * Transform the resource into an array
+      *
+-     * @param Request $request
+      * @return array<string, mixed>
+      */
+     public function toArray(Request $request): array
+@@ @@
+
+     /**
+      * Format datetime to ISO 8601 string if not null
+-     *
+-     * @param \DateTimeInterface|null $dateTime
+-     * @return string|null
+      */
+-    private function formatDateTimeToIso8601(?\DateTimeInterface $dateTime): ?string
++    private function formatDateTimeToIso8601(?DateTimeInterface $dateTime): ?string
+     {
+         return $dateTime?->format('c');
+     }
+    ----------- end diff -----------
+
+Applied rules:
+ * RemoveUselessParamTagRector
+ * RemoveUselessReturnTagRector
+
+
+24) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Models/AttachableToSchedulesTest.php:5
 
     ---------- begin diff ----------
 @@ @@
@@ -830,7 +1085,7 @@ Applied rules:
  * FinalizeTestCaseClassRector
 
 
-20) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Models/ScheduleTest.php:11
+25) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Models/ScheduleTest.php:11
 
     ---------- begin diff ----------
 @@ @@
@@ -847,7 +1102,7 @@ Applied rules:
 Applied rules:
 
 
-21) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Services/AvailabilityServiceTest.php:194
+26) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Services/AvailabilityServiceTest.php:194
 
     ---------- begin diff ----------
 @@ @@
@@ -904,7 +1159,7 @@ Applied rules:
  * ClassMethodArrayDocblockParamFromLocalCallsRector
 
 
-22) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Services/ImpedimentServiceTest.php:293
+27) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Services/ImpedimentServiceTest.php:293
 
     ---------- begin diff ----------
 @@ @@
@@ -941,7 +1196,7 @@ Applied rules:
  * AssertEmptyNullableObjectToAssertInstanceofRector
 
 
-23) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Services/ScheduleService/AvailabilitySearchTest.php:9
+28) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Services/ScheduleService/AvailabilitySearchTest.php:9
 
     ---------- begin diff ----------
 @@ @@
@@ -956,7 +1211,7 @@ Applied rules:
 Applied rules:
 
 
-24) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Services/ScheduleService/BasicOperationsTest.php:422
+29) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Services/ScheduleService/BasicOperationsTest.php:422
 
     ---------- begin diff ----------
 @@ @@
@@ -993,7 +1248,7 @@ Applied rules:
  * AssertEmptyNullableObjectToAssertInstanceofRector
 
 
-25) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Services/ScheduleService/ConflictDetectionTest.php:4
+30) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Services/ScheduleService/ConflictDetectionTest.php:4
 
     ---------- begin diff ----------
 @@ @@
@@ -1032,7 +1287,7 @@ Applied rules:
 Applied rules:
 
 
-26) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Services/ScheduleService/ScheduleLinksAdvancedTest.php:4
+31) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Services/ScheduleService/ScheduleLinksAdvancedTest.php:4
 
     ---------- begin diff ----------
 @@ @@
@@ -1079,7 +1334,7 @@ Applied rules:
  * NarrowUnusedSetUpDefinedPropertyRector
 
 
-27) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Services/ScheduleService/ScheduleLinksEdgeCasesTest.php:4
+32) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Services/ScheduleService/ScheduleLinksEdgeCasesTest.php:4
 
     ---------- begin diff ----------
 @@ @@
@@ -1126,7 +1381,7 @@ Applied rules:
  * NarrowUnusedSetUpDefinedPropertyRector
 
 
-28) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Services/ScheduleService/ScheduleLinksMixedTypesTest.php:4
+33) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Services/ScheduleService/ScheduleLinksMixedTypesTest.php:4
 
     ---------- begin diff ----------
 @@ @@
@@ -1165,7 +1420,7 @@ Applied rules:
  * NarrowUnusedSetUpDefinedPropertyRector
 
 
-29) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Services/ScheduleService/ScheduleLinksTest.php:4
+34) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Services/ScheduleService/ScheduleLinksTest.php:4
 
     ---------- begin diff ----------
 @@ @@
@@ -1263,7 +1518,7 @@ Applied rules:
 Applied rules:
 
 
-30) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Validation/Rules/AvailabilityDateRangeRuleTest.php:530
+35) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Validation/Rules/AvailabilityDateRangeRuleTest.php:530
 
     ---------- begin diff ----------
 @@ @@
@@ -1284,62 +1539,5 @@ Applied rules:
  * RemoveParentDelegatingConstructorRector
 
 
-31) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Validation/Rules/AvailabilityDaysCoherenceRuleTest.php:557
-
-    ---------- begin diff ----------
-@@ @@
-             public $validity_start;
-
-             public $validity_end;
--
--            public function __construct()
--            {
--                parent::__construct();
--            }
-         };
-
-         if ($validityStart !== null) {
-    ----------- end diff -----------
-
-Applied rules:
- * RemoveParentDelegatingConstructorRector
-
-
-32) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Validation/Rules/FutureDateRuleTest.php:667
-
-    ---------- begin diff ----------
-@@ @@
-      * @param OperationType $operationType The operation type
-      * @param bool $hasStartDatetime Whether start_datetime field is present
-      * @param string|null $startDatetime The start datetime value
--     *
--     * @return MockObject&ValidationContextInterface
-      */
-     private function createScheduleImpedimentContext(
-         EntityType $entityType,
-@@ @@
-      * @param string|null $validityStart The validity start date value
-      * @param bool $hasDailyStart Whether daily_start field is present
-      * @param string|null $dailyStart The daily start time value
--     *
--     * @return MockObject&ValidationContextInterface
-      */
-     private function createAvailabilityContext(
-         OperationType $operationType,
-@@ @@
-      *
-      * @param bool $shouldValidateFutureDates Whether future date validation should be enabled
-      * @param bool $allowPastDates Whether past dates are allowed
--     *
--     * @return MockObject&FutureDateRule
-      */
-     private function createMockWithConfigMethods(
-         bool $shouldValidateFutureDates,
-    ----------- end diff -----------
-
-Applied rules:
- * RemoveUselessReturnTagRector
-
-
- [OK] 32 files would have been changed (dry-run) by Rector                                                              
+ [OK] 35 files would have been changed (dry-run) by Rector                                                              
 

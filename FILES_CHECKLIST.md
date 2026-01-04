@@ -1,5 +1,5 @@
 # Project File Checklist
-*Last updated: sam. 03 janv. 2026 18:43:43 WAT*
+*Last updated: dim. 04 janv. 2026 05:54:45 WAT*
 
 ## Previously Checked Files
 1. config/roster.php [x]
@@ -164,14 +164,17 @@
 13. tests/Support/TestRoom.php [ ]
 14. tests/Unit/Commands/DebugRulesCommandTest.php [ ]
 15. tests/Unit/Exceptions/ValidationFailedExceptionTest.php [ ]
-16. tests/Unit/Models/AttachableToSchedulesTest.php [ ]
-17. tests/Unit/Services/ScheduleService/AvailabilitySearchTest.php [ ]
-18. tests/Unit/Services/ScheduleService/BasicOperationsTest.php [ ]
-19. tests/Unit/Services/ScheduleService/ConflictDetectionTest.php [ ]
-20. tests/Unit/Services/ScheduleService/ScheduleLinksAdvancedTest.php [ ]
-21. tests/Unit/Services/ScheduleService/ScheduleLinksEdgeCasesTest.php [ ]
-22. tests/Unit/Services/ScheduleService/ScheduleLinksMixedTypesTest.php [ ]
-23. tests/Unit/Services/ScheduleService/ScheduleLinksTest.php [ ]
-24. tests/Unit/Validation/DTOs/ViolationDataTest.php [ ]
-25. tests/Unit/Validation/Rules/AbstractRuleTest.php [ ]
-26. tests/Unit/Validation/ValidationResultTest.php [ ]
+16. tests/Unit/Http/Resources/AvailabilityResource.php [ ]
+17. tests/Unit/Http/Resources/ImpedimentResource.php [ ]
+18. tests/Unit/Http/Resources/ScheduleResource.php [ ]
+19. tests/Unit/Models/AttachableToSchedulesTest.php [ ]
+20. tests/Unit/Services/ScheduleService/AvailabilitySearchTest.php [ ]
+21. tests/Unit/Services/ScheduleService/BasicOperationsTest.php [ ]
+22. tests/Unit/Services/ScheduleService/ConflictDetectionTest.php [ ]
+23. tests/Unit/Services/ScheduleService/ScheduleLinksAdvancedTest.php [ ]
+24. tests/Unit/Services/ScheduleService/ScheduleLinksEdgeCasesTest.php [ ]
+25. tests/Unit/Services/ScheduleService/ScheduleLinksMixedTypesTest.php [ ]
+26. tests/Unit/Services/ScheduleService/ScheduleLinksTest.php [ ]
+27. tests/Unit/Validation/DTOs/ViolationDataTest.php [ ]
+28. tests/Unit/Validation/Rules/AbstractRuleTest.php [ ]
+29. tests/Unit/Validation/ValidationResultTest.php [ ]

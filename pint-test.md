@@ -1,11 +1,11 @@
 # Pint Formatting Test Report
-*Generated: sam. 03 janv. 2026 18:42:03 WAT*
+*Generated: dim. 04 janv. 2026 05:53:33 WAT*
 
 
-  ⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯.⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯..⨯....⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯...⨯...⨯⨯⨯..⨯⨯⨯⨯⨯⨯⨯.⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯.⨯.⨯⨯⨯⨯.⨯⨯⨯⨯.⨯⨯⨯⨯⨯⨯..⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯.⨯⨯⨯⨯⨯...⨯.
+  ⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯.⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯..⨯....⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯...⨯...⨯⨯⨯..⨯⨯⨯⨯⨯⨯⨯.⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯.⨯.⨯⨯⨯⨯.⨯⨯⨯⨯⨯⨯⨯.⨯⨯⨯⨯⨯⨯..⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯.⨯⨯⨯⨯⨯...⨯.
 
   ──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────── Laravel  
-    FAIL   ............................................................................................................................................... 168 files, 141 style issues  
+    FAIL   ............................................................................................................................................... 171 files, 144 style issues  
   ⨯ config/roster.php                                                                                                                     no_extra_blank_lines, binary_operator_spaces  
   ⨯ database/migrations/2024_01_01_000001_create_roster_availabilities_table.php class_definition, no_superfluous_phpdoc_tags, braces_position, phpdoc_trim, no_unused_imports, no_ex…  
   ⨯ rector.php                                                                                                                                                            concat_space  
@@ -109,6 +109,9 @@
   ⨯ tests/Unit/Domain/RepositoryMutationTest.php                                                                                                                       ordered_imports  
   ⨯ tests/Unit/HelpersTest.php                                                                             new_with_parentheses, braces_position, single_line_empty_body, phpdoc_align  
   ⨯ tests/Unit/Http/Middleware/SetUserTimezoneTest.php new_with_parentheses, function_declaration, php_unit_method_casing, braces_position, blank_line_before_statement, ordered_impo…  
+  ⨯ tests/Unit/Http/Resources/AvailabilityResource.php                                                                                         no_superfluous_phpdoc_tags, phpdoc_trim  
+  ⨯ tests/Unit/Http/Resources/ImpedimentResource.php                                                                                           no_superfluous_phpdoc_tags, phpdoc_trim  
+  ⨯ tests/Unit/Http/Resources/ScheduleResource.php                                                                                             no_superfluous_phpdoc_tags, phpdoc_trim  
   ⨯ tests/Unit/Models/AttachableToSchedulesTest.php                                                                                                                  no_unused_imports  
   ⨯ tests/Unit/Models/AvailabilityTest.php                                                                                                               ordered_imports, phpdoc_align  
   ⨯ tests/Unit/Models/ImpedimentTest.php                                                                                                                 ordered_imports, phpdoc_align  
