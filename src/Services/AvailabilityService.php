@@ -7,7 +7,7 @@ namespace Roster\Services;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Carbon;
 use Roster\Domain\Helpers\TimeSlotHelper;
-use Roster\DTOs\AvailabilityData;
+use Roster\DTOs\AvailabilityDto;
 use Roster\Enums\EntityType;
 use Roster\Enums\OperationType;
 use Roster\Models\Availability;

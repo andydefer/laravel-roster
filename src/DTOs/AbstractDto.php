@@ -11,7 +11,7 @@ use Illuminate\Support\Carbon;
  * Abstract base class for all Data Transfer Objects.
  * Provides common functionality and enforces consistent DTO patterns.
  */
-abstract class AbstractData implements DataInterface
+abstract class AbstractDto implements DataInterface
 {
     /**
      * Convert the DTO to an array representation suitable for database storage.

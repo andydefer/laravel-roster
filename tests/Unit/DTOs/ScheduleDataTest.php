@@ -8,7 +8,7 @@ use Exception;
 use ReflectionClass;
 use Illuminate\Support\Carbon;
 use InvalidArgumentException;
-use Roster\DTOs\ScheduleData;
+use Roster\DTOs\ScheduleDto;
 use Roster\Enums\ScheduleStatus;
 use Roster\Models\Schedule;
 use Roster\Support\RosterMutationContext;
@@ -16,7 +16,7 @@ use Tests\Support\TestSchedulable;
 use Tests\TestCase;
 
 /**
- * Unit tests for ScheduleData Data Transfer Object.
+ * Unit tests for ScheduleDto Data Transfer Object.
  *
  * Tests the creation, validation, and transformation of schedule DTOs,
  * including UTC enforcement, date parsing, and model conversion.
@@ -35,7 +35,7 @@ final class ScheduleDataTest extends TestCase
     }
 
     /**
-     * Test successful creation of ScheduleData from array with complete data.
+     * Test successful creation of ScheduleDto from array with complete data.
      */
     public function test_from_array_with_complete_data_succeeds(): void
     {
@@ -54,7 +54,7 @@ final class ScheduleDataTest extends TestCase
         ];
 
         // Act: Create DTO from array data
-        $scheduleData = ScheduleData::fromArray($rawData);
+        $scheduleData = ScheduleDto::fromArray($rawData);
 
         // Assert: Verify all properties are correctly set with UTC timezone
         $this->assertSame(123, $scheduleData->id);
@@ -72,7 +72,7 @@ final class ScheduleDataTest extends TestCase
     }
 
     /**
-     * Test creation of ScheduleData from array with partial data.
+     * Test creation of ScheduleDto from array with partial data.
      */
     public function test_from_array_with_partial_data_succeeds(): void
     {
@@ -84,7 +84,7 @@ final class ScheduleDataTest extends TestCase
         ];
 
         // Act: Create DTO from partial array data
-        $scheduleData = ScheduleData::fromArray($rawData);
+        $scheduleData = ScheduleDto::fromArray($rawData);
 
         // Assert: Verify provided properties are set with defaults applied
         $this->assertNull($scheduleData->id);
@@ -100,7 +100,7 @@ final class ScheduleDataTest extends TestCase
     }
 
     /**
-     * Test creation of ScheduleData from Illuminate Carbon instances.
+     * Test creation of ScheduleDto from Illuminate Carbon instances.
      */
     public function test_from_array_with_illuminate_carbon_instances_succeeds(): void
     {
@@ -112,7 +112,7 @@ final class ScheduleDataTest extends TestCase
         ];
 
         // Act: Create DTO from Carbon instances
-        $scheduleData = ScheduleData::fromArray($rawData);
+        $scheduleData = ScheduleDto::fromArray($rawData);
 
         // Assert: Verify Carbon instances are correctly handled
         $this->assertSame('Training Session', $scheduleData->title);
@@ -123,7 +123,7 @@ final class ScheduleDataTest extends TestCase
     }
 
     /**
-     * Test creation of ScheduleData from Carbon Carbon instances (avec conversion).
+     * Test creation of ScheduleDto from Carbon Carbon instances (avec conversion).
      */
     public function test_from_array_with_carbon_carbon_instances_handles_conversion(): void
     {
@@ -135,7 +135,7 @@ final class ScheduleDataTest extends TestCase
         ];
 
         // Act: Create DTO from Carbon Carbon instances (sera converti)
-        $scheduleData = ScheduleData::fromArray($rawData);
+        $scheduleData = ScheduleDto::fromArray($rawData);
 
         // Assert: Verify instances sont correctement gérés (même si conversion)
         $this->assertSame('Carbon Carbon Test', $scheduleData->title);
@@ -145,7 +145,7 @@ final class ScheduleDataTest extends TestCase
     }
 
     /**
-     * Test creation of ScheduleData from Eloquent model.
+     * Test creation of ScheduleDto from Eloquent model.
      */
     public function test_from_model_succeeds(): void
     {
@@ -165,7 +165,7 @@ final class ScheduleDataTest extends TestCase
         });
 
         // Act: Create DTO from model
-        $scheduleData = ScheduleData::fromModel($schedule);
+        $scheduleData = ScheduleDto::fromModel($schedule);
 
         // Assert: Verify DTO matches model data with UTC timezone
         $this->assertEquals($schedule->id, $scheduleData->id);
@@ -189,12 +189,12 @@ final class ScheduleDataTest extends TestCase
     }
 
     /**
-     * Test conversion of ScheduleData to array format.
+     * Test conversion of ScheduleDto to array format.
      */
     public function test_to_array_conversion_succeeds(): void
     {
         // Arrange: Create DTO with complete data
-        $scheduleData = ScheduleData::fromArray([
+        $scheduleData = ScheduleDto::fromArray([
             'id' => 123,
             'availability_id' => 456,
             'title' => 'Board Meeting',
@@ -229,7 +229,7 @@ final class ScheduleDataTest extends TestCase
     public function test_to_array_removes_null_values(): void
     {
         // Arrange: Create DTO with null values
-        $scheduleData = ScheduleData::fromArray([
+        $scheduleData = ScheduleDto::fromArray([
             'title' => 'Standup Meeting',
             'start_datetime' => '2038-06-01 09:30:00',
             'end_datetime' => '2038-06-01 09:45:00',
@@ -260,7 +260,7 @@ final class ScheduleDataTest extends TestCase
     public function test_metadata_defaults_to_empty_array(): void
     {
         // Arrange: Create DTO without metadata
-        $scheduleData = ScheduleData::fromArray([
+        $scheduleData = ScheduleDto::fromArray([
             'title' => 'Planning Session',
             'start_datetime' => '2038-07-10 10:00:00',
             'end_datetime' => '2038-07-10 11:30:00',
@@ -277,7 +277,7 @@ final class ScheduleDataTest extends TestCase
     public function test_status_defaults_to_available(): void
     {
         // Arrange: Create DTO without status
-        $scheduleData = ScheduleData::fromArray([
+        $scheduleData = ScheduleDto::fromArray([
             'title' => 'One-on-One',
             'start_datetime' => '2038-08-15 14:00:00',
             'end_datetime' => '2038-08-15 15:00:00',
@@ -303,7 +303,7 @@ final class ScheduleDataTest extends TestCase
         // Act & Assert: Verify exception is thrown for invalid datetime
         $this->expectException(Exception::class);
 
-        ScheduleData::fromArray($rawData);
+        ScheduleDto::fromArray($rawData);
     }
 
     /**
@@ -319,7 +319,7 @@ final class ScheduleDataTest extends TestCase
         ];
 
         // Act: Create DTO from data with empty datetime
-        $scheduleData = ScheduleData::fromArray($rawData);
+        $scheduleData = ScheduleDto::fromArray($rawData);
 
         // Assert: Verify empty string creates Carbon instance (current date), null remains null
         $this->assertInstanceOf(Carbon::class, $scheduleData->startDatetime);
@@ -333,7 +333,7 @@ final class ScheduleDataTest extends TestCase
     public function test_calculates_correct_duration(): void
     {
         // Arrange: Create DTO with specific start and end times
-        $scheduleData = ScheduleData::fromArray([
+        $scheduleData = ScheduleDto::fromArray([
             'title' => 'Duration Test',
             'start_datetime' => '2038-12-01 09:00:00',
             'end_datetime' => '2038-12-01 10:30:00', // 90 minutes
@@ -352,7 +352,7 @@ final class ScheduleDataTest extends TestCase
     public function test_dates_enforce_utc_timezone(): void
     {
         // Arrange: Create DTO with explicit UTC dates using Illuminate Carbon
-        $scheduleData = ScheduleData::fromArray([
+        $scheduleData = ScheduleDto::fromArray([
             'title' => 'UTC Enforcement Test',
             'start_datetime' => Carbon::create(2038, 12, 25, 14, 0, 0, 'UTC'),
             'end_datetime' => Carbon::create(2038, 12, 25, 15, 30, 0, 'UTC'),
@@ -374,7 +374,7 @@ final class ScheduleDataTest extends TestCase
     public function test_dto_is_immutable(): void
     {
         // Arrange: Create DTO instance
-        $scheduleData = ScheduleData::fromArray([
+        $scheduleData = ScheduleDto::fromArray([
             'title' => 'Immutable Test',
             'start_datetime' => '2039-01-01 09:00:00',
             'end_datetime' => '2039-01-01 10:00:00',
@@ -394,14 +394,14 @@ final class ScheduleDataTest extends TestCase
     public function test_with_schedulable_creates_new_instance(): void
     {
         // Arrange: Create original DTO
-        $originalData = ScheduleData::fromArray([
+        $originalData = ScheduleDto::fromArray([
             'title' => 'Team Meeting',
             'start_datetime' => '2039-02-01 09:00:00',
             'end_datetime' => '2039-02-01 10:00:00',
         ]);
 
         // Act: Create new DTO with schedulable info
-        /** @var ScheduleData $updatedData */
+        /** @var ScheduleDto $updatedData */
         $updatedData = $originalData->withSchedulable(456, 'team');
 
         // Assert: Verify new instance has schedulable info, original unchanged
@@ -424,7 +424,7 @@ final class ScheduleDataTest extends TestCase
     public function test_with_schedulable_array_includes_schedulable_keys(): void
     {
         // Arrange: Create DTO with schedulable info
-        $scheduleData = ScheduleData::fromArray([
+        $scheduleData = ScheduleDto::fromArray([
             'title' => 'Client Meeting',
             'start_datetime' => '2039-03-01 14:00:00',
             'end_datetime' => '2039-03-01 15:00:00',
@@ -446,7 +446,7 @@ final class ScheduleDataTest extends TestCase
     public function test_parse_datetime_throws_exception_for_invalid_input_type(): void
     {
         // Arrange: Use reflection to test protected method
-        $reflectionClass = new ReflectionClass(ScheduleData::class);
+        $reflectionClass = new ReflectionClass(ScheduleDto::class);
         $method = $reflectionClass->getMethod('parseDateTime');
         $method->setAccessible(true);
 
@@ -462,7 +462,7 @@ final class ScheduleDataTest extends TestCase
     public function test_parse_datetime_returns_null_for_null_input(): void
     {
         // Arrange: Use reflection to test protected method
-        $reflectionClass = new ReflectionClass(ScheduleData::class);
+        $reflectionClass = new ReflectionClass(ScheduleDto::class);
         $method = $reflectionClass->getMethod('parseDateTime');
         $method->setAccessible(true);
 
@@ -482,7 +482,7 @@ final class ScheduleDataTest extends TestCase
         $carbon = Carbon::create(2039, 4, 1, 10, 0, 0, 'UTC');
 
         // Use reflection to test protected method
-        $reflectionClass = new ReflectionClass(ScheduleData::class);
+        $reflectionClass = new ReflectionClass(ScheduleDto::class);
         $method = $reflectionClass->getMethod('parseDateTime');
         $method->setAccessible(true);
 
@@ -513,7 +513,7 @@ final class ScheduleDataTest extends TestCase
         ];
 
         // Act: Create DTO and convert back to array
-        $scheduleData = ScheduleData::fromArray($originalData);
+        $scheduleData = ScheduleDto::fromArray($originalData);
         $convertedData = $scheduleData->toArray();
 
         // Assert: Verify all non-null data is preserved

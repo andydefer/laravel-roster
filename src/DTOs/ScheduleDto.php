@@ -15,7 +15,7 @@ use Roster\Models\Schedule;
  * Provides an immutable, structured representation of schedule data with
  * validation, transformation, and business logic methods for schedule management.
  */
-class ScheduleData extends AbstractData
+class ScheduleDto extends AbstractDto
 {
     /**
      * @param int|null $id Schedule unique identifier
@@ -43,7 +43,7 @@ class ScheduleData extends AbstractData
     ) {}
 
     /**
-     * Create a ScheduleData instance from raw array data.
+     * Create a ScheduleDto instance from raw array data.
      *
      * @param array{
      *     id?: int|null,
@@ -57,7 +57,7 @@ class ScheduleData extends AbstractData
      *     schedulable_id?: int|null,
      *     schedulable_type?: string|null
      * } $data Raw schedule data
-     * @return self New immutable ScheduleData instance
+     * @return self New immutable ScheduleDto instance
      */
     public static function fromArray(array $data): self
     {
@@ -76,10 +76,10 @@ class ScheduleData extends AbstractData
     }
 
     /**
-     * Create a ScheduleData instance from a Schedule Eloquent model.
+     * Create a ScheduleDto instance from a Schedule Eloquent model.
      *
      * @param Schedule $model Eloquent model instance
-     * @return self New immutable ScheduleData instance
+     * @return self New immutable ScheduleDto instance
      */
     public static function fromModel(Model $model): self
     {

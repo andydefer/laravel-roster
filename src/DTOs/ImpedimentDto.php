@@ -14,7 +14,7 @@ use Roster\Models\Impediment;
  * Provides an immutable, structured representation of impediment data with
  * validation, transformation, and business logic methods for impediment management.
  */
-class ImpedimentData extends AbstractData
+class ImpedimentDto extends AbstractDto
 {
     /**
      * @param int|null $id Impediment unique identifier
@@ -38,7 +38,7 @@ class ImpedimentData extends AbstractData
     ) {}
 
     /**
-     * Create an ImpedimentData instance from raw array data.
+     * Create an ImpedimentDto instance from raw array data.
      *
      * @param array{
      *     id?: int|null,
@@ -50,7 +50,7 @@ class ImpedimentData extends AbstractData
      *     schedulable_id?: int|null,
      *     schedulable_type?: string|null
      * } $data Raw impediment data
-     * @return self New immutable ImpedimentData instance
+     * @return self New immutable ImpedimentDto instance
      */
     public static function fromArray(array $data): self
     {
@@ -67,10 +67,10 @@ class ImpedimentData extends AbstractData
     }
 
     /**
-     * Create an ImpedimentData instance from an Impediment Eloquent model.
+     * Create an ImpedimentDto instance from an Impediment Eloquent model.
      *
      * @param Impediment $model Eloquent model instance
-     * @return self New immutable ImpedimentData instance
+     * @return self New immutable ImpedimentDto instance
      */
     public static function fromModel(Model $model): self
     {

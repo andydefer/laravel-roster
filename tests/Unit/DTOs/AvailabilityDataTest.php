@@ -5,14 +5,14 @@ declare(strict_types=1);
 namespace Tests\Unit\DTOs;
 
 use Illuminate\Support\Carbon;
-use Roster\DTOs\AvailabilityData;
+use Roster\DTOs\AvailabilityDto;
 use Roster\Models\Availability;
 use Roster\Support\RosterMutationContext;
 use Tests\Support\TestSchedulable;
 use Tests\TestCase;
 
 /**
- * Unit tests for AvailabilityData Data Transfer Object.
+ * Unit tests for AvailabilityDto Data Transfer Object.
  *
  * Tests the creation, validation, and business logic of availability DTOs,
  * including data transformation, update detection, and day adjustment.
@@ -31,7 +31,7 @@ final class AvailabilityDataTest extends TestCase
     }
 
     /**
-     * Test successful creation of AvailabilityData from array with complete data.
+     * Test successful creation of AvailabilityDto from array with complete data.
      */
     public function test_from_array_with_complete_data_succeeds(): void
     {
@@ -49,7 +49,7 @@ final class AvailabilityDataTest extends TestCase
         ];
 
         // Act: Create DTO from array data
-        $availabilityData = AvailabilityData::fromArray($rawData);
+        $availabilityData = AvailabilityDto::fromArray($rawData);
 
         // Assert: Verify all properties are correctly set
         $this->assertSame(123, $availabilityData->id);
@@ -64,7 +64,7 @@ final class AvailabilityDataTest extends TestCase
     }
 
     /**
-     * Test creation of AvailabilityData from array with partial data.
+     * Test creation of AvailabilityDto from array with partial data.
      */
     public function test_from_array_with_partial_data_succeeds(): void
     {
@@ -76,7 +76,7 @@ final class AvailabilityDataTest extends TestCase
         ];
 
         // Act: Create DTO from partial array data
-        $availabilityData = AvailabilityData::fromArray($rawData);
+        $availabilityData = AvailabilityDto::fromArray($rawData);
 
         // Assert: Verify provided properties are set, others are null
         $this->assertNull($availabilityData->id);
@@ -89,7 +89,7 @@ final class AvailabilityDataTest extends TestCase
     }
 
     /**
-     * Test creation of AvailabilityData from Eloquent model.
+     * Test creation of AvailabilityDto from Eloquent model.
      */
     public function test_from_model_succeeds(): void
     {
@@ -108,7 +108,7 @@ final class AvailabilityDataTest extends TestCase
         });
 
         // Act: Create DTO from model
-        $availabilityData = AvailabilityData::fromModel($availability);
+        $availabilityData = AvailabilityDto::fromModel($availability);
 
         // Assert: Verify DTO matches model data
         $this->assertEquals($availability->id, $availabilityData->id);
@@ -133,12 +133,12 @@ final class AvailabilityDataTest extends TestCase
     }
 
     /**
-     * Test conversion of AvailabilityData to array format.
+     * Test conversion of AvailabilityDto to array format.
      */
     public function test_to_array_conversion_succeeds(): void
     {
         // Arrange: Create DTO with complete data
-        $availabilityData = AvailabilityData::fromArray([
+        $availabilityData = AvailabilityDto::fromArray([
             'id' => 123,
             'type' => 'meeting',
             'days' => ['wednesday'],
@@ -171,7 +171,7 @@ final class AvailabilityDataTest extends TestCase
     public function test_with_days_creates_new_instance_with_updated_days(): void
     {
         // Arrange: Create original DTO
-        $originalData = AvailabilityData::fromArray([
+        $originalData = AvailabilityDto::fromArray([
             'type' => 'consultation',
             'days' => ['monday'],
             'daily_start' => '09:00:00',
@@ -194,7 +194,7 @@ final class AvailabilityDataTest extends TestCase
     public function test_has_daily_times_returns_true_when_both_times_present(): void
     {
         // Arrange: Create DTO with complete daily times
-        $availabilityData = AvailabilityData::fromArray([
+        $availabilityData = AvailabilityDto::fromArray([
             'daily_start' => '09:00:00',
             'daily_end' => '17:00:00',
         ]);
@@ -209,17 +209,17 @@ final class AvailabilityDataTest extends TestCase
     public function test_has_daily_times_returns_false_when_times_missing(): void
     {
         // Arrange: Create DTO without daily times
-        $availabilityDataWithoutTimes = AvailabilityData::fromArray([
+        $availabilityDataWithoutTimes = AvailabilityDto::fromArray([
             'type' => 'consultation',
         ]);
 
         // Arrange: Create DTO with only start time
-        $availabilityDataOnlyStart = AvailabilityData::fromArray([
+        $availabilityDataOnlyStart = AvailabilityDto::fromArray([
             'daily_start' => '09:00:00',
         ]);
 
         // Arrange: Create DTO with only end time
-        $availabilityDataOnlyEnd = AvailabilityData::fromArray([
+        $availabilityDataOnlyEnd = AvailabilityDto::fromArray([
             'daily_end' => '17:00:00',
         ]);
 
@@ -235,7 +235,7 @@ final class AvailabilityDataTest extends TestCase
     public function test_has_valid_date_range_returns_true_for_valid_ranges(): void
     {
         // Arrange: Create DTO with valid date range
-        $availabilityData = AvailabilityData::fromArray([
+        $availabilityData = AvailabilityDto::fromArray([
             'validity_start' => '2038-01-01',
             'validity_end' => '2038-12-31',
         ]);
@@ -250,18 +250,18 @@ final class AvailabilityDataTest extends TestCase
     public function test_has_valid_date_range_returns_false_for_invalid_ranges(): void
     {
         // Arrange: Create DTO with end before start
-        $invalidRangeData = AvailabilityData::fromArray([
+        $invalidRangeData = AvailabilityDto::fromArray([
             'validity_start' => '2038-12-31',
             'validity_end' => '2038-01-01',
         ]);
 
         // Arrange: Create DTO with only start date
-        $onlyStartData = AvailabilityData::fromArray([
+        $onlyStartData = AvailabilityDto::fromArray([
             'validity_start' => '2038-01-01',
         ]);
 
         // Arrange: Create DTO with only end date
-        $onlyEndData = AvailabilityData::fromArray([
+        $onlyEndData = AvailabilityDto::fromArray([
             'validity_end' => '2038-12-31',
         ]);
 
@@ -277,7 +277,7 @@ final class AvailabilityDataTest extends TestCase
     public function test_is_update_operation_returns_false_for_new_entities(): void
     {
         // Arrange: Create DTO without ID (new entity)
-        $availabilityData = AvailabilityData::fromArray([
+        $availabilityData = AvailabilityDto::fromArray([
             'type' => 'consultation',
             'daily_start' => '09:00:00',
             'daily_end' => '17:00:00',
@@ -308,7 +308,7 @@ final class AvailabilityDataTest extends TestCase
         });
 
         // Act: Create DTO with existing ID
-        $availabilityData = AvailabilityData::fromArray(['id' => $availability->id]);
+        $availabilityData = AvailabilityDto::fromArray(['id' => $availability->id]);
 
         // Assert: Verify entity is loaded and update operation detected
         $this->assertTrue($availabilityData->isUpdateOperation());
@@ -322,7 +322,7 @@ final class AvailabilityDataTest extends TestCase
     public function test_get_existing_entity_returns_null_for_non_existent_id(): void
     {
         // Arrange: Create DTO with non-existent ID
-        $availabilityData = AvailabilityData::fromArray(['id' => 99999]);
+        $availabilityData = AvailabilityDto::fromArray(['id' => 99999]);
 
         // Act & Assert: Verify getExistingEntity returns null
         $this->assertFalse($availabilityData->isUpdateOperation());
@@ -335,7 +335,7 @@ final class AvailabilityDataTest extends TestCase
     public function test_explicitly_provided_days_are_preserved(): void
     {
         // Arrange: Create DTO with explicit days
-        $availabilityData = AvailabilityData::fromArray([
+        $availabilityData = AvailabilityDto::fromArray([
             'days' => ['monday', 'friday'],
             'validity_start' => '2038-07-01',
             'validity_end' => '2038-07-31',
@@ -356,7 +356,7 @@ final class AvailabilityDataTest extends TestCase
     public function test_string_days_are_handled_as_single_element_array(): void
     {
         // Arrange: Create DTO with string days
-        $availabilityData = AvailabilityData::fromArray([
+        $availabilityData = AvailabilityDto::fromArray([
             'days' => 'monday,tuesday', // String format
             'daily_start' => '09:00:00',
             'daily_end' => '17:00:00',
@@ -384,7 +384,7 @@ final class AvailabilityDataTest extends TestCase
         $parsedDays = explode(',', $rawDays);
 
         // Create DTO with parsed array
-        $availabilityData = AvailabilityData::fromArray([
+        $availabilityData = AvailabilityDto::fromArray([
             'days' => $parsedDays,
             'daily_start' => '09:00:00',
             'daily_end' => '17:00:00',
@@ -400,7 +400,7 @@ final class AvailabilityDataTest extends TestCase
     public function test_to_array_removes_null_values(): void
     {
         // Arrange: Create DTO with null dates
-        $availabilityData = AvailabilityData::fromArray([
+        $availabilityData = AvailabilityDto::fromArray([
             'type' => 'consultation',
             'daily_start' => '09:00:00',
             'daily_end' => '17:00:00',
@@ -429,14 +429,14 @@ final class AvailabilityDataTest extends TestCase
     public function test_with_schedulable_creates_new_instance(): void
     {
         // Arrange: Create original DTO
-        $originalData = AvailabilityData::fromArray([
+        $originalData = AvailabilityDto::fromArray([
             'type' => 'consultation',
             'daily_start' => '09:00:00',
             'daily_end' => '17:00:00',
         ]);
 
         // Act: Create new DTO with schedulable info
-        /** @var AvailabilityData $updatedData */
+        /** @var AvailabilityDto $updatedData */
         $updatedData = $originalData->withSchedulable(123, 'user');
 
         // Assert: Verify new instance has schedulable info, original unchanged
@@ -456,7 +456,7 @@ final class AvailabilityDataTest extends TestCase
     public function test_with_schedulable_array_includes_schedulable_keys(): void
     {
         // Arrange: Create DTO with schedulable info
-        $availabilityData = AvailabilityData::fromArray([
+        $availabilityData = AvailabilityDto::fromArray([
             'type' => 'consultation',
             'daily_start' => '09:00:00',
             'daily_end' => '17:00:00',

@@ -280,6 +280,74 @@ $service->attach($patient, [
 ]);
 ```
 
+# 📋 Méthodes de Requête Modèle (Trait HasRoster)
+
+Le trait `HasRoster` inclut des méthodes pour récupérer les impediments et schedules d'un modèle dans une période donnée.
+
+## Méthodes Ajoutées
+
+```php
+// 1. Récupérer tous les items (impediments + schedules) dans une période
+$items = $model->getRosterItemsInPeriod($start, $end);
+// Retourne: ['impediments' => Collection, 'schedules' => Collection]
+
+// 2. Récupérer seulement les impediments dans une période
+$impediments = $model->getImpedimentsInPeriod($start, $end);
+
+// 3. Récupérer seulement les schedules dans une période
+$schedules = $model->getSchedulesInPeriod($start, $end);
+
+// 4. Vérifier s'il y a des conflits
+$hasConflicts = $model->hasConflictsInPeriod($start, $end);
+// Retourne true si au moins un impediment ou schedule existe
+```
+
+## Exemple Simple
+
+```php
+// Un médecin avec le trait HasRoster
+$doctor = Doctor::find(1);
+
+// Vérifier la disponibilité pour demain 10h-11h
+$start = Carbon::parse('2024-06-10 10:00:00');
+$end = Carbon::parse('2024-06-10 11:00:00');
+
+// Vérifier les conflits
+if ($doctor->hasConflictsInPeriod($start, $end)) {
+    // Récupérer les détails
+    $conflicts = $doctor->getRosterItemsInPeriod($start, $end);
+
+    echo "Schedules en conflit: " . $conflicts['schedules']->count();
+    echo "Impediments en conflit: " . $conflicts['impediments']->count();
+} else {
+    echo "Créneau disponible";
+}
+```
+
+## Cas d'Usage Pratique
+
+```php
+// Avant de créer un nouveau schedule
+public function createSchedule(Doctor $doctor, array $data)
+{
+    $start = Carbon::parse($data['start_datetime']);
+    $end = Carbon::parse($data['end_datetime']);
+
+    // Vérifier si le créneau est libre
+    if ($doctor->hasConflictsInPeriod($start, $end)) {
+        return response()->json([
+            'error' => 'Créneau non disponible',
+            'conflicts' => $doctor->getRosterItemsInPeriod($start, $end)
+        ], 422);
+    }
+
+    // Créer le schedule
+    return schedule_for($doctor->availabilities()->first())
+        ->create($data);
+}
+```
+
+
 ## 📖 Core Concepts
 
 ### Immutability Principle

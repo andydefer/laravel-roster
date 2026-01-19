@@ -9,6 +9,7 @@ use Illuminate\Support\ServiceProvider;
 use Roster\Commands\CacheRulesCommand;
 use Roster\Commands\DebugRulesCommand;
 use Roster\Commands\InstallRosterCommand;
+use Roster\Commands\ListRulesCommand;
 use Roster\Contracts\Repository\AvailabilityRepositoryInterface;
 use Roster\Contracts\Repository\ImpedimentRepositoryInterface;
 use Roster\Contracts\Repository\ScheduleRepositoryInterface;
@@ -74,7 +75,12 @@ class RosterServiceProvider extends ServiceProvider
         $this->registerDomainServices();
 
         if ($this->app->runningInConsole()) {
-            $this->commands([CacheRulesCommand::class, DebugRulesCommand::class]);
+            $this->commands([
+                InstallRosterCommand::class,
+                CacheRulesCommand::class,
+                DebugRulesCommand::class,
+                ListRulesCommand::class
+            ]);
         }
     }
 

@@ -17,7 +17,7 @@ use Roster\Support\RosterMutationContext;
  * Provides structured, immutable access to availability data with validation,
  * transformation, and business logic methods for availability management.
  */
-class AvailabilityData extends AbstractData
+class AvailabilityDto extends AbstractDto
 {
     private ?Availability $availability = null;
 
@@ -50,7 +50,7 @@ class AvailabilityData extends AbstractData
     }
 
     /**
-     * Creates an AvailabilityData instance from raw array data.
+     * Creates an AvailabilityDto instance from raw array data.
      *
      * @param array{
      *     id?: int|null,
@@ -63,7 +63,7 @@ class AvailabilityData extends AbstractData
      *     schedulable_id?: int|null,
      *     schedulable_type?: string|null
      * } $data Raw availability data
-     * @return self New immutable AvailabilityData instance
+     * @return self New immutable AvailabilityDto instance
      */
     public static function fromArray(array $data): self
     {
@@ -81,10 +81,10 @@ class AvailabilityData extends AbstractData
     }
 
     /**
-     * Creates an AvailabilityData instance from an Availability Eloquent model.
+     * Creates an AvailabilityDto instance from an Availability Eloquent model.
      *
      * @param Availability $model Eloquent model instance
-     * @return self New immutable AvailabilityData instance
+     * @return self New immutable AvailabilityDto instance
      */
     public static function fromModel(Model $model): self
     {

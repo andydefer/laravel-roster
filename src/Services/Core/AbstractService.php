@@ -15,9 +15,9 @@ use Roster\Contracts\Repository\ScheduleRepositoryInterface;
 use Roster\Contracts\Services\ServiceInterface;
 use Roster\Contracts\Validation\ValidatorInterface;
 use Roster\Domain\Services\TemporalConflictService;
-use Roster\DTOs\AvailabilityData;
-use Roster\DTOs\ImpedimentData;
-use Roster\DTOs\ScheduleData;
+use Roster\DTOs\AvailabilityDto;
+use Roster\DTOs\ImpedimentDto;
+use Roster\DTOs\ScheduleDto;
 use Roster\Enums\EntityType;
 use Roster\Enums\OperationType;
 use Roster\Exceptions\DirectServiceUsageException;
@@ -345,15 +345,15 @@ abstract class AbstractService implements ServiceInterface
      *
      * @param array<string, mixed> $data Raw data
      * @param OperationType $operationType Operation being performed
-     * @return AvailabilityData|ScheduleData|ImpedimentData Appropriate DTO instance
+     * @return AvailabilityDto|ScheduleDto|ImpedimentDto Appropriate DTO instance
      * @throws LogicException If entity type not supported
      */
-    final protected function createDTOFromArray(array $data, OperationType $operationType): AvailabilityData|ScheduleData|ImpedimentData
+    final protected function createDTOFromArray(array $data, OperationType $operationType): AvailabilityDto|ScheduleDto|ImpedimentDto
     {
         return match ($this->getEntityTypeEnum()) {
-            EntityType::AVAILABILITY => AvailabilityData::fromArray($data),
-            EntityType::SCHEDULE => ScheduleData::fromArray($data),
-            EntityType::IMPEDIMENT => ImpedimentData::fromArray($data),
+            EntityType::AVAILABILITY => AvailabilityDto::fromArray($data),
+            EntityType::SCHEDULE => ScheduleDto::fromArray($data),
+            EntityType::IMPEDIMENT => ImpedimentDto::fromArray($data),
             default => throw new LogicException('Unsupported entity type for DTO creation')
         };
     }

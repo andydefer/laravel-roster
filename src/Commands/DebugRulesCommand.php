@@ -39,7 +39,6 @@ class DebugRulesCommand extends Command
                             {--show-methods : Display validation method details}
                             {--show-source : Display rule source code location}
                             {--details : Show all details including rule priorities and dependencies}';
-
     /**
      * The command description.
      *

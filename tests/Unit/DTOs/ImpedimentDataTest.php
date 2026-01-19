@@ -8,14 +8,14 @@ use Exception;
 use ReflectionClass;
 use Illuminate\Support\Carbon as IlluminateCarbon;
 use InvalidArgumentException;
-use Roster\DTOs\ImpedimentData;
+use Roster\DTOs\ImpedimentDto;
 use Roster\Models\Impediment;
 use Roster\Support\RosterMutationContext;
 use Tests\Support\TestSchedulable;
 use Tests\TestCase;
 
 /**
- * Unit tests for ImpedimentData Data Transfer Object.
+ * Unit tests for ImpedimentDto Data Transfer Object.
  *
  * Tests the creation, validation, and transformation of impediment DTOs,
  * including UTC enforcement, date parsing, and model conversion.
@@ -34,7 +34,7 @@ final class ImpedimentDataTest extends TestCase
     }
 
     /**
-     * Test successful creation of ImpedimentData from array with complete data.
+     * Test successful creation of ImpedimentDto from array with complete data.
      */
     public function test_from_array_with_complete_data_succeeds(): void
     {
@@ -51,7 +51,7 @@ final class ImpedimentDataTest extends TestCase
         ];
 
         // Act: Create DTO from array data
-        $impedimentData = ImpedimentData::fromArray($rawData);
+        $impedimentData = ImpedimentDto::fromArray($rawData);
 
         // Assert: Verify all properties are correctly set with UTC timezone
         $this->assertSame(123, $impedimentData->id);
@@ -67,7 +67,7 @@ final class ImpedimentDataTest extends TestCase
     }
 
     /**
-     * Test creation of ImpedimentData from array with partial data.
+     * Test creation of ImpedimentDto from array with partial data.
      */
     public function test_from_array_with_partial_data_succeeds(): void
     {
@@ -79,7 +79,7 @@ final class ImpedimentDataTest extends TestCase
         ];
 
         // Act: Create DTO from partial array data
-        $impedimentData = ImpedimentData::fromArray($rawData);
+        $impedimentData = ImpedimentDto::fromArray($rawData);
 
         // Assert: Verify provided properties are set with defaults applied
         $this->assertNull($impedimentData->id);
@@ -93,7 +93,7 @@ final class ImpedimentDataTest extends TestCase
     }
 
     /**
-     * Test creation of ImpedimentData from Illuminate Carbon instances.
+     * Test creation of ImpedimentDto from Illuminate Carbon instances.
      */
     public function test_from_array_with_illuminate_carbon_instances_succeeds(): void
     {
@@ -105,7 +105,7 @@ final class ImpedimentDataTest extends TestCase
         ];
 
         // Act: Create DTO from Carbon instances
-        $impedimentData = ImpedimentData::fromArray($rawData);
+        $impedimentData = ImpedimentDto::fromArray($rawData);
 
         // Assert: Verify Carbon instances are correctly handled
         $this->assertSame('System upgrade', $impedimentData->reason);
@@ -116,7 +116,7 @@ final class ImpedimentDataTest extends TestCase
     }
 
     /**
-     * Test creation of ImpedimentData from Eloquent model.
+     * Test creation of ImpedimentDto from Eloquent model.
      */
     public function test_from_model_succeeds(): void
     {
@@ -134,7 +134,7 @@ final class ImpedimentDataTest extends TestCase
         });
 
         // Act: Create DTO from model
-        $impedimentData = ImpedimentData::fromModel($impediment);
+        $impedimentData = ImpedimentDto::fromModel($impediment);
 
         // Assert: Verify DTO matches model data with UTC timezone
         $this->assertEquals($impediment->id, $impedimentData->id);
@@ -156,12 +156,12 @@ final class ImpedimentDataTest extends TestCase
     }
 
     /**
-     * Test conversion of ImpedimentData to array format.
+     * Test conversion of ImpedimentDto to array format.
      */
     public function test_to_array_conversion_succeeds(): void
     {
         // Arrange: Create DTO with complete data
-        $impedimentData = ImpedimentData::fromArray([
+        $impedimentData = ImpedimentDto::fromArray([
             'id' => 123,
             'availability_id' => 456,
             'start_datetime' => '2038-05-20 08:00:00',
@@ -192,7 +192,7 @@ final class ImpedimentDataTest extends TestCase
     public function test_to_array_removes_null_values(): void
     {
         // Arrange: Create DTO with null values
-        $impedimentData = ImpedimentData::fromArray([
+        $impedimentData = ImpedimentDto::fromArray([
             'start_datetime' => '2038-06-01 09:00:00',
             'end_datetime' => '2038-06-01 17:00:00',
             'reason' => 'Team building',
@@ -220,7 +220,7 @@ final class ImpedimentDataTest extends TestCase
     public function test_metadata_defaults_to_empty_array(): void
     {
         // Arrange: Create DTO without metadata
-        $impedimentData = ImpedimentData::fromArray([
+        $impedimentData = ImpedimentDto::fromArray([
             'start_datetime' => '2038-07-10 10:00:00',
             'end_datetime' => '2038-07-10 14:00:00',
             'reason' => 'Training session',
@@ -237,7 +237,7 @@ final class ImpedimentDataTest extends TestCase
     public function test_reason_can_be_null_when_not_provided(): void
     {
         // Arrange: Create DTO without reason
-        $impedimentData = ImpedimentData::fromArray([
+        $impedimentData = ImpedimentDto::fromArray([
             'start_datetime' => '2038-08-15 08:00:00',
             'end_datetime' => '2038-08-15 12:00:00',
         ]);
@@ -264,7 +264,7 @@ final class ImpedimentDataTest extends TestCase
         // Act & Assert: Verify exception is thrown for invalid datetime
         $this->expectException(Exception::class);
 
-        ImpedimentData::fromArray($rawData);
+        ImpedimentDto::fromArray($rawData);
     }
 
     /**
@@ -280,7 +280,7 @@ final class ImpedimentDataTest extends TestCase
         ];
 
         // Act: Create DTO from data with empty datetime
-        $impedimentData = ImpedimentData::fromArray($rawData);
+        $impedimentData = ImpedimentDto::fromArray($rawData);
 
         // Assert: Verify empty string creates Carbon instance (current date), null remains null
         $this->assertInstanceOf(IlluminateCarbon::class, $impedimentData->startDatetime);
@@ -294,7 +294,7 @@ final class ImpedimentDataTest extends TestCase
     public function test_calculates_correct_duration(): void
     {
         // Arrange: Create DTO with specific start and end times
-        $impedimentData = ImpedimentData::fromArray([
+        $impedimentData = ImpedimentDto::fromArray([
             'start_datetime' => '2038-12-01 09:00:00',
             'end_datetime' => '2038-12-01 17:00:00',
             'reason' => 'Full day impediment',
@@ -313,7 +313,7 @@ final class ImpedimentDataTest extends TestCase
     public function test_dates_enforce_utc_timezone(): void
     {
         // Arrange: Create DTO with explicit UTC dates using Illuminate Carbon
-        $impedimentData = ImpedimentData::fromArray([
+        $impedimentData = ImpedimentDto::fromArray([
             'start_datetime' => IlluminateCarbon::create(2038, 12, 25, 00, 0, 0, 'UTC'),
             'end_datetime' => IlluminateCarbon::create(2038, 12, 26, 00, 0, 0, 'UTC'),
             'reason' => 'Christmas holiday',
@@ -335,7 +335,7 @@ final class ImpedimentDataTest extends TestCase
     public function test_dto_is_immutable(): void
     {
         // Arrange: Create DTO instance
-        $impedimentData = ImpedimentData::fromArray([
+        $impedimentData = ImpedimentDto::fromArray([
             'start_datetime' => '2039-01-01 09:00:00',
             'end_datetime' => '2039-01-01 17:00:00',
             'reason' => 'New Year holiday',
@@ -355,14 +355,14 @@ final class ImpedimentDataTest extends TestCase
     public function test_with_schedulable_creates_new_instance(): void
     {
         // Arrange: Create original DTO
-        $originalData = ImpedimentData::fromArray([
+        $originalData = ImpedimentDto::fromArray([
             'start_datetime' => '2039-02-01 09:00:00',
             'end_datetime' => '2039-02-01 13:00:00',
             'reason' => 'Team meeting',
         ]);
 
         // Act: Create new DTO with schedulable info
-        /** @var ImpedimentData $updatedData */
+        /** @var ImpedimentDto $updatedData */
         $updatedData = $originalData->withSchedulable(456, 'team');
 
         // Assert: Verify new instance has schedulable info, original unchanged
@@ -385,7 +385,7 @@ final class ImpedimentDataTest extends TestCase
     public function test_with_schedulable_array_includes_schedulable_keys(): void
     {
         // Arrange: Create DTO with schedulable info
-        $impedimentData = ImpedimentData::fromArray([
+        $impedimentData = ImpedimentDto::fromArray([
             'start_datetime' => '2039-03-01 14:00:00',
             'end_datetime' => '2039-03-01 18:00:00',
             'reason' => 'Equipment maintenance',
@@ -407,7 +407,7 @@ final class ImpedimentDataTest extends TestCase
     public function test_parse_datetime_throws_exception_for_invalid_input_type(): void
     {
         // Arrange: Use reflection to test protected method
-        $reflectionClass = new ReflectionClass(ImpedimentData::class);
+        $reflectionClass = new ReflectionClass(ImpedimentDto::class);
         $method = $reflectionClass->getMethod('parseDateTime');
         $method->setAccessible(true);
 
@@ -423,7 +423,7 @@ final class ImpedimentDataTest extends TestCase
     public function test_parse_datetime_returns_null_for_null_input(): void
     {
         // Arrange: Use reflection to test protected method
-        $reflectionClass = new ReflectionClass(ImpedimentData::class);
+        $reflectionClass = new ReflectionClass(ImpedimentDto::class);
         $method = $reflectionClass->getMethod('parseDateTime');
         $method->setAccessible(true);
 
@@ -443,7 +443,7 @@ final class ImpedimentDataTest extends TestCase
         $carbon = IlluminateCarbon::create(2039, 4, 1, 10, 0, 0, 'UTC');
 
         // Use reflection to test protected method
-        $reflectionClass = new ReflectionClass(ImpedimentData::class);
+        $reflectionClass = new ReflectionClass(ImpedimentDto::class);
         $method = $reflectionClass->getMethod('parseDateTime');
         $method->setAccessible(true);
 
@@ -472,7 +472,7 @@ final class ImpedimentDataTest extends TestCase
         ];
 
         // Act: Create DTO and convert back to array
-        $impedimentData = ImpedimentData::fromArray($originalData);
+        $impedimentData = ImpedimentDto::fromArray($originalData);
         $convertedData = $impedimentData->toArray();
 
         // Assert: Verify all non-null data is preserved
@@ -488,13 +488,13 @@ final class ImpedimentDataTest extends TestCase
     public function test_handles_overlapping_time_periods(): void
     {
         // Arrange: Create two impediments with overlapping times
-        $impedimentData1 = ImpedimentData::fromArray([
+        $impedimentData1 = ImpedimentDto::fromArray([
             'start_datetime' => '2038-10-01 09:00:00',
             'end_datetime' => '2038-10-01 12:00:00',
             'reason' => 'Morning meeting',
         ]);
 
-        $impedimentData2 = ImpedimentData::fromArray([
+        $impedimentData2 = ImpedimentDto::fromArray([
             'start_datetime' => '2038-10-01 11:00:00',
             'end_datetime' => '2038-10-01 14:00:00',
             'reason' => 'Lunch meeting',
@@ -518,7 +518,7 @@ final class ImpedimentDataTest extends TestCase
     public function test_handles_all_day_impediments(): void
     {
         // Arrange: Create all-day impediment
-        $impedimentData = ImpedimentData::fromArray([
+        $impedimentData = ImpedimentDto::fromArray([
             'start_datetime' => '2038-11-01 00:00:00',
             'end_datetime' => '2038-11-02 00:00:00',
             'reason' => 'All day event',
@@ -538,7 +538,7 @@ final class ImpedimentDataTest extends TestCase
     public function test_handles_impediment_with_only_start_date(): void
     {
         // Arrange: Create impediment with only start date
-        $impedimentData = ImpedimentData::fromArray([
+        $impedimentData = ImpedimentDto::fromArray([
             'start_datetime' => '2038-12-01 09:00:00',
             'reason' => 'Start only test',
         ]);
@@ -559,7 +559,7 @@ final class ImpedimentDataTest extends TestCase
     public function test_handles_impediment_with_only_end_date(): void
     {
         // Arrange: Create impediment with only end date
-        $impedimentData = ImpedimentData::fromArray([
+        $impedimentData = ImpedimentDto::fromArray([
             'end_datetime' => '2038-12-01 17:00:00',
             'reason' => 'End only test',
         ]);

@@ -1,18 +1,19 @@
 # Pint Formatting Test Report
-*Generated: dim. 04 janv. 2026 05:53:33 WAT*
+*Generated: lun. 19 janv. 2026 20:12:02 WAT*
 
 
-  ⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯.⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯..⨯....⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯...⨯...⨯⨯⨯..⨯⨯⨯⨯⨯⨯⨯.⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯.⨯.⨯⨯⨯⨯.⨯⨯⨯⨯⨯⨯⨯.⨯⨯⨯⨯⨯⨯..⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯.⨯⨯⨯⨯⨯...⨯.
+  ⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯.⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯..⨯...⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯...⨯...⨯⨯⨯..⨯⨯⨯⨯⨯⨯⨯.⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯.⨯.⨯⨯⨯⨯.⨯⨯⨯⨯⨯⨯⨯.⨯⨯⨯⨯⨯⨯⨯..⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯.⨯⨯⨯⨯⨯...⨯.
 
   ──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────── Laravel  
-    FAIL   ............................................................................................................................................... 171 files, 144 style issues  
+    FAIL   ............................................................................................................................................... 174 files, 148 style issues  
   ⨯ config/roster.php                                                                                                                     no_extra_blank_lines, binary_operator_spaces  
   ⨯ database/migrations/2024_01_01_000001_create_roster_availabilities_table.php class_definition, no_superfluous_phpdoc_tags, braces_position, phpdoc_trim, no_unused_imports, no_ex…  
   ⨯ rector.php                                                                                                                                                            concat_space  
   ⨯ src/Casts/TimezoneAwareDateTimeCast.php                                                                                                              ordered_imports, phpdoc_align  
   ⨯ src/Commands/CacheRulesCommand.php                                                                                         concat_space, blank_line_before_statement, phpdoc_align  
-  ⨯ src/Commands/DebugRulesCommand.php function_declaration, increment_style, single_quote, concat_space, trailing_comma_in_multiline, not_operator_with_successor_space, blank_line_…  
+  ⨯ src/Commands/DebugRulesCommand.php class_attributes_separation, function_declaration, increment_style, single_quote, concat_space, trailing_comma_in_multiline, not_operator_with…  
   ⨯ src/Commands/InstallRosterCommand.php                                                                                                                  blank_line_before_statement  
+  ⨯ src/Commands/ListRulesCommand.php           single_quote, concat_space, trailing_comma_in_multiline, no_unused_imports, blank_line_before_statement, ordered_imports, phpdoc_align  
   ⨯ src/Contracts/Repository/AvailabilityRepositoryInterface.php                                                                                                          phpdoc_align  
   ⨯ src/Contracts/Repository/ImpedimentRepositoryInterface.php                                                                                           ordered_imports, phpdoc_align  
   ⨯ src/Contracts/Repository/RepositoryInterface.php                                                                                                                      phpdoc_align  
@@ -22,11 +23,11 @@
   ⨯ src/Contracts/Validation/RuleInterface.php                                                                                                         phpdoc_separation, phpdoc_align  
   ⨯ src/Contracts/Validation/ValidationContextInterface.php                                                                                                               phpdoc_align  
   ⨯ src/Contracts/Validation/ValidatorInterface.php                                                                                                                       phpdoc_align  
-  ⨯ src/DTOs/AbstractData.php                                                                         function_declaration, blank_line_before_statement, ordered_imports, phpdoc_align  
-  ⨯ src/DTOs/AvailabilityData.php                                                                                not_operator_with_successor_space, no_extra_blank_lines, phpdoc_align  
+  ⨯ src/DTOs/AbstractDto.php                                                                          function_declaration, blank_line_before_statement, ordered_imports, phpdoc_align  
+  ⨯ src/DTOs/AvailabilityDto.php                                                                                 not_operator_with_successor_space, no_extra_blank_lines, phpdoc_align  
   ⨯ src/DTOs/DataInterface.php                                                                                                                                            phpdoc_align  
-  ⨯ src/DTOs/ImpedimentData.php                                                                                                  braces_position, single_line_empty_body, phpdoc_align  
-  ⨯ src/DTOs/ScheduleData.php                                                                                                    braces_position, single_line_empty_body, phpdoc_align  
+  ⨯ src/DTOs/ImpedimentDto.php                                                                                                   braces_position, single_line_empty_body, phpdoc_align  
+  ⨯ src/DTOs/ScheduleDto.php                                                                                                     braces_position, single_line_empty_body, phpdoc_align  
   ⨯ src/Domain/DTOs/CacheStats.php increment_style, concat_space, unary_operator_spaces, braces_position, phpdoc_separation, not_operator_with_successor_space, single_line_empty_bod…  
   ⨯ src/Domain/DTOs/ConflictResult.php                                                                                           braces_position, single_line_empty_body, phpdoc_align  
   ⨯ src/Domain/Helpers/TimeSlotHelper.php                                                                             not_operator_with_successor_space, ordered_imports, phpdoc_align  
@@ -52,7 +53,7 @@
   ⨯ src/Repositories/AvailabilityRepository.php                                        trailing_comma_in_multiline, phpdoc_separation, not_operator_with_successor_space, phpdoc_align  
   ⨯ src/Repositories/ImpedimentRepository.php                                                                                                                             phpdoc_align  
   ⨯ src/Repositories/ScheduleRepository.php                                                     new_with_parentheses, not_operator_with_successor_space, ordered_imports, phpdoc_align  
-  ⨯ src/RosterServiceProvider.php                                                                                                                           concat_space, phpdoc_align  
+  ⨯ src/RosterServiceProvider.php                                                                                              concat_space, trailing_comma_in_multiline, phpdoc_align  
   ⨯ src/Services/AvailabilityService.php no_superfluous_phpdoc_tags, trailing_comma_in_multiline, phpdoc_separation, phpdoc_trim, no_unused_imports, not_operator_with_successor_spac…  
   ⨯ src/Services/Core/AbstractService.php no_superfluous_phpdoc_tags, concat_space, trailing_comma_in_multiline, phpdoc_separation, phpdoc_trim, not_operator_with_successor_space, b…  
   ⨯ src/Services/ImpedimentService.php                    class_attributes_separation, trailing_comma_in_multiline, phpdoc_separation, not_operator_with_successor_space, phpdoc_align  
@@ -61,6 +62,7 @@
   ⨯ src/Support/RosterServiceContext.php                                                                                    increment_style, blank_line_before_statement, phpdoc_align  
   ⨯ src/Traits/AttachableToSchedules.php                                                                                        no_superfluous_phpdoc_tags, concat_space, phpdoc_align  
   ⨯ src/Traits/BelongsToSchedulable.php                                                                                                                phpdoc_separation, phpdoc_align  
+  ⨯ src/Traits/HasRoster.php                                                                                                           not_operator_with_successor_space, phpdoc_align  
   ⨯ src/Validation/Attributes/ValidationRule.php                                                                                 braces_position, single_line_empty_body, phpdoc_align  
   ⨯ src/Validation/Cache/RuleCacheGenerator.php                                   function_declaration, concat_space, not_operator_with_successor_space, ordered_imports, phpdoc_align  
   ⨯ src/Validation/Context/ValidationContext.php class_attributes_separation, function_declaration, concat_space, phpdoc_separation, not_operator_with_successor_space, ordered_impor…  
@@ -101,6 +103,7 @@
   ⨯ tests/Unit/Commands/CapturesOutput.php                                                                                                                                phpdoc_align  
   ⨯ tests/Unit/Commands/DebugRulesCommandTest.php                                                                   new_with_parentheses, trailing_comma_in_multiline, ordered_imports  
   ⨯ tests/Unit/Commands/InstallRosterCommandTest.php                                                                 function_declaration, no_multiline_whitespace_around_double_arrow  
+  ⨯ tests/Unit/Commands/ListRulesCommandTest.php                                                      new_with_parentheses, single_quote, trailing_comma_in_multiline, ordered_imports  
   ⨯ tests/Unit/DTOs/ImpedimentDataTest.php                                                                                                                             ordered_imports  
   ⨯ tests/Unit/DTOs/ScheduleDataTest.php                                                                                                                               ordered_imports  
   ⨯ tests/Unit/Domain/Helpers/TimezoneHelperTest.php                                                                                                                   ordered_imports  
@@ -124,6 +127,7 @@
   ⨯ tests/Unit/Services/ScheduleService/ScheduleLinksAdvancedTest.php                                                                                      trailing_comma_in_multiline  
   ⨯ tests/Unit/Services/ScheduleService/ScheduleLinksMixedTypesTest.php                                                                 trailing_comma_in_multiline, no_unused_imports  
   ⨯ tests/Unit/Services/ScheduleService/ScheduleLinksTest.php                                                                                                        no_unused_imports  
+  ⨯ tests/Unit/Traits/HasRosterTest.php                                                                                                                   cast_spaces, ordered_imports  
   ⨯ tests/Unit/Validation/Rules/AbstractRuleTest.php                                                                                           braces_position, single_line_empty_body  
   ⨯ tests/Unit/Validation/Rules/AvailabilityDateRangeRuleTest.php              new_with_parentheses, function_declaration, increment_style, braces_position, phpdoc_trim, phpdoc_align  
   ⨯ tests/Unit/Validation/Rules/AvailabilityDaysCoherenceRuleTest.php      new_with_parentheses, function_declaration, increment_style, braces_position, ordered_imports, phpdoc_align  
