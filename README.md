@@ -280,73 +280,72 @@ $service->attach($patient, [
 ]);
 ```
 
-# 📋 Méthodes de Requête Modèle (Trait HasRoster)
+# 📋 Model Query Methods (HasRoster Trait)
 
-Le trait `HasRoster` inclut des méthodes pour récupérer les impediments et schedules d'un modèle dans une période donnée.
+The `HasRoster` trait includes methods to retrieve impediments and schedules of a model within a given period.
 
-## Méthodes Ajoutées
+## Added Methods
 
 ```php
-// 1. Récupérer tous les items (impediments + schedules) dans une période
+// 1. Get all items (impediments + schedules) in a period
 $items = $model->getRosterItemsInPeriod($start, $end);
-// Retourne: ['impediments' => Collection, 'schedules' => Collection]
+// Returns: ['impediments' => Collection, 'schedules' => Collection]
 
-// 2. Récupérer seulement les impediments dans une période
+// 2. Get only impediments in a period
 $impediments = $model->getImpedimentsInPeriod($start, $end);
 
-// 3. Récupérer seulement les schedules dans une période
+// 3. Get only schedules in a period
 $schedules = $model->getSchedulesInPeriod($start, $end);
 
-// 4. Vérifier s'il y a des conflits
+// 4. Check for conflicts
 $hasConflicts = $model->hasConflictsInPeriod($start, $end);
-// Retourne true si au moins un impediment ou schedule existe
+// Returns true if at least one impediment or schedule exists
 ```
 
-## Exemple Simple
+## Simple Example
 
 ```php
-// Un médecin avec le trait HasRoster
+// A doctor with the HasRoster trait
 $doctor = Doctor::find(1);
 
-// Vérifier la disponibilité pour demain 10h-11h
+// Check availability for tomorrow 10am-11am
 $start = Carbon::parse('2024-06-10 10:00:00');
 $end = Carbon::parse('2024-06-10 11:00:00');
 
-// Vérifier les conflits
+// Check for conflicts
 if ($doctor->hasConflictsInPeriod($start, $end)) {
-    // Récupérer les détails
+    // Get details
     $conflicts = $doctor->getRosterItemsInPeriod($start, $end);
 
-    echo "Schedules en conflit: " . $conflicts['schedules']->count();
-    echo "Impediments en conflit: " . $conflicts['impediments']->count();
+    echo "Conflicting schedules: " . $conflicts['schedules']->count();
+    echo "Conflicting impediments: " . $conflicts['impediments']->count();
 } else {
-    echo "Créneau disponible";
+    echo "Time slot available";
 }
 ```
 
-## Cas d'Usage Pratique
+## Practical Use Case
 
 ```php
-// Avant de créer un nouveau schedule
+// Before creating a new schedule
 public function createSchedule(Doctor $doctor, array $data)
 {
     $start = Carbon::parse($data['start_datetime']);
     $end = Carbon::parse($data['end_datetime']);
 
-    // Vérifier si le créneau est libre
+    // Check if the time slot is free
     if ($doctor->hasConflictsInPeriod($start, $end)) {
         return response()->json([
-            'error' => 'Créneau non disponible',
+            'error' => 'Time slot not available',
             'conflicts' => $doctor->getRosterItemsInPeriod($start, $end)
         ], 422);
     }
 
-    // Créer le schedule
+    // Create the schedule
     return schedule_for($doctor->availabilities()->first())
         ->create($data);
 }
 ```
-
 
 ## 📖 Core Concepts
 

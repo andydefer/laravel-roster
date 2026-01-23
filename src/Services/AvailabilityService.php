@@ -61,6 +61,33 @@ class AvailabilityService extends AbstractService
     }
 
     /**
+     * Finds an availability that covers a specific time slot.
+     *
+     * @param Model $schedulable The schedulable entity
+     * @param Carbon $start Start time of the slot
+     * @param Carbon $end End time of the slot
+     * @param string|null $type Optional availability type filter
+     *
+     * @return Availability|null Matching availability or null if none found
+     */
+    public function getAvailabilityForTimeSlot(
+        Model $model,
+        Carbon $start,
+        Carbon $end,
+        ?string $type = null
+    ): ?Availability {
+        $availability = $this->getCurrentRepository()->getAvailabilityForTimeSlot(
+            model: $model,
+            start: $start,
+            end: $end,
+            type: $type
+        );
+
+        return $availability;
+    }
+
+
+    /**
      * Updates an existing availability record.
      *
      * Reconciles requested days with the validity period and removes invalid days.

@@ -1,5 +1,5 @@
 # Pint Formatting Test Report
-*Generated: lun. 19 janv. 2026 20:12:02 WAT*
+*Generated: ven. 23 janv. 2026 15:09:26 WAT*
 
 
   ⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯.⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯..⨯...⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯...⨯...⨯⨯⨯..⨯⨯⨯⨯⨯⨯⨯.⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯.⨯.⨯⨯⨯⨯.⨯⨯⨯⨯⨯⨯⨯.⨯⨯⨯⨯⨯⨯⨯..⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯.⨯⨯⨯⨯⨯...⨯.
@@ -54,7 +54,7 @@
   ⨯ src/Repositories/ImpedimentRepository.php                                                                                                                             phpdoc_align  
   ⨯ src/Repositories/ScheduleRepository.php                                                     new_with_parentheses, not_operator_with_successor_space, ordered_imports, phpdoc_align  
   ⨯ src/RosterServiceProvider.php                                                                                              concat_space, trailing_comma_in_multiline, phpdoc_align  
-  ⨯ src/Services/AvailabilityService.php no_superfluous_phpdoc_tags, trailing_comma_in_multiline, phpdoc_separation, phpdoc_trim, no_unused_imports, not_operator_with_successor_spac…  
+  ⨯ src/Services/AvailabilityService.php class_attributes_separation, no_superfluous_phpdoc_tags, trailing_comma_in_multiline, phpdoc_separation, phpdoc_trim, no_unused_imports, not…  
   ⨯ src/Services/Core/AbstractService.php no_superfluous_phpdoc_tags, concat_space, trailing_comma_in_multiline, phpdoc_separation, phpdoc_trim, not_operator_with_successor_space, b…  
   ⨯ src/Services/ImpedimentService.php                    class_attributes_separation, trailing_comma_in_multiline, phpdoc_separation, not_operator_with_successor_space, phpdoc_align  
   ⨯ src/Services/ScheduleService.php                                      phpdoc_separation, cast_spaces, not_operator_with_successor_space, blank_line_before_statement, phpdoc_align  
