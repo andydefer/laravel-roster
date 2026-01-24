@@ -72,6 +72,7 @@ class AvailabilityRepository extends AbstractRepository implements AvailabilityR
         return $builder->get();
     }
 
+    // Dans AvailabilityRepository.php
     /**
      * Finds an availability that covers a specific time slot.
      *
@@ -88,18 +89,33 @@ class AvailabilityRepository extends AbstractRepository implements AvailabilityR
         Carbon $end,
         ?string $type = null
     ): ?Availability {
-        $builder = $this->buildBaseQuery($model);
+        TimeWindowHelper::assertDailyWindow($start, $end);
+
+        $dayOfWeek = strtolower($start->englishDayOfWeek);
+        $startTime = $start->format('H:i:s');
+        $endTime = $end->format('H:i:s');
+        $date = $start->toDateString();
+
+        $query = Availability::where('schedulable_id', $model->id)
+            ->where('schedulable_type', get_class($model))
+            ->whereJsonContains('days', $dayOfWeek)
+            ->where('daily_start', '<=', $startTime)
+            ->where('daily_end', '>=', $endTime);
 
         if ($type !== null) {
-            $builder->where('type', $type);
+            $query->where('type', $type);
         }
 
-        $this->applyTimeSlotFilters($builder, $start, $end);
+        // Vérifier la période de validité
+        $query->where(function ($q) use ($date) {
+            $q->whereNull('validity_start')
+                ->orWhere('validity_start', '<=', $date);
+        })->where(function ($q) use ($date) {
+            $q->whereNull('validity_end')
+                ->orWhere('validity_end', '>=', $date);
+        });
 
-        /** @var Availability|null $availability */
-        $availability = $builder->first();
-
-        return $availability;
+        return $query->first();
     }
 
     /**

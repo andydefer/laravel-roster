@@ -1,8 +1,8 @@
 # Rector Refactoring Report
-*Generated: sam. 24 janv. 2026 11:53:55 WAT*
+*Generated: sam. 24 janv. 2026 13:46:00 WAT*
 
 
-41 files with changes
+42 files with changes
 =====================
 
 1) /home/andy-kani/pro/sites/packages/laravel-roster/src/Commands/DebugRulesCommand.php:39
@@ -293,7 +293,55 @@ Applied rules:
  * RemoveUselessReturnTagRector
 
 
-8) /home/andy-kani/pro/sites/packages/laravel-roster/src/Repositories/ScheduleRepository.php:93
+8) /home/andy-kani/pro/sites/packages/laravel-roster/src/Repositories/AvailabilityRepository.php:107
+
+    ---------- begin diff ----------
+@@ @@
+         }
+
+         // Vérifier la période de validité
+-        $query->where(function ($q) use ($date) {
++        $query->where(function ($q) use ($date): void {
+             $q->whereNull('validity_start')
+                 ->orWhere('validity_start', '<=', $date);
+-        })->where(function ($q) use ($date) {
++        })->where(function ($q) use ($date): void {
+             $q->whereNull('validity_end')
+                 ->orWhere('validity_end', '>=', $date);
+         });
+@@ @@
+     {
+         return Availability::where('schedulable_id', $model->id)
+             ->where('schedulable_type', get_class($model));
+-    }
+-
+-    /**
+-     * Applies time slot filters to a query builder.
+-     *
+-     * @param Builder $builder Query builder to modify
+-     * @param Carbon $start Start time of the slot
+-     * @param Carbon $end End time of the slot
+-     */
+-    private function applyTimeSlotFilters(Builder $builder, Carbon $start, Carbon $end): void
+-    {
+-        TimeWindowHelper::assertDailyWindow($start, $end);
+-
+-        $builder->whereJsonContains('days', strtolower($start->englishDayOfWeek))
+-            ->where('daily_start', '<=', $start->format('H:i:s'))
+-            ->where('daily_end', '>=', $end->format('H:i:s'));
+-
+-        $this->applyDateRangeFilters($builder, $start, $end);
+     }
+
+     /**
+    ----------- end diff -----------
+
+Applied rules:
+ * RemoveUnusedPrivateMethodRector
+ * AddClosureVoidReturnTypeWhereNoReturnRector
+
+
+9) /home/andy-kani/pro/sites/packages/laravel-roster/src/Repositories/ScheduleRepository.php:93
 
     ---------- begin diff ----------
 @@ @@
@@ -371,14 +419,10 @@ Applied rules:
  * AddClosureVoidReturnTypeWhereNoReturnRector
 
 
-9) /home/andy-kani/pro/sites/packages/laravel-roster/src/Services/AvailabilityService.php:4
+10) /home/andy-kani/pro/sites/packages/laravel-roster/src/Services/AvailabilityService.php:7
 
     ---------- begin diff ----------
 @@ @@
-
- namespace Roster\Services;
-
-+use InvalidArgumentException;
  use Illuminate\Database\Eloquent\Model;
  use Illuminate\Support\Carbon;
  use Roster\Domain\Helpers\TimeWindowHelper;
@@ -396,14 +440,30 @@ Applied rules:
      protected ?Availability $pendingDeletion = null;
 
 @@ @@
-      * @param string|null $type Optional availability type filter
+             ->whereRaw('TIME(daily_end) >= ?', [$endTime]);
+
+         // CORRECTION : Pour validity_start et validity_end, utiliser DATE()
+-        $query->where(function ($q) use ($date) {
++        $query->where(function ($q) use ($date): void {
+             $q->whereNull('validity_start')
+                 ->orWhereRaw('DATE(validity_start) <= ?', [$date]);
+-        })->where(function ($q) use ($date) {
++        })->where(function ($q) use ($date): void {
+             $q->whereNull('validity_end')
+                 ->orWhereRaw('DATE(validity_end) >= ?', [$date]);
+         });
+
++        return $query->first();
++    }
+
+-
+-        $result = $query->first();
+-
+-        return $result;
+-    }
+     /**
+      * Updates an existing availability record.
       *
-      * @return Availability|null Matching availability or null if none found
--     * @throws \InvalidArgumentException When time window is invalid
-+     * @throws InvalidArgumentException When time window is invalid
-      */
-     public function getAvailabilityForTimeSlot(
-         Model $schedulable,
 @@ @@
       * Triggers a warning if invalid days were detected and warnings are enabled.
       *
@@ -421,11 +481,14 @@ Applied rules:
 
 Applied rules:
  * SimplifyEmptyCheckOnEmptyArrayRector
+ * SimplifyUselessVariableRector
+ * NewlineBetweenClassLikeStmtsRector
  * RemoveUselessReturnTagRector
  * RemoveUselessVarTagRector
+ * AddClosureVoidReturnTypeWhereNoReturnRector
 
 
-10) /home/andy-kani/pro/sites/packages/laravel-roster/src/Services/Core/AbstractService.php:125
+11) /home/andy-kani/pro/sites/packages/laravel-roster/src/Services/Core/AbstractService.php:125
 
     ---------- begin diff ----------
 @@ @@
@@ -558,7 +621,7 @@ Applied rules:
  * RemoveUselessReturnTagRector
 
 
-11) /home/andy-kani/pro/sites/packages/laravel-roster/src/Services/ScheduleService.php:4
+12) /home/andy-kani/pro/sites/packages/laravel-roster/src/Services/ScheduleService.php:4
 
     ---------- begin diff ----------
 @@ @@
@@ -670,7 +733,7 @@ Applied rules:
 Applied rules:
 
 
-12) /home/andy-kani/pro/sites/packages/laravel-roster/src/Traits/AttachableToSchedules.php:84
+13) /home/andy-kani/pro/sites/packages/laravel-roster/src/Traits/AttachableToSchedules.php:84
 
     ---------- begin diff ----------
 @@ @@
@@ -703,7 +766,7 @@ Applied rules:
  * RemoveUselessReturnTagRector
 
 
-13) /home/andy-kani/pro/sites/packages/laravel-roster/src/Traits/HasRoster.php:75
+14) /home/andy-kani/pro/sites/packages/laravel-roster/src/Traits/HasRoster.php:75
 
     ---------- begin diff ----------
 @@ @@
@@ -758,7 +821,7 @@ Applied rules:
  * AddClosureVoidReturnTypeWhereNoReturnRector
 
 
-14) /home/andy-kani/pro/sites/packages/laravel-roster/src/Validation/Rules/AvailabilityDaysInPeriodRule.php:19
+15) /home/andy-kani/pro/sites/packages/laravel-roster/src/Validation/Rules/AvailabilityDaysInPeriodRule.php:19
 
     ---------- begin diff ----------
 @@ @@
@@ -785,7 +848,7 @@ Applied rules:
  * ClassMethodArrayDocblockParamFromLocalCallsRector
 
 
-15) /home/andy-kani/pro/sites/packages/laravel-roster/src/Validation/Rules/AvailabilityTemporalCoherenceRule.php:144
+16) /home/andy-kani/pro/sites/packages/laravel-roster/src/Validation/Rules/AvailabilityTemporalCoherenceRule.php:144
 
     ---------- begin diff ----------
 @@ @@
@@ -810,38 +873,46 @@ Applied rules:
  * AddArrayFunctionClosureParamTypeRector
 
 
-16) /home/andy-kani/pro/sites/packages/laravel-roster/src/helpers.php:43
+17) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Services/ScheduleService/ConflictDetectionTest.php:4
 
     ---------- begin diff ----------
 @@ @@
-     /**
-      * Returns all days occurring within a date period, in standard week order.
-      *
--     * @param DateTimeInterface|WeekDay|Month|string|int|float|null $startDate
--     * @param DateTimeInterface|WeekDay|Month|string|int|float|null $endDate
-      * @return array<string> Unique lowercase day names within the period, sorted Monday → Sunday
-      */
-     function roster_days_in_period(
+
+ namespace Tests\Unit\Services\ScheduleService;
+
++use Roster\Models\Schedule;
+ use Illuminate\Database\Eloquent\Model;
+ use Illuminate\Foundation\Testing\RefreshDatabase;
+ use Illuminate\Support\Carbon;
+ use Illuminate\Support\Facades\Config;
+-use Roster\Enums\ScheduleStatus;
+ use Roster\Validation\Exceptions\ValidationFailedException;
+ use Tests\Support\TestSchedulable;
+ use Tests\TestCase;
 @@ @@
+         ]);
 
-             $weekOrder = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+         // Assert: Should allow adjacent schedules
+-        $this->assertInstanceOf(\Roster\Models\Schedule::class, $schedule2);
++        $this->assertInstanceOf(Schedule::class, $schedule2);
+         $this->assertSame('2038-01-04 11:00:00', $schedule2->start_datetime->format('Y-m-d H:i:s'));
+     }
 
--            usort($days, function ($a, $b) use ($weekOrder) {
--                return array_search($a, $weekOrder) <=> array_search($b, $weekOrder);
-+            usort($days, function ($a, $b) use ($weekOrder): int {
-+                return array_search($a, $weekOrder, true) <=> array_search($b, $weekOrder, true);
-             });
+@@ @@
+             'end_datetime' => $slot['end']->format('Y-m-d H:i:s'),
+         ]);
 
-             return $days;
+-        $this->assertInstanceOf(\Roster\Models\Schedule::class, $schedule);
++        $this->assertInstanceOf(Schedule::class, $schedule);
+
+         // 4. Verify cannot recreate same slot
+         $this->expectException(ValidationFailedException::class);
     ----------- end diff -----------
 
 Applied rules:
- * StrictArraySearchRector
- * RemoveUselessParamTagRector
- * ClosureReturnTypeRector
 
 
-17) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Services/ScheduleService/ScheduleLinksAdvancedTest.php:4
+18) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Services/ScheduleService/ScheduleLinksAdvancedTest.php:4
 
     ---------- begin diff ----------
 @@ @@
@@ -888,7 +959,7 @@ Applied rules:
  * NarrowUnusedSetUpDefinedPropertyRector
 
 
-18) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Services/ScheduleService/ScheduleLinksEdgeCasesTest.php:4
+19) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Services/ScheduleService/ScheduleLinksEdgeCasesTest.php:4
 
     ---------- begin diff ----------
 @@ @@
@@ -935,7 +1006,7 @@ Applied rules:
  * NarrowUnusedSetUpDefinedPropertyRector
 
 
-19) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Services/ScheduleService/ScheduleLinksMixedTypesTest.php:4
+20) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Services/ScheduleService/ScheduleLinksMixedTypesTest.php:4
 
     ---------- begin diff ----------
 @@ @@
@@ -974,7 +1045,7 @@ Applied rules:
  * NarrowUnusedSetUpDefinedPropertyRector
 
 
-20) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Services/ScheduleService/ScheduleLinksTest.php:4
+21) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Services/ScheduleService/ScheduleLinksTest.php:4
 
     ---------- begin diff ----------
 @@ @@
@@ -1072,7 +1143,7 @@ Applied rules:
 Applied rules:
 
 
-21) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Traits/HasRosterTest.php:4
+22) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Traits/HasRosterTest.php:4
 
     ---------- begin diff ----------
 @@ @@
@@ -1213,7 +1284,7 @@ Applied rules:
  * RemoveUnusedVariableAssignRector
 
 
-22) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Validation/Rules/AvailabilityDateRangeRuleTest.php:530
+23) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Validation/Rules/AvailabilityDateRangeRuleTest.php:530
 
     ---------- begin diff ----------
 @@ @@
@@ -1234,7 +1305,7 @@ Applied rules:
  * RemoveParentDelegatingConstructorRector
 
 
-23) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Validation/Rules/AvailabilityDaysCoherenceRuleTest.php:557
+24) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Validation/Rules/AvailabilityDaysCoherenceRuleTest.php:557
 
     ---------- begin diff ----------
 @@ @@
@@ -1255,7 +1326,7 @@ Applied rules:
  * RemoveParentDelegatingConstructorRector
 
 
-24) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Validation/Rules/FutureDateRuleTest.php:667
+25) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Validation/Rules/FutureDateRuleTest.php:667
 
     ---------- begin diff ----------
 @@ @@
@@ -1291,7 +1362,7 @@ Applied rules:
  * RemoveUselessReturnTagRector
 
 
-25) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Validation/ValidationContextTest.php:966
+26) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Validation/ValidationContextTest.php:966
 
     ---------- begin diff ----------
 @@ @@
@@ -1311,7 +1382,38 @@ Applied rules:
  * AssertEqualsToSameRector
 
 
-26) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Feature/Integration/CompleteRosterIntegrationTest.php:4
+27) /home/andy-kani/pro/sites/packages/laravel-roster/src/helpers.php:43
+
+    ---------- begin diff ----------
+@@ @@
+     /**
+      * Returns all days occurring within a date period, in standard week order.
+      *
+-     * @param DateTimeInterface|WeekDay|Month|string|int|float|null $startDate
+-     * @param DateTimeInterface|WeekDay|Month|string|int|float|null $endDate
+      * @return array<string> Unique lowercase day names within the period, sorted Monday → Sunday
+      */
+     function roster_days_in_period(
+@@ @@
+
+             $weekOrder = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+
+-            usort($days, function ($a, $b) use ($weekOrder) {
+-                return array_search($a, $weekOrder) <=> array_search($b, $weekOrder);
++            usort($days, function ($a, $b) use ($weekOrder): int {
++                return array_search($a, $weekOrder, true) <=> array_search($b, $weekOrder, true);
+             });
+
+             return $days;
+    ----------- end diff -----------
+
+Applied rules:
+ * StrictArraySearchRector
+ * RemoveUselessParamTagRector
+ * ClosureReturnTypeRector
+
+
+28) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Feature/Integration/CompleteRosterIntegrationTest.php:4
 
     ---------- begin diff ----------
 @@ @@
@@ -1337,7 +1439,7 @@ Applied rules:
  * AssertEmptyNullableObjectToAssertInstanceofRector
 
 
-27) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Feature/Services/AvailabilityServiceDaysCoherenceTest.php:237
+29) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Feature/Services/AvailabilityServiceDaysCoherenceTest.php:237
 
     ---------- begin diff ----------
 @@ @@
@@ -1359,7 +1461,7 @@ Applied rules:
  * ClosureReturnTypeRector
 
 
-28) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Integration/Traits/BelongsToSchedulableTest.php:421
+30) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Integration/Traits/BelongsToSchedulableTest.php:421
 
     ---------- begin diff ----------
 @@ @@
@@ -1377,7 +1479,7 @@ Applied rules:
  * AssertEmptyNullableObjectToAssertInstanceofRector
 
 
-29) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Domain/Helpers/TimezoneHelperTest.php:14
+31) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Domain/Helpers/TimezoneHelperTest.php:14
 
     ---------- begin diff ----------
 @@ @@
@@ -1394,7 +1496,7 @@ Applied rules:
 Applied rules:
 
 
-30) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Domain/RepositoryMutationTest.php:4
+32) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Domain/RepositoryMutationTest.php:4
 
     ---------- begin diff ----------
 @@ @@
@@ -1420,7 +1522,7 @@ Applied rules:
  * AssertEmptyNullableObjectToAssertInstanceofRector
 
 
-31) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Http/Resources/AvailabilityResource.php:4
+33) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Http/Resources/AvailabilityResource.php:4
 
     ---------- begin diff ----------
 @@ @@
@@ -1498,7 +1600,7 @@ Applied rules:
  * RemoveUselessReturnTagRector
 
 
-32) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Http/Resources/ImpedimentResource.php:4
+34) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Http/Resources/ImpedimentResource.php:4
 
     ---------- begin diff ----------
 @@ @@
@@ -1556,7 +1658,7 @@ Applied rules:
  * RemoveUselessReturnTagRector
 
 
-33) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Http/Resources/ScheduleResource.php:4
+35) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Http/Resources/ScheduleResource.php:4
 
     ---------- begin diff ----------
 @@ @@
@@ -1618,7 +1720,7 @@ Applied rules:
  * RemoveUselessReturnTagRector
 
 
-34) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Models/AttachableToSchedulesTest.php:5
+36) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Models/AttachableToSchedulesTest.php:5
 
     ---------- begin diff ----------
 @@ @@
@@ -1643,7 +1745,7 @@ Applied rules:
  * FinalizeTestCaseClassRector
 
 
-35) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Models/ScheduleTest.php:11
+37) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Models/ScheduleTest.php:11
 
     ---------- begin diff ----------
 @@ @@
@@ -1660,7 +1762,7 @@ Applied rules:
 Applied rules:
 
 
-36) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Services/AvailabilityServiceFindTest.php:4
+38) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Services/AvailabilityServiceFindTest.php:4
 
     ---------- begin diff ----------
 @@ @@
@@ -1979,7 +2081,7 @@ Applied rules:
  * ClosureReturnTypeRector
 
 
-37) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Services/AvailabilityServiceTest.php:194
+39) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Services/AvailabilityServiceTest.php:194
 
     ---------- begin diff ----------
 @@ @@
@@ -2036,7 +2138,7 @@ Applied rules:
  * ClassMethodArrayDocblockParamFromLocalCallsRector
 
 
-38) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Services/ImpedimentServiceTest.php:293
+40) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Services/ImpedimentServiceTest.php:293
 
     ---------- begin diff ----------
 @@ @@
@@ -2073,7 +2175,7 @@ Applied rules:
  * AssertEmptyNullableObjectToAssertInstanceofRector
 
 
-39) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Services/ScheduleService/AvailabilitySearchTest.php:9
+41) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Services/ScheduleService/AvailabilitySearchTest.php:9
 
     ---------- begin diff ----------
 @@ @@
@@ -2088,7 +2190,7 @@ Applied rules:
 Applied rules:
 
 
-40) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Services/ScheduleService/BasicOperationsTest.php:422
+42) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Services/ScheduleService/BasicOperationsTest.php:422
 
     ---------- begin diff ----------
 @@ @@
@@ -2125,44 +2227,5 @@ Applied rules:
  * AssertEmptyNullableObjectToAssertInstanceofRector
 
 
-41) /home/andy-kani/pro/sites/packages/laravel-roster/tests/Unit/Services/ScheduleService/ConflictDetectionTest.php:4
-
-    ---------- begin diff ----------
-@@ @@
-
- namespace Tests\Unit\Services\ScheduleService;
-
-+use Roster\Models\Schedule;
- use Illuminate\Database\Eloquent\Model;
- use Illuminate\Foundation\Testing\RefreshDatabase;
- use Illuminate\Support\Carbon;
- use Illuminate\Support\Facades\Config;
--use Roster\Enums\ScheduleStatus;
- use Roster\Validation\Exceptions\ValidationFailedException;
- use Tests\Support\TestSchedulable;
- use Tests\TestCase;
-@@ @@
-         ]);
-
-         // Assert: Should allow adjacent schedules
--        $this->assertInstanceOf(\Roster\Models\Schedule::class, $schedule2);
-+        $this->assertInstanceOf(Schedule::class, $schedule2);
-         $this->assertSame('2038-01-04 11:00:00', $schedule2->start_datetime->format('Y-m-d H:i:s'));
-     }
-
-@@ @@
-             'end_datetime' => $slot['end']->format('Y-m-d H:i:s'),
-         ]);
-
--        $this->assertInstanceOf(\Roster\Models\Schedule::class, $schedule);
-+        $this->assertInstanceOf(Schedule::class, $schedule);
-
-         // 4. Verify cannot recreate same slot
-         $this->expectException(ValidationFailedException::class);
-    ----------- end diff -----------
-
-Applied rules:
-
-
- [OK] 41 files would have been changed (dry-run) by Rector                                                              
+ [OK] 42 files would have been changed (dry-run) by Rector                                                              
 

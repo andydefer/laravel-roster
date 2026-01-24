@@ -49,8 +49,8 @@ final class AvailabilityServiceFindTest extends TestCase
             validityEnd: '2038-07-31'
         );
 
-        $slotStart = Carbon::parse('2038-07-01 10:00:00'); // Jeudi 1er juillet
-        $slotEnd = Carbon::parse('2038-07-01 11:00:00');
+        $slotStart = Carbon::parse('2038-07-01 12:00:00'); // Jeudi 1er juillet
+        $slotEnd = Carbon::parse('2038-07-01 13:00:00');
 
         // Act: Find availability for time slot
         $result = availability_for($this->schedulable)

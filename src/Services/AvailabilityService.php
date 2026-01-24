@@ -60,26 +60,8 @@ class AvailabilityService extends AbstractService
         return parent::create($data);
     }
 
-    /**
-     * Finds an availability that covers a specific time slot.
-     *
-     * This method searches for an availability that:
-     * 1. Belongs to the specified schedulable entity
-     * 2. Has the specified type (if provided)
-     * 3. Includes the day of week of the slot
-     * 4. Has a daily window that fully contains the slot time
-     * 5. Is valid during the slot's date range
-     *
-     * @param Model $schedulable The schedulable entity
-     * @param Carbon $start Start time of the slot
-     * @param Carbon $end End time of the slot
-     * @param string|null $type Optional availability type filter
-     *
-     * @return Availability|null Matching availability or null if none found
-     * @throws \InvalidArgumentException When time window is invalid
-     */
     public function getAvailabilityForTimeSlot(
-        Model $schedulable,
+        Model $model,
         Carbon $start,
         Carbon $end,
         ?string $type = null
@@ -91,38 +73,35 @@ class AvailabilityService extends AbstractService
         $endTime = $end->format('H:i:s');
         $date = $start->toDateString();
 
-        // Construire la requête
-        $query = Availability::where('schedulable_id', $schedulable->id)
-            ->where('schedulable_type', get_class($schedulable))
-            ->whereJsonContains('days', $dayOfWeek);
-
-        // PROBLÈME : daily_start/daily_end sont des Carbon objects avec dates complètes
-        // SOLUTION : Utiliser TIME() pour extraire seulement l'heure ou comparer en format H:i:s
-        $query->whereRaw('TIME(daily_start) <= ?', [$startTime])
-            ->whereRaw('TIME(daily_end) >= ?', [$endTime]);
-
-        // Conditions de validité - ATTENTION : validity_start/end sont aussi des Carbon
-        // On doit comparer les dates (sans l'heure)
-        $query->where(function ($q) use ($date): void {
-            $q->whereNull('validity_start')
-                ->orWhereDate('validity_start', '<=', $date);
-        });
-
-        $query->where(function ($q) use ($date): void {
-            $q->whereNull('validity_end')
-                ->orWhereDate('validity_end', '>=', $date);
-        });
+        $query = Availability::where('schedulable_id', $model->id)
+            ->where('schedulable_type', get_class($model));
 
         if ($type !== null) {
             $query->where('type', $type);
         }
 
-        /** @var Availability|null $availability */
-        $availability = $query->first();
+        // Filtre sur les jours (JSON)
+        $query->whereJsonContains('days', $dayOfWeek);
 
-        return $availability;
+        // CORRECTION : Pour daily_start et daily_end, extraire seulement l'heure
+        $query->whereRaw('TIME(daily_start) <= ?', [$startTime])
+            ->whereRaw('TIME(daily_end) >= ?', [$endTime]);
+
+        // CORRECTION : Pour validity_start et validity_end, utiliser DATE()
+        $query->where(function ($q) use ($date) {
+            $q->whereNull('validity_start')
+                ->orWhereRaw('DATE(validity_start) <= ?', [$date]);
+        })->where(function ($q) use ($date) {
+            $q->whereNull('validity_end')
+                ->orWhereRaw('DATE(validity_end) >= ?', [$date]);
+        });
+
+
+
+        $result = $query->first();
+
+        return $result;
     }
-
     /**
      * Updates an existing availability record.
      *
