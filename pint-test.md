@@ -1,11 +1,11 @@
 # Pint Formatting Test Report
-*Generated: ven. 23 janv. 2026 15:09:26 WAT*
+*Generated: sam. 24 janv. 2026 11:53:47 WAT*
 
 
-  ⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯.⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯..⨯...⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯...⨯...⨯⨯⨯..⨯⨯⨯⨯⨯⨯⨯.⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯.⨯.⨯⨯⨯⨯.⨯⨯⨯⨯⨯⨯⨯.⨯⨯⨯⨯⨯⨯⨯..⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯.⨯⨯⨯⨯⨯...⨯.
+  ⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯.⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯..⨯...⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯...⨯...⨯⨯⨯..⨯⨯⨯⨯⨯⨯⨯.⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯.⨯.⨯⨯⨯⨯.⨯⨯⨯⨯⨯⨯⨯.⨯⨯⨯⨯⨯⨯⨯⨯..⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯.⨯⨯⨯⨯⨯...⨯.
 
   ──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────── Laravel  
-    FAIL   ............................................................................................................................................... 174 files, 148 style issues  
+    FAIL   ............................................................................................................................................... 175 files, 149 style issues  
   ⨯ config/roster.php                                                                                                                     no_extra_blank_lines, binary_operator_spaces  
   ⨯ database/migrations/2024_01_01_000001_create_roster_availabilities_table.php class_definition, no_superfluous_phpdoc_tags, braces_position, phpdoc_trim, no_unused_imports, no_ex…  
   ⨯ rector.php                                                                                                                                                            concat_space  
@@ -54,7 +54,7 @@
   ⨯ src/Repositories/ImpedimentRepository.php                                                                                                                             phpdoc_align  
   ⨯ src/Repositories/ScheduleRepository.php                                                     new_with_parentheses, not_operator_with_successor_space, ordered_imports, phpdoc_align  
   ⨯ src/RosterServiceProvider.php                                                                                              concat_space, trailing_comma_in_multiline, phpdoc_align  
-  ⨯ src/Services/AvailabilityService.php class_attributes_separation, no_superfluous_phpdoc_tags, trailing_comma_in_multiline, phpdoc_separation, phpdoc_trim, no_unused_imports, not…  
+  ⨯ src/Services/AvailabilityService.php no_superfluous_phpdoc_tags, trailing_comma_in_multiline, phpdoc_separation, phpdoc_trim, no_unused_imports, not_operator_with_successor_spac…  
   ⨯ src/Services/Core/AbstractService.php no_superfluous_phpdoc_tags, concat_space, trailing_comma_in_multiline, phpdoc_separation, phpdoc_trim, not_operator_with_successor_space, b…  
   ⨯ src/Services/ImpedimentService.php                    class_attributes_separation, trailing_comma_in_multiline, phpdoc_separation, not_operator_with_successor_space, phpdoc_align  
   ⨯ src/Services/ScheduleService.php                                      phpdoc_separation, cast_spaces, not_operator_with_successor_space, blank_line_before_statement, phpdoc_align  
@@ -120,6 +120,7 @@
   ⨯ tests/Unit/Models/ImpedimentTest.php                                                                                                                 ordered_imports, phpdoc_align  
   ⨯ tests/Unit/Models/ScheduleTest.php                                                            class_attributes_separation, no_unused_imports, binary_operator_spaces, phpdoc_align  
   ⨯ tests/Unit/RosterServiceProviderTest.php                                                                                                                           ordered_imports  
+  ⨯ tests/Unit/Services/AvailabilityServiceFindTest.php                                                                                                phpdoc_separation, phpdoc_align  
   ⨯ tests/Unit/Services/AvailabilityServiceTest.php                                                         class_attributes_separation, single_quote, phpdoc_separation, phpdoc_align  
   ⨯ tests/Unit/Services/ImpedimentServiceTest.php                                                   increment_style, single_quote, concat_space, no_extra_blank_lines, ordered_imports  
   ⨯ tests/Unit/Services/ScheduleService/AvailabilitySearchTest.php                                                                                                   no_unused_imports  

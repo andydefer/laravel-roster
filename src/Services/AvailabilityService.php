@@ -6,7 +6,7 @@ namespace Roster\Services;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Carbon;
-use Roster\Domain\Helpers\TimeSlotHelper;
+use Roster\Domain\Helpers\TimeWindowHelper;
 use Roster\DTOs\AvailabilityDto;
 use Roster\Enums\EntityType;
 use Roster\Enums\OperationType;
@@ -63,29 +63,65 @@ class AvailabilityService extends AbstractService
     /**
      * Finds an availability that covers a specific time slot.
      *
+     * This method searches for an availability that:
+     * 1. Belongs to the specified schedulable entity
+     * 2. Has the specified type (if provided)
+     * 3. Includes the day of week of the slot
+     * 4. Has a daily window that fully contains the slot time
+     * 5. Is valid during the slot's date range
+     *
      * @param Model $schedulable The schedulable entity
      * @param Carbon $start Start time of the slot
      * @param Carbon $end End time of the slot
      * @param string|null $type Optional availability type filter
      *
      * @return Availability|null Matching availability or null if none found
+     * @throws \InvalidArgumentException When time window is invalid
      */
     public function getAvailabilityForTimeSlot(
-        Model $model,
+        Model $schedulable,
         Carbon $start,
         Carbon $end,
         ?string $type = null
     ): ?Availability {
-        $availability = $this->getCurrentRepository()->getAvailabilityForTimeSlot(
-            model: $model,
-            start: $start,
-            end: $end,
-            type: $type
-        );
+        TimeWindowHelper::assertDailyWindow($start, $end);
+
+        $dayOfWeek = strtolower($start->englishDayOfWeek);
+        $startTime = $start->format('H:i:s');
+        $endTime = $end->format('H:i:s');
+        $date = $start->toDateString();
+
+        // Construire la requête
+        $query = Availability::where('schedulable_id', $schedulable->id)
+            ->where('schedulable_type', get_class($schedulable))
+            ->whereJsonContains('days', $dayOfWeek);
+
+        // PROBLÈME : daily_start/daily_end sont des Carbon objects avec dates complètes
+        // SOLUTION : Utiliser TIME() pour extraire seulement l'heure ou comparer en format H:i:s
+        $query->whereRaw('TIME(daily_start) <= ?', [$startTime])
+            ->whereRaw('TIME(daily_end) >= ?', [$endTime]);
+
+        // Conditions de validité - ATTENTION : validity_start/end sont aussi des Carbon
+        // On doit comparer les dates (sans l'heure)
+        $query->where(function ($q) use ($date): void {
+            $q->whereNull('validity_start')
+                ->orWhereDate('validity_start', '<=', $date);
+        });
+
+        $query->where(function ($q) use ($date): void {
+            $q->whereNull('validity_end')
+                ->orWhereDate('validity_end', '>=', $date);
+        });
+
+        if ($type !== null) {
+            $query->where('type', $type);
+        }
+
+        /** @var Availability|null $availability */
+        $availability = $query->first();
 
         return $availability;
     }
-
 
     /**
      * Updates an existing availability record.
