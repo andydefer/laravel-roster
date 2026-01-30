@@ -22,13 +22,14 @@ interface AvailabilityRepositoryInterface extends RepositoryInterface
     public function findForSchedulable(Model $model, ?string $type = null): Builder;
 
     /**
-     * Get all availabilities for a schedulable resource within a date range.
+     * Retrieves availabilities valid within a specific date range.
      *
-     * @param Model $model The schedulable resource model
-     * @param Carbon $start Start date of the range
-     * @param Carbon $end End date of the range
+     * @param Model $model The schedulable entity
+     * @param Carbon $startDate Start date of the range
+     * @param Carbon $endDate End date of the range
      * @param string|null $type Optional availability type filter
-     * @return Collection<int, Availability> Collection of availabilities
+     *
+     * @return Collection<int, Availability> Collection of matching availabilities
      */
     public function getForDateRange(Model $model, Carbon $start, Carbon $end, ?string $type = null): Collection;
 
@@ -36,12 +37,12 @@ interface AvailabilityRepositoryInterface extends RepositoryInterface
      * Find a specific availability that covers a time slot.
      *
      * @param Model $model The schedulable resource model
-     * @param Carbon $start Start time of the slot
-     * @param Carbon $end End time of the slot
+     * @param Carbon $slotStart slotStart time of the slot
+     * @param Carbon $slotEnd slotEnd time of the slot
      * @param string|null $type Optional availability type filter
      * @return Availability|null The availability covering the slot, or null if not found
      */
-    public function getAvailabilityForTimeSlot(Model $model, Carbon $start, Carbon $end, ?string $type = null): ?Availability;
+    public function getAvailabilityForTimeSlot(Model $model, Carbon $slotStart, Carbon $slotEnd, ?string $type = null): ?Availability;
 
     /**
      * Get all availabilities for a specific date.

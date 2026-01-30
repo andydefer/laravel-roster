@@ -43,14 +43,14 @@ final class AvailabilityServiceFindTest extends TestCase
         // Arrange: Create availability for Thursday 9:00-17:00 (1er juillet 2038 est un jeudi)
         $availability = $this->createTestAvailability(
             days: ['thursday'], // Jeudi
-            dailyStart: '09:00:00',
-            dailyEnd: '17:00:00',
+            dailyStart: '10:00:00',
+            dailyEnd: '14:00:00',
             validityStart: '2038-07-01',
             validityEnd: '2038-07-31'
         );
 
-        $slotStart = Carbon::parse('2038-07-01 12:00:00'); // Jeudi 1er juillet
-        $slotEnd = Carbon::parse('2038-07-01 13:00:00');
+        $slotStart = Carbon::parse('2038-07-01 10:45:00'); // Jeudi 1er juillet
+        $slotEnd = Carbon::parse('2038-07-01 11:30:00');
 
         // Act: Find availability for time slot
         $result = availability_for($this->schedulable)

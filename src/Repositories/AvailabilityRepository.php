@@ -23,105 +23,94 @@ class AvailabilityRepository extends AbstractRepository implements AvailabilityR
     /**
      * Retrieves a query builder for availabilities of a specific schedulable entity.
      *
-     * @param Model $model The schedulable entity (e.g., User, Team)
+     * @param Model $schedulable The schedulable entity (e.g., User, Team)
      * @param string|null $type Optional availability type filter
      *
      * @return Builder Query builder for availabilities
      */
-    public function findForSchedulable(Model $model, ?string $type = null): Builder
+    public function findForSchedulable(Model $schedulable, ?string $type = null): Builder
     {
-        $builder = $this->buildBaseQuery($model);
+        $query = $this->buildBaseQuery($schedulable);
 
         if ($type !== null) {
-            $builder->where('type', $type);
+            $query->where('type', $type);
         }
 
-        return $builder;
+        return $query;
     }
 
     /**
      * Retrieves availabilities valid within a specific date range.
      *
      * @param Model $model The schedulable entity
-     * @param Carbon $start Start date of the range
-     * @param Carbon $end End date of the range
+     * @param Carbon $startDate Start date of the range
+     * @param Carbon $endDate End date of the range
      * @param string|null $type Optional availability type filter
      *
      * @return Collection<int, Availability> Collection of matching availabilities
      */
     public function getForDateRange(
         Model $model,
-        Carbon $start,
-        Carbon $end,
+        Carbon $startDate,
+        Carbon $endDate,
         ?string $type = null
     ): Collection {
-        $builder = $this->buildBaseQuery($model)
-            ->where(function ($query) use ($end): void {
+        $query = $this->buildBaseQuery($model)
+            ->where(function (Builder $query) use ($endDate): void {
                 $query->whereNull('validity_start')
-                    ->orWhere('validity_start', '<=', $end);
+                    ->orWhere('validity_start', '<=', $endDate);
             })
-            ->where(function ($query) use ($start): void {
+            ->where(function (Builder $query) use ($startDate): void {
                 $query->whereNull('validity_end')
-                    ->orWhere('validity_end', '>=', $start);
+                    ->orWhere('validity_end', '>=', $startDate);
             });
 
         if ($type !== null) {
-            $builder->where('type', $type);
+            $query->where('type', $type);
         }
 
-        return $builder->get();
+        return $query->get();
     }
 
-    // Dans AvailabilityRepository.php
     /**
      * Finds an availability that covers a specific time slot.
      *
-     * @param Model $schedulable The schedulable entity
-     * @param Carbon $start Start time of the slot
-     * @param Carbon $end End time of the slot
+     * @param Model $model The schedulable entity
+     * @param Carbon $slotStart Start time of the slot
+     * @param Carbon $slotEnd End time of the slot
      * @param string|null $type Optional availability type filter
      *
      * @return Availability|null Matching availability or null if none found
      */
     public function getAvailabilityForTimeSlot(
         Model $model,
-        Carbon $start,
-        Carbon $end,
+        Carbon $slotStart,
+        Carbon $slotEnd,
         ?string $type = null
     ): ?Availability {
-        TimeWindowHelper::assertDailyWindow($start, $end);
+        TimeWindowHelper::assertDailyWindow($slotStart, $slotEnd);
 
-        $dayOfWeek = strtolower($start->englishDayOfWeek);
-        $startTime = $start->format('H:i:s');
-        $endTime = $end->format('H:i:s');
-        $date = $start->toDateString();
-
-        $query = Availability::where('schedulable_id', $model->id)
-            ->where('schedulable_type', get_class($model))
-            ->whereJsonContains('days', $dayOfWeek)
-            ->where('daily_start', '<=', $startTime)
-            ->where('daily_end', '>=', $endTime);
+        $query = $this->buildBaseQuery($model)
+            ->whereJsonContains('days', strtolower($slotStart->englishDayOfWeek))
+            ->where('daily_start', '<=', $slotStart->format('H:i:s'))
+            ->where('daily_end', '>=', $slotEnd->format('H:i:s'));
 
         if ($type !== null) {
             $query->where('type', $type);
         }
 
-        // Vérifier la période de validité
-        $query->where(function ($q) use ($date) {
-            $q->whereNull('validity_start')
-                ->orWhere('validity_start', '<=', $date);
-        })->where(function ($q) use ($date) {
-            $q->whereNull('validity_end')
-                ->orWhere('validity_end', '>=', $date);
-        });
+        $this->applyDateRangeFilters($query, $slotStart, $slotEnd);
 
-        return $query->first();
+        /** @var Availability|null $availability */
+        $availability = $query->first();
+
+        return $availability;
     }
 
     /**
      * Retrieves availabilities applicable to a specific date.
      *
-     * @param Model $model The schedulable entity
+     * @param Model $schedulable The schedulable entity
      * @param Carbon $date Target date
      * @param string|null $type Optional availability type filter
      *
@@ -132,17 +121,20 @@ class AvailabilityRepository extends AbstractRepository implements AvailabilityR
         Carbon $date,
         ?string $type = null
     ): Collection {
-        $builder = $this->buildBaseQuery($model)
+        $query = $this->buildBaseQuery($model)
             ->whereJsonContains('days', strtolower($date->englishDayOfWeek));
 
         if ($type !== null) {
-            $builder->where('type', $type);
+            $query->where('type', $type);
         }
 
-        $this->applyDateFilters($builder, $date);
+        $this->applyDateFilters($query, $date);
 
         /** @var Collection<int, Availability> $availabilities */
-        $availabilities = $builder->orderBy('daily_start')->get();
+        $availabilities = $query
+            ->orderBy('daily_start')
+            ->get()
+            ->unique('id');
 
         return $availabilities;
     }
@@ -175,43 +167,43 @@ class AvailabilityRepository extends AbstractRepository implements AvailabilityR
     /**
      * Finds an availability for a time slot with conflict detection information.
      *
-     * @param Model $model The schedulable entity
-     * @param Carbon $start Start time of the slot
-     * @param Carbon $end End time of the slot
+     * @param Model $schedulable The schedulable entity
+     * @param Carbon $slotStart Start time of the slot
+     * @param Carbon $slotEnd End time of the slot
      * @param string|null $type Optional availability type filter
      *
      * @return Availability|null Matching availability with conflict flags or null
      */
     public function findForTimeSlotWithConflictInfo(
-        Model $model,
-        Carbon $start,
-        Carbon $end,
+        Model $schedulable,
+        Carbon $slotStart,
+        Carbon $slotEnd,
         ?string $type = null
     ): ?Availability {
-        return Availability::where('schedulable_id', $model->id)
-            ->where('schedulable_type', get_class($model))
-            ->when($type !== null, function ($query) use ($type): void {
+        return Availability::where('schedulable_id', $schedulable->id)
+            ->where('schedulable_type', get_class($schedulable))
+            ->when($type !== null, function (Builder $query) use ($type): void {
                 $query->where('type', $type);
             })
-            ->whereJsonContains('days', strtolower($start->englishDayOfWeek))
-            ->where('daily_start', '<=', $start->format('H:i:s'))
-            ->where('daily_end', '>=', $end->format('H:i:s'))
-            ->where(function ($query) use ($start): void {
+            ->whereJsonContains('days', strtolower($slotStart->englishDayOfWeek))
+            ->where('daily_start', '<=', $slotStart->format('H:i:s'))
+            ->where('daily_end', '>=', $slotEnd->format('H:i:s'))
+            ->where(function (Builder $query) use ($slotStart): void {
                 $query->whereNull('validity_start')
-                    ->orWhere('validity_start', '<=', $start->toDateString());
+                    ->orWhere('validity_start', '<=', $slotStart->toDateString());
             })
-            ->where(function ($query) use ($end): void {
+            ->where(function (Builder $query) use ($slotEnd): void {
                 $query->whereNull('validity_end')
-                    ->orWhere('validity_end', '>=', $end->toDateString());
+                    ->orWhere('validity_end', '>=', $slotEnd->toDateString());
             })
             ->withExists([
-                'schedules as has_overlapping_schedules' => function ($query) use ($start, $end): void {
-                    $query->where('start_datetime', '<', $end)
-                        ->where('end_datetime', '>', $start);
+                'schedules as has_overlapping_schedules' => function (Builder $query) use ($slotStart, $slotEnd): void {
+                    $query->where('start_datetime', '<', $slotEnd)
+                        ->where('end_datetime', '>', $slotStart);
                 },
-                'impediments as has_overlapping_impediments' => function ($query) use ($start, $end): void {
-                    $query->where('start_datetime', '<', $end)
-                        ->where('end_datetime', '>', $start);
+                'impediments as has_overlapping_impediments' => function (Builder $query) use ($slotStart, $slotEnd): void {
+                    $query->where('start_datetime', '<', $slotEnd)
+                        ->where('end_datetime', '>', $slotStart);
                 }
             ])
             ->first();
@@ -220,58 +212,58 @@ class AvailabilityRepository extends AbstractRepository implements AvailabilityR
     /**
      * Builds a base query for availabilities of a schedulable entity.
      *
-     * @param Model $model The schedulable entity
+     * @param Model $schedulable The schedulable entity
      *
      * @return Builder Base query builder
      */
-    private function buildBaseQuery(Model $model): Builder
+    private function buildBaseQuery(Model $schedulable): Builder
     {
-        return Availability::where('schedulable_id', $model->id)
-            ->where('schedulable_type', get_class($model));
+        return Availability::where('schedulable_id', $schedulable->id)
+            ->where('schedulable_type', get_class($schedulable));
     }
 
     /**
      * Applies time slot filters to a query builder.
      *
-     * @param Builder $builder Query builder to modify
-     * @param Carbon $start Start time of the slot
-     * @param Carbon $end End time of the slot
+     * @param Builder $query Query builder to modify
+     * @param Carbon $slotStart Start time of the slot
+     * @param Carbon $slotEnd End time of the slot
      */
-    private function applyTimeSlotFilters(Builder $builder, Carbon $start, Carbon $end): void
+    private function applyTimeSlotFilters(Builder $query, Carbon $slotStart, Carbon $slotEnd): void
     {
-        TimeWindowHelper::assertDailyWindow($start, $end);
+        TimeWindowHelper::assertDailyWindow($slotStart, $slotEnd);
 
-        $builder->whereJsonContains('days', strtolower($start->englishDayOfWeek))
-            ->where('daily_start', '<=', $start->format('H:i:s'))
-            ->where('daily_end', '>=', $end->format('H:i:s'));
+        $query->whereJsonContains('days', strtolower($slotStart->englishDayOfWeek))
+            ->where('daily_start', '<=', $slotStart->format('H:i:s'))
+            ->where('daily_end', '>=', $slotEnd->format('H:i:s'));
 
-        $this->applyDateRangeFilters($builder, $start, $end);
+        $this->applyDateRangeFilters($query, $slotStart, $slotEnd);
     }
 
     /**
      * Applies date-specific filters to a query builder.
      *
-     * @param Builder $builder Query builder to modify
+     * @param Builder $query Query builder to modify
      * @param Carbon $date Target date
      */
-    private function applyDateFilters(Builder $builder, Carbon $date): void
+    private function applyDateFilters(Builder $query, Carbon $date): void
     {
-        $this->applyDateRangeFilters($builder, $date, $date);
+        $this->applyDateRangeFilters($query, $date, $date);
     }
 
     /**
      * Applies date range validity filters to a query builder.
      *
-     * @param Builder $builder Query builder to modify
+     * @param Builder $query Query builder to modify
      * @param Carbon $startDate Start date of validity period
      * @param Carbon $endDate End date of validity period
      */
-    private function applyDateRangeFilters(Builder $builder, Carbon $startDate, Carbon $endDate): void
+    private function applyDateRangeFilters(Builder $query, Carbon $startDate, Carbon $endDate): void
     {
-        $builder->where(function ($query) use ($startDate): void {
+        $query->where(function (Builder $query) use ($startDate): void {
             $query->whereNull('validity_start')
                 ->orWhere('validity_start', '<=', $startDate->toDateString());
-        })->where(function ($query) use ($endDate): void {
+        })->where(function (Builder $query) use ($endDate): void {
             $query->whereNull('validity_end')
                 ->orWhere('validity_end', '>=', $endDate->toDateString());
         });

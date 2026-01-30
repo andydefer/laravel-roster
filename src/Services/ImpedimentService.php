@@ -80,8 +80,8 @@ class ImpedimentService extends AbstractService
     {
         $availability = $this->availabilityRepository->getAvailabilityForTimeSlot(
             model: $this->schedulable,
-            start: $start,
-            end: $end,
+            slotStart: $start,
+            slotEnd: $end,
             type: $type
         );
 
@@ -110,8 +110,8 @@ class ImpedimentService extends AbstractService
     {
         $availability = $this->availabilityRepository->getAvailabilityForTimeSlot(
             model: $this->schedulable,
-            start: $start,
-            end: $end,
+            slotStart: $start,
+            slotEnd: $end,
             type: $type
         );
 

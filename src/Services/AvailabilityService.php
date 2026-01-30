@@ -7,7 +7,6 @@ namespace Roster\Services;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Carbon;
 use Roster\Domain\Helpers\TimeWindowHelper;
-use Roster\DTOs\AvailabilityDto;
 use Roster\Enums\EntityType;
 use Roster\Enums\OperationType;
 use Roster\Models\Availability;
@@ -18,8 +17,8 @@ use Roster\Validation\Exceptions\ValidationFailedException;
 /**
  * Service for managing Availability entities.
  *
- * Handles creation, updating, and validation of availability periods
- * with automatic day adjustment based on validity periods.
+ * Handles creation, updating, validation, and time slot coverage checks
+ * for availability periods with automatic day adjustment based on validity periods.
  */
 class AvailabilityService extends AbstractService
 {
@@ -60,6 +59,23 @@ class AvailabilityService extends AbstractService
         return parent::create($data);
     }
 
+    /**
+     * Finds an availability that fully covers a specific time slot.
+     *
+     * This method searches for an availability that:
+     * 1. Belongs to the current schedulable entity
+     * 2. Has the specified type (if provided)
+     * 3. Includes the day of week of the slot
+     * 4. Has a daily window that fully contains the slot time
+     * 5. Is valid during the slot's date range
+     *
+     * @param Model $model Schedulable entity to check availabilities for
+     * @param Carbon $start Start time of the slot
+     * @param Carbon $end End time of the slot
+     * @param string|null $type Optional availability type filter
+     * @return Availability|null Matching availability or null if none found
+     * @throws \InvalidArgumentException When time window is invalid
+     */
     public function getAvailabilityForTimeSlot(
         Model $model,
         Carbon $start,
@@ -68,40 +84,91 @@ class AvailabilityService extends AbstractService
     ): ?Availability {
         TimeWindowHelper::assertDailyWindow($start, $end);
 
-        $dayOfWeek = strtolower($start->englishDayOfWeek);
-        $startTime = $start->format('H:i:s');
-        $endTime = $end->format('H:i:s');
-        $date = $start->toDateString();
+        /** @var \Illuminate\Database\Eloquent\Collection<int, Availability> $potentialAvailabilities */
+        $potentialAvailabilities = Availability::where('schedulable_id', $model->id)
+            ->where('schedulable_type', get_class($model))
+            ->when($type !== null, fn($query) => $query->where('type', $type))
+            ->whereJsonContains('days', strtolower($start->englishDayOfWeek))
+            ->get();
 
-        $query = Availability::where('schedulable_id', $model->id)
-            ->where('schedulable_type', get_class($model));
-
-        if ($type !== null) {
-            $query->where('type', $type);
+        foreach ($potentialAvailabilities as $availability) {
+            if ($this->doesAvailabilityCoverTimeSlot($availability, $start, $end)) {
+                return $availability;
+            }
         }
 
-        // Filtre sur les jours (JSON)
-        $query->whereJsonContains('days', $dayOfWeek);
-
-        // CORRECTION : Pour daily_start et daily_end, extraire seulement l'heure
-        $query->whereRaw('TIME(daily_start) <= ?', [$startTime])
-            ->whereRaw('TIME(daily_end) >= ?', [$endTime]);
-
-        // CORRECTION : Pour validity_start et validity_end, utiliser DATE()
-        $query->where(function ($q) use ($date) {
-            $q->whereNull('validity_start')
-                ->orWhereRaw('DATE(validity_start) <= ?', [$date]);
-        })->where(function ($q) use ($date) {
-            $q->whereNull('validity_end')
-                ->orWhereRaw('DATE(validity_end) >= ?', [$date]);
-        });
-
-
-
-        $result = $query->first();
-
-        return $result;
+        return null;
     }
+
+    /**
+     * Determines if an availability entity fully covers a given time slot.
+     *
+     * Checks daily time window coverage and validity period constraints.
+     *
+     * @param Availability $availability Availability entity to check
+     * @param Carbon $slotStart Start time of the slot to verify
+     * @param Carbon $slotEnd End time of the slot to verify
+     * @return bool True if the availability fully covers the time slot
+     */
+    private function doesAvailabilityCoverTimeSlot(
+        Availability $availability,
+        Carbon $slotStart,
+        Carbon $slotEnd
+    ): bool {
+        if (!$this->isSlotWithinDailyWindow($availability, $slotStart, $slotEnd)) {
+            return false;
+        }
+
+        if (!$this->isSlotWithinValidityPeriod($availability, $slotStart)) {
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * Verifies if a time slot falls within an availability's daily time window.
+     *
+     * @param Availability $availability Availability entity
+     * @param Carbon $slotStart Slot start time
+     * @param Carbon $slotEnd Slot end time
+     * @return bool True if slot is within daily window
+     */
+    private function isSlotWithinDailyWindow(
+        Availability $availability,
+        Carbon $slotStart,
+        Carbon $slotEnd
+    ): bool {
+        $slotStartTime = $slotStart->format('H:i:s');
+        $slotEndTime = $slotEnd->format('H:i:s');
+        $availabilityStartTime = $availability->daily_start->format('H:i:s');
+        $availabilityEndTime = $availability->daily_end->format('H:i:s');
+
+        return $slotStartTime >= $availabilityStartTime && $slotEndTime <= $availabilityEndTime;
+    }
+
+    /**
+     * Verifies if a slot date falls within an availability's validity period.
+     *
+     * @param Availability $availability Availability entity
+     * @param Carbon $slotStart Slot start time (date part is used)
+     * @return bool True if slot date is within validity period
+     */
+    private function isSlotWithinValidityPeriod(
+        Availability $availability,
+        Carbon $slotStart
+    ): bool {
+        $slotDate = $slotStart->toDateString();
+
+        $isAfterStart = !$availability->validity_start ||
+            $slotDate >= $availability->validity_start->toDateString();
+
+        $isBeforeEnd = !$availability->validity_end ||
+            $slotDate <= $availability->validity_end->toDateString();
+
+        return $isAfterStart && $isBeforeEnd;
+    }
+
     /**
      * Updates an existing availability record.
      *
@@ -132,7 +199,7 @@ class AvailabilityService extends AbstractService
         [$validDays, $invalidDays] = $reconciliationResult;
         $data['days'] = $validDays;
 
-        $this->triggerInvalidDaysWarningIfNeeded($invalidDays);
+        $this->warnAboutInvalidDaysIfEnabled($invalidDays);
 
         return parent::update($id, $data);
     }
@@ -160,19 +227,20 @@ class AvailabilityService extends AbstractService
      * Triggers a warning if invalid days were detected and warnings are enabled.
      *
      * @param array<int, string> $invalidDays Days outside the validity period
-     * @return void
      */
-    private function triggerInvalidDaysWarningIfNeeded(array $invalidDays): void
+    private function warnAboutInvalidDaysIfEnabled(array $invalidDays): void
     {
-        if (!empty($invalidDays) && config('roster.reconciliation_warning')) {
-            trigger_error(
-                sprintf(
-                    'The following days were outside the validity period and have been removed: %s',
-                    implode(', ', $invalidDays)
-                ),
-                E_USER_WARNING
-            );
+        if (empty($invalidDays) || !config('roster.reconciliation_warning')) {
+            return;
         }
+
+        trigger_error(
+            sprintf(
+                'The following days were outside the validity period and have been removed: %s',
+                implode(', ', $invalidDays)
+            ),
+            E_USER_WARNING
+        );
     }
 
     /**
