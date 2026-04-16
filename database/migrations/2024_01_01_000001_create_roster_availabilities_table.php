@@ -44,8 +44,8 @@ return new class extends Migration
             $table->json('days')
                 ->comment('Recurring days of the week (e.g., ["monday","wednesday"])');
 
-            $table->timestamp('validity_start')->comment('Start timestamp of the availability validity period');
-            $table->timestamp('validity_end')->comment('End timestamp of the availability validity period');
+            $table->datetime('validity_start')->comment('Start timestamp of the availability validity period');
+            $table->datetime('validity_end')->comment('End timestamp of the availability validity period');
 
             $table->timestamps();
             $table->softDeletes();
