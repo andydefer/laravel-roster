@@ -7,6 +7,8 @@ namespace Roster\Services;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Log;
+use Roster\Config\RosterConfig;
 use Roster\Contracts\Repository\AvailabilityRepositoryInterface;
 use Roster\Contracts\Services\ScheduleServiceInterface;
 use Roster\Enums\EntityType;
@@ -221,12 +223,13 @@ class ScheduleService extends AbstractService implements ScheduleServiceInterfac
     /**
      * Find the next available time slot from a given starting point.
      *
-     * @param int $durationMinutes Required slot duration in minutes
+     * @param int $durationMinutes Required slot duration in minutes (minimum 10 minutes for performance)
      * @param string|null $type Availability type filter
      * @param bool $returnStartOnly Whether to return only the start time
      * @param Carbon|null $startFrom Search starting date (defaults to now)
      * @param Carbon|null $endBefore Search ending date (defaults to max period days from start)
      * @return array|Carbon|null Available slot data, start time only, or null if no slot found
+     * @throws \InvalidArgumentException When durationMinutes is less than minimum allowed (10 minutes)
      */
     public function findNextSlot(
         int $durationMinutes,
@@ -235,14 +238,19 @@ class ScheduleService extends AbstractService implements ScheduleServiceInterfac
         ?Carbon $startFrom = null,
         ?Carbon $endBefore = null
     ): array|Carbon|null {
+        $this->validateDurationMinutes($durationMinutes);
+
         $searchStart = $startFrom ?? Carbon::now();
         $searchEnd = $endBefore ?? $searchStart->copy()->addDays(
-            config('roster.durations.max_search_period_days', 30)
+            config('roster.durations.max_search_period_days', RosterConfig::MAX_DAYS_ITERATION)
         );
 
         $currentDate = $searchStart->copy()->startOfDay();
+        $dayIteration = 0;
 
-        while ($currentDate->lt($searchEnd)) {
+        while ($dayIteration < RosterConfig::MAX_DAYS_ITERATION && $currentDate->lt($searchEnd)) {
+            $dayIteration++;
+
             $slot = $this->findFirstAvailableSlotInDay(
                 day: $currentDate,
                 durationMinutes: $durationMinutes,
@@ -295,9 +303,10 @@ class ScheduleService extends AbstractService implements ScheduleServiceInterfac
      *
      * @param Carbon $startDate Range start date
      * @param Carbon $endDate Range end date
-     * @param int $durationMinutes Required slot duration in minutes
+     * @param int $durationMinutes Required slot duration in minutes (minimum 10 minutes for performance)
      * @param string|null $type Availability type filter
      * @return Collection<array> Collection of available slots with start, end, availability and duration
+     * @throws \InvalidArgumentException When durationMinutes is less than minimum allowed (10 minutes)
      */
     public function findAvailableSlots(
         Carbon $startDate,
@@ -305,10 +314,15 @@ class ScheduleService extends AbstractService implements ScheduleServiceInterfac
         int $durationMinutes,
         ?string $type = null
     ): Collection {
+        $this->validateDurationMinutes($durationMinutes);
+
         $availableSlots = collect();
         $currentDate = $startDate->copy()->startOfDay();
+        $dayIteration = 0;
 
-        while ($currentDate->lte($endDate)) {
+        while ($dayIteration < RosterConfig::MAX_DAYS_ITERATION && $currentDate->lte($endDate)) {
+            $dayIteration++;
+
             $dailySlots = $this->findAllAvailableSlotsInDay(
                 day: $currentDate,
                 durationMinutes: $durationMinutes,
@@ -364,6 +378,35 @@ class ScheduleService extends AbstractService implements ScheduleServiceInterfac
     protected function getAvailabilityRepository(): AvailabilityRepositoryInterface
     {
         return $this->availabilityRepository;
+    }
+
+    /**
+     * Validate that duration minutes meets minimum requirements.
+     *
+     * @param int $durationMinutes Duration to validate
+     * @throws \InvalidArgumentException When duration is invalid
+     */
+    private function validateDurationMinutes(int $durationMinutes): void
+    {
+        if ($durationMinutes <= 0) {
+            throw new \InvalidArgumentException(
+                sprintf(
+                    'Duration minutes must be greater than 0. Got: %d',
+                    $durationMinutes
+                )
+            );
+        }
+
+        if ($durationMinutes < RosterConfig::ABSOLUTE_MIN_DURATION_MINUTES) {
+            throw new \InvalidArgumentException(
+                sprintf(
+                    'Duration minutes must be at least %d minutes for performance reasons. ' .
+                        'Smaller durations would generate too many iterations and slow down the system. Got: %d',
+                    RosterConfig::ABSOLUTE_MIN_DURATION_MINUTES,
+                    $durationMinutes
+                )
+            );
+        }
     }
 
     /**
@@ -452,21 +495,36 @@ class ScheduleService extends AbstractService implements ScheduleServiceInterfac
         $availabilityStart = $this->createDayTime($day, $availability->daily_start);
         $availabilityEnd = $this->createDayTime($day, $availability->daily_end);
 
-        $slotInterval = (int) config('roster.durations.default_slot_interval_minutes', 15);
-        $slotStart = $this->alignToInterval($availabilityStart, $slotInterval);
+        $slotInterval = (int) config('roster.durations.default_slot_interval_minutes', RosterConfig::DEFAULT_SLOT_INTERVAL);
 
-        while ($slotStart->copy()->addMinutes($durationMinutes)->lte($availabilityEnd)) {
+        if ($slotInterval <= 0) {
+            $slotInterval = RosterConfig::DEFAULT_SLOT_INTERVAL;
+        }
+
+        $slotStart = $this->alignToInterval($availabilityStart, $slotInterval);
+        $iteration = 0;
+
+        while ($iteration < RosterConfig::MAX_ITERATIONS && $slotStart->copy()->addMinutes($durationMinutes)->lte($availabilityEnd)) {
+            $iteration++;
             $slotEnd = $slotStart->copy()->addMinutes($durationMinutes);
 
             if ($this->isTimeSlotAvailable($slotStart, $slotEnd, $availability->type)) {
                 $slots->push($this->createSlotData($slotStart, $slotEnd, $availability, $durationMinutes));
-
                 $slotStart = $slotEnd->copy();
             } else {
                 $slotStart->addMinutes($slotInterval);
             }
 
             $slotStart = $this->alignToInterval($slotStart, $slotInterval);
+        }
+
+        if ($iteration >= RosterConfig::MAX_ITERATIONS) {
+            Log::warning('Max iterations reached in findAllSlotsInAvailability', [
+                'availability_id' => $availability->id,
+                'duration_minutes' => $durationMinutes,
+                'slot_interval' => $slotInterval,
+                'day' => $day->toDateString(),
+            ]);
         }
 
         return $slots;
@@ -551,7 +609,12 @@ class ScheduleService extends AbstractService implements ScheduleServiceInterfac
             return null;
         }
 
-        $slotInterval = (int) config('roster.durations.default_slot_interval_minutes', 15);
+        $slotInterval = (int) config('roster.durations.default_slot_interval_minutes', RosterConfig::DEFAULT_SLOT_INTERVAL);
+
+        if ($slotInterval <= 0) {
+            $slotInterval = RosterConfig::DEFAULT_SLOT_INTERVAL;
+        }
+
         $slotStart = $this->alignToInterval($slotStart, $slotInterval);
 
         if ($slotStart->copy()->addMinutes($durationMinutes)->gt($availabilityEnd)) {
@@ -675,7 +738,10 @@ class ScheduleService extends AbstractService implements ScheduleServiceInterfac
         int $slotInterval,
         Availability $availability
     ): ?array {
-        while ($slotStart->copy()->addMinutes($durationMinutes)->lte($availabilityEnd)) {
+        $iteration = 0;
+
+        while ($iteration < RosterConfig::MAX_ITERATIONS && $slotStart->copy()->addMinutes($durationMinutes)->lte($availabilityEnd)) {
+            $iteration++;
             $slotEnd = $slotStart->copy()->addMinutes($durationMinutes);
 
             if ($this->isTimeSlotAvailable($slotStart, $slotEnd, $availability->type)) {
@@ -684,6 +750,14 @@ class ScheduleService extends AbstractService implements ScheduleServiceInterfac
 
             $slotStart->addMinutes($slotInterval);
             $slotStart = $this->alignToInterval($slotStart, $slotInterval);
+        }
+
+        if ($iteration >= RosterConfig::MAX_ITERATIONS) {
+            Log::warning('Max iterations reached in findNextAvailableSlotFromTime', [
+                'availability_id' => $availability->id,
+                'duration_minutes' => $durationMinutes,
+                'slot_interval' => $slotInterval,
+            ]);
         }
 
         return null;

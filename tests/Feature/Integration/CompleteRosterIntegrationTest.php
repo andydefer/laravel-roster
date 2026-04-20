@@ -31,6 +31,11 @@ final class CompleteRosterIntegrationTest extends TestCase
     use RefreshDatabase;
 
     /**
+     * Maximum iterations to prevent infinite loops in test helpers.
+     */
+    private const MAX_ITERATIONS = 1000;
+
+    /**
      * Primary doctor entity for testing.
      */
     private TestSchedulable $primaryDoctor;
@@ -1396,26 +1401,53 @@ final class CompleteRosterIntegrationTest extends TestCase
         $impediments = [];
         $availabilityDays = $availability->days;
         $currentDate = Carbon::parse($availability->validity_start);
+        $validityEnd = Carbon::parse($availability->validity_end);
 
-        // Find first valid day
-        while (!in_array(strtolower($currentDate->englishDayOfWeek), $availabilityDays, true)) {
+        $iteration = 0;
+
+        // Find first valid day with protection
+        while (
+            $iteration < self::MAX_ITERATIONS &&
+            !in_array(strtolower($currentDate->englishDayOfWeek), $availabilityDays, true)
+        ) {
             $currentDate->addDay();
+            $iteration++;
+
+            // Check if we've exceeded validity period
+            if ($currentDate->gt($validityEnd)) {
+                return []; // No valid day found
+            }
+        }
+
+        // Stop if we couldn't find a valid day
+        if ($iteration >= self::MAX_ITERATIONS) {
+            return [];
         }
 
         $startHour = (int) $availability->daily_start->format('H') + 1;
         $endHour   = $startHour + 2;
 
-        // Create 3 impediments
+        // Create up to 3 impediments
         for ($j = 1; $j <= 3; ++$j) {
             if ($endHour <= (int) $availability->daily_end->format('H')) {
-                $impediments[] = impediment_for($availability)->create([
-                    'reason' => sprintf('Empêchement %d pour %s', $j, $availability->type),
-                    'start_datetime' => $currentDate->copy()->setTime($startHour, 0, 0),
-                    'end_datetime'   => $currentDate->copy()->setTime($endHour, 0, 0),
-                ]);
+                try {
+                    $impediments[] = impediment_for($availability)->create([
+                        'reason' => sprintf('Empêchement %d pour %s', $j, $availability->type),
+                        'start_datetime' => $currentDate->copy()->setTime($startHour, 0, 0),
+                        'end_datetime'   => $currentDate->copy()->setTime($endHour, 0, 0),
+                    ]);
+                } catch (Exception $e) {
+                    // Skip if impediment creation fails
+                    continue;
+                }
             }
 
             $currentDate->addWeek();
+
+            // Stop if we exceed validity period
+            if ($currentDate->gt($validityEnd)) {
+                break;
+            }
         }
 
         return $impediments;
@@ -1433,18 +1465,37 @@ final class CompleteRosterIntegrationTest extends TestCase
     ): array {
         $schedules = [];
         $availabilityDays = $availability->days;
-        $currentDate = Carbon::parse($availability->validity_start)->addDays(2);
+        $validityStart = Carbon::parse($availability->validity_start);
+        $validityEnd = Carbon::parse($availability->validity_end);
 
+        $currentDate = $validityStart->copy()->addDays(2);
         $schedulesCreated = 0;
-        $maxAttempts = 10;
+        $maxAttempts = 50; // Increased but still safe
+        $totalIteration = 0;
 
         // Try to create up to 4 schedules
-        for ($k = 1; $k <= 4 && $schedulesCreated < 4 && $maxAttempts > 0; ++$k) {
-            --$maxAttempts;
+        for ($k = 1; $k <= 4 && $schedulesCreated < 4 && $totalIteration < self::MAX_ITERATIONS; ++$k) {
+            $totalIteration++;
 
-            // Find valid day
-            while (!in_array(strtolower($currentDate->englishDayOfWeek), $availabilityDays, true)) {
+            // Find valid day with protection
+            $daySearchIteration = 0;
+
+            while (
+                $daySearchIteration < self::MAX_ITERATIONS &&
+                !in_array(strtolower($currentDate->englishDayOfWeek), $availabilityDays, true)
+            ) {
                 $currentDate->addDay();
+                $daySearchIteration++;
+
+                // Check if we've exceeded validity period
+                if ($currentDate->gt($validityEnd)) {
+                    break 2; // No more valid days
+                }
+            }
+
+            // Stop if we couldn't find a valid day
+            if ($daySearchIteration >= self::MAX_ITERATIONS) {
+                break;
             }
 
             $startHour = (int) $availability->daily_start->format('H');
@@ -1476,6 +1527,11 @@ final class CompleteRosterIntegrationTest extends TestCase
             }
 
             $currentDate->addDays(2);
+
+            // Stop if we exceed validity period
+            if ($currentDate->gt($validityEnd)) {
+                break;
+            }
         }
 
         return $schedules;

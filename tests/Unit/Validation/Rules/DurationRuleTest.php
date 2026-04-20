@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Unit\Validation\Rules;
 
 use Illuminate\Support\Carbon;
+use Roster\Config\RosterConfig;
 use Roster\Contracts\Validation\ValidationContextInterface;
 use Roster\Enums\EntityType;
 use Roster\Enums\OperationType;
@@ -18,28 +19,22 @@ use Tests\TestCase;
  */
 final class DurationRuleTest extends TestCase
 {
+    private const DEFAULT_AVAILABILITY_MINUTES = 15;
+    private const DEFAULT_SCHEDULE_MINUTES = 15;
+    private const DEFAULT_IMPEDIMENT_MINUTES = 5;
+
     private DurationRule $rule;
 
-    /**
-     * Set up the test case with a fresh rule instance.
-     */
     protected function setUp(): void
     {
         parent::setUp();
         $this->rule = new DurationRule();
     }
 
-    /**
-     * Configure minimum duration settings for different entity types.
-     *
-     * @param int $availabilityMinutes Minimum minutes for availability entities
-     * @param int $scheduleMinutes Minimum minutes for schedule entities
-     * @param int $impedimentMinutes Minimum minutes for impediment entities
-     */
     private function configureMinimumDurations(
-        int $availabilityMinutes = 15,
-        int $scheduleMinutes = 15,
-        int $impedimentMinutes = 5
+        int $availabilityMinutes = self::DEFAULT_AVAILABILITY_MINUTES,
+        int $scheduleMinutes = self::DEFAULT_SCHEDULE_MINUTES,
+        int $impedimentMinutes = self::DEFAULT_IMPEDIMENT_MINUTES
     ): void {
         config([
             'roster.durations.minimum_availability_minutes' => $availabilityMinutes,
@@ -53,7 +48,7 @@ final class DurationRuleTest extends TestCase
      */
     public function test_passes_when_availability_duration_meets_minimum(): void
     {
-        // Arrange: Configure context with valid availability duration
+        // Arrange : Configure context with valid availability duration
         $this->configureMinimumDurations(availabilityMinutes: 15);
 
         $context = $this->createMock(ValidationContextInterface::class);
@@ -66,10 +61,10 @@ final class DurationRuleTest extends TestCase
 
         $context->expects($this->never())->method('setViolationFromRule');
 
-        // Act: Execute validation
+        // Act : Execute validation
         $this->rule->validate($context);
 
-        // Assert: No violations should be set
+        // Assert : No violations should be set
     }
 
     /**
@@ -77,7 +72,7 @@ final class DurationRuleTest extends TestCase
      */
     public function test_fails_when_availability_duration_below_minimum(): void
     {
-        // Arrange: Configure context with insufficient availability duration
+        // Arrange : Configure context with insufficient availability duration
         $this->configureMinimumDurations(availabilityMinutes: 15);
 
         $context = $this->createMock(ValidationContextInterface::class);
@@ -96,10 +91,10 @@ final class DurationRuleTest extends TestCase
                 "Minimum duration of 15 minutes required for availability. Got 10 minutes"
             );
 
-        // Act: Execute validation
+        // Act : Execute validation
         $this->rule->validate($context);
 
-        // Assert: Violation should be set for insufficient duration
+        // Assert : Violation should be set for insufficient duration
     }
 
     /**
@@ -107,7 +102,7 @@ final class DurationRuleTest extends TestCase
      */
     public function test_passes_for_create_when_availability_times_missing(): void
     {
-        // Arrange: Configure context with missing time fields for availability
+        // Arrange : Configure context with missing time fields for availability
         $this->configureMinimumDurations(availabilityMinutes: 15);
 
         $context = $this->createMock(ValidationContextInterface::class);
@@ -119,10 +114,10 @@ final class DurationRuleTest extends TestCase
 
         $context->expects($this->never())->method('setViolationFromRule');
 
-        // Act: Execute validation
+        // Act : Execute validation
         $this->rule->validate($context);
 
-        // Assert: No violations expected when time fields are missing
+        // Assert : No violations expected when time fields are missing
     }
 
     /**
@@ -130,7 +125,7 @@ final class DurationRuleTest extends TestCase
      */
     public function test_passes_for_update_when_availability_times_not_provided(): void
     {
-        // Arrange: Configure context without time fields for update operation
+        // Arrange : Configure context without time fields for update operation
         $this->configureMinimumDurations(availabilityMinutes: 15);
 
         $context = $this->createMock(ValidationContextInterface::class);
@@ -142,10 +137,10 @@ final class DurationRuleTest extends TestCase
 
         $context->expects($this->never())->method('setViolationFromRule');
 
-        // Act: Execute validation
+        // Act : Execute validation
         $this->rule->validate($context);
 
-        // Assert: No violations expected when updating without time fields
+        // Assert : No violations expected when updating without time fields
     }
 
     /**
@@ -153,7 +148,7 @@ final class DurationRuleTest extends TestCase
      */
     public function test_passes_when_schedule_duration_meets_minimum(): void
     {
-        // Arrange: Configure context with valid schedule duration
+        // Arrange : Configure context with valid schedule duration
         $this->configureMinimumDurations(scheduleMinutes: 15);
 
         $start = Carbon::now()->format('Y-m-d H:i:s');
@@ -169,10 +164,10 @@ final class DurationRuleTest extends TestCase
 
         $context->expects($this->never())->method('setViolationFromRule');
 
-        // Act: Execute validation
+        // Act : Execute validation
         $this->rule->validate($context);
 
-        // Assert: No violations expected for valid schedule duration
+        // Assert : No violations expected for valid schedule duration
     }
 
     /**
@@ -180,7 +175,7 @@ final class DurationRuleTest extends TestCase
      */
     public function test_fails_when_schedule_duration_below_minimum(): void
     {
-        // Arrange: Configure context with insufficient schedule duration
+        // Arrange : Configure context with insufficient schedule duration
         $this->configureMinimumDurations(scheduleMinutes: 15);
 
         $start = Carbon::now()->format('Y-m-d H:i:s');
@@ -202,10 +197,10 @@ final class DurationRuleTest extends TestCase
                 "Minimum duration of 15 minutes required for Schedule. Got 10 minutes"
             );
 
-        // Act: Execute validation
+        // Act : Execute validation
         $this->rule->validate($context);
 
-        // Assert: Violation should be set for insufficient schedule duration
+        // Assert : Violation should be set for insufficient schedule duration
     }
 
     /**
@@ -213,7 +208,7 @@ final class DurationRuleTest extends TestCase
      */
     public function test_passes_when_impediment_duration_meets_minimum(): void
     {
-        // Arrange: Configure context with valid impediment duration
+        // Arrange : Configure context with valid impediment duration
         $this->configureMinimumDurations(impedimentMinutes: 5);
 
         $start = Carbon::now()->format('Y-m-d H:i:s');
@@ -229,22 +224,24 @@ final class DurationRuleTest extends TestCase
 
         $context->expects($this->never())->method('setViolationFromRule');
 
-        // Act: Execute validation
+        // Act : Execute validation
         $this->rule->validate($context);
 
-        // Assert: No violations expected for valid impediment duration
+        // Assert : No violations expected for valid impediment duration
     }
 
     /**
      * Test that validation fails when impediment duration is below minimum.
+     * Note: The system enforces an absolute minimum of 10 minutes for all entity types.
      */
     public function test_fails_when_impediment_duration_below_minimum(): void
     {
-        // Arrange: Configure context with insufficient impediment duration
+        // Arrange : Configure context with insufficient impediment duration
+        // Even though we configure 5 minutes, the system enforces 10 minutes minimum
         $this->configureMinimumDurations(impedimentMinutes: 5);
 
         $start = Carbon::now()->format('Y-m-d H:i:s');
-        $end = Carbon::now()->addMinutes(3)->format('Y-m-d H:i:s');
+        $end = Carbon::now()->addMinutes(8)->format('Y-m-d H:i:s');
 
         $context = $this->createMock(ValidationContextInterface::class);
         $context->method('getEntityType')->willReturn(EntityType::IMPEDIMENT);
@@ -254,18 +251,19 @@ final class DurationRuleTest extends TestCase
             'end_datetime' => $end,
         ]);
 
+        // Assert : The system enforces 10 minutes absolute minimum
         $context->expects($this->once())
             ->method('setViolationFromRule')
             ->with(
                 $this->rule,
                 'duration',
-                "Minimum duration of 5 minutes required for Impediment. Got 3 minutes"
+                "Minimum duration of " . RosterConfig::ABSOLUTE_MIN_DURATION_MINUTES . " minutes required for Impediment. Got 8 minutes"
             );
 
-        // Act: Execute validation
+        // Act : Execute validation
         $this->rule->validate($context);
 
-        // Assert: Violation should be set for insufficient impediment duration
+        // Assert : Violation should be set for insufficient impediment duration
     }
 
     /**
@@ -273,7 +271,7 @@ final class DurationRuleTest extends TestCase
      */
     public function test_fails_for_invalid_availability_time_format(): void
     {
-        // Arrange: Configure context with invalid time format for availability
+        // Arrange : Configure context with invalid time format for availability
         $this->configureMinimumDurations(availabilityMinutes: 15);
 
         $context = $this->createMock(ValidationContextInterface::class);
@@ -292,10 +290,10 @@ final class DurationRuleTest extends TestCase
                 $this->stringContains('Invalid time format:')
             );
 
-        // Act: Execute validation
+        // Act : Execute validation
         $this->rule->validate($context);
 
-        // Assert: Violation should be set for invalid time format
+        // Assert : Violation should be set for invalid time format
     }
 
     /**
@@ -303,7 +301,7 @@ final class DurationRuleTest extends TestCase
      */
     public function test_fails_for_invalid_schedule_datetime_format(): void
     {
-        // Arrange: Configure context with invalid datetime format for schedule
+        // Arrange : Configure context with invalid datetime format for schedule
         $this->configureMinimumDurations(scheduleMinutes: 15);
 
         $context = $this->createMock(ValidationContextInterface::class);
@@ -322,10 +320,10 @@ final class DurationRuleTest extends TestCase
                 $this->stringContains('Invalid datetime format:')
             );
 
-        // Act: Execute validation
+        // Act : Execute validation
         $this->rule->validate($context);
 
-        // Assert: Violation should be set for invalid datetime format
+        // Assert : Violation should be set for invalid datetime format
     }
 
     /**
@@ -333,7 +331,7 @@ final class DurationRuleTest extends TestCase
      */
     public function test_handles_partial_update_for_availability(): void
     {
-        // Arrange: Configure context with partial update for availability
+        // Arrange : Configure context with partial update for availability
         $this->configureMinimumDurations(availabilityMinutes: 15);
 
         $context = $this->createMock(ValidationContextInterface::class);
@@ -345,10 +343,10 @@ final class DurationRuleTest extends TestCase
 
         $context->expects($this->never())->method('setViolationFromRule');
 
-        // Act: Execute validation
+        // Act : Execute validation
         $this->rule->validate($context);
 
-        // Assert: No violations expected for partial update
+        // Assert : No violations expected for partial update
     }
 
     /**
@@ -356,7 +354,7 @@ final class DurationRuleTest extends TestCase
      */
     public function test_handles_partial_update_for_schedule(): void
     {
-        // Arrange: Configure context with partial update for schedule
+        // Arrange : Configure context with partial update for schedule
         $this->configureMinimumDurations(scheduleMinutes: 15);
 
         $context = $this->createMock(ValidationContextInterface::class);
@@ -368,10 +366,10 @@ final class DurationRuleTest extends TestCase
 
         $context->expects($this->never())->method('setViolationFromRule');
 
-        // Act: Execute validation
+        // Act : Execute validation
         $this->rule->validate($context);
 
-        // Assert: No violations expected for partial update
+        // Assert : No violations expected for partial update
     }
 
     /**
@@ -379,7 +377,7 @@ final class DurationRuleTest extends TestCase
      */
     public function test_passes_for_update_with_both_availability_times(): void
     {
-        // Arrange: Configure context with complete update for availability
+        // Arrange : Configure context with complete update for availability
         $this->configureMinimumDurations(availabilityMinutes: 15);
 
         $context = $this->createMock(ValidationContextInterface::class);
@@ -392,10 +390,10 @@ final class DurationRuleTest extends TestCase
 
         $context->expects($this->never())->method('setViolationFromRule');
 
-        // Act: Execute validation
+        // Act : Execute validation
         $this->rule->validate($context);
 
-        // Assert: No violations expected for valid update duration
+        // Assert : No violations expected for valid update duration
     }
 
     /**
@@ -403,7 +401,7 @@ final class DurationRuleTest extends TestCase
      */
     public function test_passes_for_update_with_both_schedule_datetimes(): void
     {
-        // Arrange: Configure context with complete update for schedule
+        // Arrange : Configure context with complete update for schedule
         $this->configureMinimumDurations(scheduleMinutes: 15);
 
         $start = Carbon::now()->format('Y-m-d H:i:s');
@@ -419,18 +417,18 @@ final class DurationRuleTest extends TestCase
 
         $context->expects($this->never())->method('setViolationFromRule');
 
-        // Act: Execute validation
+        // Act : Execute validation
         $this->rule->validate($context);
 
-        // Assert: No violations expected for valid update duration
+        // Assert : No violations expected for valid update duration
     }
 
     /**
-     * Test that validation handles exact minimum duration.
+     * Test that validation passes for exact minimum duration.
      */
     public function test_passes_for_exact_minimum_duration(): void
     {
-        // Arrange: Configure context with exact minimum duration for availability
+        // Arrange : Configure context with exact minimum duration for availability
         $this->configureMinimumDurations(availabilityMinutes: 15);
 
         $context = $this->createMock(ValidationContextInterface::class);
@@ -443,10 +441,10 @@ final class DurationRuleTest extends TestCase
 
         $context->expects($this->never())->method('setViolationFromRule');
 
-        // Act: Execute validation
+        // Act : Execute validation
         $this->rule->validate($context);
 
-        // Assert: No violations expected for exact minimum duration
+        // Assert : No violations expected for exact minimum duration
     }
 
     /**
@@ -454,7 +452,7 @@ final class DurationRuleTest extends TestCase
      */
     public function test_uses_correct_display_names_in_error_messages(): void
     {
-        // Arrange: Configure context with insufficient schedule duration
+        // Arrange : Configure context with insufficient schedule duration
         $this->configureMinimumDurations(scheduleMinutes: 15);
 
         $start = Carbon::now()->format('Y-m-d H:i:s');
@@ -476,18 +474,18 @@ final class DurationRuleTest extends TestCase
                 "Minimum duration of 15 minutes required for Schedule. Got 10 minutes"
             );
 
-        // Act: Execute validation
+        // Act : Execute validation
         $this->rule->validate($context);
 
-        // Assert: Error message should contain correct entity display name
+        // Assert : Error message should contain correct entity display name
     }
 
     /**
-     * Test that validation handles edge case with 1 minute difference.
+     * Test that validation passes with 10 minutes (absolute minimum).
      */
-    public function test_handles_one_minute_difference(): void
+    public function test_passes_with_10_minutes_absolute_minimum(): void
     {
-        // Arrange: Configure context with minimal duration for availability
+        // Arrange : Configure context with minimal duration for availability
         $this->configureMinimumDurations(availabilityMinutes: 1);
 
         $context = $this->createMock(ValidationContextInterface::class);
@@ -495,15 +493,15 @@ final class DurationRuleTest extends TestCase
         $context->method('getOperation')->willReturn(OperationType::CREATE);
         $context->method('safeData')->willReturn([
             'start_time' => '09:00:00',
-            'end_time' => '09:01:00',
+            'end_time' => '09:10:00',
         ]);
 
         $context->expects($this->never())->method('setViolationFromRule');
 
-        // Act: Execute validation
+        // Act : Execute validation
         $this->rule->validate($context);
 
-        // Assert: No violations expected for exact minimal duration
+        // Assert : No violations expected for exact minimal duration
     }
 
     /**
@@ -511,7 +509,7 @@ final class DurationRuleTest extends TestCase
      */
     public function test_fails_for_zero_duration(): void
     {
-        // Arrange: Configure context with zero duration for availability
+        // Arrange : Configure context with zero duration for availability
         $this->configureMinimumDurations(availabilityMinutes: 15);
 
         $context = $this->createMock(ValidationContextInterface::class);
@@ -530,10 +528,10 @@ final class DurationRuleTest extends TestCase
                 "Minimum duration of 15 minutes required for availability. Got 0 minutes"
             );
 
-        // Act: Execute validation
+        // Act : Execute validation
         $this->rule->validate($context);
 
-        // Assert: Violation should be set for zero duration
+        // Assert : Violation should be set for zero duration
     }
 
     /**
@@ -541,7 +539,7 @@ final class DurationRuleTest extends TestCase
      */
     public function test_handles_end_time_before_start_time(): void
     {
-        // Arrange: Configure context with negative duration for availability
+        // Arrange : Configure context with negative duration for availability
         $this->configureMinimumDurations(availabilityMinutes: 15);
 
         $context = $this->createMock(ValidationContextInterface::class);
@@ -560,10 +558,10 @@ final class DurationRuleTest extends TestCase
                 "Minimum duration of 15 minutes required for availability. Got -60 minutes"
             );
 
-        // Act: Execute validation
+        // Act : Execute validation
         $this->rule->validate($context);
 
-        // Assert: Violation should be set for negative duration
+        // Assert : Violation should be set for negative duration
     }
 
     /**
@@ -571,7 +569,7 @@ final class DurationRuleTest extends TestCase
      */
     public function test_handles_update_with_only_start_time(): void
     {
-        // Arrange: Configure context with partial update for availability
+        // Arrange : Configure context with partial update for availability
         $this->configureMinimumDurations(availabilityMinutes: 15);
 
         $context = $this->createMock(ValidationContextInterface::class);
@@ -583,10 +581,10 @@ final class DurationRuleTest extends TestCase
 
         $context->expects($this->never())->method('setViolationFromRule');
 
-        // Act: Execute validation
+        // Act : Execute validation
         $this->rule->validate($context);
 
-        // Assert: No violations expected for partial update
+        // Assert : No violations expected for partial update
     }
 
     /**
@@ -594,7 +592,7 @@ final class DurationRuleTest extends TestCase
      */
     public function test_handles_update_with_only_start_datetime(): void
     {
-        // Arrange: Configure context with partial update for schedule
+        // Arrange : Configure context with partial update for schedule
         $this->configureMinimumDurations(scheduleMinutes: 15);
 
         $context = $this->createMock(ValidationContextInterface::class);
@@ -606,10 +604,10 @@ final class DurationRuleTest extends TestCase
 
         $context->expects($this->never())->method('setViolationFromRule');
 
-        // Act: Execute validation
+        // Act : Execute validation
         $this->rule->validate($context);
 
-        // Assert: No violations expected for partial update
+        // Assert : No violations expected for partial update
     }
 
     /**
@@ -617,20 +615,20 @@ final class DurationRuleTest extends TestCase
      */
     public function test_has_description(): void
     {
-        // Act: Get rule description
+        // Act : Get rule description
         $description = $this->rule->getDescription();
 
-        // Assert: Description should not be empty
+        // Assert : Description should not be empty
         $this->assertIsString($description);
         $this->assertNotEmpty($description);
     }
 
     /**
-     * Test that validation handles exact configuration boundaries.
+     * Test that validation passes when minimum is zero (uses absolute minimum 10).
      */
-    public function test_handles_exact_configuration_boundaries(): void
+    public function test_passes_with_zero_configuration_uses_absolute_minimum(): void
     {
-        // Arrange: Configure with exact minimums
+        // Arrange : Configure with exact minimums
         $this->configureMinimumDurations(
             availabilityMinutes: 0,
             scheduleMinutes: 0,
@@ -642,15 +640,15 @@ final class DurationRuleTest extends TestCase
         $context->method('getOperation')->willReturn(OperationType::CREATE);
         $context->method('safeData')->willReturn([
             'start_time' => '09:00:00',
-            'end_time' => '09:00:00',
+            'end_time' => '09:10:00',
         ]);
 
         $context->expects($this->never())->method('setViolationFromRule');
 
-        // Act: Execute validation
+        // Act : Execute validation
         $this->rule->validate($context);
 
-        // Assert: Zero duration should pass when minimum is zero
+        // Assert : Zero duration should pass when minimum is zero
     }
 
     /**
@@ -658,7 +656,7 @@ final class DurationRuleTest extends TestCase
      */
     public function test_handles_very_large_durations(): void
     {
-        // Arrange: Configure context with very large duration
+        // Arrange : Configure context with very large duration
         $this->configureMinimumDurations(availabilityMinutes: 15);
 
         $context = $this->createMock(ValidationContextInterface::class);
@@ -671,10 +669,10 @@ final class DurationRuleTest extends TestCase
 
         $context->expects($this->never())->method('setViolationFromRule');
 
-        // Act: Execute validation
+        // Act : Execute validation
         $this->rule->validate($context);
 
-        // Assert: Large durations should pass validation
+        // Assert : Large durations should pass validation
     }
 
     /**
@@ -682,7 +680,7 @@ final class DurationRuleTest extends TestCase
      */
     public function test_handles_different_time_formats(): void
     {
-        // Arrange: Configure context with various time formats
+        // Arrange : Configure context with various time formats
         $this->configureMinimumDurations(availabilityMinutes: 15);
 
         $context = $this->createMock(ValidationContextInterface::class);
@@ -695,9 +693,127 @@ final class DurationRuleTest extends TestCase
 
         $context->expects($this->never())->method('setViolationFromRule');
 
-        // Act: Execute validation
+        // Act : Execute validation
         $this->rule->validate($context);
 
-        // Assert: Different time formats should be handled correctly
+        // Assert : Different time formats should be handled correctly
+    }
+
+    /**
+     * Test that validation respects absolute minimum of 10 minutes.
+     */
+    public function test_respects_absolute_minimum_of_10_minutes(): void
+    {
+        // Arrange : Try to configure minimum below 10 minutes
+        $this->configureMinimumDurations(
+            availabilityMinutes: 5,
+            scheduleMinutes: 7,
+            impedimentMinutes: 3
+        );
+
+        // Act & Assert : Availability should enforce 10 minutes minimum
+        $context = $this->createMock(ValidationContextInterface::class);
+        $context->method('getEntityType')->willReturn(EntityType::AVAILABILITY);
+        $context->method('getOperation')->willReturn(OperationType::CREATE);
+        $context->method('safeData')->willReturn([
+            'start_time' => '09:00:00',
+            'end_time' => '09:09:00', // 9 minutes - below absolute minimum
+        ]);
+
+        $context->expects($this->once())
+            ->method('setViolationFromRule')
+            ->with(
+                $this->rule,
+                'duration',
+                $this->stringContains('Minimum duration of ' . RosterConfig::ABSOLUTE_MIN_DURATION_MINUTES . ' minutes required for availability')
+            );
+
+        $this->rule->validate($context);
+    }
+
+    /**
+     * Test that validation passes with 10 minutes when config is lower.
+     */
+    public function test_passes_with_10_minutes_when_config_is_lower(): void
+    {
+        // Arrange : Configure minimum below 10 minutes
+        $this->configureMinimumDurations(
+            availabilityMinutes: 5,
+            scheduleMinutes: 7,
+            impedimentMinutes: 3
+        );
+
+        // Act & Assert : Availability with exactly 10 minutes should pass
+        $context = $this->createMock(ValidationContextInterface::class);
+        $context->method('getEntityType')->willReturn(EntityType::AVAILABILITY);
+        $context->method('getOperation')->willReturn(OperationType::CREATE);
+        $context->method('safeData')->willReturn([
+            'start_time' => '09:00:00',
+            'end_time' => '09:10:00', // 10 minutes - meets absolute minimum
+        ]);
+
+        $context->expects($this->never())->method('setViolationFromRule');
+
+        $this->rule->validate($context);
+    }
+
+    /**
+     * Test that schedule enforces absolute minimum of 10 minutes.
+     */
+    public function test_schedule_enforces_absolute_minimum_of_10_minutes(): void
+    {
+        // Arrange : Configure minimum below 10 minutes
+        $this->configureMinimumDurations(scheduleMinutes: 7);
+
+        $start = Carbon::now()->format('Y-m-d H:i:s');
+        $end = Carbon::now()->addMinutes(9)->format('Y-m-d H:i:s');
+
+        $context = $this->createMock(ValidationContextInterface::class);
+        $context->method('getEntityType')->willReturn(EntityType::SCHEDULE);
+        $context->method('getOperation')->willReturn(OperationType::CREATE);
+        $context->method('safeData')->willReturn([
+            'start_datetime' => $start,
+            'end_datetime' => $end,
+        ]);
+
+        $context->expects($this->once())
+            ->method('setViolationFromRule')
+            ->with(
+                $this->rule,
+                'duration',
+                $this->stringContains('Minimum duration of ' . RosterConfig::ABSOLUTE_MIN_DURATION_MINUTES . ' minutes required for Schedule')
+            );
+
+        $this->rule->validate($context);
+    }
+
+    /**
+     * Test that impediment enforces absolute minimum of 10 minutes.
+     */
+    public function test_impediment_enforces_absolute_minimum_of_10_minutes(): void
+    {
+        // Arrange : Configure minimum below 10 minutes
+        $this->configureMinimumDurations(impedimentMinutes: 5);
+
+        $start = Carbon::now()->format('Y-m-d H:i:s');
+        $end = Carbon::now()->addMinutes(8)->format('Y-m-d H:i:s');
+
+        $context = $this->createMock(ValidationContextInterface::class);
+        $context->method('getEntityType')->willReturn(EntityType::IMPEDIMENT);
+        $context->method('getOperation')->willReturn(OperationType::CREATE);
+        $context->method('safeData')->willReturn([
+            'start_datetime' => $start,
+            'end_datetime' => $end,
+        ]);
+
+        $context->expects($this->once())
+            ->method('setViolationFromRule')
+            ->with(
+                $this->rule,
+                'duration',
+                $this->stringContains('Minimum duration of ' . RosterConfig::ABSOLUTE_MIN_DURATION_MINUTES . ' minutes required for Impediment')
+            );
+
+        $this->rule->validate($context);
     }
 }

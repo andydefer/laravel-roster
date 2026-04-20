@@ -107,6 +107,96 @@ $isAvailable = schedule_for($availability)->isTimeSlotAvailable(
 );
 ```
 
+## 🛡️ Performance Protection: Absolute Minimum Duration
+
+To prevent **infinite loops** and **performance degradation**, Roster enforces an **absolute minimum duration** of **10 minutes** for ALL entity types (Availability, Schedule, Impediment).
+
+### Why 10 minutes?
+
+When searching for available slots, the system generates time slots based on the duration. A duration that is too small would generate an enormous number of iterations:
+
+| Duration | Generated Slots (1 year) | Performance Impact |
+|----------|-------------------------|-------------------|
+| **1 minute** | ~525,600 slots | 🔴 **Infinite loop risk** - System overload, memory exhaustion |
+| **5 minutes** | ~105,120 slots | 🟠 **Very slow** - Timeout possible, poor user experience |
+| **10 minutes** | ~52,560 slots | 🟢 **Optimal** - Fast and stable |
+| **15 minutes** | ~35,040 slots | 🟢 **Excellent** - Best performance |
+| **30 minutes** | ~17,520 slots | 🟢 **Perfect** - Maximum efficiency |
+
+### Technical Protection Implementation
+
+The protection is enforced at the lowest level of the validation system:
+
+```php
+// In AbstractRule.php - Protected against configuration errors
+private const ABSOLUTE_MIN_DURATION_MINUTES = 10;
+
+protected function getMinimumDuration(EntityType $entityType): int
+{
+    $configuredMinutes = match ($entityType) {
+        EntityType::AVAILABILITY => config('roster.durations.minimum_availability_minutes', 10),
+        EntityType::SCHEDULE => config('roster.durations.minimum_schedule_minutes', 10),
+        EntityType::IMPEDIMENT => config('roster.durations.minimum_impediment_minutes', 5),
+    };
+
+    // FORCE absolute minimum - Configuration cannot go below 10 minutes
+    if ($configuredMinutes < self::ABSOLUTE_MIN_DURATION_MINUTES) {
+        $actualMinutes = $configuredMinutes;
+        $configuredMinutes = self::ABSOLUTE_MIN_DURATION_MINUTES;
+
+        // Automatic warning when configuration is overridden
+        logger()->warning('Minimum duration configuration overridden for performance reasons', [
+            'entity_type' => $entityType->value,
+            'configured_minutes' => $actualMinutes,
+            'enforced_minutes' => self::ABSOLUTE_MIN_DURATION_MINUTES,
+            'reason' => 'Durations below 10 minutes would generate too many iterations and slow down the system',
+        ]);
+    }
+
+    return $configuredMinutes;
+}
+```
+
+### What happens if you try to configure less than 10 minutes?
+
+```php
+// In config/roster.php
+'durations' => [
+    'minimum_availability_minutes' => 5, // ❌ Will be forced to 10
+    'minimum_schedule_minutes' => 3,     // ❌ Will be forced to 10
+    'minimum_impediment_minutes' => 1,   // ❌ Will be forced to 10
+],
+
+// The system automatically:
+// 1. Detects the configuration below 10 minutes
+// 2. Logs a warning for debugging
+// 3. Enforces 10 minutes as the actual minimum
+// 4. Prevents infinite loops and performance issues
+```
+
+### Validation in Action
+
+```php
+// Attempt to create an availability with 5 minutes duration
+$context = $this->createMock(ValidationContextInterface::class);
+$context->method('getEntityType')->willReturn(EntityType::AVAILABILITY);
+$context->method('safeData')->willReturn([
+    'start_time' => '09:00:00',
+    'end_time' => '09:05:00', // 5 minutes - BELOW absolute minimum
+]);
+
+// This will FAIL with a clear error message:
+// "Minimum duration of 10 minutes required for availability. Got 5 minutes"
+
+// Attempt with 10 minutes
+$context->method('safeData')->willReturn([
+    'start_time' => '09:00:00',
+    'end_time' => '09:10:00', // 10 minutes - MEETS absolute minimum
+]);
+
+// This will PASS validation
+```
+
 ## 🔗 Polymorphic Scheduling Link System
 
 Roster includes an advanced system that allows any Eloquent model to be associated with schedules with customizable metadata.
@@ -280,11 +370,11 @@ $service->attach($patient, [
 ]);
 ```
 
-# 📋 Model Query Methods (HasRoster Trait)
+## 📋 Model Query Methods (HasRoster Trait)
 
 The `HasRoster` trait includes methods to retrieve impediments and schedules of a model within a given period.
 
-## Added Methods
+### Added Methods
 
 ```php
 // 1. Get all items (impediments + schedules) in a period
@@ -302,7 +392,7 @@ $hasConflicts = $model->hasConflictsInPeriod($start, $end);
 // Returns true if at least one impediment or schedule exists
 ```
 
-## Simple Example
+### Simple Example
 
 ```php
 // A doctor with the HasRoster trait
@@ -324,7 +414,7 @@ if ($doctor->hasConflictsInPeriod($start, $end)) {
 }
 ```
 
-## Practical Use Case
+### Practical Use Case
 
 ```php
 // Before creating a new schedule
@@ -482,6 +572,7 @@ Roster includes **17 validation rules** that guarantee system consistency:
 - **TemporalConflictRule** (80) - Prevents scheduling overlaps
 - **AvailabilityOverlapRule** (80) - Prevents availability overlaps
 - **TimeRangeRule** (85) - Validates time ranges (no multi-day spans)
+- **DurationRule** (90) - Enforces minimum duration (with 10 minutes absolute minimum)
 
 ### Rule visualization:
 
@@ -701,10 +792,13 @@ return [
     ],
 
     // Minimum durations (in minutes)
+    // IMPORTANT: The system enforces an absolute minimum of 10 minutes
+    // for ALL entity types to prevent infinite loops and performance issues.
+    // Any value below 10 will be automatically forced to 10.
     'durations' => [
-        'minimum_availability_minutes' => 15,
-        'minimum_schedule_minutes' => 15,
-        'minimum_impediment_minutes' => 5,
+        'minimum_availability_minutes' => 15,  // Will be enforced to >= 10
+        'minimum_schedule_minutes' => 15,      // Will be enforced to >= 10
+        'minimum_impediment_minutes' => 5,     // Will be enforced to >= 10
         'max_search_period_days' => 365,
         'max_availability_days' => 365,
     ],
@@ -766,6 +860,8 @@ php artisan test --filter=test_real_world_complex_scenario
 - ✅ Polymorphic link system with metadata
 - ✅ Attached resource management (rooms, vehicles, equipment)
 - ✅ Synchronization and detachment tests
+- ✅ **Minimum duration enforcement (10 minutes absolute minimum)**
+- ✅ **Protection against infinite loops in slot generation**
 
 ## 🚨 Error Handling
 
@@ -791,6 +887,23 @@ try {
         'message' => $e->getFormattedMessage(),
         'violations' => $detailedReport['violations'],
     ], 422);
+}
+```
+
+### Duration validation error example
+
+```php
+try {
+    schedule_for($availability)->create([
+        'start_datetime' => '2024-06-10 09:00:00',
+        'end_datetime' => '2024-06-10 09:05:00', // 5 minutes
+    ]);
+} catch (ValidationFailedException $e) {
+    // Error message:
+    // "Minimum duration of 10 minutes required for Schedule. Got 5 minutes"
+    
+    // The system automatically prevents durations below 10 minutes
+    // to protect against infinite loops in slot generation
 }
 ```
 
@@ -892,4 +1005,4 @@ This package is open-source and available under the [MIT](LICENSE) license.
 
 **Roster** - A professional solution for advanced scheduling management, designed for critical applications where every minute counts. ⚕️⏰✨
 
-With advanced search features, data consistency, exhaustive business validation, and a comprehensive polymorphic link system, Roster ensures the integrity of your scheduling systems in the most demanding environments.
+With advanced search features, data consistency, exhaustive business validation, **automatic protection against infinite loops (10 minutes absolute minimum duration)**, and a comprehensive polymorphic link system, Roster ensures the integrity of your scheduling systems in the most demanding environments.

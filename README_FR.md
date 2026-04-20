@@ -107,6 +107,96 @@ $isAvailable = schedule_for($availability)->isTimeSlotAvailable(
 );
 ```
 
+## 🛡️ Protection des performances : Durée minimale absolue
+
+Pour éviter les **boucles infinies** et la **dégradation des performances**, Roster impose une **durée minimale absolue** de **10 minutes** pour TOUS les types d'entités (Availability, Schedule, Impediment).
+
+### Pourquoi 10 minutes ?
+
+Lors de la recherche de créneaux disponibles, le système génère des intervalles de temps basés sur la durée. Une durée trop petite générerait un nombre énorme d'itérations :
+
+| Durée | Créneaux générés (1 an) | Impact sur les performances |
+|-------|------------------------|----------------------------|
+| **1 minute** | ~525 600 créneaux | 🔴 **Risque de boucle infinie** - Surcharge système, épuisement mémoire |
+| **5 minutes** | ~105 120 créneaux | 🟠 **Très lent** - Timeout possible, mauvaise expérience utilisateur |
+| **10 minutes** | ~52 560 créneaux | 🟢 **Optimal** - Rapide et stable |
+| **15 minutes** | ~35 040 créneaux | 🟢 **Excellent** - Meilleures performances |
+| **30 minutes** | ~17 520 créneaux | 🟢 **Parfait** - Efficacité maximale |
+
+### Implémentation de la protection technique
+
+La protection est appliquée au niveau le plus bas du système de validation :
+
+```php
+// Dans AbstractRule.php - Protégé contre les erreurs de configuration
+private const ABSOLUTE_MIN_DURATION_MINUTES = 10;
+
+protected function getMinimumDuration(EntityType $entityType): int
+{
+    $configuredMinutes = match ($entityType) {
+        EntityType::AVAILABILITY => config('roster.durations.minimum_availability_minutes', 10),
+        EntityType::SCHEDULE => config('roster.durations.minimum_schedule_minutes', 10),
+        EntityType::IMPEDIMENT => config('roster.durations.minimum_impediment_minutes', 5),
+    };
+
+    // FORCE le minimum absolu - La configuration ne peut pas passer en dessous de 10 minutes
+    if ($configuredMinutes < self::ABSOLUTE_MIN_DURATION_MINUTES) {
+        $actualMinutes = $configuredMinutes;
+        $configuredMinutes = self::ABSOLUTE_MIN_DURATION_MINUTES;
+
+        // Avertissement automatique lorsque la configuration est ignorée
+        logger()->warning('Configuration de durée minimale ignorée pour des raisons de performance', [
+            'entity_type' => $entityType->value,
+            'configured_minutes' => $actualMinutes,
+            'enforced_minutes' => self::ABSOLUTE_MIN_DURATION_MINUTES,
+            'reason' => 'Les durées inférieures à 10 minutes généreraient trop d\'itérations et ralentiraient le système',
+        ]);
+    }
+
+    return $configuredMinutes;
+}
+```
+
+### Que se passe-t-il si vous essayez de configurer moins de 10 minutes ?
+
+```php
+// Dans config/roster.php
+'durations' => [
+    'minimum_availability_minutes' => 5, // ❌ Sera forcé à 10
+    'minimum_schedule_minutes' => 3,     // ❌ Sera forcé à 10
+    'minimum_impediment_minutes' => 1,   // ❌ Sera forcé à 10
+],
+
+// Le système automatiquement :
+// 1. Détecte la configuration en dessous de 10 minutes
+// 2. Journalise un avertissement pour le débogage
+// 3. Applique 10 minutes comme minimum réel
+// 4. Empêche les boucles infinies et les problèmes de performance
+```
+
+### Validation en action
+
+```php
+// Tentative de création d'une disponibilité de 5 minutes
+$context = $this->createMock(ValidationContextInterface::class);
+$context->method('getEntityType')->willReturn(EntityType::AVAILABILITY);
+$context->method('safeData')->willReturn([
+    'start_time' => '09:00:00',
+    'end_time' => '09:05:00', // 5 minutes - EN DESSOUS du minimum absolu
+]);
+
+// Cela ÉCHOUERA avec un message d'erreur clair :
+// "Minimum duration of 10 minutes required for availability. Got 5 minutes"
+
+// Tentative avec 10 minutes
+$context->method('safeData')->willReturn([
+    'start_time' => '09:00:00',
+    'end_time' => '09:10:00', // 10 minutes - ATTEINT le minimum absolu
+]);
+
+// Cela PASSERA la validation
+```
+
 ## 🔗 Système de liens polymorphiques pour horaires
 
 Roster inclut un système avancé permettant d'associer n'importe quel modèle Eloquent à des horaires avec des métadonnées personnalisables.
@@ -415,6 +505,7 @@ Roster inclut **17 règles de validation** qui garantissent la cohérence du sys
 - **TemporalConflictRule** (80) - Empêche les chevauchements de planning
 - **AvailabilityOverlapRule** (80) - Empêche les chevauchements de disponibilités
 - **TimeRangeRule** (85) - Valide les plages horaires (pas de spans multi-jours)
+- **DurationRule** (90) - Applique la durée minimale (avec 10 minutes minimum absolu)
 
 ### Visualisation des règles :
 
@@ -634,10 +725,14 @@ return [
     ],
 
     // Durées minimales (en minutes)
+    // IMPORTANT : Le système impose un minimum absolu de 10 minutes
+    // pour TOUS les types d'entités afin d'éviter les boucles infinies
+    // et les problèmes de performance.
+    // Toute valeur inférieure à 10 sera automatiquement forcée à 10.
     'durations' => [
-        'minimum_availability_minutes' => 15,
-        'minimum_schedule_minutes' => 15,
-        'minimum_impediment_minutes' => 5,
+        'minimum_availability_minutes' => 15,  // Sera forcé à >= 10
+        'minimum_schedule_minutes' => 15,      // Sera forcé à >= 10
+        'minimum_impediment_minutes' => 5,     // Sera forcé à >= 10
         'max_search_period_days' => 365,
         'max_availability_days' => 365,
     ],
@@ -699,6 +794,8 @@ php artisan test --filter=test_real_world_complex_scenario
 - ✅ Système de liens polymorphiques avec métadonnées
 - ✅ Gestion des ressources attachées (salles, véhicules, équipements)
 - ✅ Tests de synchronisation et de détachement
+- ✅ **Application de la durée minimale (10 minutes minimum absolu)**
+- ✅ **Protection contre les boucles infinies dans la génération de créneaux**
 
 ## 🚨 Gestion des erreurs
 
@@ -724,6 +821,23 @@ try {
         'message' => $e->getFormattedMessage(),
         'violations' => $detailedReport['violations'],
     ], 422);
+}
+```
+
+### Exemple d'erreur de validation de durée
+
+```php
+try {
+    schedule_for($availability)->create([
+        'start_datetime' => '2024-06-10 09:00:00',
+        'end_datetime' => '2024-06-10 09:05:00', // 5 minutes
+    ]);
+} catch (ValidationFailedException $e) {
+    // Message d'erreur :
+    // "Minimum duration of 10 minutes required for Schedule. Got 5 minutes"
+    
+    // Le système empêche automatiquement les durées inférieures à 10 minutes
+    // pour se protéger contre les boucles infinies dans la génération de créneaux
 }
 ```
 
@@ -825,4 +939,4 @@ Ce package est open-source et disponible sous licence [MIT](LICENSE).
 
 **Roster** - Une solution professionnelle pour la gestion avancée d'emplois du temps, conçue pour les applications critiques où chaque minute compte. ⚕️⏰✨
 
-Avec des fonctionnalités avancées de recherche, de cohérence des données, de validation métier exhaustive et un système complet de liens polymorphiques, Roster assure l'intégrité de vos systèmes de planification dans les environnements les plus exigeants.
+Avec des fonctionnalités avancées de recherche, de cohérence des données, de validation métier exhaustive, **une protection automatique contre les boucles infinies (10 minutes de durée minimale absolue)** et un système complet de liens polymorphiques, Roster assure l'intégrité de vos systèmes de planification dans les environnements les plus exigeants.

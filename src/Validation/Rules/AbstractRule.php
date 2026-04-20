@@ -5,10 +5,12 @@ declare(strict_types=1);
 namespace Roster\Validation\Rules;
 
 use ReflectionClass;
+use Roster\Config\RosterConfig;
 use Roster\Contracts\Validation\RuleInterface;
 use Roster\Enums\EntityType;
 use Roster\Enums\OperationType;
 use Roster\Validation\Attributes\ValidationRule;
+use Illuminate\Support\Facades\Log;
 
 /**
  * Abstract base class for validation rules with attribute-based configuration.
@@ -29,7 +31,8 @@ abstract class AbstractRule implements RuleInterface
     public function getPriority(): int
     {
         $ruleAttribute = $this->getValidationRuleAttribute();
-        return $ruleAttribute?->priority ?? 50;
+
+        return $ruleAttribute?->priority ?? RosterConfig::DEFAULT_RULE_PRIORITY;
     }
 
     /**
@@ -87,16 +90,23 @@ abstract class AbstractRule implements RuleInterface
     /**
      * Gets the minimum duration in minutes for an entity type.
      *
+     * This method ensures the duration never goes below the absolute minimum
+     * (10 minutes) for performance and safety reasons, regardless of configuration.
+     *
      * @param EntityType $entityType Type of entity
-     * @return int Minimum duration in minutes
+     * @return int Minimum duration in minutes (guaranteed >= 10)
      */
     protected function getMinimumDuration(EntityType $entityType): int
     {
-        return match ($entityType) {
-            EntityType::AVAILABILITY => config('roster.durations.minimum_availability_minutes', 15),
-            EntityType::SCHEDULE => config('roster.durations.minimum_schedule_minutes', 15),
-            EntityType::IMPEDIMENT => config('roster.durations.minimum_impediment_minutes', 5),
-        };
+        $configuredMinutes = $this->getConfiguredMinimumDuration($entityType);
+
+        // Force the absolute minimum - configuration cannot go below 10 minutes
+        if ($configuredMinutes < RosterConfig::ABSOLUTE_MIN_DURATION_MINUTES) {
+            $this->logMinimumDurationOverride($entityType, $configuredMinutes);
+            return RosterConfig::ABSOLUTE_MIN_DURATION_MINUTES;
+        }
+
+        return $configuredMinutes;
     }
 
     /**
@@ -106,7 +116,7 @@ abstract class AbstractRule implements RuleInterface
      */
     protected function getMaxDays(): int
     {
-        return config('roster.durations.max_search_period_days', 365);
+        return config('roster.durations.max_search_period_days', RosterConfig::MAX_DAYS_ITERATION);
     }
 
     /**
@@ -136,7 +146,7 @@ abstract class AbstractRule implements RuleInterface
      */
     protected function getDefaultTimezone(): string
     {
-        return config('roster.timezone', 'UTC');
+        return config('roster.timezone', RosterConfig::DEFAULT_TIMEZONE);
     }
 
     /**
@@ -152,6 +162,46 @@ abstract class AbstractRule implements RuleInterface
         $attributes = $reflectionClass->getAttributes(ValidationRule::class);
 
         return $attributes !== [] ? $attributes[0]->newInstance() : null;
+    }
+
+    /**
+     * Get configured minimum duration from configuration for entity type.
+     *
+     * @param EntityType $entityType Type of entity
+     * @return int Configured minimum duration in minutes
+     */
+    private function getConfiguredMinimumDuration(EntityType $entityType): int
+    {
+        return match ($entityType) {
+            EntityType::AVAILABILITY => (int) config(
+                'roster.durations.minimum_availability_minutes',
+                RosterConfig::DEFAULT_MINIMUM_AVAILABILITY_MINUTES
+            ),
+            EntityType::SCHEDULE => (int) config(
+                'roster.durations.minimum_schedule_minutes',
+                RosterConfig::DEFAULT_MINIMUM_SCHEDULE_MINUTES
+            ),
+            EntityType::IMPEDIMENT => (int) config(
+                'roster.durations.minimum_impediment_minutes',
+                RosterConfig::DEFAULT_MINIMUM_IMPEDIMENT_MINUTES
+            ),
+        };
+    }
+
+    /**
+     * Log a warning when minimum duration configuration is overridden.
+     *
+     * @param EntityType $entityType Entity type being validated
+     * @param int $configuredMinutes The original configured value
+     */
+    private function logMinimumDurationOverride(EntityType $entityType, int $configuredMinutes): void
+    {
+        Log::warning('Minimum duration configuration overridden for performance reasons', [
+            'entity_type' => $entityType->value,
+            'configured_minutes' => $configuredMinutes,
+            'enforced_minutes' => RosterConfig::ABSOLUTE_MIN_DURATION_MINUTES,
+            'reason' => 'Durations below 10 minutes would generate too many iterations and slow down the system',
+        ]);
     }
 
     /**

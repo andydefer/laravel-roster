@@ -6,6 +6,8 @@ namespace Roster\Validation\Rules;
 
 use Illuminate\Support\Carbon;
 use Exception;
+use Illuminate\Support\Facades\Log;
+use Roster\Config\RosterConfig;
 use Roster\Contracts\Validation\ValidationContextInterface;
 use Roster\Enums\EntityType;
 use Roster\Enums\OperationType;
@@ -204,6 +206,7 @@ class AvailabilityTemporalCoherenceRule extends AbstractRule
         $futureEntities = $entityClass::query()
             ->where('availability_id', $availability->id)
             ->where('end_datetime', '>=', $referenceTime)
+            ->limit(1000) // Limit to prevent memory issues
             ->get();
 
         foreach ($futureEntities as $futureEntity) {
@@ -382,11 +385,27 @@ class AvailabilityTemporalCoherenceRule extends AbstractRule
             return [];
         }
 
+        // Check if period is too large (more than MAX_DAYS_ITERATION days)
+        $daysDiff = $start->diffInDays($end);
+        if ($daysDiff > RosterConfig::MAX_DAYS_ITERATION) {
+            Log::warning('Period too large for day extraction', [
+                'start' => $start->toDateString(),
+                'end' => $end->toDateString(),
+                'days_diff' => $daysDiff,
+                'max_allowed' => RosterConfig::MAX_DAYS_ITERATION,
+            ]);
+
+            // Return empty array instead of iterating
+            return [];
+        }
+
         try {
             $current = $start->copy();
             $days = [];
+            $iteration = 0;
 
-            while ($current->lte($end)) {
+            while ($iteration < RosterConfig::MAX_DAYS_ITERATION && $current->lte($end)) {
+                $iteration++;
                 $day = strtolower($current->format('l'));
                 if (!in_array($day, $days, true)) {
                     $days[] = $day;
@@ -396,7 +415,12 @@ class AvailabilityTemporalCoherenceRule extends AbstractRule
             }
 
             return $days;
-        } catch (Exception) {
+        } catch (Exception $e) {
+            Log::error('Failed to extract days from period', [
+                'start' => $start->toDateString(),
+                'end' => $end->toDateString(),
+                'error' => $e->getMessage(),
+            ]);
             return [];
         }
     }
