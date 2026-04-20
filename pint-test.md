@@ -1,5 +1,5 @@
 # Pint Formatting Test Report
-*Generated: lun. 20 avril 2026 23:29:07 WAT*
+*Generated: lun. 20 avril 2026 23:48:57 WAT*
 
 
   ⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯.⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯..⨯...⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯...⨯...⨯⨯⨯..⨯⨯⨯⨯⨯⨯⨯.⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯.⨯.⨯⨯⨯⨯.⨯⨯⨯⨯⨯⨯⨯.⨯⨯⨯⨯⨯⨯⨯⨯..⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯.⨯⨯⨯⨯⨯...⨯⨯.
@@ -15,7 +15,7 @@
   ⨯ src/Commands/DebugRulesCommand.php class_attributes_separation, function_declaration, increment_style, single_quote, concat_space, trailing_comma_in_multiline, not_operator_with…  
   ⨯ src/Commands/InstallRosterCommand.php                                                                                                                  blank_line_before_statement  
   ⨯ src/Commands/ListRulesCommand.php           single_quote, concat_space, trailing_comma_in_multiline, no_unused_imports, blank_line_before_statement, ordered_imports, phpdoc_align  
-  ⨯ src/Config/RosterConfig.php                             class_attributes_separation, phpdoc_no_package, no_superfluous_phpdoc_tags, no_trailing_whitespace_in_comment, phpdoc_trim  
+  ⨯ src/Config/RosterConfig.php                                                class_attributes_separation, no_superfluous_phpdoc_tags, no_trailing_whitespace_in_comment, phpdoc_trim  
   ⨯ src/Contracts/Repository/AvailabilityRepositoryInterface.php                                                                                       phpdoc_separation, phpdoc_align  
   ⨯ src/Contracts/Repository/ImpedimentRepositoryInterface.php                                                                                           ordered_imports, phpdoc_align  
   ⨯ src/Contracts/Repository/RepositoryInterface.php                                                                                                                      phpdoc_align  

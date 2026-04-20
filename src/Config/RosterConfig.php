@@ -10,7 +10,6 @@ namespace Roster\Config;
  * Provides a single source of truth for all performance-related constants
  * and configuration defaults used across the package.
  * 
- * @package Roster\Config
  */
 final class RosterConfig
 {
